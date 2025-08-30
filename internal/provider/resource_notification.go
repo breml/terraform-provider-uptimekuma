@@ -2,16 +2,19 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
-	"github.com/breml/go-uptime-kuma-client/model3"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -30,8 +33,13 @@ type NotificationResource struct {
 
 // NotificationResourceModel describes the resource data model.
 type NotificationResourceModel struct {
-	Id   types.Int32  `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	Id            types.Int32  `tfsdk:"id"`
+	Name          types.String `tfsdk:"name"`
+	IsActive      types.Bool   `tfsdk:"is_active"`
+	IsDefault     types.Bool   `tfsdk:"is_default"`
+	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
+	Type          types.String `tfsdk:"type"`
+	Config        types.String `tfsdk:"config"`
 }
 
 func (r *NotificationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -41,7 +49,6 @@ func (r *NotificationResource) Metadata(ctx context.Context, req resource.Metada
 func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
-
 		Attributes: map[string]schema.Attribute{
 			"id": schema.Int32Attribute{
 				Computed:            true,
@@ -52,6 +59,30 @@ func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Notification name",
+				Required:            true,
+			},
+			"is_active": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(true),
+			},
+			"is_default": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(false),
+			},
+			"apply_existing": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(false),
+			},
+			"type": schema.StringAttribute{
+				MarkdownDescription: "Notification type",
+				Required:            true,
+			},
+			"config": schema.StringAttribute{
+				MarkdownDescription: "Notification configuration for the given type as JSON encoded object",
+				Required:            true,
 			},
 		},
 	}
@@ -86,10 +117,25 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	notification := model3.Notification{}
-	notification.Name = data.Name.ValueString()
+	genericDetails := make(map[string]any, 20)
+	err := json.Unmarshal([]byte(data.Config.ValueString()), &genericDetails)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create notification", err.Error())
+		return
+	}
 
-	id, err := r.client.CreateNotification(ctx, notification)
+	genericNotification := notification.Generic{
+		Base: notification.Base{
+			ApplyExisting: data.ApplyExisting.ValueBool(),
+			IsDefault:     data.IsDefault.ValueBool(),
+			IsActive:      data.IsActive.ValueBool(),
+			Name:          data.Name.ValueString(),
+		},
+		TypeName:       data.Type.ValueString(),
+		GenericDetails: genericDetails,
+	}
+
+	id, err := r.client.CreateNotification(ctx, genericNotification)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -112,13 +158,37 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 
 	id := data.Id.ValueInt32()
 
-	notification, err := r.client.GetNotification(ctx, int(id))
+	base, err := r.client.GetNotification(ctx, int(id))
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	genericNotification := notification.Generic{}
+	err = base.As(&genericNotification)
+	if err != nil {
+		resp.Diagnostics.AddError(`failed to convert notification to type "generic"`, err.Error())
+		return
+	}
+
+	genericDetailsJSON, err := json.Marshal(genericNotification.GenericDetails)
+	if err != nil {
+		resp.Diagnostics.AddError(`failed to convert notification to type "generic"`, err.Error())
+		return
+	}
+
+	data.Id = types.Int32Value(id)
+	data.Name = types.StringValue(genericNotification.Name)
+	data.IsActive = types.BoolValue(genericNotification.IsActive)
+	data.IsDefault = types.BoolValue(genericNotification.IsDefault)
+	data.ApplyExisting = types.BoolValue(genericNotification.ApplyExisting)
+	data.Type = types.StringValue(genericNotification.Type())
+	data.Config = types.StringValue(string(genericDetailsJSON))
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -134,11 +204,26 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	notification := model3.Notification{}
-	notification.ID = int(data.Id.ValueInt32())
-	notification.Name = data.Name.ValueString()
+	genericDetails := make(map[string]any, 20)
+	err := json.Unmarshal([]byte(data.Config.ValueString()), &genericDetails)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create notification", err.Error())
+		return
+	}
 
-	err := r.client.UpdateNotification(ctx, notification)
+	genericNotification := notification.Generic{
+		Base: notification.Base{
+			ID:            int(data.Id.ValueInt32()),
+			ApplyExisting: data.ApplyExisting.ValueBool(),
+			IsDefault:     data.IsDefault.ValueBool(),
+			IsActive:      data.IsActive.ValueBool(),
+			Name:          data.Name.ValueString(),
+		},
+		TypeName:       data.Type.ValueString(),
+		GenericDetails: genericDetails,
+	}
+
+	err = r.client.UpdateNotification(ctx, genericNotification)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return

@@ -78,7 +78,8 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 	}
 
 	// Uptime Kuma client configuration for data sources and resources
-	client, err := kuma.New(ctx, data.Endpoint.String(), data.Username.String(), data.Password.String())
+	// We can not use the context from Terraform, since it gets cancelled too early.
+	client, err := kuma.New(context.Background(), data.Endpoint.ValueString(), data.Username.ValueString(), data.Password.ValueString(), kuma.WithLogLevel(kuma.LogLevelDebug))
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create client", err.Error())
 		return
@@ -91,6 +92,7 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
+		NewNotificationNtfyResource,
 	}
 }
 
