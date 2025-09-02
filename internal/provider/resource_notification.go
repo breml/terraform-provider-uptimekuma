@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -33,7 +33,7 @@ type NotificationResource struct {
 
 // NotificationResourceModel describes the resource data model.
 type NotificationResourceModel struct {
-	Id            types.Int32  `tfsdk:"id"`
+	Id            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
 	IsActive      types.Bool   `tfsdk:"is_active"`
 	IsDefault     types.Bool   `tfsdk:"is_default"`
@@ -50,11 +50,11 @@ func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int32Attribute{
+			"id": schema.Int64Attribute{
 				Computed:            true,
 				MarkdownDescription: "Notification identifier",
-				PlanModifiers: []planmodifier.Int32{
-					int32planmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -141,7 +141,7 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	data.Id = types.Int32Value(int32(id))
+	data.Id = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -156,9 +156,9 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	id := data.Id.ValueInt32()
+	id := data.Id.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, int(id))
+	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -182,7 +182,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	data.Id = types.Int32Value(id)
+	data.Id = types.Int64Value(id)
 	data.Name = types.StringValue(genericNotification.Name)
 	data.IsActive = types.BoolValue(genericNotification.IsActive)
 	data.IsDefault = types.BoolValue(genericNotification.IsDefault)
@@ -213,7 +213,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 
 	genericNotification := notification.Generic{
 		Base: notification.Base{
-			ID:            int(data.Id.ValueInt32()),
+			ID:            data.Id.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -243,7 +243,7 @@ func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, int(data.Id.ValueInt32()))
+	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return

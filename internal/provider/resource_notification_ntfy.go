@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -41,7 +41,7 @@ type NotificationNtfyResourceModel struct {
 	AuthenticationMethod types.String `tfsdk:"authentication_method"`
 	Icon                 types.String `tfsdk:"icon"`
 	Password             types.String `tfsdk:"password"`
-	Priority             types.Int32  `tfsdk:"priority"`
+	Priority             types.Int64  `tfsdk:"priority"`
 	ServerURL            types.String `tfsdk:"server_url"`
 	Topic                types.String `tfsdk:"topic"`
 	Username             types.String `tfsdk:"username"`
@@ -73,13 +73,13 @@ func (r *NotificationNtfyResource) Schema(ctx context.Context, req resource.Sche
 				Optional:  true,
 				Sensitive: true,
 			},
-			"priority": schema.Int32Attribute{
+			"priority": schema.Int64Attribute{
 				Optional: true,
 				Computed: true,
-				Default:  int32default.StaticInt32(5),
-				Validators: []validator.Int32{
-					int32validator.AtLeast(1),
-					int32validator.AtMost(5),
+				Default:  int64default.StaticInt64(5),
+				Validators: []validator.Int64{
+					int64validator.AtLeast(1),
+					int64validator.AtMost(5),
 				},
 			},
 			"server_url": schema.StringAttribute{
@@ -142,7 +142,7 @@ func (r *NotificationNtfyResource) Create(ctx context.Context, req resource.Crea
 		},
 		NtfyDetails: notification.NtfyDetails{
 			AuthenticationMethod: data.AuthenticationMethod.ValueString(),
-			Priority:             int(data.Priority.ValueInt32()),
+			Priority:             data.Priority.ValueInt64(),
 			ServerURL:            data.ServerURL.ValueString(),
 			Topic:                data.Topic.ValueString(),
 		},
@@ -156,7 +156,7 @@ func (r *NotificationNtfyResource) Create(ctx context.Context, req resource.Crea
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int32Value(int32(id))
+	data.Id = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -171,9 +171,9 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	id := data.Id.ValueInt32()
+	id := data.Id.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, int(id))
+	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -192,14 +192,14 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	}
 
 	// Base properties
-	data.Id = types.Int32Value(id)
+	data.Id = types.Int64Value(id)
 	data.Name = types.StringValue(ntfy.Name)
 	data.IsActive = types.BoolValue(ntfy.IsActive)
 	data.IsDefault = types.BoolValue(ntfy.IsDefault)
 	data.ApplyExisting = types.BoolValue(ntfy.ApplyExisting)
 
 	data.AuthenticationMethod = types.StringValue(ntfy.AuthenticationMethod)
-	data.Priority = types.Int32Value(int32(ntfy.Priority))
+	data.Priority = types.Int64Value(ntfy.Priority)
 	data.ServerURL = types.StringValue(ntfy.ServerURL)
 	data.Topic = types.StringValue(ntfy.Topic)
 
@@ -219,7 +219,7 @@ func (r *NotificationNtfyResource) Update(ctx context.Context, req resource.Upda
 
 	ntfy := notification.Ntfy{
 		Base: notification.Base{
-			ID:            int(data.Id.ValueInt32()),
+			ID:            data.Id.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -227,7 +227,7 @@ func (r *NotificationNtfyResource) Update(ctx context.Context, req resource.Upda
 		},
 		NtfyDetails: notification.NtfyDetails{
 			AuthenticationMethod: data.AuthenticationMethod.ValueString(),
-			Priority:             int(data.Priority.ValueInt32()),
+			Priority:             data.Priority.ValueInt64(),
 			ServerURL:            data.ServerURL.ValueString(),
 			Topic:                data.Topic.ValueString(),
 		},
@@ -253,7 +253,7 @@ func (r *NotificationNtfyResource) Delete(ctx context.Context, req resource.Dele
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, int(data.Id.ValueInt32()))
+	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return

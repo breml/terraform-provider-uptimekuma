@@ -3,13 +3,13 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type NotificationBaseModel struct {
-	Id            types.Int32  `tfsdk:"id"`
+	Id            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
 	IsActive      types.Bool   `tfsdk:"is_active"`
 	IsDefault     types.Bool   `tfsdk:"is_default"`
@@ -17,11 +17,11 @@ type NotificationBaseModel struct {
 }
 
 func withNotificationBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	attrs["id"] = schema.Int32Attribute{
+	attrs["id"] = schema.Int64Attribute{
 		Computed:            true,
 		MarkdownDescription: "Notification identifier",
-		PlanModifiers: []planmodifier.Int32{
-			int32planmodifier.UseStateForUnknown(),
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.UseStateForUnknown(),
 		},
 	}
 
