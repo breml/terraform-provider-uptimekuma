@@ -93,6 +93,7 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotificationNtfyResource,
+		NewNotificationSlackResource,
 	}
 }
 
