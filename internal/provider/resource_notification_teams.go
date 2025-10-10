@@ -1,0 +1,193 @@
+package provider
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
+)
+
+var (
+	_ resource.Resource = &NotificationTeamsResource{}
+)
+
+func NewNotificationTeamsResource() resource.Resource {
+	return &NotificationTeamsResource{}
+}
+
+type NotificationTeamsResource struct {
+	client *kuma.Client
+}
+
+type NotificationTeamsResourceModel struct {
+	NotificationBaseModel
+
+	WebhookURL types.String `tfsdk:"webhook_url"`
+}
+
+func (r *NotificationTeamsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_notification_teams"
+}
+
+func (r *NotificationTeamsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Notification resource",
+		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
+			"webhook_url": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
+			},
+		}),
+	}
+}
+
+func (r *NotificationTeamsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*kuma.Client)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.client = client
+}
+
+func (r *NotificationTeamsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data NotificationTeamsResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	teams := notification.Teams{
+		Base: notification.Base{
+			ApplyExisting: data.ApplyExisting.ValueBool(),
+			IsDefault:     data.IsDefault.ValueBool(),
+			IsActive:      data.IsActive.ValueBool(),
+			Name:          data.Name.ValueString(),
+		},
+		TeamsDetails: notification.TeamsDetails{
+			WebhookURL: data.WebhookURL.ValueString(),
+		},
+	}
+
+	id, err := r.client.CreateNotification(ctx, teams)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create notification", err.Error())
+		return
+	}
+
+	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
+
+	data.Id = types.Int64Value(id)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data NotificationTeamsResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := data.Id.ValueInt64()
+
+	base, err := r.client.GetNotification(ctx, id)
+	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
+		return
+	}
+
+	teams := notification.Teams{}
+	err = base.As(&teams)
+	if err != nil {
+		resp.Diagnostics.AddError(`failed to convert notification to type "teams"`, err.Error())
+		return
+	}
+
+	data.Id = types.Int64Value(id)
+	data.Name = types.StringValue(teams.Name)
+	data.IsActive = types.BoolValue(teams.IsActive)
+	data.IsDefault = types.BoolValue(teams.IsDefault)
+	data.ApplyExisting = types.BoolValue(teams.ApplyExisting)
+
+	data.WebhookURL = types.StringValue(teams.WebhookURL)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *NotificationTeamsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data NotificationTeamsResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	teams := notification.Teams{
+		Base: notification.Base{
+			ID:            data.Id.ValueInt64(),
+			ApplyExisting: data.ApplyExisting.ValueBool(),
+			IsDefault:     data.IsDefault.ValueBool(),
+			IsActive:      data.IsActive.ValueBool(),
+			Name:          data.Name.ValueString(),
+		},
+		TeamsDetails: notification.TeamsDetails{
+			WebhookURL: data.WebhookURL.ValueString(),
+		},
+	}
+
+	err := r.client.UpdateNotification(ctx, teams)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update notification", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *NotificationTeamsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data NotificationTeamsResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
+		return
+	}
+}
