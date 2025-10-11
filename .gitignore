@@ -47,4 +47,3 @@ tools
 CHANGELOG.md
 README.md
 terraform-registry-manifest.json
-internal/provider.scaffolding
