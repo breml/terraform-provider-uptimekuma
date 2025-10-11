@@ -6,11 +6,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -184,6 +186,7 @@ func (r *MonitorHTTPResource) Schema(ctx context.Context, req resource.SchemaReq
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
+				Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")})),
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
 				},
@@ -360,7 +363,7 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 
 		httpMonitor.AcceptedStatusCodes = statusCodes
 	} else {
-		httpMonitor.AcceptedStatusCodes = []string{}
+		httpMonitor.AcceptedStatusCodes = []string{"200-299"}
 	}
 
 	if !data.NotificationIDs.IsNull() {
@@ -380,10 +383,6 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	data.ID = types.Int64Value(id)
-
-	if data.AcceptedStatusCodes.IsNull() || data.AcceptedStatusCodes.IsUnknown() {
-		data.AcceptedStatusCodes, _ = types.ListValueFrom(ctx, types.StringType, []string{})
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -544,7 +543,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 
 		httpMonitor.AcceptedStatusCodes = statusCodes
 	} else {
-		httpMonitor.AcceptedStatusCodes = []string{}
+		httpMonitor.AcceptedStatusCodes = []string{"200-299"}
 	}
 
 	if !data.NotificationIDs.IsNull() {
