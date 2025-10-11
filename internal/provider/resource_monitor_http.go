@@ -37,6 +37,7 @@ type MonitorHTTPResourceModel struct {
 	ID                  types.Int64  `tfsdk:"id"`
 	Name                types.String `tfsdk:"name"`
 	Description         types.String `tfsdk:"description"`
+	Parent              types.Int64  `tfsdk:"parent"`
 	Interval            types.Int64  `tfsdk:"interval"`
 	RetryInterval       types.Int64  `tfsdk:"retry_interval"`
 	ResendInterval      types.Int64  `tfsdk:"resend_interval"`
@@ -91,6 +92,10 @@ func (r *MonitorHTTPResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "Description",
+				Optional:            true,
+			},
+			"parent": schema.Int64Attribute{
+				MarkdownDescription: "Parent monitor ID for hierarchical organization",
 				Optional:            true,
 			},
 			"interval": schema.Int64Attribute{
@@ -349,6 +354,11 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 		httpMonitor.Description = &desc
 	}
 
+	if !data.Parent.IsNull() {
+		parent := data.Parent.ValueInt64()
+		httpMonitor.Parent = &parent
+	}
+
 	if !data.ProxyID.IsNull() {
 		proxyID := data.ProxyID.ValueInt64()
 		httpMonitor.ProxyID = &proxyID
@@ -447,6 +457,12 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	data.OAuthClientSecret = stringOrNull(httpMonitor.OAuthClientSecret)
 	data.OAuthScopes = stringOrNull(httpMonitor.OAuthScopes)
 
+	if httpMonitor.Parent != nil {
+		data.Parent = types.Int64Value(*httpMonitor.Parent)
+	} else {
+		data.Parent = types.Int64Null()
+	}
+
 	if httpMonitor.ProxyID != nil {
 		data.ProxyID = types.Int64Value(*httpMonitor.ProxyID)
 	} else {
@@ -527,6 +543,11 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		httpMonitor.Description = &desc
+	}
+
+	if !data.Parent.IsNull() {
+		parent := data.Parent.ValueInt64()
+		httpMonitor.Parent = &parent
 	}
 
 	if !data.ProxyID.IsNull() {
