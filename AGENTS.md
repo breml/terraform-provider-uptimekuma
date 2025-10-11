@@ -33,3 +33,12 @@
 - **Error handling**: Return errors from framework methods; use diagnostics for user-facing errors
 - **Types**: Use `types.String`, `types.Int64`, etc. from terraform-plugin-framework for schema
 - **Documentation**: Self-documenting code, avoid inline comments
+
+## Definition of Done
+
+The following criteria must be met before a task is considered done:
+
+- Code is formatted and linted
+- Unit tests cover new functionality
+- Unit tests and acceptance tests pass without errors (`make testacc`)
+- Documentation is updated
