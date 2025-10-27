@@ -1,0 +1,362 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/monitor"
+)
+
+var _ resource.Resource = &MonitorDNSResource{}
+
+func NewMonitorDNSResource() resource.Resource {
+	return &MonitorDNSResource{}
+}
+
+type MonitorDNSResource struct {
+	client *kuma.Client
+}
+
+type MonitorDNSResourceModel struct {
+	ID               types.Int64  `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
+	Parent           types.Int64  `tfsdk:"parent"`
+	Interval         types.Int64  `tfsdk:"interval"`
+	RetryInterval    types.Int64  `tfsdk:"retry_interval"`
+	ResendInterval   types.Int64  `tfsdk:"resend_interval"`
+	MaxRetries       types.Int64  `tfsdk:"max_retries"`
+	UpsideDown       types.Bool   `tfsdk:"upside_down"`
+	Active           types.Bool   `tfsdk:"active"`
+	Hostname         types.String `tfsdk:"hostname"`
+	DNSResolveServer types.String `tfsdk:"dns_resolve_server"`
+	DNSResolveType   types.String `tfsdk:"dns_resolve_type"`
+	Port             types.Int64  `tfsdk:"port"`
+	NotificationIDs  types.List   `tfsdk:"notification_ids"`
+}
+
+func (r *MonitorDNSResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
+}
+
+func (r *MonitorDNSResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "DNS monitor resource",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				MarkdownDescription: "Monitor identifier",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
+			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "Friendly name",
+				Required:            true,
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Description",
+				Optional:            true,
+			},
+			"parent": schema.Int64Attribute{
+				MarkdownDescription: "Parent monitor ID for hierarchical organization",
+				Optional:            true,
+			},
+			"interval": schema.Int64Attribute{
+				MarkdownDescription: "Heartbeat interval in seconds",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(60),
+				Validators: []validator.Int64{
+					int64validator.Between(20, 2073600),
+				},
+			},
+			"retry_interval": schema.Int64Attribute{
+				MarkdownDescription: "Retry interval in seconds",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(60),
+				Validators: []validator.Int64{
+					int64validator.Between(20, 2073600),
+				},
+			},
+			"resend_interval": schema.Int64Attribute{
+				MarkdownDescription: "Resend interval in seconds",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(0),
+			},
+			"max_retries": schema.Int64Attribute{
+				MarkdownDescription: "Maximum number of retries",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(3),
+				Validators: []validator.Int64{
+					int64validator.Between(0, 10),
+				},
+			},
+			"upside_down": schema.BoolAttribute{
+				MarkdownDescription: "Invert monitor status (treat DOWN as UP and vice versa)",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
+			"active": schema.BoolAttribute{
+				MarkdownDescription: "Monitor is active",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+			"hostname": schema.StringAttribute{
+				MarkdownDescription: "Domain name to resolve",
+				Required:            true,
+			},
+			"dns_resolve_server": schema.StringAttribute{
+				MarkdownDescription: "DNS resolver server IP address",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("1.1.1.1"),
+			},
+			"dns_resolve_type": schema.StringAttribute{
+				MarkdownDescription: "DNS record type to query",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("A"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("A", "AAAA", "CAA", "CNAME", "MX", "NS", "PTR", "SOA", "SRV", "TXT"),
+				},
+			},
+			"port": schema.Int64Attribute{
+				MarkdownDescription: "DNS resolver port",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(53),
+				Validators: []validator.Int64{
+					int64validator.Between(0, 65535),
+				},
+			},
+			"notification_ids": schema.ListAttribute{
+				MarkdownDescription: "List of notification IDs",
+				ElementType:         types.Int64Type,
+				Optional:            true,
+			},
+		},
+	}
+}
+
+func (r *MonitorDNSResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*kuma.Client)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.client = client
+}
+
+func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data MonitorDNSResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	dnsMonitor := monitor.DNS{
+		Base: monitor.Base{
+			Name:           data.Name.ValueString(),
+			Interval:       data.Interval.ValueInt64(),
+			RetryInterval:  data.RetryInterval.ValueInt64(),
+			ResendInterval: data.ResendInterval.ValueInt64(),
+			MaxRetries:     data.MaxRetries.ValueInt64(),
+			UpsideDown:     data.UpsideDown.ValueBool(),
+			IsActive:       data.Active.ValueBool(),
+		},
+		DNSDetails: monitor.DNSDetails{
+			Hostname:       data.Hostname.ValueString(),
+			ResolverServer: data.DNSResolveServer.ValueString(),
+			ResolveType:    monitor.DNSResolveType(data.DNSResolveType.ValueString()),
+			Port:           int(data.Port.ValueInt64()),
+		},
+	}
+
+	if !data.Description.IsNull() {
+		desc := data.Description.ValueString()
+		dnsMonitor.Description = &desc
+	}
+
+	if !data.Parent.IsNull() {
+		parent := data.Parent.ValueInt64()
+		dnsMonitor.Parent = &parent
+	}
+
+	if !data.NotificationIDs.IsNull() {
+		var notificationIDs []int64
+		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		dnsMonitor.NotificationIDs = notificationIDs
+	}
+
+	id, err := r.client.CreateMonitor(ctx, dnsMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create DNS monitor", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data MonitorDNSResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var dnsMonitor monitor.DNS
+	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &dnsMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
+		return
+	}
+
+	data.Name = types.StringValue(dnsMonitor.Name)
+	if dnsMonitor.Description != nil {
+		data.Description = types.StringValue(*dnsMonitor.Description)
+	} else {
+		data.Description = types.StringNull()
+	}
+
+	data.Interval = types.Int64Value(dnsMonitor.Interval)
+	data.RetryInterval = types.Int64Value(dnsMonitor.RetryInterval)
+	data.ResendInterval = types.Int64Value(dnsMonitor.ResendInterval)
+	data.MaxRetries = types.Int64Value(dnsMonitor.MaxRetries)
+	data.UpsideDown = types.BoolValue(dnsMonitor.UpsideDown)
+	data.Active = types.BoolValue(dnsMonitor.IsActive)
+	data.Hostname = types.StringValue(dnsMonitor.Hostname)
+	data.DNSResolveServer = types.StringValue(dnsMonitor.ResolverServer)
+	data.DNSResolveType = types.StringValue(string(dnsMonitor.ResolveType))
+	data.Port = types.Int64Value(int64(dnsMonitor.Port))
+
+	if dnsMonitor.Parent != nil {
+		data.Parent = types.Int64Value(*dnsMonitor.Parent)
+	} else {
+		data.Parent = types.Int64Null()
+	}
+
+	if len(dnsMonitor.NotificationIDs) > 0 {
+		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, dnsMonitor.NotificationIDs)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		data.NotificationIDs = notificationIDs
+	} else {
+		data.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data MonitorDNSResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	dnsMonitor := monitor.DNS{
+		Base: monitor.Base{
+			ID:             data.ID.ValueInt64(),
+			Name:           data.Name.ValueString(),
+			Interval:       data.Interval.ValueInt64(),
+			RetryInterval:  data.RetryInterval.ValueInt64(),
+			ResendInterval: data.ResendInterval.ValueInt64(),
+			MaxRetries:     data.MaxRetries.ValueInt64(),
+			UpsideDown:     data.UpsideDown.ValueBool(),
+			IsActive:       data.Active.ValueBool(),
+		},
+		DNSDetails: monitor.DNSDetails{
+			Hostname:       data.Hostname.ValueString(),
+			ResolverServer: data.DNSResolveServer.ValueString(),
+			ResolveType:    monitor.DNSResolveType(data.DNSResolveType.ValueString()),
+			Port:           int(data.Port.ValueInt64()),
+		},
+	}
+
+	if !data.Description.IsNull() {
+		desc := data.Description.ValueString()
+		dnsMonitor.Description = &desc
+	}
+
+	if !data.Parent.IsNull() {
+		parent := data.Parent.ValueInt64()
+		dnsMonitor.Parent = &parent
+	}
+
+	if !data.NotificationIDs.IsNull() {
+		var notificationIDs []int64
+		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		dnsMonitor.NotificationIDs = notificationIDs
+	}
+
+	err := r.client.UpdateMonitor(ctx, dnsMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update DNS monitor", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data MonitorDNSResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete DNS monitor", err.Error())
+		return
+	}
+}
