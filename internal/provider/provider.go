@@ -97,6 +97,7 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 		NewNotificationTeamsResource,
 		NewMonitorHTTPResource,
 		NewMonitorGroupResource,
+		NewMonitorPingResource,
 		NewMonitorDNSResource,
 	}
 }
