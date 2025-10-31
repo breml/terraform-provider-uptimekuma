@@ -4,14 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -29,17 +23,7 @@ type MonitorGroupResource struct {
 }
 
 type MonitorGroupResourceModel struct {
-	ID              types.Int64  `tfsdk:"id"`
-	Name            types.String `tfsdk:"name"`
-	Description     types.String `tfsdk:"description"`
-	Parent          types.Int64  `tfsdk:"parent"`
-	Interval        types.Int64  `tfsdk:"interval"`
-	RetryInterval   types.Int64  `tfsdk:"retry_interval"`
-	ResendInterval  types.Int64  `tfsdk:"resend_interval"`
-	MaxRetries      types.Int64  `tfsdk:"max_retries"`
-	UpsideDown      types.Bool   `tfsdk:"upside_down"`
-	Active          types.Bool   `tfsdk:"active"`
-	NotificationIDs types.List   `tfsdk:"notification_ids"`
+	MonitorBaseModel
 }
 
 func (r *MonitorGroupResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -49,77 +33,7 @@ func (r *MonitorGroupResource) Metadata(ctx context.Context, req resource.Metada
 func (r *MonitorGroupResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Monitor group resource for organizing monitors",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				MarkdownDescription: "Monitor identifier",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
-			},
-			"name": schema.StringAttribute{
-				MarkdownDescription: "Friendly name of the monitor group",
-				Required:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "Description of the monitor group",
-				Optional:            true,
-			},
-			"parent": schema.Int64Attribute{
-				MarkdownDescription: "Parent monitor ID for hierarchical organization",
-				Optional:            true,
-			},
-			"interval": schema.Int64Attribute{
-				MarkdownDescription: "Heartbeat interval in seconds",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(60),
-				Validators: []validator.Int64{
-					int64validator.Between(20, 2073600),
-				},
-			},
-			"retry_interval": schema.Int64Attribute{
-				MarkdownDescription: "Retry interval in seconds",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(60),
-				Validators: []validator.Int64{
-					int64validator.Between(20, 2073600),
-				},
-			},
-			"resend_interval": schema.Int64Attribute{
-				MarkdownDescription: "Resend interval in seconds",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(0),
-			},
-			"max_retries": schema.Int64Attribute{
-				MarkdownDescription: "Maximum number of retries",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(3),
-				Validators: []validator.Int64{
-					int64validator.Between(0, 10),
-				},
-			},
-			"upside_down": schema.BoolAttribute{
-				MarkdownDescription: "Invert monitor status (treat DOWN as UP and vice versa)",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(false),
-			},
-			"active": schema.BoolAttribute{
-				MarkdownDescription: "Monitor is active",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(true),
-			},
-			"notification_ids": schema.ListAttribute{
-				MarkdownDescription: "List of notification IDs",
-				ElementType:         types.Int64Type,
-				Optional:            true,
-			},
-		},
+		Attributes:          withMonitorBaseAttributes(map[string]schema.Attribute{}),
 	}
 }
 
