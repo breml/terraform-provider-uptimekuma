@@ -38,7 +38,6 @@ terraform-provider-uptimekuma
 *.winfile eol=crlf
 
 # Disable parts of scaffolding for now
-.github
 docs
 examples
 META.d
