@@ -101,6 +101,7 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 		NewMonitorPingResource,
 		NewMonitorDNSResource,
 		NewMonitorPushResource,
+		NewMonitorRealBrowserResource,
 	}
 }
 
