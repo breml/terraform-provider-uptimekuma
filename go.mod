@@ -3,10 +3,11 @@ module github.com/breml/terraform-provider-uptimekuma
 go 1.25.0
 
 require (
-	github.com/breml/go-uptime-kuma-client v0.0.0
+	github.com/breml/go-uptime-kuma-client v0.0.0-20251125160709-26bfb3e1ad43
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
+	github.com/ory/dockertest/v3 v3.12.0
 )
 
 require (
@@ -51,7 +52,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runc v1.2.3 // indirect
-	github.com/ory/dockertest/v3 v3.12.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
@@ -80,7 +80,7 @@ require (
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/maldikhan/go.socket.io v0.1.1 // indirect
-	github.com/maniartech/signals v1.2.1-0.20250713110343-9566101cf08a // indirect
+	github.com/maniartech/signals v1.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
@@ -94,5 +94,3 @@ require (
 	google.golang.org/grpc v1.72.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
-
-replace github.com/breml/go-uptime-kuma-client => ../go-uptime-kuma-client
