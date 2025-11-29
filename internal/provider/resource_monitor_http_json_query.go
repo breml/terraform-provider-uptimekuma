@@ -1,0 +1,388 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/monitor"
+)
+
+var _ resource.Resource = &MonitorHTTPJSONQueryResource{}
+
+func NewMonitorHTTPJSONQueryResource() resource.Resource {
+	return &MonitorHTTPJSONQueryResource{}
+}
+
+type MonitorHTTPJSONQueryResource struct {
+	client *kuma.Client
+}
+
+type MonitorHTTPJSONQueryResourceModel struct {
+	MonitorBaseModel
+	MonitorHTTPBaseModel
+	JSONPath         types.String `tfsdk:"json_path"`
+	ExpectedValue    types.String `tfsdk:"expected_value"`
+	JSONPathOperator types.String `tfsdk:"json_path_operator"`
+}
+
+func (r *MonitorHTTPJSONQueryResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
+}
+
+func (r *MonitorHTTPJSONQueryResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "HTTP JSON Query monitor resource",
+		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
+			"json_path": schema.StringAttribute{
+				MarkdownDescription: "JSON Path expression to query the response",
+				Required:            true,
+				Computed:            false,
+			},
+			"expected_value": schema.StringAttribute{
+				MarkdownDescription: "Expected value to compare against the JSON path result",
+				Required:            true,
+				Computed:            false,
+			},
+			"json_path_operator": schema.StringAttribute{
+				MarkdownDescription: "Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("=="),
+				Validators: []validator.String{
+					stringvalidator.OneOf(">", ">=", "<", "<=", "!=", "==", "contains"),
+				},
+			},
+		})),
+	}
+}
+
+func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*kuma.Client)
+
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.client = client
+}
+
+func (r *MonitorHTTPJSONQueryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data MonitorHTTPJSONQueryResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	httpJSONQueryMonitor := monitor.HTTPJSONQuery{
+		Base: monitor.Base{
+			Name:           data.Name.ValueString(),
+			Interval:       data.Interval.ValueInt64(),
+			RetryInterval:  data.RetryInterval.ValueInt64(),
+			ResendInterval: data.ResendInterval.ValueInt64(),
+			MaxRetries:     data.MaxRetries.ValueInt64(),
+			UpsideDown:     data.UpsideDown.ValueBool(),
+			IsActive:       data.Active.ValueBool(),
+		},
+		HTTPDetails: monitor.HTTPDetails{
+			URL:                 data.URL.ValueString(),
+			Timeout:             data.Timeout.ValueInt64(),
+			Method:              data.Method.ValueString(),
+			ExpiryNotification:  data.ExpiryNotification.ValueBool(),
+			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
+			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
+			AcceptedStatusCodes: []string{},
+			HTTPBodyEncoding:    data.HTTPBodyEncoding.ValueString(),
+			Body:                data.Body.ValueString(),
+			Headers:             data.Headers.ValueString(),
+			AuthMethod:          monitor.AuthMethod(data.AuthMethod.ValueString()),
+			BasicAuthUser:       data.BasicAuthUser.ValueString(),
+			BasicAuthPass:       data.BasicAuthPass.ValueString(),
+			AuthDomain:          data.AuthDomain.ValueString(),
+			AuthWorkstation:     data.AuthWorkstation.ValueString(),
+			TLSCert:             data.TLSCert.ValueString(),
+			TLSKey:              data.TLSKey.ValueString(),
+			TLSCa:               data.TLSCa.ValueString(),
+			OAuthAuthMethod:     data.OAuthAuthMethod.ValueString(),
+			OAuthTokenURL:       data.OAuthTokenURL.ValueString(),
+			OAuthClientID:       data.OAuthClientID.ValueString(),
+			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
+			OAuthScopes:         data.OAuthScopes.ValueString(),
+		},
+		HTTPJSONQueryDetails: monitor.HTTPJSONQueryDetails{
+			JSONPath:         data.JSONPath.ValueString(),
+			ExpectedValue:    data.ExpectedValue.ValueString(),
+			JSONPathOperator: data.JSONPathOperator.ValueString(),
+		},
+	}
+
+	if !data.Description.IsNull() {
+		desc := data.Description.ValueString()
+		httpJSONQueryMonitor.Description = &desc
+	}
+
+	if !data.Parent.IsNull() {
+		parent := data.Parent.ValueInt64()
+		httpJSONQueryMonitor.Parent = &parent
+	}
+
+	if !data.ProxyID.IsNull() {
+		proxyID := data.ProxyID.ValueInt64()
+		httpJSONQueryMonitor.ProxyID = &proxyID
+	}
+
+	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
+		var statusCodes []string
+		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		httpJSONQueryMonitor.AcceptedStatusCodes = statusCodes
+	} else {
+		httpJSONQueryMonitor.AcceptedStatusCodes = []string{"200-299"}
+	}
+
+	if !data.NotificationIDs.IsNull() {
+		var notificationIDs []int64
+		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		httpJSONQueryMonitor.NotificationIDs = notificationIDs
+	}
+
+	id, err := r.client.CreateMonitor(ctx, httpJSONQueryMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create HTTP JSON Query monitor", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data MonitorHTTPJSONQueryResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var httpJSONQueryMonitor monitor.HTTPJSONQuery
+	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpJSONQueryMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read HTTP JSON Query monitor", err.Error())
+		return
+	}
+
+	data.Name = types.StringValue(httpJSONQueryMonitor.Name)
+	if httpJSONQueryMonitor.Description != nil {
+		data.Description = types.StringValue(*httpJSONQueryMonitor.Description)
+	} else {
+		data.Description = types.StringNull()
+	}
+
+	data.Interval = types.Int64Value(httpJSONQueryMonitor.Interval)
+	data.RetryInterval = types.Int64Value(httpJSONQueryMonitor.RetryInterval)
+	data.ResendInterval = types.Int64Value(httpJSONQueryMonitor.ResendInterval)
+	data.MaxRetries = types.Int64Value(httpJSONQueryMonitor.MaxRetries)
+	data.UpsideDown = types.BoolValue(httpJSONQueryMonitor.UpsideDown)
+	data.Active = types.BoolValue(httpJSONQueryMonitor.IsActive)
+	data.URL = types.StringValue(httpJSONQueryMonitor.URL)
+	data.Timeout = types.Int64Value(httpJSONQueryMonitor.Timeout)
+	data.Method = types.StringValue(httpJSONQueryMonitor.Method)
+	data.ExpiryNotification = types.BoolValue(httpJSONQueryMonitor.ExpiryNotification)
+	data.IgnoreTLS = types.BoolValue(httpJSONQueryMonitor.IgnoreTLS)
+	data.MaxRedirects = types.Int64Value(int64(httpJSONQueryMonitor.MaxRedirects))
+	data.HTTPBodyEncoding = types.StringValue(httpJSONQueryMonitor.HTTPBodyEncoding)
+	data.Body = stringOrNull(httpJSONQueryMonitor.Body)
+	data.Headers = stringOrNull(httpJSONQueryMonitor.Headers)
+	data.AuthMethod = types.StringValue(string(httpJSONQueryMonitor.AuthMethod))
+	data.BasicAuthUser = stringOrNull(httpJSONQueryMonitor.BasicAuthUser)
+	data.BasicAuthPass = stringOrNull(httpJSONQueryMonitor.BasicAuthPass)
+	data.AuthDomain = stringOrNull(httpJSONQueryMonitor.AuthDomain)
+	data.AuthWorkstation = stringOrNull(httpJSONQueryMonitor.AuthWorkstation)
+	data.TLSCert = stringOrNull(httpJSONQueryMonitor.TLSCert)
+	data.TLSKey = stringOrNull(httpJSONQueryMonitor.TLSKey)
+	data.TLSCa = stringOrNull(httpJSONQueryMonitor.TLSCa)
+	data.OAuthAuthMethod = stringOrNull(httpJSONQueryMonitor.OAuthAuthMethod)
+	data.OAuthTokenURL = stringOrNull(httpJSONQueryMonitor.OAuthTokenURL)
+	data.OAuthClientID = stringOrNull(httpJSONQueryMonitor.OAuthClientID)
+	data.OAuthClientSecret = stringOrNull(httpJSONQueryMonitor.OAuthClientSecret)
+	data.OAuthScopes = stringOrNull(httpJSONQueryMonitor.OAuthScopes)
+	data.JSONPath = types.StringValue(httpJSONQueryMonitor.JSONPath)
+	data.ExpectedValue = types.StringValue(httpJSONQueryMonitor.ExpectedValue)
+	data.JSONPathOperator = types.StringValue(httpJSONQueryMonitor.JSONPathOperator)
+
+	if httpJSONQueryMonitor.Parent != nil {
+		data.Parent = types.Int64Value(*httpJSONQueryMonitor.Parent)
+	} else {
+		data.Parent = types.Int64Null()
+	}
+
+	if httpJSONQueryMonitor.ProxyID != nil {
+		data.ProxyID = types.Int64Value(*httpJSONQueryMonitor.ProxyID)
+	} else {
+		data.ProxyID = types.Int64Null()
+	}
+
+	if len(httpJSONQueryMonitor.AcceptedStatusCodes) > 0 {
+		statusCodes, diags := types.ListValueFrom(ctx, types.StringType, httpJSONQueryMonitor.AcceptedStatusCodes)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		data.AcceptedStatusCodes = statusCodes
+	}
+
+	if len(httpJSONQueryMonitor.NotificationIDs) > 0 {
+		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, httpJSONQueryMonitor.NotificationIDs)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		data.NotificationIDs = notificationIDs
+	} else {
+		data.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data MonitorHTTPJSONQueryResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	httpJSONQueryMonitor := monitor.HTTPJSONQuery{
+		Base: monitor.Base{
+			ID:             data.ID.ValueInt64(),
+			Name:           data.Name.ValueString(),
+			Interval:       data.Interval.ValueInt64(),
+			RetryInterval:  data.RetryInterval.ValueInt64(),
+			ResendInterval: data.ResendInterval.ValueInt64(),
+			MaxRetries:     data.MaxRetries.ValueInt64(),
+			UpsideDown:     data.UpsideDown.ValueBool(),
+			IsActive:       data.Active.ValueBool(),
+		},
+		HTTPDetails: monitor.HTTPDetails{
+			URL:                 data.URL.ValueString(),
+			Timeout:             data.Timeout.ValueInt64(),
+			Method:              data.Method.ValueString(),
+			ExpiryNotification:  data.ExpiryNotification.ValueBool(),
+			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
+			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
+			AcceptedStatusCodes: []string{},
+			HTTPBodyEncoding:    data.HTTPBodyEncoding.ValueString(),
+			Body:                data.Body.ValueString(),
+			Headers:             data.Headers.ValueString(),
+			AuthMethod:          monitor.AuthMethod(data.AuthMethod.ValueString()),
+			BasicAuthUser:       data.BasicAuthUser.ValueString(),
+			BasicAuthPass:       data.BasicAuthPass.ValueString(),
+			AuthDomain:          data.AuthDomain.ValueString(),
+			AuthWorkstation:     data.AuthWorkstation.ValueString(),
+			TLSCert:             data.TLSCert.ValueString(),
+			TLSKey:              data.TLSKey.ValueString(),
+			TLSCa:               data.TLSCa.ValueString(),
+			OAuthAuthMethod:     data.OAuthAuthMethod.ValueString(),
+			OAuthTokenURL:       data.OAuthTokenURL.ValueString(),
+			OAuthClientID:       data.OAuthClientID.ValueString(),
+			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
+			OAuthScopes:         data.OAuthScopes.ValueString(),
+		},
+		HTTPJSONQueryDetails: monitor.HTTPJSONQueryDetails{
+			JSONPath:         data.JSONPath.ValueString(),
+			ExpectedValue:    data.ExpectedValue.ValueString(),
+			JSONPathOperator: data.JSONPathOperator.ValueString(),
+		},
+	}
+
+	if !data.Description.IsNull() {
+		desc := data.Description.ValueString()
+		httpJSONQueryMonitor.Description = &desc
+	}
+
+	if !data.Parent.IsNull() {
+		parent := data.Parent.ValueInt64()
+		httpJSONQueryMonitor.Parent = &parent
+	}
+
+	if !data.ProxyID.IsNull() {
+		proxyID := data.ProxyID.ValueInt64()
+		httpJSONQueryMonitor.ProxyID = &proxyID
+	}
+
+	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
+		var statusCodes []string
+		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		httpJSONQueryMonitor.AcceptedStatusCodes = statusCodes
+	} else {
+		httpJSONQueryMonitor.AcceptedStatusCodes = []string{"200-299"}
+	}
+
+	if !data.NotificationIDs.IsNull() {
+		var notificationIDs []int64
+		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		httpJSONQueryMonitor.NotificationIDs = notificationIDs
+	}
+
+	err := r.client.UpdateMonitor(ctx, httpJSONQueryMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update HTTP JSON Query monitor", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *MonitorHTTPJSONQueryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data MonitorHTTPJSONQueryResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete HTTP JSON Query monitor", err.Error())
+		return
+	}
+}
