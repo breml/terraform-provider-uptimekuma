@@ -1,0 +1,172 @@
+package provider
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"regexp"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/tag"
+)
+
+var _ resource.Resource = &TagResource{}
+
+func NewTagResource() resource.Resource {
+	return &TagResource{}
+}
+
+type TagResource struct {
+	client *kuma.Client
+}
+
+type TagResourceModel struct {
+	ID    types.Int64  `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+	Color types.String `tfsdk:"color"`
+}
+
+func (r *TagResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_tag"
+}
+
+func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Tag resource for organizing monitors with custom values",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				MarkdownDescription: "Tag identifier",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				MarkdownDescription: "Tag name",
+			},
+			"color": schema.StringAttribute{
+				Required:            true,
+				MarkdownDescription: "Tag color (hex color code, e.g., #RRGGBB)",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$`),
+						"must be a valid hex color code (e.g., #RRGGBB or #RGB)",
+					),
+				},
+			},
+		},
+	}
+}
+
+func (r *TagResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*kuma.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+		return
+	}
+
+	r.client = client
+}
+
+func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data TagResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	t := tag.Tag{
+		Name:  data.Name.ValueString(),
+		Color: data.Color.ValueString(),
+	}
+
+	id, err := r.client.CreateTag(ctx, t)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create tag", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data TagResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	t, err := r.client.GetTag(ctx, data.ID.ValueInt64())
+	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
+		resp.Diagnostics.AddError("failed to read tag", err.Error())
+		return
+	}
+
+	data.Name = types.StringValue(t.Name)
+	data.Color = types.StringValue(t.Color)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data TagResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	t := tag.Tag{
+		ID:    data.ID.ValueInt64(),
+		Name:  data.Name.ValueString(),
+		Color: data.Color.ValueString(),
+	}
+
+	err := r.client.UpdateTag(ctx, t)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update tag", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data TagResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteTag(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete tag", err.Error())
+		return
+	}
+}

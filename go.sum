@@ -15,8 +15,6 @@ github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki
 github.com/apparentlymart/go-textseg/v12 v12.0.0/go.mod h1:S/4uRK2UtaQttw1GenVJEynmyUenKwP++x/+DdGV/Ec=
 github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew1u1fNQOlOtuGxQY=
 github.com/apparentlymart/go-textseg/v15 v15.0.0/go.mod h1:K8XmNZdhEBkdlyDdvbmmsvpAG721bKi0joRfFdHIWJ4=
-github.com/breml/go-uptime-kuma-client v0.0.0-20251129133020-fae61887ca96 h1:ZnKBn+HwsPu5kcefc/pB2lp5m4QpREowdqABmU8oooc=
-github.com/breml/go-uptime-kuma-client v0.0.0-20251129133020-fae61887ca96/go.mod h1:rrkfME8FRHXjZmngQbsMyv7Pz/9lUdxmKz67lewaXHg=
 github.com/breml/go-uptime-kuma-client v0.0.0-20251129153851-b286e4792aed h1:whv0k7NZcz3siyWraEL7d9VXi+oQf0JrkH2tvdJEOm4=
 github.com/breml/go-uptime-kuma-client v0.0.0-20251129153851-b286e4792aed/go.mod h1:rrkfME8FRHXjZmngQbsMyv7Pz/9lUdxmKz67lewaXHg=
 github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/FBatYVw=
