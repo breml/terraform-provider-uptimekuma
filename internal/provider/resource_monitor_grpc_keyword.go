@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -30,16 +28,14 @@ type MonitorGrpcKeywordResource struct {
 
 type MonitorGrpcKeywordResourceModel struct {
 	MonitorBaseModel
-	GrpcURL             types.String `tfsdk:"grpc_url"`
-	GrpcProtobuf        types.String `tfsdk:"grpc_protobuf"`
-	GrpcServiceName     types.String `tfsdk:"grpc_service_name"`
-	GrpcMethod          types.String `tfsdk:"grpc_method"`
-	GrpcEnableTLS       types.Bool   `tfsdk:"grpc_enable_tls"`
-	GrpcBody            types.String `tfsdk:"grpc_body"`
-	Keyword             types.String `tfsdk:"keyword"`
-	InvertKeyword       types.Bool   `tfsdk:"invert_keyword"`
-	MaxRedirects        types.Int64  `tfsdk:"max_redirects"`
-	AcceptedStatusCodes types.List   `tfsdk:"accepted_status_codes"`
+	GrpcURL         types.String `tfsdk:"grpc_url"`
+	GrpcProtobuf    types.String `tfsdk:"grpc_protobuf"`
+	GrpcServiceName types.String `tfsdk:"grpc_service_name"`
+	GrpcMethod      types.String `tfsdk:"grpc_method"`
+	GrpcEnableTLS   types.Bool   `tfsdk:"grpc_enable_tls"`
+	GrpcBody        types.String `tfsdk:"grpc_body"`
+	Keyword         types.String `tfsdk:"keyword"`
+	InvertKeyword   types.Bool   `tfsdk:"invert_keyword"`
 }
 
 func (r *MonitorGrpcKeywordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -100,20 +96,6 @@ func (r *MonitorGrpcKeywordResource) Schema(ctx context.Context, req resource.Sc
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
-			"max_redirects": schema.Int64Attribute{
-				MarkdownDescription: "Maximum number of redirects to follow",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(10),
-				Validators: []validator.Int64{
-					int64validator.AtLeast(0),
-				},
-			},
-			"accepted_status_codes": schema.ListAttribute{
-				MarkdownDescription: "Accepted status codes (e.g., [\"200-299\"])",
-				ElementType:         types.StringType,
-				Optional:            true,
-			},
 		}),
 	}
 }
@@ -157,16 +139,14 @@ func (r *MonitorGrpcKeywordResource) Create(ctx context.Context, req resource.Cr
 			IsActive:       data.Active.ValueBool(),
 		},
 		GrpcKeywordDetails: monitor.GrpcKeywordDetails{
-			GrpcURL:             data.GrpcURL.ValueString(),
-			GrpcProtobuf:        data.GrpcProtobuf.ValueString(),
-			GrpcServiceName:     data.GrpcServiceName.ValueString(),
-			GrpcMethod:          data.GrpcMethod.ValueString(),
-			GrpcEnableTLS:       data.GrpcEnableTLS.ValueBool(),
-			GrpcBody:            data.GrpcBody.ValueString(),
-			Keyword:             data.Keyword.ValueString(),
-			InvertKeyword:       data.InvertKeyword.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
+			GrpcURL:         data.GrpcURL.ValueString(),
+			GrpcProtobuf:    data.GrpcProtobuf.ValueString(),
+			GrpcServiceName: data.GrpcServiceName.ValueString(),
+			GrpcMethod:      data.GrpcMethod.ValueString(),
+			GrpcEnableTLS:   data.GrpcEnableTLS.ValueBool(),
+			GrpcBody:        data.GrpcBody.ValueString(),
+			Keyword:         data.Keyword.ValueString(),
+			InvertKeyword:   data.InvertKeyword.ValueBool(),
 		},
 	}
 
@@ -178,18 +158,6 @@ func (r *MonitorGrpcKeywordResource) Create(ctx context.Context, req resource.Cr
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
 		grpcKeywordMonitor.Parent = &parent
-	}
-
-	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
-		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		grpcKeywordMonitor.AcceptedStatusCodes = statusCodes
-	} else {
-		grpcKeywordMonitor.AcceptedStatusCodes = []string{"200-299"}
 	}
 
 	if !data.NotificationIDs.IsNull() {
@@ -271,24 +239,11 @@ func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(data *MonitorGrpcK
 	data.GrpcBody = stringOrNull(grpcKeywordMonitor.GrpcBody)
 	data.Keyword = types.StringValue(grpcKeywordMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(grpcKeywordMonitor.InvertKeyword)
-	data.MaxRedirects = types.Int64Value(int64(grpcKeywordMonitor.MaxRedirects))
 
 	if grpcKeywordMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*grpcKeywordMonitor.Parent)
 	} else {
 		data.Parent = types.Int64Null()
-	}
-
-	if len(grpcKeywordMonitor.AcceptedStatusCodes) > 0 && !isDefaultStatusCodes(grpcKeywordMonitor.AcceptedStatusCodes) {
-		statusCodes, diagsLocal := types.ListValueFrom(ctx, types.StringType, grpcKeywordMonitor.AcceptedStatusCodes)
-		diags.Append(diagsLocal...)
-		if diags.HasError() {
-			return
-		}
-
-		data.AcceptedStatusCodes = statusCodes
-	} else {
-		data.AcceptedStatusCodes = types.ListNull(types.StringType)
 	}
 
 	if len(grpcKeywordMonitor.NotificationIDs) > 0 {
@@ -302,10 +257,6 @@ func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(data *MonitorGrpcK
 	} else {
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
-}
-
-func isDefaultStatusCodes(codes []string) bool {
-	return len(codes) == 1 && codes[0] == "200-299"
 }
 
 func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -328,16 +279,14 @@ func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.Up
 			IsActive:       data.Active.ValueBool(),
 		},
 		GrpcKeywordDetails: monitor.GrpcKeywordDetails{
-			GrpcURL:             data.GrpcURL.ValueString(),
-			GrpcProtobuf:        data.GrpcProtobuf.ValueString(),
-			GrpcServiceName:     data.GrpcServiceName.ValueString(),
-			GrpcMethod:          data.GrpcMethod.ValueString(),
-			GrpcEnableTLS:       data.GrpcEnableTLS.ValueBool(),
-			GrpcBody:            data.GrpcBody.ValueString(),
-			Keyword:             data.Keyword.ValueString(),
-			InvertKeyword:       data.InvertKeyword.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
+			GrpcURL:         data.GrpcURL.ValueString(),
+			GrpcProtobuf:    data.GrpcProtobuf.ValueString(),
+			GrpcServiceName: data.GrpcServiceName.ValueString(),
+			GrpcMethod:      data.GrpcMethod.ValueString(),
+			GrpcEnableTLS:   data.GrpcEnableTLS.ValueBool(),
+			GrpcBody:        data.GrpcBody.ValueString(),
+			Keyword:         data.Keyword.ValueString(),
+			InvertKeyword:   data.InvertKeyword.ValueBool(),
 		},
 	}
 
@@ -349,18 +298,6 @@ func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.Up
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
 		grpcKeywordMonitor.Parent = &parent
-	}
-
-	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
-		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		grpcKeywordMonitor.AcceptedStatusCodes = statusCodes
-	} else {
-		grpcKeywordMonitor.AcceptedStatusCodes = []string{"200-299"}
 	}
 
 	if !data.NotificationIDs.IsNull() {
