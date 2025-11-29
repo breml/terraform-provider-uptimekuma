@@ -73,7 +73,6 @@ Resources follow a pattern-based architecture:
 
 ## Special Directories
 
-- **admin/pep/**: Project Enhancement Proposals - design docs for major changes
 - **.scratch/**: Temporary code for testing ideas - not linted, not tested, not in git
 - **.scratch/uptime-kuma/**: Copy of Uptime Kuma source code for reference
 - **examples/**: Terraform examples for documentation generation
