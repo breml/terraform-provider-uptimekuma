@@ -17,6 +17,8 @@ github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew
 github.com/apparentlymart/go-textseg/v15 v15.0.0/go.mod h1:K8XmNZdhEBkdlyDdvbmmsvpAG721bKi0joRfFdHIWJ4=
 github.com/breml/go-uptime-kuma-client v0.0.0-20251129133020-fae61887ca96 h1:ZnKBn+HwsPu5kcefc/pB2lp5m4QpREowdqABmU8oooc=
 github.com/breml/go-uptime-kuma-client v0.0.0-20251129133020-fae61887ca96/go.mod h1:rrkfME8FRHXjZmngQbsMyv7Pz/9lUdxmKz67lewaXHg=
+github.com/breml/go-uptime-kuma-client v0.0.0-20251129153851-b286e4792aed h1:whv0k7NZcz3siyWraEL7d9VXi+oQf0JrkH2tvdJEOm4=
+github.com/breml/go-uptime-kuma-client v0.0.0-20251129153851-b286e4792aed/go.mod h1:rrkfME8FRHXjZmngQbsMyv7Pz/9lUdxmKz67lewaXHg=
 github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/FBatYVw=
 github.com/bufbuild/protocompile v0.14.1/go.mod h1:ppVdAIhbr2H8asPk6k4pY7t9zB1OU5DoEw9xY/FUi1c=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
