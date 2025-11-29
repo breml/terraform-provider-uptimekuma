@@ -39,17 +39,18 @@ func (r *MonitorHTTPJSONQueryResource) Metadata(ctx context.Context, req resourc
 
 func (r *MonitorHTTPJSONQueryResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "HTTP JSON Query monitor resource",
+		MarkdownDescription: "The HTTP JSON Query monitor allows you to monitor an HTTP endpoint by querying its JSON response using a JSONPath expression. This monitor extracts a value from the JSON response at the specified path and compares it to an expected value using a configurable comparison operator.",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
 			"json_path": schema.StringAttribute{
 				MarkdownDescription: "JSON Path expression to query the response",
 				Required:            true,
-				Computed:            false,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"expected_value": schema.StringAttribute{
 				MarkdownDescription: "Expected value to compare against the JSON path result",
 				Required:            true,
-				Computed:            false,
 			},
 			"json_path_operator": schema.StringAttribute{
 				MarkdownDescription: "Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`",
