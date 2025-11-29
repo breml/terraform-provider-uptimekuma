@@ -21,7 +21,6 @@
 - **Tests**: Acceptance tests use `terraform-plugin-testing`, create real resources via Docker
 - **.scratch/uptime-kuma/**: Code of Uptime Kuma itself, copied here for reference
 - **.scratch/**: Temporary code for testing ideas, not linted, not tested, not checked into git
-- **admin/pep/**: Project Enhancement Proposals (PEP) for changes to the codebase
 
 ## Code Style
 
