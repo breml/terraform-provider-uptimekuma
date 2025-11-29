@@ -23,7 +23,6 @@ website/node_modules
 .idea
 *.iml
 *.test
-*.iml
 
 website/vendor
 
@@ -36,13 +35,3 @@ terraform-provider-uptimekuma
 
 # Keep windows files with windows line endings
 *.winfile eol=crlf
-
-# Disable parts of scaffolding for now
-docs
-examples
-META.d
-tools
-.goreleaser.yml
-CHANGELOG.md
-README.md
-terraform-registry-manifest.json

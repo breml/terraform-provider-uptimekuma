@@ -1,0 +1,9 @@
+uptimekuma_endpoint = "http://localhost:3001"
+uptimekuma_username = "admin"
+uptimekuma_password = "your-password-here"
+
+slack_webhook_url = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+db_host     = "db.example.com"
+db_user     = "monitoring"
+db_password = "secure-db-password"
