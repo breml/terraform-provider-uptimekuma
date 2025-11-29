@@ -94,3 +94,5 @@ require (
 	google.golang.org/grpc v1.75.1 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 )
+
+replace github.com/breml/go-uptime-kuma-client => ../go-uptime-kuma-client
