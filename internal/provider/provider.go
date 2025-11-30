@@ -108,6 +108,7 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 		NewMonitorPostgresResource,
 		NewMonitorRedisResource,
 		NewMonitorTCPPortResource,
+		NewProxyResource,
 		NewTagResource,
 		NewDockerHostResource,
 	}

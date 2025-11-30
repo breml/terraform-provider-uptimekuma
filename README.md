@@ -9,6 +9,7 @@ A Terraform provider for managing Uptime Kuma monitors and notifications through
 - Monitor groups for organizing related monitors
 - Manage notification channels (webhook, Slack, Teams, ntfy)
 - Configure generic notifications with JSON config for custom types
+- Configure HTTP/HTTPS/SOCKS5 proxies for routing monitor requests
 - Tag monitors and notifications for organization and filtering
 
 ## Dependencies
@@ -68,6 +69,17 @@ resource "uptimekuma_notification_webhook" "example" {
 }
 ```
 
+### Create a Proxy
+
+```hcl
+resource "uptimekuma_proxy" "example" {
+  host     = "proxy.example.com"
+  port     = 8080
+  protocol = "http"
+  active   = true
+}
+```
+
 ## Supported Resources
 
 ### Monitors
@@ -90,6 +102,12 @@ resource "uptimekuma_notification_webhook" "example" {
 - `uptimekuma_notification_slack` - Slack integration
 - `uptimekuma_notification_teams` - Microsoft Teams integration
 - `uptimekuma_notification_ntfy` - ntfy.sh notifications
+
+### Proxies
+- `uptimekuma_proxy` - HTTP/HTTPS/SOCKS5 proxy configuration
+
+### Other
+- `uptimekuma_tag` - Tags for organizing monitors and notifications
 
 ## Documentation
 
