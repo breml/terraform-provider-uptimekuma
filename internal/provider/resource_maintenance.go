@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -183,9 +182,6 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 			"status": schema.StringAttribute{
 				MarkdownDescription: "Current status: inactive, scheduled, under-maintenance, ended, unknown",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"timezone_resolved": schema.StringAttribute{
 				MarkdownDescription: "Resolved IANA timezone",
@@ -495,10 +491,14 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 
 	if m.Duration > 0 {
 		data.Duration = types.Int64Value(int64(m.Duration))
+	} else {
+		data.Duration = types.Int64Null()
 	}
 
 	if m.Cron != "" {
 		data.Cron = types.StringValue(m.Cron)
+	} else {
+		data.Cron = types.StringNull()
 	}
 
 	switch m.Strategy {
@@ -569,6 +569,14 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 		}
 
 		listValue, d := types.ListValue(types.ObjectType{AttrTypes: timeslotAttrTypes}, timeslotList)
+		diags.Append(d...)
+		data.TimeslotList = listValue
+	} else {
+		timeslotAttrTypes := map[string]attr.Type{
+			"start_date": types.StringType,
+			"end_date":   types.StringType,
+		}
+		listValue, d := types.ListValue(types.ObjectType{AttrTypes: timeslotAttrTypes}, []attr.Value{})
 		diags.Append(d...)
 		data.TimeslotList = listValue
 	}
