@@ -111,13 +111,18 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 		NewProxyResource,
 		NewTagResource,
 		NewDockerHostResource,
+		NewMaintenanceResource,
+		NewMaintenanceMonitorsResource,
+		NewMaintenanceStatusPagesResource,
 		NewStatusPageResource,
 		NewStatusPageIncidentResource,
 	}
 }
 
 func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewMaintenancesDataSource,
+	}
 }
 
 func New(version string) func() provider.Provider {
