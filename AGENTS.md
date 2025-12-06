@@ -15,11 +15,10 @@
 
 - **Provider**: Terraform provider for Uptime Kuma using Plugin Framework (not SDK)
 - **Main package**: `internal/provider/` contains all provider implementation
-- **Resources**: `resource_notification.go`, `resource_notification_ntfy.go` (notification resources)
-- **Base types**: `resource_notification_base.go` (shared notification logic)
+- **Resources**: Notifications, monitors (HTTP, DNS, TCP, Postgres, Redis, gRPC, Push, Ping, Real Browser), status pages, proxies, tags, docker hosts
+- **Base types**: `resource_notification_base.go`, `resource_monitor_base.go`, `resource_monitor_http_base.go` (shared logic)
 - **Client**: Uses `github.com/breml/go-uptime-kuma-client` (local replace in go.mod, check @.scratch/go-uptime-kuma-client for source code)
 - **Tests**: Acceptance tests use `terraform-plugin-testing`, create real resources via Docker
-- **.scratch/uptime-kuma/**: Code of Uptime Kuma itself, copied here for reference
 - **.scratch/**: Temporary code for testing ideas, not linted, not tested, not checked into git
 
 ## Code Style

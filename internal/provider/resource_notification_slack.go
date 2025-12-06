@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -38,6 +39,7 @@ type NotificationSlackResourceModel struct {
 	Username      types.String `tfsdk:"username"`
 	IconEmoji     types.String `tfsdk:"icon_emoji"`
 	Channel       types.String `tfsdk:"channel"`
+	RichMessage   types.Bool   `tfsdk:"rich_message"`
 	ChannelNotify types.Bool   `tfsdk:"channel_notify"`
 }
 
@@ -69,9 +71,17 @@ func (r *NotificationSlackResource) Schema(ctx context.Context, req resource.Sch
 				MarkdownDescription: "Channel name to send notifications to",
 				Optional:            true,
 			},
+			"rich_message": schema.BoolAttribute{
+				MarkdownDescription: "Enable rich message formatting",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
 			"channel_notify": schema.BoolAttribute{
 				MarkdownDescription: "Notify channel with @channel mention",
 				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 		}),
 	}
@@ -117,6 +127,7 @@ func (r *NotificationSlackResource) Create(ctx context.Context, req resource.Cre
 			Username:      data.Username.ValueString(),
 			IconEmoji:     data.IconEmoji.ValueString(),
 			Channel:       data.Channel.ValueString(),
+			RichMessage:   data.RichMessage.ValueBool(),
 			ChannelNotify: data.ChannelNotify.ValueBool(),
 		},
 	}
@@ -169,9 +180,17 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	data.IsDefault = types.BoolValue(slack.IsDefault)
 	data.ApplyExisting = types.BoolValue(slack.ApplyExisting)
 
-	data.Username = types.StringValue(slack.Username)
-	data.IconEmoji = types.StringValue(slack.IconEmoji)
-	data.Channel = types.StringValue(slack.Channel)
+	data.WebhookURL = types.StringValue(slack.WebhookURL)
+	if slack.Username != "" {
+		data.Username = types.StringValue(slack.Username)
+	}
+	if slack.IconEmoji != "" {
+		data.IconEmoji = types.StringValue(slack.IconEmoji)
+	}
+	if slack.Channel != "" {
+		data.Channel = types.StringValue(slack.Channel)
+	}
+	data.RichMessage = types.BoolValue(slack.RichMessage)
 	data.ChannelNotify = types.BoolValue(slack.ChannelNotify)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -199,6 +218,7 @@ func (r *NotificationSlackResource) Update(ctx context.Context, req resource.Upd
 			Username:      data.Username.ValueString(),
 			IconEmoji:     data.IconEmoji.ValueString(),
 			Channel:       data.Channel.ValueString(),
+			RichMessage:   data.RichMessage.ValueBool(),
 			ChannelNotify: data.ChannelNotify.ValueBool(),
 		},
 	}

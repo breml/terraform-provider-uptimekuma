@@ -49,6 +49,7 @@ resource "uptimekuma_notification_slack" "with_mentions" {
 - `icon_emoji` (String) Icon emoji to display in Slack
 - `is_active` (Boolean)
 - `is_default` (Boolean)
+- `rich_message` (Boolean) Enable rich message formatting
 - `username` (String) Username to display in Slack
 
 ### Read-Only
