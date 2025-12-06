@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -281,6 +282,10 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 
 	m, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
 		return
 	}

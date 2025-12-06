@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -106,6 +107,10 @@ func (r *MaintenanceStatusPagesResource) Read(ctx context.Context, req resource.
 
 	statusPageIDs, err := r.client.GetMaintenanceStatusPage(ctx, data.MaintenanceID.ValueInt64())
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to read maintenance status pages", err.Error())
 		return
 	}
