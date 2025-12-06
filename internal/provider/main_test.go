@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Could not start resource: %v", err)
 		}
 
-		err = resource.Expire(240)
+		err = resource.Expire(480)
 		if err != nil {
 			log.Fatalf("Could not set expire on container: %v", err)
 		}

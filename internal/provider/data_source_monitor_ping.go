@@ -1,0 +1,140 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/monitor"
+)
+
+var _ datasource.DataSource = &MonitorPingDataSource{}
+
+func NewMonitorPingDataSource() datasource.DataSource {
+	return &MonitorPingDataSource{}
+}
+
+type MonitorPingDataSource struct {
+	client *kuma.Client
+}
+
+type MonitorPingDataSourceModel struct {
+	ID       types.Int64  `tfsdk:"id"`
+	Name     types.String `tfsdk:"name"`
+	Hostname types.String `tfsdk:"hostname"`
+}
+
+func (d *MonitorPingDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
+}
+
+func (d *MonitorPingDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get PING monitor information by ID or name",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.Int64Attribute{
+				MarkdownDescription: "Monitor identifier",
+				Optional:            true,
+				Computed:            true,
+			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "Monitor name",
+				Optional:            true,
+				Computed:            true,
+			},
+			"hostname": schema.StringAttribute{
+				MarkdownDescription: "Hostname to ping",
+				Computed:            true,
+			},
+		},
+	}
+}
+
+func (d *MonitorPingDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*kuma.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected DataSource Configure Type",
+			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+		return
+	}
+
+	d.client = client
+}
+
+func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data MonitorPingDataSourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !data.ID.IsNull() && !data.ID.IsUnknown() {
+		var pingMonitor monitor.Ping
+		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pingMonitor)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to read PING monitor", err.Error())
+			return
+		}
+		data.Name = types.StringValue(pingMonitor.Name)
+		data.Hostname = types.StringValue(pingMonitor.Hostname)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
+		monitors, err := d.client.GetMonitors(ctx)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to read monitors", err.Error())
+			return
+		}
+
+		var found *monitor.Ping
+		for _, m := range monitors {
+			if m.Name == data.Name.ValueString() && m.Type() == "ping" {
+				if found != nil {
+					resp.Diagnostics.AddError(
+						"Multiple monitors found",
+						fmt.Sprintf("Multiple PING monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
+					)
+					return
+				}
+				var pingMon monitor.Ping
+				err := m.As(&pingMon)
+				if err != nil {
+					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+					return
+				}
+				found = &pingMon
+			}
+		}
+
+		if found == nil {
+			resp.Diagnostics.AddError(
+				"PING monitor not found",
+				fmt.Sprintf("No PING monitor with name '%s' found.", data.Name.ValueString()),
+			)
+			return
+		}
+
+		data.ID = types.Int64Value(found.ID)
+		data.Hostname = types.StringValue(found.Hostname)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
+	resp.Diagnostics.AddError(
+		"Missing query parameters",
+		"Either 'id' or 'name' must be specified.",
+	)
+}

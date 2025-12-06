@@ -122,6 +122,28 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewMaintenancesDataSource,
+		NewTagDataSource,
+		NewNotificationDataSource,
+		NewNotificationNtfyDataSource,
+		NewNotificationSlackDataSource,
+		NewNotificationTeamsDataSource,
+		NewNotificationWebhookDataSource,
+		NewMonitorHTTPDataSource,
+		NewMonitorHTTPKeywordDataSource,
+		NewMonitorGrpcKeywordDataSource,
+		NewMonitorHTTPJSONQueryDataSource,
+		NewMonitorGroupDataSource,
+		NewMonitorPingDataSource,
+		NewMonitorDNSDataSource,
+		NewMonitorPushDataSource,
+		NewMonitorRealBrowserDataSource,
+		NewMonitorPostgresDataSource,
+		NewMonitorRedisDataSource,
+		NewMonitorTCPPortDataSource,
+		NewProxyDataSource,
+		NewDockerHostDataSource,
+		NewMaintenanceDataSource,
+		NewStatusPageDataSource,
 	}
 }
 
