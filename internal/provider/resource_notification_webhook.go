@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -18,7 +20,8 @@ import (
 )
 
 var (
-	_ resource.Resource = &NotificationWebhookResource{}
+	_ resource.Resource                = &NotificationWebhookResource{}
+	_ resource.ResourceWithImportState = &NotificationWebhookResource{}
 )
 
 func NewNotificationWebhookResource() resource.Resource {
@@ -260,4 +263,17 @@ func (r *NotificationWebhookResource) Delete(ctx context.Context, req resource.D
 	}
 
 	tflog.Info(ctx, "Deleted webhook notification", map[string]any{"id": data.Id.ValueInt64()})
+}
+
+func (r *NotificationWebhookResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

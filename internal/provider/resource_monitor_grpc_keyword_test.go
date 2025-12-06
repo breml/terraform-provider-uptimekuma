@@ -73,7 +73,7 @@ message HealthCheckResponse {
 	})
 }
 
-func testAccMonitorGrpcKeywordResourceConfig(name, grpcURL, serviceName, method, protobuf, keyword string, invertKeyword bool, interval int64) string {
+func testAccMonitorGrpcKeywordResourceConfig(name, grpcURL, serviceName, method, protobuf, keyword string, invertKeyword bool, interval int64) string { //nolint:unparam
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_grpc_keyword" "test" {
   name              = %[1]q
@@ -247,4 +247,48 @@ resource "uptimekuma_monitor_grpc_keyword" "test" {
   grpc_body         = %[7]q
 }
 `, name, grpcURL, serviceName, method, protobuf, keyword, grpcBody)
+}
+
+func TestAccMonitorGrpcKeywordResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestGrpcKeywordMonitorImport")
+	grpcURL := "localhost:50051"
+	serviceName := "Health"
+	method := "Check"
+	keyword := "SERVING"
+	protobuf := `syntax = "proto3";
+
+package grpc.health.v1;
+
+service Health {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+  }
+  ServingStatus status = 1;
+}
+`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorGrpcKeywordResourceConfig(name, grpcURL, serviceName, method, protobuf, keyword, false, 60),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_grpc_keyword.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }

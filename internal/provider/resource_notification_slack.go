@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -17,7 +19,8 @@ import (
 )
 
 var (
-	_ resource.Resource = &NotificationSlackResource{}
+	_ resource.Resource                = &NotificationSlackResource{}
+	_ resource.ResourceWithImportState = &NotificationSlackResource{}
 )
 
 func NewNotificationSlackResource() resource.Resource {
@@ -223,4 +226,17 @@ func (r *NotificationSlackResource) Delete(ctx context.Context, req resource.Del
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
+}
+
+func (r *NotificationSlackResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

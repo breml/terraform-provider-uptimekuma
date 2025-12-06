@@ -93,3 +93,24 @@ resource "uptimekuma_monitor_tcp_port" "test" {
 }
 `, name, hostname, port, description)
 }
+
+func TestAccMonitorTCPPortResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestTCPPortMonitorImport")
+	hostname := "8.8.8.8"
+	port := int64(443)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorTCPPortResourceConfig(name, hostname, port, 60),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_tcp_port.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

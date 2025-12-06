@@ -88,3 +88,23 @@ resource "uptimekuma_monitor_ping" "test" {
 }
 `, name, hostname, description)
 }
+
+func TestAccMonitorPingResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestPingMonitorImport")
+	hostname := "8.8.8.8"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorPingResourceConfig(name, hostname, 60, 56),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_ping.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

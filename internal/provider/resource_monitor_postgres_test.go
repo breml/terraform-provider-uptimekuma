@@ -135,3 +135,23 @@ resource "uptimekuma_monitor_postgres" "test" {
 }
 `, groupName, monitorName, connectionString)
 }
+
+func TestAccMonitorPostgresResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestPostgresMonitorImport")
+	connectionString := "postgres://user:password@localhost:5432/testdb"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorPostgresResourceConfig(name, connectionString, "SELECT 1"),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_postgres.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

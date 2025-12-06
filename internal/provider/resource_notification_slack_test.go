@@ -62,3 +62,24 @@ resource "uptimekuma_notification_slack" "test" {
 }
 `, name, webhookURL, username, iconEmoji, channel, channelNotify)
 }
+
+func TestAccNotificationSlackResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationSlackImport")
+	webhookURL := "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNotificationSlackResourceConfig(name, webhookURL, "test-bot", ":robot_face:", "#general", true),
+			},
+			{
+				ResourceName:            "uptimekuma_notification_slack.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"webhook_url"},
+			},
+		},
+	})
+}

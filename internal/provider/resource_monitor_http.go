@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -12,7 +14,10 @@ import (
 	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
-var _ resource.Resource = &MonitorHTTPResource{}
+var (
+	_ resource.Resource                = &MonitorHTTPResource{}
+	_ resource.ResourceWithImportState = &MonitorHTTPResource{}
+)
 
 func NewMonitorHTTPResource() resource.Resource {
 	return &MonitorHTTPResource{}
@@ -354,4 +359,17 @@ func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteReq
 		resp.Diagnostics.AddError("failed to delete HTTP monitor", err.Error())
 		return
 	}
+}
+
+func (r *MonitorHTTPResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

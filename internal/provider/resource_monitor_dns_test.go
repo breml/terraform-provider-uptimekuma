@@ -179,3 +179,22 @@ resource "uptimekuma_monitor_dns" "test" {
 }
 `, name, hostname, recordType)
 }
+
+func TestAccMonitorDNSResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestDNSMonitorImport")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorDNSResourceConfig(name, "Test DNS import", "example.com", "A", "1.1.1.1", 53),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_dns.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

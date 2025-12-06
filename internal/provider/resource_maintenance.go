@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -14,8 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -24,7 +27,10 @@ import (
 	"github.com/breml/go-uptime-kuma-client/maintenance"
 )
 
-var _ resource.Resource = &MaintenanceResource{}
+var (
+	_ resource.Resource                = &MaintenanceResource{}
+	_ resource.ResourceWithImportState = &MaintenanceResource{}
+)
 
 func NewMaintenanceResource() resource.Resource {
 	return &MaintenanceResource{}
@@ -132,6 +138,9 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Cron expression for cron strategy",
 				Optional:            true,
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"duration_minutes": schema.Int64Attribute{
 				MarkdownDescription: "Duration in minutes for cron strategy",
@@ -198,6 +207,9 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 			"timeslot_list": schema.ListNestedAttribute{
 				MarkdownDescription: "Scheduled maintenance windows",
 				Computed:            true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"start_date": schema.StringAttribute{
@@ -544,6 +556,11 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 		}
 	}
 
+	timeslotAttrTypes := map[string]attr.Type{
+		"start_date": types.StringType,
+		"end_date":   types.StringType,
+	}
+
 	if len(m.TimeslotList) > 0 {
 		timeslots := make([]TimeslotModel, len(m.TimeslotList))
 		for i, ts := range m.TimeslotList {
@@ -551,11 +568,6 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 				StartDate: types.StringValue(ts.StartDate.Format(time.RFC3339)),
 				EndDate:   types.StringValue(ts.EndDate.Format(time.RFC3339)),
 			}
-		}
-
-		timeslotAttrTypes := map[string]attr.Type{
-			"start_date": types.StringType,
-			"end_date":   types.StringType,
 		}
 
 		timeslotList := make([]attr.Value, len(timeslots))
@@ -572,10 +584,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 		diags.Append(d...)
 		data.TimeslotList = listValue
 	} else {
-		timeslotAttrTypes := map[string]attr.Type{
-			"start_date": types.StringType,
-			"end_date":   types.StringType,
-		}
+		// Always set timeslot_list even if empty
 		listValue, d := types.ListValue(types.ObjectType{AttrTypes: timeslotAttrTypes}, []attr.Value{})
 		diags.Append(d...)
 		data.TimeslotList = listValue
@@ -693,4 +702,17 @@ func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.V
 			)
 		}
 	}
+}
+
+func (r *MaintenanceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
