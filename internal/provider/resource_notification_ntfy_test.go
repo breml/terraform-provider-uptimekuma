@@ -61,3 +61,22 @@ resource "uptimekuma_notification_ntfy" "test" {
 }
 `, name)
 }
+
+func TestAccNotificationNtfyResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationNtfyImport")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNotificationNtfyResourceConfig(name),
+			},
+			{
+				ResourceName:      "uptimekuma_notification_ntfy.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

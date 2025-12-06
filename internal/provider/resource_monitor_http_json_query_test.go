@@ -178,3 +178,23 @@ resource "uptimekuma_monitor_http_json_query" "test" {
 }
 `, name, url, jsonPath, expectedValue)
 }
+
+func TestAccMonitorHTTPJSONQueryResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorImport")
+	url := "https://httpbin.org/json"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPJSONQueryResourceConfig(name, url, "$.slideshow.author", "Yours Truly", "==", 60, 48),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_http_json_query.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

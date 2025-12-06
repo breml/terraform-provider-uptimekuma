@@ -108,3 +108,22 @@ resource "uptimekuma_notification" "test" {
 }
 `, name)
 }
+
+func TestAccNotificationResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationImport")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNotificationResourceConfig(name),
+			},
+			{
+				ResourceName:      "uptimekuma_notification.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

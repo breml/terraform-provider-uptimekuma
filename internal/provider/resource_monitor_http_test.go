@@ -128,3 +128,23 @@ resource "uptimekuma_monitor_http" "test" {
 }
 `, name, url)
 }
+
+func TestAccMonitorHTTPResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorImport")
+	url := "https://httpbin.org/status/200"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfig(name, url, "GET", 60, 48),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

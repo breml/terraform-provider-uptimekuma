@@ -40,7 +40,6 @@ func TestMain(m *testing.M) {
 
 		// pulls an image, creates a container based on it and runs it
 		resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-			Name:       "uptime-kuma",
 			Repository: "louislam/uptime-kuma",
 			Tag:        "2",
 		}, func(config *docker.HostConfig) {
