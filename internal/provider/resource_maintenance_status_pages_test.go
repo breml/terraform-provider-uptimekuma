@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -83,6 +84,31 @@ resource "uptimekuma_maintenance_status_pages" "test" {
   ]
 }
 `, maintenanceTitle, statusPageSlug1, statusPageSlug2)
+}
+
+func TestAccMaintenanceStatusPagesResource_Import(t *testing.T) {
+	maintenanceTitle := acctest.RandomWithPrefix("TestMaintenance")
+	statusPageSlug := acctest.RandomWithPrefix("test-status")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMaintenanceStatusPagesResourceConfigSingle(maintenanceTitle, statusPageSlug),
+			},
+			{
+				ResourceName:                         "uptimekuma_maintenance_status_pages.test",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "maintenance_id",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs := s.RootModule().Resources["uptimekuma_maintenance_status_pages.test"]
+					return rs.Primary.Attributes["maintenance_id"], nil
+				},
+			},
+		},
+	})
 }
 
 func TestAccMaintenanceStatusPagesResource_Update(t *testing.T) {
