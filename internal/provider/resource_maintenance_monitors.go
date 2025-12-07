@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -14,7 +16,10 @@ import (
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
-var _ resource.Resource = &MaintenanceMonitorsResource{}
+var (
+	_ resource.Resource                = &MaintenanceMonitorsResource{}
+	_ resource.ResourceWithImportState = &MaintenanceMonitorsResource{}
+)
 
 func NewMaintenanceMonitorsResource() resource.Resource {
 	return &MaintenanceMonitorsResource{}
@@ -160,4 +165,17 @@ func (r *MaintenanceMonitorsResource) Delete(ctx context.Context, req resource.D
 		resp.Diagnostics.AddError("failed to delete monitor maintenance", err.Error())
 		return
 	}
+}
+
+func (r *MaintenanceMonitorsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid maintenance ID (integer), got: %s", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("maintenance_id"), id)...)
 }

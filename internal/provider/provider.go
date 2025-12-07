@@ -143,6 +143,7 @@ func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasourc
 		NewProxyDataSource,
 		NewDockerHostDataSource,
 		NewMaintenanceDataSource,
+		NewMaintenanceMonitorsDataSource,
 		NewStatusPageDataSource,
 	}
 }
