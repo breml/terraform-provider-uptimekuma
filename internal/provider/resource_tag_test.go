@@ -75,23 +75,3 @@ func TestAccTagResourceDelete(t *testing.T) {
 func testAccTagResourceConfigEmpty() string {
 	return providerConfig()
 }
-
-func TestAccTagResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestTagImport")
-	color := "#e74c3c"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccTagResourceConfig(name, color),
-			},
-			{
-				ResourceName:      "uptimekuma_tag.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}

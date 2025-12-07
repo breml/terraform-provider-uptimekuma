@@ -24,6 +24,12 @@ func TestAccMonitorGRPCKeywordDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_grpc_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorGRPCKeywordDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_grpc_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -43,23 +49,6 @@ data "uptimekuma_monitor_grpc_keyword" "test" {
   name = uptimekuma_monitor_grpc_keyword.test.name
 }
 `, name)
-}
-
-func TestAccMonitorGRPCKeywordDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestGRPCKeywordMonitor")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorGRPCKeywordDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_grpc_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorGRPCKeywordDataSourceConfigByID(name string) string {

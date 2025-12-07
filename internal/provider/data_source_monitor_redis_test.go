@@ -24,6 +24,12 @@ func TestAccMonitorRedisDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorRedisDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -39,23 +45,6 @@ data "uptimekuma_monitor_redis" "test" {
   name = uptimekuma_monitor_redis.test.name
 }
 `, name)
-}
-
-func TestAccMonitorRedisDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestRedisMonitor")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorRedisDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorRedisDataSourceConfigByID(name string) string {

@@ -25,6 +25,12 @@ func TestAccMonitorRealBrowserDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_real_browser.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorRealBrowserDataSourceConfigByID(name, url),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_real_browser.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -40,24 +46,6 @@ data "uptimekuma_monitor_real_browser" "test" {
   name = uptimekuma_monitor_real_browser.test.name
 }
 `, name, url)
-}
-
-func TestAccMonitorRealBrowserDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestRealBrowserMonitor")
-	url := "https://httpbin.org/status/200"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorRealBrowserDataSourceConfigByID(name, url),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_real_browser.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorRealBrowserDataSourceConfigByID(name, url string) string {

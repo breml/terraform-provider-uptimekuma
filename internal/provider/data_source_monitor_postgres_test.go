@@ -24,6 +24,12 @@ func TestAccMonitorPostgresDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorPostgresDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -39,23 +45,6 @@ data "uptimekuma_monitor_postgres" "test" {
   name = uptimekuma_monitor_postgres.test.name
 }
 `, name)
-}
-
-func TestAccMonitorPostgresDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestPostgresMonitor")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorPostgresDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorPostgresDataSourceConfigByID(name string) string {

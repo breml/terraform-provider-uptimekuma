@@ -48,6 +48,11 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
 				},
 			},
+			{
+				ResourceName:      "uptimekuma_monitor_http_keyword.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -160,25 +165,4 @@ resource "uptimekuma_monitor_http_keyword" "test" {
   accepted_status_codes = ["200-299", "301"]
 }
 `, name, url, keyword)
-}
-
-func TestAccMonitorHTTPKeywordResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestHTTPKeywordMonitorImport")
-	url := "https://httpbin.org/html"
-	keyword := "Herman"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorHTTPKeywordResourceConfig(name, url, keyword, false, 60, 48),
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_http_keyword.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
 }

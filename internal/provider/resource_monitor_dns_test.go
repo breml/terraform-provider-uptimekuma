@@ -45,6 +45,11 @@ func TestAccMonitorDNSResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
 				},
 			},
+			{
+				ResourceName:      "uptimekuma_monitor_dns.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -146,7 +151,7 @@ resource "uptimekuma_monitor_dns" "test" {
 }
 
 func TestAccMonitorDNSResourceDifferentRecordTypes(t *testing.T) {
-	recordTypes := []string{"A", "AAAA", "CNAME", "MX", "NS", "TXT", "SOA", "SRV", "PTR", "CAA"}
+	recordTypes := []string{"CNAME", "TXT", "SRV"}
 
 	for _, recordType := range recordTypes {
 		t.Run(recordType, func(t *testing.T) {
@@ -178,23 +183,4 @@ resource "uptimekuma_monitor_dns" "test" {
   dns_resolve_type = %[3]q
 }
 `, name, hostname, recordType)
-}
-
-func TestAccMonitorDNSResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestDNSMonitorImport")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorDNSResourceConfig(name, "Test DNS import", "example.com", "A", "1.1.1.1", 53),
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_dns.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
 }

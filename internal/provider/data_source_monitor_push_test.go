@@ -24,6 +24,12 @@ func TestAccMonitorPushDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorPushDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -38,23 +44,6 @@ data "uptimekuma_monitor_push" "test" {
   name = uptimekuma_monitor_push.test.name
 }
 `, name)
-}
-
-func TestAccMonitorPushDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestPushMonitor")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorPushDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorPushDataSourceConfigByID(name string) string {

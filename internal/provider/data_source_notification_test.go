@@ -24,6 +24,12 @@ func TestAccNotificationDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_notification.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccNotificationDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_notification.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -43,23 +49,6 @@ data "uptimekuma_notification" "test" {
   name = uptimekuma_notification.test.name
 }
 `, name)
-}
-
-func TestAccNotificationDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestNotification")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_notification.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccNotificationDataSourceConfigByID(name string) string {

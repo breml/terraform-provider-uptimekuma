@@ -91,23 +91,3 @@ resource "uptimekuma_monitor_real_browser" "test" {
 }
 `, name, url)
 }
-
-func TestAccMonitorRealBrowserResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestRealBrowserMonitorImport")
-	url := "https://example.com"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorRealBrowserResourceConfig(name, url, 60, 48),
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_real_browser.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}

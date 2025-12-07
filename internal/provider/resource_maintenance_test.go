@@ -348,22 +348,3 @@ resource "uptimekuma_maintenance" "test" {
 }
 `, title)
 }
-
-func TestAccMaintenanceResourceImport(t *testing.T) {
-	title := acctest.RandomWithPrefix("TestMaintenanceImport")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMaintenanceResourceConfigSingle(title, "Test import", true),
-			},
-			{
-				ResourceName:      "uptimekuma_maintenance.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
