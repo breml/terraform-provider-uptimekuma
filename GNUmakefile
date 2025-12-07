@@ -22,7 +22,12 @@ testacc:
 	TF_ACC=1 go test -v -coverprofile coverage.out -timeout 480s ./...
 
 testacc-coverage:
-	TF_ACC=1 go test -v -coverprofile=coverage.out -timeout 480s ./...
-	go tool cover -func=coverage.out
+	@if [ ! -f "coverage.out" ]; then \
+		TF_ACC=1 go test -v -coverprofile coverage.out -timeout 480s ./...; \
+	fi
+	go tool cover -func=coverage.out | sort -k3 -rn
+
+clean:
+	rm -f coverage.out
 
 .PHONY: fmt lint test testacc build install generate
