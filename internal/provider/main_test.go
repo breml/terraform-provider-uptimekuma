@@ -119,5 +119,5 @@ func providerConfig() string {
 provider "uptimekuma" {
   endpoint = %[1]q
 }
-`, endpoint, username, password)
+`, endpoint)
 }
