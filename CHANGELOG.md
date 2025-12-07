@@ -8,4 +8,5 @@ FEATURES:
 - Support for notifications (Webhook, Slack, Teams, ntfy, Generic)
 - Support for proxy configuration (HTTP, HTTPS, SOCKS5 with optional authentication)
 - Support for tags
+- Support for status pages and incidents
 - Terraform registry documentation and examples
