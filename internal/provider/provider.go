@@ -65,20 +65,32 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 		return
 	}
 
-	if data.Endpoint.IsNull() {
-		resp.Diagnostics.AddError("endpoint nil", "endpoint is required")
-	}
+	// Validate configuration
+	// Endpoint is always required to connect to Uptime Kuma
+	// Username and password are optional (client will skip login if both are empty)
+	// However, if either username or password is provided, both must be present
+	hasUsername := !data.Username.IsNull()
+	hasPassword := !data.Password.IsNull()
 
 	if data.Endpoint.IsNull() {
-		resp.Diagnostics.AddError("username nil", "username is required")
+		resp.Diagnostics.AddError("endpoint required", "endpoint is required")
 	}
 
-	if data.Endpoint.IsNull() {
-		resp.Diagnostics.AddError("password nil", "password is required")
+	// If credentials are partially provided, require both
+	if hasUsername && !hasPassword {
+		resp.Diagnostics.AddError("password required", "password is required when username is provided")
+	}
+	if hasPassword && !hasUsername {
+		resp.Diagnostics.AddError("username required", "username is required when password is provided")
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Uptime Kuma client configuration for data sources and resources
 	// We can not use the context from Terraform, since it gets cancelled too early.
+	// ValueString() returns "" for null values, which client library handles gracefully
 	client, err := kuma.New(context.Background(), data.Endpoint.ValueString(), data.Username.ValueString(), data.Password.ValueString(), kuma.WithLogLevel(kuma.LogLevelDebug))
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create client", err.Error())
