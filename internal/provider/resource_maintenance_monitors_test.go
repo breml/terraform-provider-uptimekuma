@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -258,4 +259,29 @@ resource "uptimekuma_maintenance_monitors" "test" {
   monitor_ids    = [uptimekuma_monitor_http.test.id]
 }
 `, maintenanceTitle, monitorName)
+}
+
+func TestAccMaintenanceMonitorsResource_ImportBasic(t *testing.T) {
+	maintenanceTitle := acctest.RandomWithPrefix("TestMaintenance")
+	monitorName := acctest.RandomWithPrefix("TestMonitor")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMaintenanceMonitorsResourceConfigSingle(maintenanceTitle, monitorName),
+			},
+			{
+				ResourceName:                         "uptimekuma_maintenance_monitors.test",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "maintenance_id",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs := s.RootModule().Resources["uptimekuma_maintenance_monitors.test"]
+					return rs.Primary.Attributes["maintenance_id"], nil
+				},
+			},
+		},
+	})
 }
