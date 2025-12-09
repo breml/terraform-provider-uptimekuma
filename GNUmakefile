@@ -30,4 +30,4 @@ testacc-coverage:
 clean:
 	rm -f coverage.out
 
-.PHONY: fmt lint test testacc build install generate
+.PHONY: fmt lint test testacc testacc-coverage build install generate clean
