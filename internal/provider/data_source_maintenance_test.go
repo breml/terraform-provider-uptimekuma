@@ -26,6 +26,13 @@ func TestAccMaintenanceDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
 				},
 			},
+			{
+				Config: testAccMaintenanceDataSourceConfigByID(title),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("name"), knownvalue.StringExact(title)),
+					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
+				},
+			},
 		},
 	})
 }
@@ -46,24 +53,6 @@ data "uptimekuma_maintenance" "test" {
   name = uptimekuma_maintenance.test.title
 }
 `, title)
-}
-
-func TestAccMaintenanceDataSourceByID(t *testing.T) {
-	title := acctest.RandomWithPrefix("TestMaintenance")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMaintenanceDataSourceConfigByID(title),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("name"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMaintenanceDataSourceConfigByID(title string) string {

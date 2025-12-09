@@ -47,6 +47,11 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
 				},
 			},
+			{
+				ResourceName:      "uptimekuma_monitor_http_json_query.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -177,24 +182,4 @@ resource "uptimekuma_monitor_http_json_query" "test" {
   accepted_status_codes = ["200-299", "301"]
 }
 `, name, url, jsonPath, expectedValue)
-}
-
-func TestAccMonitorHTTPJSONQueryResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorImport")
-	url := "https://httpbin.org/json"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorHTTPJSONQueryResourceConfig(name, url, "$.slideshow.author", "Yours Truly", "==", 60, 48),
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_http_json_query.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
 }

@@ -24,6 +24,12 @@ func TestAccDockerHostDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_docker_host.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccDockerHostDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_docker_host.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -40,23 +46,6 @@ data "uptimekuma_docker_host" "test" {
   name = uptimekuma_docker_host.test.name
 }
 `, name)
-}
-
-func TestAccDockerHostDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestDockerHost")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDockerHostDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_docker_host.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccDockerHostDataSourceConfigByID(name string) string {

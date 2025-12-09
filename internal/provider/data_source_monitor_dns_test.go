@@ -24,6 +24,12 @@ func TestAccMonitorDNSDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorDNSDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -39,23 +45,6 @@ data "uptimekuma_monitor_dns" "test" {
   name = uptimekuma_monitor_dns.test.name
 }
 `, name)
-}
-
-func TestAccMonitorDNSDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestDNSMonitor")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorDNSDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorDNSDataSourceConfigByID(name string) string {

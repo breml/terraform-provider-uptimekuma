@@ -25,6 +25,12 @@ func TestAccMonitorHTTPKeywordDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorHTTPKeywordDataSourceConfigByID(name, url),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -41,24 +47,6 @@ data "uptimekuma_monitor_http_keyword" "test" {
   name = uptimekuma_monitor_http_keyword.test.name
 }
 `, name, url)
-}
-
-func TestAccMonitorHTTPKeywordDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestHTTPKeywordMonitor")
-	url := "https://httpbin.org/html"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorHTTPKeywordDataSourceConfigByID(name, url),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorHTTPKeywordDataSourceConfigByID(name, url string) string {

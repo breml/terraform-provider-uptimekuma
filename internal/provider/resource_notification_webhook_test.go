@@ -136,23 +136,3 @@ resource "uptimekuma_notification_webhook" "test" {
 }
 `, name, webhookURL)
 }
-
-func TestAccNotificationWebhookResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("NotificationWebhookImport")
-	webhookURL := "https://example.com/webhook"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationWebhookResourceConfigWithCustomBody(name, webhookURL),
-			},
-			{
-				ResourceName:      "uptimekuma_notification_webhook.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}

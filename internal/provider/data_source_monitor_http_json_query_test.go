@@ -25,6 +25,12 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -42,24 +48,6 @@ data "uptimekuma_monitor_http_json_query" "test" {
   name = uptimekuma_monitor_http_json_query.test.name
 }
 `, name, url)
-}
-
-func TestAccMonitorHTTPJSONQueryDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitor")
-	url := "https://httpbin.org/json"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url string) string {

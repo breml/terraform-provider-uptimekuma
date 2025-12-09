@@ -24,6 +24,12 @@ func TestAccNotificationSlackDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_notification_slack.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccNotificationSlackDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_notification_slack.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -40,23 +46,6 @@ data "uptimekuma_notification_slack" "test" {
   name = uptimekuma_notification_slack.test.name
 }
 `, name)
-}
-
-func TestAccNotificationSlackDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestNotificationSlack")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationSlackDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_notification_slack.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccNotificationSlackDataSourceConfigByID(name string) string {

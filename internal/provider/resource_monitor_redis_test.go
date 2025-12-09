@@ -137,23 +137,3 @@ resource "uptimekuma_monitor_redis" "test" {
 }
 `, groupName, monitorName, connectionString)
 }
-
-func TestAccMonitorRedisResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestRedisMonitorImport")
-	connectionString := "redis://user:password@localhost:6379"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorRedisResourceConfig(name, connectionString, false),
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_redis.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}

@@ -24,6 +24,12 @@ func TestAccNotificationWebhookDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue("data.uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 				},
 			},
+			{
+				Config: testAccNotificationWebhookDataSourceConfigByID(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+				},
+			},
 		},
 	})
 }
@@ -40,23 +46,6 @@ data "uptimekuma_notification_webhook" "test" {
   name = uptimekuma_notification_webhook.test.name
 }
 `, name)
-}
-
-func TestAccNotificationWebhookDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestNotificationWebhook")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationWebhookDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-				},
-			},
-		},
-	})
 }
 
 func testAccNotificationWebhookDataSourceConfigByID(name string) string {

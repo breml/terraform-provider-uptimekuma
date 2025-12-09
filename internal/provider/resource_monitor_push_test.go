@@ -126,22 +126,3 @@ resource "uptimekuma_monitor_push" "test" {
 }
 `, groupName, monitorName)
 }
-
-func TestAccMonitorPushResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestPushMonitorImport")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitorPushResourceConfig(name, 60),
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_push.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}

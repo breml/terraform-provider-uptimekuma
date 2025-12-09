@@ -50,23 +50,3 @@ resource "uptimekuma_notification_teams" "test" {
 }
 `, name, webhookURL)
 }
-
-func TestAccNotificationTeamsResourceImport(t *testing.T) {
-	name := acctest.RandomWithPrefix("NotificationTeamsImport")
-	webhookURL := "https://outlook.office.com/webhook/00000000-0000-0000-0000-000000000000@00000000-0000-0000-0000-000000000000/IncomingWebhook/00000000000000000000000000000000/00000000-0000-0000-0000-000000000000"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationTeamsResourceConfig(name, webhookURL),
-			},
-			{
-				ResourceName:      "uptimekuma_notification_teams.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
