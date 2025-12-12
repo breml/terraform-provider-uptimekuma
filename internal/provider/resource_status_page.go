@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -277,7 +276,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		}
 	}
 
-	_, err = r.client.SaveStatusPage(ctx, sp)
+	savedGroups, err := r.client.SaveStatusPage(ctx, sp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to save status page", err.Error())
 		return
@@ -291,43 +290,20 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 	data.ID = types.Int64Value(retrievedSP.ID)
 
-	// Note: We need to explicitly set group IDs to null (not unknown) for any groups
-	// that don't have IDs in the config. Terraform requires all Computed values to be
-	// "known" after Create, even if they're null.
-	if !data.PublicGroupList.IsNull() {
-		var configGroups []PublicGroupModel
-		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, false)...)
+	planPublic := data.PublicGroupList
+
+	// Build public_group_list from the savedGroups response when available
+	data.PublicGroupList = buildPublicGroupListFromSaved(ctx, savedGroups, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// If server didn't return groups, preserve config but convert unknown IDs to null so values are known after create
+	if len(savedGroups) == 0 && !planPublic.IsNull() {
+		data.PublicGroupList = convertUnknownIDsToNull(ctx, planPublic, &resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		// Set any unknown IDs to null
-		groups := make([]PublicGroupModel, len(configGroups))
-		for i, group := range configGroups {
-			groups[i] = group
-			if group.ID.IsUnknown() {
-				groups[i].ID = types.Int64Null()
-			}
-		}
-
-		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":     types.Int64Type,
-				"name":   types.StringType,
-				"weight": types.Int64Type,
-				"monitor_list": types.ListType{ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":       types.Int64Type,
-						"send_url": types.BoolType,
-					},
-				}},
-			},
-		}, groups)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		data.PublicGroupList = groupList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -465,10 +441,24 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 		}
 	}
 
-	_, err := r.client.SaveStatusPage(ctx, sp)
+	savedGroups, err := r.client.SaveStatusPage(ctx, sp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update status page", err.Error())
 		return
+	}
+
+	// If the server returned group IDs, construct a known public_group_list from the response
+	if len(savedGroups) > 0 {
+		data.PublicGroupList = buildPublicGroupListFromSaved(ctx, savedGroups, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else if !data.PublicGroupList.IsNull() {
+		// If server didn't return groups, preserve config but ensure unknown IDs are set to null
+		data.PublicGroupList = convertUnknownIDsToNull(ctx, data.PublicGroupList, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
