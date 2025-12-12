@@ -342,6 +342,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		}
 		data.PublicGroupList = groupList
 	} else {
+		if data.PublicGroupList.IsNull() {
+			// preserve null; server didn't return groups and config didn't provide any
+		} else {
 		// If server didn't return groups, attempt to preserve config but ensure unknown IDs are set to null
 		var configGroups []PublicGroupModel
 		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, true)...)
@@ -611,6 +614,9 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 		}
 		data.PublicGroupList = groupList
 	} else {
+		if data.PublicGroupList.IsNull() {
+			// preserve null; server didn't return groups and config didn't provide any
+		} else {
 		// If server didn't return groups, attempt to preserve config but ensure unknown IDs are set to null
 		var configGroups []PublicGroupModel
 		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, true)...)
