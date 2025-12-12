@@ -277,7 +277,8 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		}
 	}
 
-	_, err = r.client.SaveStatusPage(ctx, sp)
+	// Save status page and obtain any generated IDs for groups/monitors
+	savedGroups, err := r.client.SaveStatusPage(ctx, sp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to save status page", err.Error())
 		return
@@ -291,10 +292,68 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 	data.ID = types.Int64Value(retrievedSP.ID)
 
-	// Note: We need to explicitly set group IDs to null (not unknown) for any groups
-	// that don't have IDs in the config. Terraform requires all Computed values to be
-	// "known" after Create, even if they're null.
-	if !data.PublicGroupList.IsNull() {
+	// Build public_group_list from the response of SaveStatusPage so all computed IDs are known
+	if len(savedGroups) > 0 {
+		groups := make([]PublicGroupModel, len(savedGroups))
+		for i, g := range savedGroups {
+			groups[i] = PublicGroupModel{}
+			groups[i].ID = types.Int64Value(g.ID)
+			groups[i].Name = types.StringValue(g.Name)
+			groups[i].Weight = types.Int64Value(int64(g.Weight))
+
+			// map monitors
+			if len(g.MonitorList) > 0 {
+				monitors := make([]PublicMonitorModel, len(g.MonitorList))
+				for j, m := range g.MonitorList {
+					monitors[j] = PublicMonitorModel{
+						ID: types.Int64Value(m.ID),
+					}
+					if m.SendURL != nil {
+						monitors[j].SendURL = types.BoolValue(*m.SendURL)
+					} else {
+						monitors[j].SendURL = types.BoolNull()
+					}
+				}
+				// convert monitor slice to list value later via ListValueFrom
+				// temporarily store as List by creating a types.ListValueFrom below
+				// but we assemble full groups object first and then convert
+				// by embedding the monitors as a Go slice on the model struct
+				// using the MonitorList field which is a types.List when set later.
+				// To keep it simple, reuse the PublicGroupModel.MonitorList by
+				// creating a types.ListValueFrom when building the final list.
+				// Store monitors via reflection in the next step.
+				// For now, assign a nil List and rebuild below.
+				groups[i].MonitorList = types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
+				// Convert monitors slice into a types.ListValue
+				monList, diags := types.ListValueFrom(context.Background(), types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, monitors)
+				if diags.HasError() {
+					resp.Diagnostics.Append(diags...)
+					return
+				}
+				groups[i].MonitorList = monList
+			}
+		}
+
+		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"id":     types.Int64Type,
+				"name":   types.StringType,
+				"weight": types.Int64Type,
+				"monitor_list": types.ListType{ElemType: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"id":       types.Int64Type,
+						"send_url": types.BoolType,
+					},
+				}},
+			},
+		}, groups)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		data.PublicGroupList = groupList
+	} else if !data.PublicGroupList.IsNull() {
+		// If server didn't return groups, preserve config but ensure unknown IDs are set to null
 		var configGroups []PublicGroupModel
 		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, false)...)
 		if resp.Diagnostics.HasError() {
@@ -465,10 +524,58 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 		}
 	}
 
-	_, err := r.client.SaveStatusPage(ctx, sp)
+	savedGroups, err := r.client.SaveStatusPage(ctx, sp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update status page", err.Error())
 		return
+	}
+
+	// If the server returned group IDs, construct a known public_group_list from the response
+	if len(savedGroups) > 0 {
+		groups := make([]PublicGroupModel, len(savedGroups))
+		for i, g := range savedGroups {
+			groups[i] = PublicGroupModel{}
+			groups[i].ID = types.Int64Value(g.ID)
+			groups[i].Name = types.StringValue(g.Name)
+			groups[i].Weight = types.Int64Value(int64(g.Weight))
+
+			if len(g.MonitorList) > 0 {
+				monitors := make([]PublicMonitorModel, len(g.MonitorList))
+				for j, m := range g.MonitorList {
+					monitors[j] = PublicMonitorModel{ID: types.Int64Value(m.ID)}
+					if m.SendURL != nil {
+						monitors[j].SendURL = types.BoolValue(*m.SendURL)
+					} else {
+						monitors[j].SendURL = types.BoolNull()
+					}
+				}
+				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, monitors)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				groups[i].MonitorList = monList
+			}
+		}
+
+		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"id":     types.Int64Type,
+				"name":   types.StringType,
+				"weight": types.Int64Type,
+				"monitor_list": types.ListType{ElemType: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"id":       types.Int64Type,
+						"send_url": types.BoolType,
+					},
+				}},
+			},
+		}, groups)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		data.PublicGroupList = groupList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
