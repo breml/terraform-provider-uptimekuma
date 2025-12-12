@@ -403,29 +403,6 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		data.PublicGroupList = groupList
 	}
 
-	// Ensure public_group_list is present in state (empty list if server/config didn't provide any)
-	if data.PublicGroupList.IsNull() {
-		emptyGroups := []PublicGroupModel{}
-		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":     types.Int64Type,
-				"name":   types.StringType,
-				"weight": types.Int64Type,
-				"monitor_list": types.ListType{ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":       types.Int64Type,
-						"send_url": types.BoolType,
-					},
-				}},
-			},
-		}, emptyGroups)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		data.PublicGroupList = groupList
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -668,29 +645,6 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 				}},
 			},
 		}, groups)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		data.PublicGroupList = groupList
-	}
-
-	// Ensure public_group_list is present in state (empty list if server/config didn't provide any)
-	if data.PublicGroupList.IsNull() {
-		emptyGroups := []PublicGroupModel{}
-		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":     types.Int64Type,
-				"name":   types.StringType,
-				"weight": types.Int64Type,
-				"monitor_list": types.ListType{ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":       types.Int64Type,
-						"send_url": types.BoolType,
-					},
-				}},
-			},
-		}, emptyGroups)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
