@@ -129,6 +129,11 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -182,6 +187,11 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, redisMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -189,6 +199,13 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 	var data MonitorRedisResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorRedisResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -233,6 +250,11 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 	err := r.client.UpdateMonitor(ctx, redisMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Redis monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
