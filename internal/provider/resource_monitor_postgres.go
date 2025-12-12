@@ -129,6 +129,11 @@ func (r *MonitorPostgresResource) Create(ctx context.Context, req resource.Creat
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -182,6 +187,11 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, postgresMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -189,6 +199,13 @@ func (r *MonitorPostgresResource) Update(ctx context.Context, req resource.Updat
 	var data MonitorPostgresResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorPostgresResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -233,6 +250,11 @@ func (r *MonitorPostgresResource) Update(ctx context.Context, req resource.Updat
 	err := r.client.UpdateMonitor(ctx, postgresMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update PostgreSQL monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

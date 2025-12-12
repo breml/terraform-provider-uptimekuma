@@ -176,6 +176,11 @@ func (r *MonitorHTTPKeywordResource) Create(ctx context.Context, req resource.Cr
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -267,6 +272,11 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, httpKeywordMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -274,6 +284,13 @@ func (r *MonitorHTTPKeywordResource) Update(ctx context.Context, req resource.Up
 	var data MonitorHTTPKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorHTTPKeywordResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -360,6 +377,11 @@ func (r *MonitorHTTPKeywordResource) Update(ctx context.Context, req resource.Up
 	err := r.client.UpdateMonitor(ctx, httpKeywordMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP Keyword monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

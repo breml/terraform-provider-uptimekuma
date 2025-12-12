@@ -121,6 +121,11 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var createdMonitor monitor.Push
 	err = r.client.GetMonitorAs(ctx, id, &createdMonitor)
 	if err != nil {
@@ -182,6 +187,11 @@ func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, pushMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -189,6 +199,13 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 	var data MonitorPushResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorPushResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -232,6 +249,11 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 	err := r.client.UpdateMonitor(ctx, pushMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Push monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

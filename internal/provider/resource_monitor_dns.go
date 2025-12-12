@@ -154,6 +154,11 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -209,6 +214,11 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, dnsMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -216,6 +226,13 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 	var data MonitorDNSResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorDNSResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -262,6 +279,11 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 	err := r.client.UpdateMonitor(ctx, dnsMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update DNS monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

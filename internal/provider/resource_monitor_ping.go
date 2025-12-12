@@ -133,6 +133,11 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -186,6 +191,11 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, pingMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -193,6 +203,13 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	var data MonitorPingResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorPingResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -237,6 +254,11 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	err := r.client.UpdateMonitor(ctx, pingMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Ping monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

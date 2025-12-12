@@ -48,8 +48,20 @@ resource "uptimekuma_monitor_postgres" "example" {
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
+- `tags` (Attributes List) List of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only
 
 - `id` (Number) Monitor identifier
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_id` (Number) Tag ID
+
+Optional:
+
+- `value` (String) Optional value for this tag

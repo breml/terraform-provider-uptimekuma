@@ -185,6 +185,11 @@ func (r *MonitorHTTPJSONQueryResource) Create(ctx context.Context, req resource.
 
 	data.ID = types.Int64Value(id)
 
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -277,6 +282,11 @@ func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.Re
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Tags = handleMonitorTagsRead(ctx, httpJSONQueryMonitor.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -284,6 +294,13 @@ func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.
 	var data MonitorHTTPJSONQueryResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state MonitorHTTPJSONQueryResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -371,6 +388,11 @@ func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.
 	err := r.client.UpdateMonitor(ctx, httpJSONQueryMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP JSON Query monitor", err.Error())
+		return
+	}
+
+	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
