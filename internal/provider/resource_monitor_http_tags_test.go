@@ -23,7 +23,7 @@ func TestAccMonitorHTTPResourceWithTags(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create monitor with one tag
-				Config: testAccMonitorHTTPResourceConfigWithOneTags(monitorName, url, tagName1),
+				Config: testAccMonitorHTTPResourceConfigWithOneTag(monitorName, url, tagName1),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(monitorName)),
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
@@ -59,6 +59,7 @@ func TestAccMonitorHTTPResourceWithTags(t *testing.T) {
 				},
 			},
 			{
+				// Import and verify - this verifies tags with values are imported correctly
 				ResourceName:      "uptimekuma_monitor_http.test",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -67,7 +68,37 @@ func TestAccMonitorHTTPResourceWithTags(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPResourceConfigWithOneTags(monitorName, url, tagName string) string {
+func TestAccMonitorHTTPResourceWithTagsImport(t *testing.T) {
+	monitorName := acctest.RandomWithPrefix("TestHTTPMonitorImport")
+	tagName := acctest.RandomWithPrefix("TestTag")
+	url := "https://httpbin.org/status/200"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// Create monitor with tag (no value)
+				Config: testAccMonitorHTTPResourceConfigWithOneTag(monitorName, url, tagName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("tags"),
+						knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test",
+						tfjsonpath.New("tags").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.Null()),
+				},
+			},
+			{
+				// Import and verify null values are handled correctly
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPResourceConfigWithOneTag(monitorName, url, tagName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test1" {
   name  = %[3]q
