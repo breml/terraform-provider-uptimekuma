@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -301,61 +300,10 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// If server didn't return groups, preserve config but convert unknown IDs to null so values are known after create
 	if len(savedGroups) == 0 && !planPublic.IsNull() {
-		var configGroups []PublicGroupModel
-		resp.Diagnostics.Append(planPublic.ElementsAs(ctx, &configGroups, true)...)
+		data.PublicGroupList = convertUnknownIDsToNull(ctx, planPublic, &resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		// Convert unknown IDs to null so terraform state has known values
-		groups := make([]PublicGroupModel, len(configGroups))
-		for i, group := range configGroups {
-			groups[i] = group
-			if group.ID.IsUnknown() {
-				groups[i].ID = types.Int64Null()
-			}
-			// handle monitors
-			if !group.MonitorList.IsNull() {
-				var mons []PublicMonitorModel
-				resp.Diagnostics.Append(group.MonitorList.ElementsAs(ctx, &mons, true)...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				for j := range mons {
-					if mons[j].ID.IsUnknown() {
-						mons[j].ID = types.Int64Null()
-					}
-					if mons[j].SendURL.IsUnknown() {
-						mons[j].SendURL = types.BoolNull()
-					}
-				}
-				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				groups[i].MonitorList = monList
-			}
-		}
-
-		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":     types.Int64Type,
-				"name":   types.StringType,
-				"weight": types.Int64Type,
-				"monitor_list": types.ListType{ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":       types.Int64Type,
-						"send_url": types.BoolType,
-					},
-				}},
-			},
-		}, groups)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		data.PublicGroupList = groupList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -507,61 +455,10 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 		}
 	} else if !data.PublicGroupList.IsNull() {
 		// If server didn't return groups, preserve config but ensure unknown IDs are set to null
-		var configGroups []PublicGroupModel
-		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, true)...)
+		data.PublicGroupList = convertUnknownIDsToNull(ctx, data.PublicGroupList, &resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		// Convert unknown IDs to null so terraform state has known values
-		groups := make([]PublicGroupModel, len(configGroups))
-		for i, group := range configGroups {
-			groups[i] = group
-			if group.ID.IsUnknown() {
-				groups[i].ID = types.Int64Null()
-			}
-			// handle monitors
-			if !group.MonitorList.IsNull() {
-				var mons []PublicMonitorModel
-				resp.Diagnostics.Append(group.MonitorList.ElementsAs(ctx, &mons, true)...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				for j := range mons {
-					if mons[j].ID.IsUnknown() {
-						mons[j].ID = types.Int64Null()
-					}
-					if mons[j].SendURL.IsUnknown() {
-						mons[j].SendURL = types.BoolNull()
-					}
-				}
-				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				groups[i].MonitorList = monList
-			}
-		}
-
-		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":     types.Int64Type,
-				"name":   types.StringType,
-				"weight": types.Int64Type,
-				"monitor_list": types.ListType{ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":       types.Int64Type,
-						"send_url": types.BoolType,
-					},
-				}},
-			},
-		}, groups)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		data.PublicGroupList = groupList
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

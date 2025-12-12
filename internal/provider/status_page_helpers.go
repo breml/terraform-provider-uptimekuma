@@ -10,6 +10,98 @@ import (
 	"github.com/breml/go-uptime-kuma-client/statuspage"
 )
 
+// convertUnknownIDsToNull converts unknown group and monitor IDs to null values.
+// This ensures all computed values are known in Terraform state after Create/Update.
+func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, diags *diag.Diagnostics) types.List {
+	if publicGroupList.IsNull() {
+		return publicGroupList
+	}
+
+	var configGroups []PublicGroupModel
+	diags.Append(publicGroupList.ElementsAs(ctx, &configGroups, true)...)
+	if diags.HasError() {
+		return types.ListNull(types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"id":     types.Int64Type,
+				"name":   types.StringType,
+				"weight": types.Int64Type,
+				"monitor_list": types.ListType{ElemType: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"id":       types.Int64Type,
+						"send_url": types.BoolType,
+					},
+				}},
+			},
+		})
+	}
+
+	// Convert unknown IDs to null so terraform state has known values
+	groups := make([]PublicGroupModel, len(configGroups))
+	for i, group := range configGroups {
+		groups[i] = group
+		if group.ID.IsUnknown() {
+			groups[i].ID = types.Int64Null()
+		}
+		// handle monitors
+		if !group.MonitorList.IsNull() {
+			var mons []PublicMonitorModel
+			diags.Append(group.MonitorList.ElementsAs(ctx, &mons, true)...)
+			if diags.HasError() {
+				return types.ListNull(types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"id":       types.Int64Type,
+						"send_url": types.BoolType,
+					},
+				})
+			}
+			for j := range mons {
+				if mons[j].ID.IsUnknown() {
+					mons[j].ID = types.Int64Null()
+				}
+				if mons[j].SendURL.IsUnknown() {
+					mons[j].SendURL = types.BoolNull()
+				}
+			}
+			monList, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.ListNull(types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"id":       types.Int64Type,
+						"send_url": types.BoolType,
+					},
+				})
+			}
+			groups[i].MonitorList = monList
+		}
+	}
+
+	groupList, d := types.ListValueFrom(ctx, types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"id":     types.Int64Type,
+			"name":   types.StringType,
+			"weight": types.Int64Type,
+			"monitor_list": types.ListType{ElemType: types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"id":       types.Int64Type,
+					"send_url": types.BoolType,
+				},
+			}},
+		},
+	}, groups)
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ListNull(types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"id":       types.Int64Type,
+				"send_url": types.BoolType,
+			},
+		})
+	}
+
+	return groupList
+}
+
 // buildPublicGroupListFromSaved constructs a types.List value for public_group_list
 // from the savedGroups returned by the API. It appends any diagnostics to the
 // provided diags pointer.
