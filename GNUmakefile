@@ -16,14 +16,14 @@ fmt:
 	gofmt -s -w -e .
 
 test:
-	go test -v -cover -timeout=120s -parallel=10 ./...
+	go test -v -shuffle on -cover -timeout=120s -parallel=10 ./...
 
 testacc:
-	TF_ACC=1 go test -v -coverprofile coverage.out -timeout 480s ./...
+	TF_ACC=1 go test -v -shuffle on -coverprofile coverage.out -timeout 480s ./...
 
 testacc-coverage:
 	@if [ ! -f "coverage.out" ]; then \
-		TF_ACC=1 go test -v -coverprofile coverage.out -timeout 480s ./...; \
+		TF_ACC=1 go test -v -shuffle on -coverprofile coverage.out -timeout 480s ./...; \
 	fi
 	go tool cover -func=coverage.out | sort -k3 -rn
 
