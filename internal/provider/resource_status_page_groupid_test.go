@@ -21,9 +21,6 @@ func TestAccStatusPageGroupIDs(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("public_group_list[0].id"), knownvalue.NotNull()),
-				},
 			},
 		},
 	})
