@@ -314,20 +314,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 						monitors[j].SendURL = types.BoolNull()
 					}
 				}
-				// convert monitor slice to list value later via ListValueFrom
-				// temporarily store as List by creating a types.ListValueFrom below
-				// but we assemble full groups object first and then convert
-				// by embedding the monitors as a Go slice on the model struct
-				// using the MonitorList field which is a types.List when set later.
-				// To keep it simple, reuse the PublicGroupModel.MonitorList by
-				// creating a types.ListValueFrom when building the final list.
-				// Store monitors via reflection in the next step.
-				// For now, assign a nil List and rebuild below.
-				groups[i].MonitorList = types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
-				// Convert monitors slice into a types.ListValue
-				monList, diags := types.ListValueFrom(context.Background(), types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, monitors)
-				if diags.HasError() {
-					resp.Diagnostics.Append(diags...)
+				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, monitors)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
 					return
 				}
 				groups[i].MonitorList = monList
@@ -352,20 +341,42 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 			return
 		}
 		data.PublicGroupList = groupList
-	} else if !data.PublicGroupList.IsNull() {
-		// If server didn't return groups, preserve config but ensure unknown IDs are set to null
+	} else {
+		// If server didn't return groups, attempt to preserve config but ensure unknown IDs are set to null
 		var configGroups []PublicGroupModel
-		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, false)...)
+		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, true)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		// Set any unknown IDs to null
+		// Convert unknown IDs to null so terraform state has known values
 		groups := make([]PublicGroupModel, len(configGroups))
 		for i, group := range configGroups {
 			groups[i] = group
 			if group.ID.IsUnknown() {
 				groups[i].ID = types.Int64Null()
+			}
+			// handle monitors
+			if !group.MonitorList.IsNull() {
+				var mons []PublicMonitorModel
+				resp.Diagnostics.Append(group.MonitorList.ElementsAs(ctx, &mons, true)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				for j := range mons {
+					if mons[j].ID.IsUnknown() {
+						mons[j].ID = types.Int64Null()
+					}
+					if mons[j].SendURL.IsUnknown() {
+						mons[j].SendURL = types.BoolNull()
+					}
+				}
+				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				groups[i].MonitorList = monList
 			}
 		}
 
@@ -550,6 +561,63 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 					}
 				}
 				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, monitors)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				groups[i].MonitorList = monList
+			}
+		}
+
+		groupList, diags := types.ListValueFrom(ctx, types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"id":     types.Int64Type,
+				"name":   types.StringType,
+				"weight": types.Int64Type,
+				"monitor_list": types.ListType{ElemType: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"id":       types.Int64Type,
+						"send_url": types.BoolType,
+					},
+				}},
+			},
+		}, groups)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		data.PublicGroupList = groupList
+	} else {
+		// If server didn't return groups, attempt to preserve config but ensure unknown IDs are set to null
+		var configGroups []PublicGroupModel
+		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &configGroups, true)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// Convert unknown IDs to null so terraform state has known values
+		groups := make([]PublicGroupModel, len(configGroups))
+		for i, group := range configGroups {
+			groups[i] = group
+			if group.ID.IsUnknown() {
+				groups[i].ID = types.Int64Null()
+			}
+			// handle monitors
+			if !group.MonitorList.IsNull() {
+				var mons []PublicMonitorModel
+				resp.Diagnostics.Append(group.MonitorList.ElementsAs(ctx, &mons, true)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				for j := range mons {
+					if mons[j].ID.IsUnknown() {
+						mons[j].ID = types.Int64Null()
+					}
+					if mons[j].SendURL.IsUnknown() {
+						mons[j].SendURL = types.BoolNull()
+					}
+				}
+				monList, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
 				resp.Diagnostics.Append(diags...)
 				if resp.Diagnostics.HasError() {
 					return
