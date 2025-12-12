@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -133,8 +132,6 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 				"value": schema.StringAttribute{
 					MarkdownDescription: "Optional value for this tag",
 					Optional:            true,
-					Computed:            true,
-					Default:             stringdefault.StaticString(""),
 				},
 			},
 		},
@@ -156,7 +153,10 @@ func handleMonitorTagsCreate(ctx context.Context, client *kuma.Client, monitorID
 
 	for _, monitorTag := range monitorTags {
 		tagID := monitorTag.TagID.ValueInt64()
-		value := monitorTag.Value.ValueString()
+		value := ""
+		if !monitorTag.Value.IsNull() {
+			value = monitorTag.Value.ValueString()
+		}
 
 		_, err := client.AddMonitorTag(ctx, tagID, monitorID, value)
 		if err != nil {
@@ -181,9 +181,15 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 
 	tagModels := make([]MonitorTagModel, len(monitorTags))
 	for i, monitorTag := range monitorTags {
+		var value types.String
+		if monitorTag.Value == "" {
+			value = types.StringNull()
+		} else {
+			value = types.StringValue(monitorTag.Value)
+		}
 		tagModels[i] = MonitorTagModel{
 			TagID: types.Int64Value(monitorTag.TagID),
-			Value: types.StringValue(monitorTag.Value),
+			Value: value,
 		}
 	}
 
@@ -218,19 +224,31 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 
 	oldTagMap := make(map[string]MonitorTagModel)
 	for _, tag := range oldMonitorTags {
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), tag.Value.ValueString())
+		value := ""
+		if !tag.Value.IsNull() {
+			value = tag.Value.ValueString()
+		}
+		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
 		oldTagMap[key] = tag
 	}
 
 	newTagMap := make(map[string]MonitorTagModel)
 	for _, tag := range newMonitorTags {
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), tag.Value.ValueString())
+		value := ""
+		if !tag.Value.IsNull() {
+			value = tag.Value.ValueString()
+		}
+		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
 		newTagMap[key] = tag
 	}
 
 	for key, oldTag := range oldTagMap {
 		if _, exists := newTagMap[key]; !exists {
-			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, oldTag.Value.ValueString())
+			value := ""
+			if !oldTag.Value.IsNull() {
+				value = oldTag.Value.ValueString()
+			}
+			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
 					fmt.Sprintf("failed to remove tag %d from monitor %d", oldTag.TagID.ValueInt64(), monitorID),
@@ -243,7 +261,11 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 
 	for key, newTag := range newTagMap {
 		if _, exists := oldTagMap[key]; !exists {
-			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, newTag.Value.ValueString())
+			value := ""
+			if !newTag.Value.IsNull() {
+				value = newTag.Value.ValueString()
+			}
+			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
 					fmt.Sprintf("failed to add tag %d to monitor %d", newTag.TagID.ValueInt64(), monitorID),
