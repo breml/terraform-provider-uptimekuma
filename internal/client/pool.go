@@ -74,6 +74,12 @@ func (p *Pool) configMatches(config *Config) bool {
 // Release decrements the reference counter for the pooled connection.
 // This should be called when a client is no longer needed, but it does not
 // actually close the connection (connection remains pooled for reuse).
+//
+// Note: In the current acceptance test use case, Release is not called by
+// consumers because the pool is closed via CloseGlobalPool at the end of all
+// tests. The reference count is maintained for debugging purposes and to
+// support future use cases where automatic cleanup when refs reach zero
+// might be desired.
 func (p *Pool) Release() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
