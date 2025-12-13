@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand/v2"
-	"os"
 	"time"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -21,20 +20,14 @@ type Config struct {
 }
 
 // New creates a new Uptime Kuma client with optional connection pooling.
-// If connection pooling is enabled (via config or UPTIMEKUMA_ENABLE_CONNECTION_POOL
-// environment variable), it returns a shared connection from the pool.
+// If connection pooling is enabled, it returns a shared connection from the pool.
 // Otherwise, it creates a new direct connection with retry logic.
 func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 	if config.Endpoint == "" {
 		return nil, fmt.Errorf("endpoint is required")
 	}
 
-	poolEnabled := config.EnableConnectionPool
-	if !poolEnabled {
-		poolEnabled = os.Getenv("UPTIMEKUMA_ENABLE_CONNECTION_POOL") == "true"
-	}
-
-	if poolEnabled {
+	if config.EnableConnectionPool {
 		return GetGlobalPool().GetOrCreate(ctx, config)
 	}
 
@@ -68,10 +61,7 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 		// Exponential backoff with jitter
 		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
 		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
-		sleepDuration := time.Duration(backoff * jitter)
-		if sleepDuration > 30*time.Second {
-			sleepDuration = 30 * time.Second
-		}
+		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
 
 		select {
 		case <-ctx.Done():

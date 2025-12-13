@@ -1,8 +1,11 @@
 package client
 
 import (
+	"os"
 	"sync"
 	"testing"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
 func TestPool_RefCount(t *testing.T) {
@@ -93,6 +96,8 @@ func TestPool_ConfigMatches(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			tc.config.LogLevel = kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL"))
+
 			result := pool.configMatches(tc.config)
 			if result != tc.expected {
 				t.Errorf("expected configMatches to return %v, got %v", tc.expected, result)

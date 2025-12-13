@@ -28,9 +28,11 @@ var (
 func GetGlobalPool() *Pool {
 	globalPoolMu.Lock()
 	defer globalPoolMu.Unlock()
+
 	globalPoolOnce.Do(func() {
 		globalPool = &Pool{}
 	})
+
 	return globalPool
 }
 
@@ -48,6 +50,7 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 				p.config.Endpoint, p.config.Username, config.Endpoint, config.Username,
 			)
 		}
+
 		p.refs++
 		return p.client, nil
 	}
@@ -72,6 +75,7 @@ func (p *Pool) configMatches(config *Config) bool {
 	if p.config == nil {
 		return false
 	}
+
 	return p.config.Endpoint == config.Endpoint &&
 		p.config.Username == config.Username &&
 		p.config.Password == config.Password
@@ -89,6 +93,7 @@ func (p *Pool) configMatches(config *Config) bool {
 func (p *Pool) Release() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
 	if p.refs > 0 {
 		p.refs--
 	}
@@ -98,6 +103,7 @@ func (p *Pool) Release() {
 func (p *Pool) RefCount() int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
 	return p.refs
 }
 
@@ -114,15 +120,24 @@ func (p *Pool) Close() error {
 		p.refs = 0
 		return err
 	}
+
 	return nil
 }
 
 // CloseGlobalPool closes the global connection pool.
 // This is a convenience function for test cleanup.
 func CloseGlobalPool() error {
+	globalPoolMu.Lock()
+	defer globalPoolMu.Unlock()
+
 	if globalPool != nil {
+		if globalPool.refs != 0 {
+			return fmt.Errorf("failed to close global pool, expected 0 refs, got: %d", globalPool.refs)
+		}
+
 		return globalPool.Close()
 	}
+
 	return nil
 }
 
@@ -131,6 +146,7 @@ func CloseGlobalPool() error {
 func ResetGlobalPool() {
 	globalPoolMu.Lock()
 	defer globalPoolMu.Unlock()
+
 	globalPoolOnce = sync.Once{}
 	globalPool = nil
 }

@@ -27,9 +27,6 @@ func TestMain(m *testing.M) {
 	// We only start the docker based test application, if the TF_ACC env var is
 	// set because they're slow.
 	if os.Getenv(resource.EnvTfAcc) != "" {
-		// Enable connection pooling for acceptance tests to avoid rate limiting
-		os.Setenv("UPTIMEKUMA_ENABLE_CONNECTION_POOL", "true")
-
 		// uses a sensible default on windows (tcp/http) and linux/osx (socket)
 		pool, err := dockertest.NewPool("")
 		if err != nil {
@@ -74,7 +71,9 @@ func TestMain(m *testing.M) {
 			var err error
 			kumaClient, err = kuma.New(
 				ctx,
-				endpoint, username, password,
+				endpoint,
+				username,
+				password,
 				kuma.WithAutosetup(),
 				kuma.WithLogLevel(kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL"))),
 			)
@@ -107,6 +106,15 @@ func TestMain(m *testing.M) {
 			}
 		}()
 	}
+
+	// The terraform tests create a fresh connection pool, which we close after
+	// all tests have been executed.
+	defer func() {
+		err := client.CloseGlobalPool()
+		if err != nil {
+			log.Fatalf("Failed to close connection pool after tests: %v", err)
+		}
+	}()
 
 	m.Run()
 }
