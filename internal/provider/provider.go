@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
 // Ensure UptimeKumaProvider satisfies various provider interfaces.
@@ -91,14 +93,26 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 	// Uptime Kuma client configuration for data sources and resources
 	// We can not use the context from Terraform, since it gets cancelled too early.
 	// ValueString() returns "" for null values, which client library handles gracefully
-	client, err := kuma.New(context.Background(), data.Endpoint.ValueString(), data.Username.ValueString(), data.Password.ValueString(), kuma.WithLogLevel(kuma.LogLevelDebug))
+	kumaClient, err := client.New(context.Background(), &client.Config{
+		Endpoint:             data.Endpoint.ValueString(),
+		Username:             data.Username.ValueString(),
+		Password:             data.Password.ValueString(),
+		EnableConnectionPool: true,
+		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create client", err.Error())
 		return
 	}
 
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	// Context is cancelled on shutdown - you can use defer or goroutine
+	go func() {
+		<-ctx.Done()
+		client.GetGlobalPool().Release()
+	}()
+
+	resp.DataSourceData = kumaClient
+	resp.ResourceData = kumaClient
 }
 
 func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Resource {
