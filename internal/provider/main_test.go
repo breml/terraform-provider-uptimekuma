@@ -13,6 +13,7 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
 const (
@@ -26,6 +27,9 @@ func TestMain(m *testing.M) {
 	// We only start the docker based test application, if the TF_ACC env var is
 	// set because they're slow.
 	if os.Getenv(resource.EnvTfAcc) != "" {
+		// Enable connection pooling for acceptance tests to avoid rate limiting
+		os.Setenv("UPTIMEKUMA_ENABLE_CONNECTION_POOL", "true")
+
 		// uses a sensible default on windows (tcp/http) and linux/osx (socket)
 		pool, err := dockertest.NewPool("")
 		if err != nil {
@@ -63,12 +67,12 @@ func TestMain(m *testing.M) {
 
 		endpoint = fmt.Sprintf("http://localhost:%s", resource.GetPort("3001/tcp"))
 
-		var client *kuma.Client
+		var kumaClient *kuma.Client
 
 		// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 		if err := pool.Retry(func() error {
 			var err error
-			client, err = kuma.New(
+			kumaClient, err = kuma.New(
 				ctx,
 				endpoint, username, password,
 				kuma.WithAutosetup(),
@@ -83,28 +87,21 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Could not connect to uptime kuma: %v", err)
 		}
 
-		settings, err := client.GetSettings(ctx)
-		if err != nil {
-			log.Fatalf("Failed to get settings: %v", err)
-		}
-
-		settings["disableAuth"] = true
-
-		err = client.SetSettings(ctx, settings, password)
-		if err != nil {
-			log.Fatalf("Failed to set settings: %v", err)
-		}
-
 		// Close connection again, after we know, the application is running and
 		// auto setup has been performed. We don't need the client anymore,
-		// Terraform will establish its own connection.
-		err = client.Disconnect()
+		// Terraform will establish its own connection via the pool.
+		err = kumaClient.Disconnect()
 		if err != nil {
-			log.Fatalf("Failed to connect to uptime kuma: %v", err)
+			log.Fatalf("Failed to disconnect from uptime kuma: %v", err)
 		}
 
 		// As of go1.15 testing.M returns the exit code of m.Run(), so it is safe to use defer here
 		defer func() {
+			// Close the connection pool before purging the container
+			if err := client.CloseGlobalPool(); err != nil {
+				log.Printf("Warning: failed to close connection pool: %v", err)
+			}
+
 			if err := pool.Purge(resource); err != nil {
 				log.Fatalf("Could not purge resource: %v", err)
 			}
@@ -118,6 +115,8 @@ func providerConfig() string {
 	return fmt.Sprintf(`
 provider "uptimekuma" {
   endpoint = %[1]q
+  username = %[2]q
+  password = %[3]q
 }
-`, endpoint)
+`, endpoint, username, password)
 }
