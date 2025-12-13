@@ -21,10 +21,13 @@ type Pool struct {
 var (
 	globalPool     *Pool
 	globalPoolOnce sync.Once
+	globalPoolMu   sync.Mutex // protects globalPool and globalPoolOnce during reset
 )
 
 // GetGlobalPool returns the global connection pool singleton.
 func GetGlobalPool() *Pool {
+	globalPoolMu.Lock()
+	defer globalPoolMu.Unlock()
 	globalPoolOnce.Do(func() {
 		globalPool = &Pool{}
 	})
@@ -41,8 +44,8 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	if p.client != nil {
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
-				"pool config mismatch: existing endpoint=%s, requested endpoint=%s",
-				p.config.Endpoint, config.Endpoint,
+				"pool config mismatch: existing endpoint=%q username=%q, requested endpoint=%q username=%q",
+				p.config.Endpoint, p.config.Username, config.Endpoint, config.Username,
 			)
 		}
 		p.refs++
@@ -62,6 +65,9 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 }
 
 // configMatches checks if the provided config matches the pool's config.
+// Only connection-critical fields (endpoint, credentials) are compared.
+// LogLevel and EnableConnectionPool are intentionally excluded as they don't
+// affect the connection identity - the first connection's LogLevel is used.
 func (p *Pool) configMatches(config *Config) bool {
 	if p.config == nil {
 		return false
@@ -123,6 +129,8 @@ func CloseGlobalPool() error {
 // ResetGlobalPool resets the global pool singleton.
 // This is primarily for testing purposes to ensure test isolation.
 func ResetGlobalPool() {
+	globalPoolMu.Lock()
+	defer globalPoolMu.Unlock()
 	globalPoolOnce = sync.Once{}
 	globalPool = nil
 }
