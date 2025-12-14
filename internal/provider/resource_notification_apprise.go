@@ -151,7 +151,11 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 	data.ApplyExisting = types.BoolValue(apprise.ApplyExisting)
 
 	data.AppriseURL = types.StringValue(apprise.AppriseURL)
-	data.Title = types.StringValue(apprise.Title)
+	if apprise.Title != "" {
+		data.Title = types.StringValue(apprise.Title)
+	} else {
+		data.Title = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

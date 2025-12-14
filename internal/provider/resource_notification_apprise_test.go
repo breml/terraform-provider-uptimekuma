@@ -26,7 +26,7 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("apprise_url"), knownvalue.StringExact("discord://webhook_id/webhook_token")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.StringExact("")),
+					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.Null()),
 				},
 			},
 			{
@@ -44,7 +44,7 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("apprise_url"), knownvalue.StringExact("discord://webhook_id/webhook_token")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.StringExact("")),
+					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.Null()),
 				},
 			},
 		},
