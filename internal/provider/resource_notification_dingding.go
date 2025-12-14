@@ -161,9 +161,13 @@ func (r *NotificationDingDingResource) Read(ctx context.Context, req resource.Re
 	data.WebHookURL = types.StringValue(dingding.WebHookURL)
 	if dingding.SecretKey != "" {
 		data.SecretKey = types.StringValue(dingding.SecretKey)
+	} else {
+		data.SecretKey = types.StringNull()
 	}
 	if dingding.Mentioning != "" {
 		data.Mentioning = types.StringValue(dingding.Mentioning)
+	} else {
+		data.Mentioning = types.StringNull()
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

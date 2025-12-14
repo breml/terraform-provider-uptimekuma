@@ -14,6 +14,8 @@ import (
 func TestAccNotificationDingDingResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationDingDing")
 	nameUpdated := acctest.RandomWithPrefix("NotificationDingDingUpdated")
+	secretKey := "test-secret-key-123"
+	mentioning := "@user1 @user2"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -25,6 +27,18 @@ func TestAccNotificationDingDingResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact("https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456")),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("secret_key"), knownvalue.Null()),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("mentioning"), knownvalue.Null()),
+				},
+			},
+			{
+				Config: testAccNotificationDingDingResourceConfigWithOptionalFields(nameUpdated, secretKey, mentioning),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact("https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456")),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("secret_key"), knownvalue.StringExact(secretKey)),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("mentioning"), knownvalue.StringExact(mentioning)),
 				},
 			},
 			{
@@ -33,6 +47,8 @@ func TestAccNotificationDingDingResource(t *testing.T) {
 					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact("https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456")),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("secret_key"), knownvalue.Null()),
+					statecheck.ExpectKnownValue("uptimekuma_notification_dingding.test", tfjsonpath.New("mentioning"), knownvalue.Null()),
 				},
 			},
 		},
@@ -47,4 +63,16 @@ resource "uptimekuma_notification_dingding" "test" {
   webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"
 }
 `, name)
+}
+
+func testAccNotificationDingDingResourceConfigWithOptionalFields(name, secretKey, mentioning string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_dingding" "test" {
+  name        = %[1]q
+  is_active   = true
+  webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"
+  secret_key  = %[2]q
+  mentioning  = %[3]q
+}
+`, name, secretKey, mentioning)
 }
