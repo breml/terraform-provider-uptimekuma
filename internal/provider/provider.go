@@ -119,6 +119,7 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotificationAppriseResource,
+		NewNotificationDingDingResource,
 		NewNotificationNtfyResource,
 		NewNotificationSlackResource,
 		NewNotificationTeamsResource,
@@ -152,6 +153,7 @@ func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasourc
 		NewTagDataSource,
 		NewNotificationDataSource,
 		NewNotificationAppriseDataSource,
+		NewNotificationDingDingDataSource,
 		NewNotificationNtfyDataSource,
 		NewNotificationSlackDataSource,
 		NewNotificationTeamsDataSource,
