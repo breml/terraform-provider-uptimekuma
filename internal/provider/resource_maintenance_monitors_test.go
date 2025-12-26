@@ -97,7 +97,11 @@ func TestAccMaintenanceMonitorsResource_Update(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMaintenanceMonitorsResourceConfigUpdateInitial(maintenanceTitle, monitorName1, monitorName2),
+				Config: testAccMaintenanceMonitorsResourceConfigUpdateInitial(
+					maintenanceTitle,
+					monitorName1,
+					monitorName2,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_maintenance_monitors.test", tfjsonpath.New("monitor_ids"),
@@ -105,7 +109,12 @@ func TestAccMaintenanceMonitorsResource_Update(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccMaintenanceMonitorsResourceConfigUpdateChanged(maintenanceTitle, monitorName1, monitorName2, monitorName3),
+				Config: testAccMaintenanceMonitorsResourceConfigUpdateChanged(
+					maintenanceTitle,
+					monitorName1,
+					monitorName2,
+					monitorName3,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_maintenance_monitors.test", tfjsonpath.New("monitor_ids"),
 						knownvalue.ListSizeExact(2)),
@@ -142,7 +151,9 @@ resource "uptimekuma_maintenance_monitors" "test" {
 `, maintenanceTitle, monitorName1, monitorName2)
 }
 
-func testAccMaintenanceMonitorsResourceConfigUpdateChanged(maintenanceTitle, monitorName1, monitorName2, monitorName3 string) string {
+func testAccMaintenanceMonitorsResourceConfigUpdateChanged(
+	maintenanceTitle, monitorName1, monitorName2, monitorName3 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -216,10 +227,17 @@ func TestAccMaintenanceMonitorsResource_WithScheduledMaintenance(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMaintenanceMonitorsResourceConfigWithScheduledMaintenance(maintenanceTitle, monitorName),
+				Config: testAccMaintenanceMonitorsResourceConfigWithScheduledMaintenance(
+					maintenanceTitle,
+					monitorName,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("recurring-weekday")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("recurring-weekday"),
+					),
 					statecheck.ExpectKnownValue("uptimekuma_maintenance_monitors.test", tfjsonpath.New("monitor_ids"),
 						knownvalue.ListSizeExact(1)),
 				},

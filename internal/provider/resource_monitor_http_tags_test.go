@@ -25,8 +25,16 @@ func TestAccMonitorHTTPResourceWithTags(t *testing.T) {
 				// Create monitor with one tag
 				Config: testAccMonitorHTTPResourceConfigWithOneTag(monitorName, url, tagName1),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(monitorName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(monitorName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
 					// Verify tags list has 1 element
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("tags"),
 						knownvalue.ListSizeExact(1)),

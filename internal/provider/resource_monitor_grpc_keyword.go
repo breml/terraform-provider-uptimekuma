@@ -33,6 +33,7 @@ type MonitorGrpcKeywordResource struct {
 
 type MonitorGrpcKeywordResourceModel struct {
 	MonitorBaseModel
+
 	GrpcURL         types.String `tfsdk:"grpc_url"`
 	GrpcProtobuf    types.String `tfsdk:"grpc_protobuf"`
 	GrpcServiceName types.String `tfsdk:"grpc_service_name"`
@@ -43,11 +44,19 @@ type MonitorGrpcKeywordResourceModel struct {
 	InvertKeyword   types.Bool   `tfsdk:"invert_keyword"`
 }
 
-func (r *MonitorGrpcKeywordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MonitorGrpcKeywordResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_grpc_keyword"
 }
 
-func (r *MonitorGrpcKeywordResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorGrpcKeywordResource) Schema(
+	ctx context.Context,
+	req resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "gRPC Keyword monitor resource checks for the presence (or absence) of a specific keyword in the gRPC response. The monitor makes a gRPC request and searches for the specified keyword in the response. Use `invert_keyword` to reverse the logic: when false (default), finding the keyword means UP; when true, finding the keyword means DOWN.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -105,7 +114,11 @@ func (r *MonitorGrpcKeywordResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (r *MonitorGrpcKeywordResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MonitorGrpcKeywordResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -115,7 +128,10 @@ func (r *MonitorGrpcKeywordResource) Configure(ctx context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -124,7 +140,11 @@ func (r *MonitorGrpcKeywordResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *MonitorGrpcKeywordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *MonitorGrpcKeywordResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorGrpcKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -227,7 +247,12 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(data *MonitorGrpcKeywordResourceModel, grpcKeywordMonitor *monitor.GrpcKeyword, ctx context.Context, diags *diag.Diagnostics) {
+func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(
+	data *MonitorGrpcKeywordResourceModel,
+	grpcKeywordMonitor *monitor.GrpcKeyword,
+	ctx context.Context,
+	diags *diag.Diagnostics,
+) {
 	data.Name = types.StringValue(grpcKeywordMonitor.Name)
 	if grpcKeywordMonitor.Description != nil {
 		data.Description = types.StringValue(*grpcKeywordMonitor.Description)
@@ -274,7 +299,11 @@ func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(data *MonitorGrpcK
 	}
 }
 
-func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *MonitorGrpcKeywordResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorGrpcKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -358,7 +387,11 @@ func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.Up
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorGrpcKeywordResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *MonitorGrpcKeywordResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorGrpcKeywordResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -374,7 +407,11 @@ func (r *MonitorGrpcKeywordResource) Delete(ctx context.Context, req resource.De
 	}
 }
 
-func (r *MonitorGrpcKeywordResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MonitorGrpcKeywordResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

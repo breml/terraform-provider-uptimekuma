@@ -66,7 +66,11 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 				}
 			}
 
-			monList, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
+			monList, d := types.ListValueFrom(
+				ctx,
+				types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}},
+				mons,
+			)
 			diags.Append(d...)
 			if diags.HasError() {
 				return types.ListNull(types.ObjectType{
@@ -110,7 +114,11 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 // buildPublicGroupListFromSaved constructs a types.List value for public_group_list
 // from the savedGroups returned by the API. It appends any diagnostics to the
 // provided diags pointer.
-func buildPublicGroupListFromSaved(ctx context.Context, saved []statuspage.PublicGroup, diags *diag.Diagnostics) types.List {
+func buildPublicGroupListFromSaved(
+	ctx context.Context,
+	saved []statuspage.PublicGroup,
+	diags *diag.Diagnostics,
+) types.List {
 	if len(saved) == 0 {
 		return types.ListNull(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
@@ -145,10 +153,18 @@ func buildPublicGroupListFromSaved(ctx context.Context, saved []statuspage.Publi
 				}
 			}
 
-			monList, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, monitors)
+			monList, d := types.ListValueFrom(
+				ctx,
+				types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}},
+				monitors,
+			)
 			diags.Append(d...)
 			if diags.HasError() {
-				return types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
+				return types.ListNull(
+					types.ObjectType{
+						AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType},
+					},
+				)
 			}
 
 			groups[i].MonitorList = monList
@@ -179,7 +195,9 @@ func buildPublicGroupListFromSaved(ctx context.Context, saved []statuspage.Publi
 	}, groups)
 	diags.Append(d...)
 	if diags.HasError() {
-		return types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
+		return types.ListNull(
+			types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}},
+		)
 	}
 
 	return groupList

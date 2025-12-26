@@ -22,8 +22,16 @@ func TestAccStatusPageDataSource(t *testing.T) {
 			{
 				Config: testAccStatusPageDataSourceConfig(slug, title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_status_page.test", tfjsonpath.New("slug"), knownvalue.StringExact(slug)),
-					statecheck.ExpectKnownValue("data.uptimekuma_status_page.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
 				},
 			},
 		},

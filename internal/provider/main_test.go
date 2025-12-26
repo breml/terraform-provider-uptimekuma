@@ -13,6 +13,7 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+
 	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
@@ -97,11 +98,13 @@ func TestMain(m *testing.M) {
 		// As of go1.15 testing.M returns the exit code of m.Run(), so it is safe to use defer here
 		defer func() {
 			// Close the connection pool before purging the container
-			if err := client.CloseGlobalPool(); err != nil {
+			err := client.CloseGlobalPool()
+			if err != nil {
 				log.Printf("Warning: failed to close connection pool: %v", err)
 			}
 
-			if err := pool.Purge(resource); err != nil {
+			err = pool.Purge(resource)
+			if err != nil {
 				log.Fatalf("Could not purge resource: %v", err)
 			}
 		}()

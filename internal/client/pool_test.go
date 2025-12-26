@@ -128,13 +128,10 @@ func TestPool_ConcurrentRelease(t *testing.T) {
 	pool := &Pool{refs: 100}
 
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+	for range 100 {
+		wg.Go(func() {
 			pool.Release()
-		}()
+		})
 	}
 
 	wg.Wait()

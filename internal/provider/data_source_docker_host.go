@@ -26,11 +26,19 @@ type DockerHostDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *DockerHostDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *DockerHostDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
-func (d *DockerHostDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *DockerHostDataSource) Schema(
+	ctx context.Context,
+	req datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Docker host information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +56,11 @@ func (d *DockerHostDataSource) Schema(ctx context.Context, req datasource.Schema
 	}
 }
 
-func (d *DockerHostDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *DockerHostDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +69,10 @@ func (d *DockerHostDataSource) Configure(ctx context.Context, req datasource.Con
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -98,7 +113,10 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple Docker hosts found",
-						fmt.Sprintf("Multiple Docker hosts with name '%s' found. Please use 'id' to specify the host uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple Docker hosts with name '%s' found. Please use 'id' to specify the host uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}

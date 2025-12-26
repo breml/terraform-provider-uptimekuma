@@ -22,12 +22,29 @@ func TestAccStatusPageIncidentResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccStatusPageIncidentResourceConfig(slug, statusPageTitle, incidentTitle, incidentContent),
+				Config: testAccStatusPageIncidentResourceConfig(
+					slug,
+					statusPageTitle,
+					incidentTitle,
+					incidentContent,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("title"), knownvalue.StringExact(incidentTitle)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("content"), knownvalue.StringExact(incidentContent)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("pin"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(incidentTitle),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(incidentContent),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("pin"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
@@ -61,19 +78,42 @@ func TestAccStatusPageIncidentResourceWithStyle(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccStatusPageIncidentResourceConfigWithStyle(slug, statusPageTitle, incidentTitle, incidentContent),
+				Config: testAccStatusPageIncidentResourceConfigWithStyle(
+					slug,
+					statusPageTitle,
+					incidentTitle,
+					incidentContent,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("title"), knownvalue.StringExact(incidentTitle)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("content"), knownvalue.StringExact(incidentContent)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("style"), knownvalue.StringExact("info")),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("pin"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(incidentTitle),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(incidentContent),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("style"),
+						knownvalue.StringExact("info"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("pin"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccStatusPageIncidentResourceConfigWithStyle(slug, statusPageTitle, incidentTitle, incidentContent string) string {
+func testAccStatusPageIncidentResourceConfigWithStyle(
+	slug, statusPageTitle, incidentTitle, incidentContent string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug      = %[1]q
@@ -104,17 +144,43 @@ func TestAccStatusPageIncidentResourceUpdate(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccStatusPageIncidentResourceConfigWithStyle(slug, statusPageTitle, incidentTitle, incidentContent),
+				Config: testAccStatusPageIncidentResourceConfigWithStyle(
+					slug,
+					statusPageTitle,
+					incidentTitle,
+					incidentContent,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("title"), knownvalue.StringExact(incidentTitle)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("content"), knownvalue.StringExact(incidentContent)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(incidentTitle),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(incidentContent),
+					),
 				},
 			},
 			{
-				Config: testAccStatusPageIncidentResourceConfigWithStyle(slug, statusPageTitle, incidentTitleUpdated, incidentContentUpdated),
+				Config: testAccStatusPageIncidentResourceConfigWithStyle(
+					slug,
+					statusPageTitle,
+					incidentTitleUpdated,
+					incidentContentUpdated,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("title"), knownvalue.StringExact(incidentTitleUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page_incident.test", tfjsonpath.New("content"), knownvalue.StringExact(incidentContentUpdated)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(incidentTitleUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page_incident.test",
+						tfjsonpath.New("content"),
+						knownvalue.StringExact(incidentContentUpdated),
+					),
 				},
 			},
 		},

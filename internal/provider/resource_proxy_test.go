@@ -24,22 +24,62 @@ func TestAccProxyResource(t *testing.T) {
 				Config:             testAccProxyResourceConfig(host, port, "http"),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("host"), knownvalue.StringExact(host)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("port"), knownvalue.Int64Exact(8080)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("protocol"), knownvalue.StringExact("http")),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("default"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("auth"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("host"),
+						knownvalue.StringExact(host),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(8080),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("protocol"),
+						knownvalue.StringExact("http"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("auth"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
 				Config:             testAccProxyResourceConfig(hostUpdated, portUpdated, "https"),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("host"), knownvalue.StringExact(hostUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("port"), knownvalue.Int64Exact(3128)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("protocol"), knownvalue.StringExact("https")),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("host"),
+						knownvalue.StringExact(hostUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(3128),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("protocol"),
+						knownvalue.StringExact("https"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -60,11 +100,27 @@ func TestAccProxyResourceWithAuth(t *testing.T) {
 				Config:             testAccProxyResourceConfigWithAuth(host, port, "socks5", username, password),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("host"), knownvalue.StringExact(host)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("port"), knownvalue.Int64Exact(8080)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("protocol"), knownvalue.StringExact("socks5")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("host"),
+						knownvalue.StringExact(host),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(8080),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("protocol"),
+						knownvalue.StringExact("socks5"),
+					),
 					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("auth"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("username"), knownvalue.StringExact(username)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("username"),
+						knownvalue.StringExact(username),
+					),
 				},
 			},
 		},
@@ -86,14 +142,22 @@ func TestAccProxyResourceAuthToggle(t *testing.T) {
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("auth"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("username"), knownvalue.StringExact(username)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("username"),
+						knownvalue.StringExact(username),
+					),
 				},
 			},
 			{
 				Config:             testAccProxyResourceConfig(host, port, "http"),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("auth"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("auth"),
+						knownvalue.Bool(false),
+					),
 					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("username"), knownvalue.Null()),
 					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("password"), knownvalue.Null()),
 				},
@@ -114,8 +178,16 @@ func TestAccProxyResourceWithDefault(t *testing.T) {
 				Config:             testAccProxyResourceConfigWithDefault(host, port, "http"),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("host"), knownvalue.StringExact(host)),
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("default"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("host"),
+						knownvalue.StringExact(host),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("default"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -133,7 +205,11 @@ func TestAccProxyResourceDelete(t *testing.T) {
 			{
 				Config: testAccProxyResourceConfig(host, port, "http"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_proxy.test", tfjsonpath.New("host"), knownvalue.StringExact(host)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_proxy.test",
+						tfjsonpath.New("host"),
+						knownvalue.StringExact(host),
+					),
 				},
 			},
 			{

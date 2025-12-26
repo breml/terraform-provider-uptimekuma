@@ -140,7 +140,13 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 	return attrs
 }
 
-func handleMonitorTagsCreate(ctx context.Context, client *kuma.Client, monitorID int64, tags types.List, diags *diag.Diagnostics) {
+func handleMonitorTagsCreate(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	tags types.List,
+	diags *diag.Diagnostics,
+) {
 	if tags.IsNull() || tags.IsUnknown() {
 		return
 	}
@@ -205,7 +211,14 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 	return tagsList
 }
 
-func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID int64, oldTags types.List, newTags types.List, diags *diag.Diagnostics) {
+func handleMonitorTagsUpdate(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTags types.List,
+	newTags types.List,
+	diags *diag.Diagnostics,
+) {
 	var oldMonitorTags []MonitorTagModel
 	var newMonitorTags []MonitorTagModel
 

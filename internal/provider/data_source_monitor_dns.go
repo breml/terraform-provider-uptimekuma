@@ -28,11 +28,19 @@ type MonitorDNSDataSourceModel struct {
 	Hostname types.String `tfsdk:"hostname"`
 }
 
-func (d *MonitorDNSDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *MonitorDNSDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
-func (d *MonitorDNSDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *MonitorDNSDataSource) Schema(
+	ctx context.Context,
+	req datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get DNS monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -54,7 +62,11 @@ func (d *MonitorDNSDataSource) Schema(ctx context.Context, req datasource.Schema
 	}
 }
 
-func (d *MonitorDNSDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *MonitorDNSDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -63,7 +75,10 @@ func (d *MonitorDNSDataSource) Configure(ctx context.Context, req datasource.Con
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -106,7 +121,10 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple monitors found",
-						fmt.Sprintf("Multiple DNS monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple DNS monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}

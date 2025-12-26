@@ -32,11 +32,16 @@ type MonitorPingResource struct {
 
 type MonitorPingResourceModel struct {
 	MonitorBaseModel
+
 	Hostname   types.String `tfsdk:"hostname"`
 	PacketSize types.Int64  `tfsdk:"packet_size"`
 }
 
-func (r *MonitorPingResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MonitorPingResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
@@ -61,7 +66,11 @@ func (r *MonitorPingResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func (r *MonitorPingResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MonitorPingResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -71,7 +80,10 @@ func (r *MonitorPingResource) Configure(ctx context.Context, req resource.Config
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -281,7 +293,11 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *MonitorPingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MonitorPingResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

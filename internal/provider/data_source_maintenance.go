@@ -27,11 +27,19 @@ type MaintenanceDataSourceModel struct {
 	Title types.String `tfsdk:"title"`
 }
 
-func (d *MaintenanceDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *MaintenanceDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
-func (d *MaintenanceDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *MaintenanceDataSource) Schema(
+	ctx context.Context,
+	req datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get maintenance window information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -53,7 +61,11 @@ func (d *MaintenanceDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (d *MaintenanceDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *MaintenanceDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -62,7 +74,10 @@ func (d *MaintenanceDataSource) Configure(ctx context.Context, req datasource.Co
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -108,7 +123,10 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple maintenances found",
-						fmt.Sprintf("Multiple maintenance windows with title '%s' found. Please use 'id' to specify the maintenance uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple maintenance windows with title '%s' found. Please use 'id' to specify the maintenance uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}

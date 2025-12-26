@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+
 	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
@@ -34,7 +35,11 @@ type UptimeKumaProviderModel struct {
 	Password types.String `tfsdk:"password"`
 }
 
-func (p *UptimeKumaProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (p *UptimeKumaProvider) Metadata(
+	ctx context.Context,
+	req provider.MetadataRequest,
+	resp *provider.MetadataResponse,
+) {
 	resp.TypeName = "uptimekuma"
 	resp.Version = p.version
 }
@@ -58,7 +63,11 @@ func (p *UptimeKumaProvider) Schema(ctx context.Context, req provider.SchemaRequ
 	}
 }
 
-func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+func (p *UptimeKumaProvider) Configure(
+	ctx context.Context,
+	req provider.ConfigureRequest,
+	resp *provider.ConfigureResponse,
+) {
 	var data UptimeKumaProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)

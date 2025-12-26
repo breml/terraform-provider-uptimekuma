@@ -34,11 +34,19 @@ type MaintenanceMonitorsResourceModel struct {
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
-func (r *MaintenanceMonitorsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MaintenanceMonitorsResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
-func (r *MaintenanceMonitorsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MaintenanceMonitorsResource) Schema(
+	ctx context.Context,
+	req resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Associate monitors with a maintenance window",
 		Attributes: map[string]schema.Attribute{
@@ -58,7 +66,11 @@ func (r *MaintenanceMonitorsResource) Schema(ctx context.Context, req resource.S
 	}
 }
 
-func (r *MaintenanceMonitorsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MaintenanceMonitorsResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -68,7 +80,10 @@ func (r *MaintenanceMonitorsResource) Configure(ctx context.Context, req resourc
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -77,7 +92,11 @@ func (r *MaintenanceMonitorsResource) Configure(ctx context.Context, req resourc
 	r.client = client
 }
 
-func (r *MaintenanceMonitorsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *MaintenanceMonitorsResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MaintenanceMonitorsResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -128,7 +147,11 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceMonitorsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *MaintenanceMonitorsResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MaintenanceMonitorsResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -152,7 +175,11 @@ func (r *MaintenanceMonitorsResource) Update(ctx context.Context, req resource.U
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceMonitorsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *MaintenanceMonitorsResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MaintenanceMonitorsResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -168,7 +195,11 @@ func (r *MaintenanceMonitorsResource) Delete(ctx context.Context, req resource.D
 	}
 }
 
-func (r *MaintenanceMonitorsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MaintenanceMonitorsResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

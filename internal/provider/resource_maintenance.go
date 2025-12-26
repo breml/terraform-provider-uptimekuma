@@ -74,7 +74,11 @@ type MaintenanceResourceModel struct {
 	TimeslotList     types.List   `tfsdk:"timeslot_list"`
 }
 
-func (r *MaintenanceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MaintenanceResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
@@ -103,7 +107,14 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
 				Required:            true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("single", "recurring-interval", "recurring-weekday", "recurring-day-of-month", "cron", "manual"),
+					stringvalidator.OneOf(
+						"single",
+						"recurring-interval",
+						"recurring-weekday",
+						"recurring-day-of-month",
+						"cron",
+						"manual",
+					),
 				},
 			},
 			"active": schema.BoolAttribute{
@@ -227,7 +238,11 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func (r *MaintenanceResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MaintenanceResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -237,7 +252,10 @@ func (r *MaintenanceResource) Configure(ctx context.Context, req resource.Config
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -359,7 +377,12 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, data *MaintenanceResourceModel, m *maintenance.Maintenance, diags *diag.Diagnostics) error {
+func (r *MaintenanceResource) populateMaintenanceFromModel(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
 	strategy := data.Strategy.ValueString()
 
 	switch strategy {
@@ -388,7 +411,8 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 		}
 
 		m.DateRange = []*time.Time{nil, nil}
-		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
+		err := r.populateTimeRange(ctx, data, m, diags)
+		if err != nil {
 			return err
 		}
 
@@ -401,7 +425,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 			var weekdays []int64
 			diags.Append(data.Weekdays.ElementsAs(ctx, &weekdays, false)...)
 			if diags.HasError() {
-				return fmt.Errorf("invalid weekdays")
+				return errors.New("invalid weekdays")
 			}
 
 			m.Weekdays = make([]int, len(weekdays))
@@ -411,7 +435,8 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 		}
 
 		m.DateRange = []*time.Time{nil, nil}
-		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
+		err := r.populateTimeRange(ctx, data, m, diags)
+		if err != nil {
 			return err
 		}
 
@@ -424,17 +449,18 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 			var daysOfMonth []string
 			diags.Append(data.DaysOfMonth.ElementsAs(ctx, &daysOfMonth, false)...)
 			if diags.HasError() {
-				return fmt.Errorf("invalid days_of_month")
+				return errors.New("invalid days_of_month")
 			}
 
-			m.DaysOfMonth = make([]interface{}, len(daysOfMonth))
+			m.DaysOfMonth = make([]any, len(daysOfMonth))
 			for i, d := range daysOfMonth {
 				m.DaysOfMonth[i] = d
 			}
 		}
 
 		m.DateRange = []*time.Time{nil, nil}
-		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
+		err := r.populateTimeRange(ctx, data, m, diags)
+		if err != nil {
 			return err
 		}
 
@@ -463,18 +489,23 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 	return nil
 }
 
-func (r *MaintenanceResource) populateTimeRange(ctx context.Context, data *MaintenanceResourceModel, m *maintenance.Maintenance, diags *diag.Diagnostics) error {
+func (r *MaintenanceResource) populateTimeRange(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
 	if !data.StartTime.IsNull() && !data.EndTime.IsNull() {
 		var startTime TimeOfDayModel
 		diags.Append(data.StartTime.As(ctx, &startTime, basetypes.ObjectAsOptions{})...)
 		if diags.HasError() {
-			return fmt.Errorf("invalid start_time")
+			return errors.New("invalid start_time")
 		}
 
 		var endTime TimeOfDayModel
 		diags.Append(data.EndTime.As(ctx, &endTime, basetypes.ObjectAsOptions{})...)
 		if diags.HasError() {
-			return fmt.Errorf("invalid end_time")
+			return errors.New("invalid end_time")
 		}
 
 		m.TimeRange = []maintenance.TimeOfDay{
@@ -494,7 +525,12 @@ func (r *MaintenanceResource) populateTimeRange(ctx context.Context, data *Maint
 	return nil
 }
 
-func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, m *maintenance.Maintenance, data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+func (r *MaintenanceResource) populateModelFromMaintenance(
+	ctx context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
 	data.Title = types.StringValue(m.Title)
 	data.Description = types.StringValue(m.Description)
 	data.Strategy = types.StringValue(m.Strategy)
@@ -611,7 +647,11 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 	}
 }
 
-func (r *MaintenanceResource) populateModelTimeRange(m *maintenance.Maintenance, data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+func (r *MaintenanceResource) populateModelTimeRange(
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
 	if len(m.TimeRange) == 2 {
 		timeOfDayAttrTypes := map[string]attr.Type{
 			"hours":   types.Int64Type,
@@ -637,7 +677,11 @@ func (r *MaintenanceResource) populateModelTimeRange(m *maintenance.Maintenance,
 	}
 }
 
-func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (r *MaintenanceResource) ValidateConfig(
+	ctx context.Context,
+	req resource.ValidateConfigRequest,
+	resp *resource.ValidateConfigResponse,
+) {
 	var data MaintenanceResourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -728,7 +772,11 @@ func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.V
 	}
 }
 
-func (r *MaintenanceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MaintenanceResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

@@ -22,18 +22,31 @@ func TestAccMaintenanceStatusPagesResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMaintenanceStatusPagesResourceConfigSingle(maintenanceTitle, statusPageSlug1),
+				Config: testAccMaintenanceStatusPagesResourceConfigSingle(
+					maintenanceTitle,
+					statusPageSlug1,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(1),
+					),
 				},
 			},
 			{
-				Config: testAccMaintenanceStatusPagesResourceConfigMultiple(maintenanceTitle, statusPageSlug1, statusPageSlug2),
+				Config: testAccMaintenanceStatusPagesResourceConfigMultiple(
+					maintenanceTitle,
+					statusPageSlug1,
+					statusPageSlug2,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(2),
+					),
 				},
 			},
 		},
@@ -59,7 +72,9 @@ resource "uptimekuma_maintenance_status_pages" "test" {
 `, maintenanceTitle, statusPageSlug)
 }
 
-func testAccMaintenanceStatusPagesResourceConfigMultiple(maintenanceTitle, statusPageSlug1, statusPageSlug2 string) string {
+func testAccMaintenanceStatusPagesResourceConfigMultiple(
+	maintenanceTitle, statusPageSlug1, statusPageSlug2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -122,25 +137,42 @@ func TestAccMaintenanceStatusPagesResource_Update(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMaintenanceStatusPagesResourceConfigUpdateInitial(maintenanceTitle, statusPageSlug1, statusPageSlug2),
+				Config: testAccMaintenanceStatusPagesResourceConfigUpdateInitial(
+					maintenanceTitle,
+					statusPageSlug1,
+					statusPageSlug2,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(2),
+					),
 				},
 			},
 			{
-				Config: testAccMaintenanceStatusPagesResourceConfigUpdateChanged(maintenanceTitle, statusPageSlug1, statusPageSlug2, statusPageSlug3),
+				Config: testAccMaintenanceStatusPagesResourceConfigUpdateChanged(
+					maintenanceTitle,
+					statusPageSlug1,
+					statusPageSlug2,
+					statusPageSlug3,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(2),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMaintenanceStatusPagesResourceConfigUpdateInitial(maintenanceTitle, statusPageSlug1, statusPageSlug2 string) string {
+func testAccMaintenanceStatusPagesResourceConfigUpdateInitial(
+	maintenanceTitle, statusPageSlug1, statusPageSlug2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -167,7 +199,9 @@ resource "uptimekuma_maintenance_status_pages" "test" {
 `, maintenanceTitle, statusPageSlug1, statusPageSlug2)
 }
 
-func testAccMaintenanceStatusPagesResourceConfigUpdateChanged(maintenanceTitle, statusPageSlug1, statusPageSlug2, statusPageSlug3 string) string {
+func testAccMaintenanceStatusPagesResourceConfigUpdateChanged(
+	maintenanceTitle, statusPageSlug1, statusPageSlug2, statusPageSlug3 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -210,8 +244,11 @@ func TestAccMaintenanceStatusPagesResource_Empty(t *testing.T) {
 				Config:             testAccMaintenanceStatusPagesResourceConfigEmpty(maintenanceTitle),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(0)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(0),
+					),
 				},
 			},
 		},
@@ -241,19 +278,31 @@ func TestAccMaintenanceStatusPagesResource_WithScheduledMaintenance(t *testing.T
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMaintenanceStatusPagesResourceConfigWithScheduledMaintenance(maintenanceTitle, statusPageSlug),
+				Config: testAccMaintenanceStatusPagesResourceConfigWithScheduledMaintenance(
+					maintenanceTitle,
+					statusPageSlug,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("recurring-interval")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("recurring-interval"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(1),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMaintenanceStatusPagesResourceConfigWithScheduledMaintenance(maintenanceTitle, statusPageSlug string) string {
+func testAccMaintenanceStatusPagesResourceConfigWithScheduledMaintenance(
+	maintenanceTitle, statusPageSlug string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title        = %[1]q
@@ -297,13 +346,20 @@ func TestAccMaintenanceStatusPagesResource_Combined(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMaintenanceStatusPagesResourceConfigCombined(maintenanceTitle, monitorName, statusPageSlug),
+				Config: testAccMaintenanceStatusPagesResourceConfigCombined(
+					maintenanceTitle,
+					monitorName,
+					statusPageSlug,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_maintenance_monitors.test", tfjsonpath.New("monitor_ids"),
 						knownvalue.ListSizeExact(1)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(1),
+					),
 				},
 			},
 		},

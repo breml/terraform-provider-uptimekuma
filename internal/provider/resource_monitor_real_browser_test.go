@@ -25,21 +25,61 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 				Config:             testAccMonitorRealBrowserResourceConfig(name, url, 60, 48),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(48)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(48),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorRealBrowserResourceConfig(nameUpdated, urlUpdated, 120, 60),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("url"), knownvalue.StringExact(urlUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(urlUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -69,13 +109,24 @@ func TestAccMonitorRealBrowserResourceWithStatusCodes(t *testing.T) {
 			{
 				Config: testAccMonitorRealBrowserResourceConfigWithStatusCodes(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_real_browser.test", tfjsonpath.New("accepted_status_codes"),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("accepted_status_codes"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("200-299"),
 							knownvalue.StringExact("301"),
-						})),
+						}),
+					),
 				},
 			},
 		},

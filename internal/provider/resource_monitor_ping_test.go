@@ -23,25 +23,75 @@ func TestAccMonitorPingResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorPingResourceConfigWithDescription(name, hostname, description, 60, 56),
+				Config: testAccMonitorPingResourceConfigWithDescription(
+					name,
+					hostname,
+					description,
+					60,
+					56,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("hostname"), knownvalue.StringExact(hostname)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("packet_size"), knownvalue.Int64Exact(56)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact(hostname),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("packet_size"),
+						knownvalue.Int64Exact(56),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorPingResourceConfigWithDescription(nameUpdated, hostnameUpdated, "", 120, 64),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("hostname"), knownvalue.StringExact(hostnameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("packet_size"), knownvalue.Int64Exact(64)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_ping.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact(hostnameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("packet_size"),
+						knownvalue.Int64Exact(64),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -53,7 +103,10 @@ func TestAccMonitorPingResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorPingResourceConfigWithDescription(name, hostname, description string, interval, packetSize int64) string {
+func testAccMonitorPingResourceConfigWithDescription(
+	name, hostname, description string,
+	interval, packetSize int64,
+) string {
 	descField := ""
 	if description != "" {
 		descField = fmt.Sprintf("  description = %q", description)

@@ -30,15 +30,24 @@ type MonitorPostgresResource struct {
 
 type MonitorPostgresResourceModel struct {
 	MonitorBaseModel
+
 	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
 	DatabaseQuery            types.String `tfsdk:"database_query"`
 }
 
-func (r *MonitorPostgresResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MonitorPostgresResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_postgres"
 }
 
-func (r *MonitorPostgresResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorPostgresResource) Schema(
+	ctx context.Context,
+	req resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "PostgreSQL monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -57,7 +66,11 @@ func (r *MonitorPostgresResource) Schema(ctx context.Context, req resource.Schem
 	}
 }
 
-func (r *MonitorPostgresResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MonitorPostgresResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -67,7 +80,10 @@ func (r *MonitorPostgresResource) Configure(ctx context.Context, req resource.Co
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -76,7 +92,11 @@ func (r *MonitorPostgresResource) Configure(ctx context.Context, req resource.Co
 	r.client = client
 }
 
-func (r *MonitorPostgresResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *MonitorPostgresResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorPostgresResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -195,7 +215,11 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorPostgresResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *MonitorPostgresResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorPostgresResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -261,7 +285,11 @@ func (r *MonitorPostgresResource) Update(ctx context.Context, req resource.Updat
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorPostgresResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *MonitorPostgresResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorPostgresResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -277,7 +305,11 @@ func (r *MonitorPostgresResource) Delete(ctx context.Context, req resource.Delet
 	}
 }
 
-func (r *MonitorPostgresResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MonitorPostgresResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

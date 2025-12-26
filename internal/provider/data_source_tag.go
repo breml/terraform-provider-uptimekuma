@@ -27,7 +27,11 @@ type TagDataSourceModel struct {
 	Color types.String `tfsdk:"color"`
 }
 
-func (d *TagDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *TagDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
@@ -53,7 +57,11 @@ func (d *TagDataSource) Schema(ctx context.Context, req datasource.SchemaRequest
 	}
 }
 
-func (d *TagDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *TagDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -62,7 +70,10 @@ func (d *TagDataSource) Configure(ctx context.Context, req datasource.ConfigureR
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -112,7 +123,10 @@ func (d *TagDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 				if foundTag != nil {
 					resp.Diagnostics.AddError(
 						"Multiple tags found",
-						fmt.Sprintf("Multiple tags with name '%s' found. Please use 'id' to specify the tag uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple tags with name '%s' found. Please use 'id' to specify the tag uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}

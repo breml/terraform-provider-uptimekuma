@@ -97,7 +97,9 @@ func withHTTPMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string
 		ElementType:         types.StringType,
 		Optional:            true,
 		Computed:            true,
-		Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")})),
+		Default: listdefault.StaticValue(
+			types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")}),
+		),
 		PlanModifiers: []planmodifier.List{
 			listplanmodifier.UseStateForUnknown(),
 		},

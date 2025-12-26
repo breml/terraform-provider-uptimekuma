@@ -27,11 +27,19 @@ type MonitorHTTPJSONQueryDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *MonitorHTTPJSONQueryDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *MonitorHTTPJSONQueryDataSource) Schema(
+	ctx context.Context,
+	req datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get HTTP JSON Query monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +57,11 @@ func (d *MonitorHTTPJSONQueryDataSource) Schema(ctx context.Context, req datasou
 	}
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *MonitorHTTPJSONQueryDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +70,10 @@ func (d *MonitorHTTPJSONQueryDataSource) Configure(ctx context.Context, req data
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,7 +81,11 @@ func (d *MonitorHTTPJSONQueryDataSource) Configure(ctx context.Context, req data
 	d.client = client
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *MonitorHTTPJSONQueryDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorHTTPJSONQueryDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -100,7 +119,10 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasourc
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple monitors found",
-						fmt.Sprintf("Multiple HTTP JSON Query monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple HTTP JSON Query monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}

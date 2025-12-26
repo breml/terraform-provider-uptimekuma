@@ -21,30 +21,110 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorHTTPJSONQueryResourceConfig(name, url, "$.slideshow.author", "Yours Truly", "==", 60, 48),
+				Config: testAccMonitorHTTPJSONQueryResourceConfig(
+					name,
+					url,
+					"$.slideshow.author",
+					"Yours Truly",
+					"==",
+					60,
+					48,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path"), knownvalue.StringExact("$.slideshow.author")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("expected_value"), knownvalue.StringExact("Yours Truly")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path_operator"), knownvalue.StringExact("==")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(48)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path"),
+						knownvalue.StringExact("$.slideshow.author"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("expected_value"),
+						knownvalue.StringExact("Yours Truly"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path_operator"),
+						knownvalue.StringExact("=="),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(48),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorHTTPJSONQueryResourceConfig(nameUpdated, url, "$.slideshow.slides[0].title", "Wake up to WonderWidgets!", "contains", 120, 60),
+				Config: testAccMonitorHTTPJSONQueryResourceConfig(
+					nameUpdated,
+					url,
+					"$.slideshow.slides[0].title",
+					"Wake up to WonderWidgets!",
+					"contains",
+					120,
+					60,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path"), knownvalue.StringExact("$.slideshow.slides[0].title")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("expected_value"), knownvalue.StringExact("Wake up to WonderWidgets!")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path_operator"), knownvalue.StringExact("contains")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path"),
+						knownvalue.StringExact("$.slideshow.slides[0].title"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("expected_value"),
+						knownvalue.StringExact("Wake up to WonderWidgets!"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path_operator"),
+						knownvalue.StringExact("contains"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -56,7 +136,10 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPJSONQueryResourceConfig(name, url, jsonPath, expectedValue, operator string, interval, timeout int64) string {
+func testAccMonitorHTTPJSONQueryResourceConfig(
+	name, url, jsonPath, expectedValue, operator string,
+	interval, timeout int64,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name                = %[1]q
@@ -80,13 +163,38 @@ func TestAccMonitorHTTPJSONQueryResourceWithDefaultOperator(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorHTTPJSONQueryResourceConfigWithDefaultOperator(name, url, "$.slideshow.author", "Yours Truly"),
+				Config: testAccMonitorHTTPJSONQueryResourceConfigWithDefaultOperator(
+					name,
+					url,
+					"$.slideshow.author",
+					"Yours Truly",
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path"), knownvalue.StringExact("$.slideshow.author")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("expected_value"), knownvalue.StringExact("Yours Truly")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path_operator"), knownvalue.StringExact("==")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path"),
+						knownvalue.StringExact("$.slideshow.author"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("expected_value"),
+						knownvalue.StringExact("Yours Truly"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path_operator"),
+						knownvalue.StringExact("=="),
+					),
 				},
 			},
 		},
@@ -115,15 +223,50 @@ func TestAccMonitorHTTPJSONQueryResourceWithAuth(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorHTTPJSONQueryResourceConfigWithAuth(name, url, jsonPath, expectedValue, "user", "pass"),
+				Config: testAccMonitorHTTPJSONQueryResourceConfigWithAuth(
+					name,
+					url,
+					jsonPath,
+					expectedValue,
+					"user",
+					"pass",
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path"), knownvalue.StringExact(jsonPath)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("expected_value"), knownvalue.StringExact(expectedValue)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("auth_method"), knownvalue.StringExact("basic")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("basic_auth_user"), knownvalue.StringExact("user")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("basic_auth_pass"), knownvalue.StringExact("pass")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path"),
+						knownvalue.StringExact(jsonPath),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("expected_value"),
+						knownvalue.StringExact(expectedValue),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("auth_method"),
+						knownvalue.StringExact("basic"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("basic_auth_user"),
+						knownvalue.StringExact("user"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("basic_auth_pass"),
+						knownvalue.StringExact("pass"),
+					),
 				},
 			},
 		},
@@ -157,15 +300,34 @@ func TestAccMonitorHTTPJSONQueryResourceWithStatusCodes(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPJSONQueryResourceConfigWithStatusCodes(name, url, jsonPath, expectedValue),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("json_path"), knownvalue.StringExact(jsonPath)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("expected_value"), knownvalue.StringExact(expectedValue)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_json_query.test", tfjsonpath.New("accepted_status_codes"),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path"),
+						knownvalue.StringExact(jsonPath),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("expected_value"),
+						knownvalue.StringExact(expectedValue),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("accepted_status_codes"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("200-299"),
 							knownvalue.StringExact("301"),
-						})),
+						}),
+					),
 				},
 			},
 		},

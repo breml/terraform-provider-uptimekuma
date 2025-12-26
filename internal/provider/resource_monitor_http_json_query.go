@@ -33,16 +33,25 @@ type MonitorHTTPJSONQueryResource struct {
 type MonitorHTTPJSONQueryResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
+
 	JSONPath         types.String `tfsdk:"json_path"`
 	ExpectedValue    types.String `tfsdk:"expected_value"`
 	JSONPathOperator types.String `tfsdk:"json_path_operator"`
 }
 
-func (r *MonitorHTTPJSONQueryResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MonitorHTTPJSONQueryResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
-func (r *MonitorHTTPJSONQueryResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorHTTPJSONQueryResource) Schema(
+	ctx context.Context,
+	req resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The HTTP JSON Query monitor allows you to monitor an HTTP endpoint by querying its JSON response using a JSONPath expression. This monitor extracts a value from the JSON response at the specified path and compares it to an expected value using a configurable comparison operator.",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
@@ -70,7 +79,11 @@ func (r *MonitorHTTPJSONQueryResource) Schema(ctx context.Context, req resource.
 	}
 }
 
-func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MonitorHTTPJSONQueryResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -80,7 +93,10 @@ func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resour
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -89,7 +105,11 @@ func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resour
 	r.client = client
 }
 
-func (r *MonitorHTTPJSONQueryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *MonitorHTTPJSONQueryResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -193,7 +213,11 @@ func (r *MonitorHTTPJSONQueryResource) Create(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *MonitorHTTPJSONQueryResource) Read(
+	ctx context.Context,
+	req resource.ReadRequest,
+	resp *resource.ReadResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -290,7 +314,11 @@ func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.Re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *MonitorHTTPJSONQueryResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -399,7 +427,11 @@ func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPJSONQueryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *MonitorHTTPJSONQueryResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -415,7 +447,11 @@ func (r *MonitorHTTPJSONQueryResource) Delete(ctx context.Context, req resource.
 	}
 }
 
-func (r *MonitorHTTPJSONQueryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MonitorHTTPJSONQueryResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

@@ -24,18 +24,46 @@ func TestAccNotificationWebhookResource(t *testing.T) {
 			{
 				Config: testAccNotificationWebhookResourceConfig(name, webhookURL, "json", ""),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURL)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_content_type"), knownvalue.StringExact("json")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURL),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_content_type"),
+						knownvalue.StringExact("json"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccNotificationWebhookResourceConfig(nameUpdated, webhookURLUpdated, "form-data", ""),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURLUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_content_type"), knownvalue.StringExact("form-data")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURLUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_content_type"),
+						knownvalue.StringExact("form-data"),
+					),
 				},
 			},
 		},
@@ -53,9 +81,21 @@ func TestAccNotificationWebhookResource_WithHeaders(t *testing.T) {
 			{
 				Config: testAccNotificationWebhookResourceConfigWithHeaders(name, webhookURL),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURL)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_content_type"), knownvalue.StringExact("json")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURL),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_content_type"),
+						knownvalue.StringExact("json"),
+					),
 				},
 			},
 		},
@@ -73,9 +113,21 @@ func TestAccNotificationWebhookResource_CustomBody(t *testing.T) {
 			{
 				Config: testAccNotificationWebhookResourceConfigWithCustomBody(name, webhookURL),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURL)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_webhook.test", tfjsonpath.New("webhook_content_type"), knownvalue.StringExact("custom")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURL),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_webhook.test",
+						tfjsonpath.New("webhook_content_type"),
+						knownvalue.StringExact("custom"),
+					),
 				},
 			},
 		},

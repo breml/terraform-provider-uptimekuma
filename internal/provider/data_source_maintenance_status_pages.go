@@ -26,11 +26,19 @@ type MaintenanceStatusPagesDataSourceModel struct {
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
-func (d *MaintenanceStatusPagesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *MaintenanceStatusPagesDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
-func (d *MaintenanceStatusPagesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *MaintenanceStatusPagesDataSource) Schema(
+	ctx context.Context,
+	req datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get status pages associated with a maintenance window",
 		Attributes: map[string]schema.Attribute{
@@ -47,7 +55,11 @@ func (d *MaintenanceStatusPagesDataSource) Schema(ctx context.Context, req datas
 	}
 }
 
-func (d *MaintenanceStatusPagesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *MaintenanceStatusPagesDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -56,7 +68,10 @@ func (d *MaintenanceStatusPagesDataSource) Configure(ctx context.Context, req da
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -64,7 +79,11 @@ func (d *MaintenanceStatusPagesDataSource) Configure(ctx context.Context, req da
 	d.client = client
 }
 
-func (d *MaintenanceStatusPagesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *MaintenanceStatusPagesDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MaintenanceStatusPagesDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)

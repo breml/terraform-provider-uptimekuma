@@ -22,27 +22,93 @@ func TestAccMonitorDNSResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorDNSResourceConfig(name, description, "example.com", "A", "1.1.1.1", 53),
+				Config: testAccMonitorDNSResourceConfig(
+					name,
+					description,
+					"example.com",
+					"A",
+					"1.1.1.1",
+					53,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("hostname"), knownvalue.StringExact("example.com")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_type"), knownvalue.StringExact("A")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_server"), knownvalue.StringExact("1.1.1.1")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("port"), knownvalue.Int64Exact(53)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_type"),
+						knownvalue.StringExact("A"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_server"),
+						knownvalue.StringExact("1.1.1.1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(53),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorDNSResourceConfig(nameUpdated, descriptionUpdated, "google.com", "AAAA", "8.8.8.8", 53),
+				Config: testAccMonitorDNSResourceConfig(
+					nameUpdated,
+					descriptionUpdated,
+					"google.com",
+					"AAAA",
+					"8.8.8.8",
+					53,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("description"), knownvalue.StringExact(descriptionUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("hostname"), knownvalue.StringExact("google.com")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_type"), knownvalue.StringExact("AAAA")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_server"), knownvalue.StringExact("8.8.8.8")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(descriptionUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("google.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_type"),
+						knownvalue.StringExact("AAAA"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_server"),
+						knownvalue.StringExact("8.8.8.8"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -78,15 +144,51 @@ func TestAccMonitorDNSResourceMinimal(t *testing.T) {
 			{
 				Config: testAccMonitorDNSResourceConfigMinimal(name, "example.com"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("hostname"), knownvalue.StringExact("example.com")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_type"), knownvalue.StringExact("A")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_server"), knownvalue.StringExact("1.1.1.1")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("port"), knownvalue.Int64Exact(53)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("retry_interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("max_retries"), knownvalue.Int64Exact(3)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_type"),
+						knownvalue.StringExact("A"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_server"),
+						knownvalue.StringExact("1.1.1.1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(53),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -113,18 +215,66 @@ func TestAccMonitorDNSResourceWithAllOptions(t *testing.T) {
 			{
 				Config: testAccMonitorDNSResourceConfigWithAllOptions(name, description),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("hostname"), knownvalue.StringExact("example.com")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_type"), knownvalue.StringExact("MX")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_server"), knownvalue.StringExact("8.8.8.8")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("port"), knownvalue.Int64Exact(53)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("retry_interval"), knownvalue.Int64Exact(90)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("resend_interval"), knownvalue.Int64Exact(0)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("max_retries"), knownvalue.Int64Exact(5)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("upside_down"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("active"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_type"),
+						knownvalue.StringExact("MX"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_server"),
+						knownvalue.StringExact("8.8.8.8"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(53),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(90),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("resend_interval"),
+						knownvalue.Int64Exact(0),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(5),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("upside_down"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
@@ -164,9 +314,21 @@ func TestAccMonitorDNSResourceDifferentRecordTypes(t *testing.T) {
 					{
 						Config: testAccMonitorDNSResourceConfigRecordType(name, "example.com", recordType),
 						ConfigStateChecks: []statecheck.StateCheck{
-							statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-							statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("hostname"), knownvalue.StringExact("example.com")),
-							statecheck.ExpectKnownValue("uptimekuma_monitor_dns.test", tfjsonpath.New("dns_resolve_type"), knownvalue.StringExact(recordType)),
+							statecheck.ExpectKnownValue(
+								"uptimekuma_monitor_dns.test",
+								tfjsonpath.New("name"),
+								knownvalue.StringExact(name),
+							),
+							statecheck.ExpectKnownValue(
+								"uptimekuma_monitor_dns.test",
+								tfjsonpath.New("hostname"),
+								knownvalue.StringExact("example.com"),
+							),
+							statecheck.ExpectKnownValue(
+								"uptimekuma_monitor_dns.test",
+								tfjsonpath.New("dns_resolve_type"),
+								knownvalue.StringExact(recordType),
+							),
 						},
 					},
 				},

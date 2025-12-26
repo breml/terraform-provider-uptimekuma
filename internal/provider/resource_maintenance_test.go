@@ -23,19 +23,51 @@ func TestAccMaintenanceResource_Single(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigSingle(title, "Test single maintenance", true),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("description"), knownvalue.StringExact("Test single maintenance")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("single")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("timezone"), knownvalue.StringExact("UTC")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact("Test single maintenance"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("single"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("timezone"),
+						knownvalue.StringExact("UTC"),
+					),
 				},
 			},
 			{
 				Config: testAccMaintenanceResourceConfigSingle(titleUpdated, "Updated description", false),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(titleUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("description"), knownvalue.StringExact("Updated description")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(titleUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact("Updated description"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
@@ -67,16 +99,36 @@ func TestAccMaintenanceResource_RecurringInterval(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigRecurringInterval(title, 7),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("recurring-interval")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("interval_day"), knownvalue.Int64Exact(7)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("recurring-interval"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("interval_day"),
+						knownvalue.Int64Exact(7),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMaintenanceResourceConfigRecurringInterval(title, 14),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("interval_day"), knownvalue.Int64Exact(14)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("interval_day"),
+						knownvalue.Int64Exact(14),
+					),
 				},
 			},
 		},
@@ -117,15 +169,27 @@ func TestAccMaintenanceResource_RecurringWeekday(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigRecurringWeekday(title),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("recurring-weekday")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("recurring-weekday"),
+					),
 					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("weekdays"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.Int64Exact(1),
 							knownvalue.Int64Exact(3),
 							knownvalue.Int64Exact(5),
 						})),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -166,15 +230,27 @@ func TestAccMaintenanceResource_RecurringDayOfMonth(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigRecurringDayOfMonth(title),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("recurring-day-of-month")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("recurring-day-of-month"),
+					),
 					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("days_of_month"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("1"),
 							knownvalue.StringExact("15"),
 							knownvalue.StringExact("lastDay1"),
 						})),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -215,18 +291,46 @@ func TestAccMaintenanceResource_Cron(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigCron(title, "0 2 * * *", 120),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("cron")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("cron"), knownvalue.StringExact("0 2 * * *")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("duration_minutes"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("cron"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("cron"),
+						knownvalue.StringExact("0 2 * * *"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("duration_minutes"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMaintenanceResourceConfigCron(title, "0 3 * * *", 60),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("cron"), knownvalue.StringExact("0 3 * * *")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("duration_minutes"), knownvalue.Int64Exact(60)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("cron"),
+						knownvalue.StringExact("0 3 * * *"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("duration_minutes"),
+						knownvalue.Int64Exact(60),
+					),
 				},
 			},
 		},
@@ -258,9 +362,21 @@ func TestAccMaintenanceResource_Manual(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigManual(title),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("manual")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("manual"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -290,14 +406,26 @@ func TestAccMaintenanceResource_WithTimezone(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigWithTimezone(title, "America/New_York"),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("timezone"), knownvalue.StringExact("America/New_York")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("timezone"),
+						knownvalue.StringExact("America/New_York"),
+					),
 				},
 			},
 			{
 				Config: testAccMaintenanceResourceConfigWithTimezone(title, "Europe/London"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("timezone"), knownvalue.StringExact("Europe/London")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("timezone"),
+						knownvalue.StringExact("Europe/London"),
+					),
 				},
 			},
 		},
@@ -329,11 +457,31 @@ func TestAccMaintenanceResource_Minimal(t *testing.T) {
 				Config:             testAccMaintenanceResourceConfigMinimal(title),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("strategy"), knownvalue.StringExact("manual")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("timezone"), knownvalue.StringExact("UTC")),
-					statecheck.ExpectKnownValue("uptimekuma_maintenance.test", tfjsonpath.New("description"), knownvalue.StringExact("")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("strategy"),
+						knownvalue.StringExact("manual"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("timezone"),
+						knownvalue.StringExact("UTC"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_maintenance.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(""),
+					),
 				},
 			},
 		},

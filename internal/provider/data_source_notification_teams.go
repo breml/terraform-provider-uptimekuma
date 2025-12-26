@@ -26,11 +26,19 @@ type NotificationTeamsDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationTeamsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *NotificationTeamsDataSource) Metadata(
+	ctx context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_teams"
 }
 
-func (d *NotificationTeamsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *NotificationTeamsDataSource) Schema(
+	ctx context.Context,
+	req datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Microsoft Teams notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +56,11 @@ func (d *NotificationTeamsDataSource) Schema(ctx context.Context, req datasource
 	}
 }
 
-func (d *NotificationTeamsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *NotificationTeamsDataSource) Configure(
+	ctx context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +69,10 @@ func (d *NotificationTeamsDataSource) Configure(ctx context.Context, req datasou
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +80,11 @@ func (d *NotificationTeamsDataSource) Configure(ctx context.Context, req datasou
 	d.client = client
 }
 
-func (d *NotificationTeamsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *NotificationTeamsDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationTeamsDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -81,7 +100,10 @@ func (d *NotificationTeamsDataSource) Read(ctx context.Context, req datasource.R
 		}
 
 		if notification.Type() != "teams" {
-			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Microsoft Teams notification")
+			resp.Diagnostics.AddError(
+				"Incorrect notification type",
+				"Notification is not a Microsoft Teams notification",
+			)
 			return
 		}
 
@@ -103,7 +125,10 @@ func (d *NotificationTeamsDataSource) Read(ctx context.Context, req datasource.R
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
-						fmt.Sprintf("Multiple Microsoft Teams notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple Microsoft Teams notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}

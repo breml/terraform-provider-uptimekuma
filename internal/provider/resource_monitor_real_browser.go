@@ -37,6 +37,7 @@ type MonitorRealBrowserResource struct {
 
 type MonitorRealBrowserResourceModel struct {
 	MonitorBaseModel
+
 	URL                 types.String `tfsdk:"url"`
 	Timeout             types.Int64  `tfsdk:"timeout"`
 	IgnoreTLS           types.Bool   `tfsdk:"ignore_tls"`
@@ -46,11 +47,19 @@ type MonitorRealBrowserResourceModel struct {
 	RemoteBrowser       types.Int64  `tfsdk:"remote_browser"`
 }
 
-func (r *MonitorRealBrowserResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MonitorRealBrowserResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
-func (r *MonitorRealBrowserResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorRealBrowserResource) Schema(
+	ctx context.Context,
+	req resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Real Browser monitor resource",
 		Attributes:          withMonitorBaseAttributes(withRealBrowserMonitorAttributes(map[string]schema.Attribute{})),
@@ -95,7 +104,9 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 		ElementType:         types.StringType,
 		Optional:            true,
 		Computed:            true,
-		Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")})),
+		Default: listdefault.StaticValue(
+			types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")}),
+		),
 		PlanModifiers: []planmodifier.List{
 			listplanmodifier.UseStateForUnknown(),
 		},
@@ -114,7 +125,11 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	return attrs
 }
 
-func (r *MonitorRealBrowserResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MonitorRealBrowserResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -124,7 +139,10 @@ func (r *MonitorRealBrowserResource) Configure(ctx context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -133,7 +151,11 @@ func (r *MonitorRealBrowserResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *MonitorRealBrowserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *MonitorRealBrowserResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorRealBrowserResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -301,7 +323,11 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorRealBrowserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *MonitorRealBrowserResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorRealBrowserResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -392,7 +418,11 @@ func (r *MonitorRealBrowserResource) Update(ctx context.Context, req resource.Up
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorRealBrowserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *MonitorRealBrowserResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorRealBrowserResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -408,7 +438,11 @@ func (r *MonitorRealBrowserResource) Delete(ctx context.Context, req resource.De
 	}
 }
 
-func (r *MonitorRealBrowserResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MonitorRealBrowserResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

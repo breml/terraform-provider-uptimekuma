@@ -26,26 +26,86 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 				Config:             testAccMonitorHTTPKeywordResourceConfig(name, url, keyword, false, 60, 48),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("keyword"), knownvalue.StringExact(keyword)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("invert_keyword"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("method"), knownvalue.StringExact("GET")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(48)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("keyword"),
+						knownvalue.StringExact(keyword),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("invert_keyword"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("method"),
+						knownvalue.StringExact("GET"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(48),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorHTTPKeywordResourceConfig(nameUpdated, url, keywordUpdated, false, 120, 60),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("keyword"), knownvalue.StringExact(keywordUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("invert_keyword"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("keyword"),
+						knownvalue.StringExact(keywordUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("invert_keyword"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -57,7 +117,11 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPKeywordResourceConfig(name, url, keyword string, invertKeyword bool, interval, timeout int64) string { //nolint:unparam
+func testAccMonitorHTTPKeywordResourceConfig(
+	name, url, keyword string,
+	invertKeyword bool,
+	interval, timeout int64,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name           = %[1]q
@@ -83,10 +147,26 @@ func TestAccMonitorHTTPKeywordResourceWithInvert(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPKeywordResourceConfig(name, url, keyword, true, 60, 48),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("keyword"), knownvalue.StringExact(keyword)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("invert_keyword"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("keyword"),
+						knownvalue.StringExact(keyword),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("invert_keyword"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -105,12 +185,36 @@ func TestAccMonitorHTTPKeywordResourceWithAuth(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPKeywordResourceConfigWithAuth(name, url, keyword, "user", "pass"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("keyword"), knownvalue.StringExact(keyword)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("auth_method"), knownvalue.StringExact("basic")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("basic_auth_user"), knownvalue.StringExact("user")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("basic_auth_pass"), knownvalue.StringExact("pass")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("keyword"),
+						knownvalue.StringExact(keyword),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("auth_method"),
+						knownvalue.StringExact("basic"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("basic_auth_user"),
+						knownvalue.StringExact("user"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("basic_auth_pass"),
+						knownvalue.StringExact("pass"),
+					),
 				},
 			},
 		},
@@ -142,14 +246,29 @@ func TestAccMonitorHTTPKeywordResourceWithStatusCodes(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPKeywordResourceConfigWithStatusCodes(name, url, keyword),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("keyword"), knownvalue.StringExact(keyword)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http_keyword.test", tfjsonpath.New("accepted_status_codes"),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("keyword"),
+						knownvalue.StringExact(keyword),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("accepted_status_codes"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("200-299"),
 							knownvalue.StringExact("301"),
-						})),
+						}),
+					),
 				},
 			},
 		},

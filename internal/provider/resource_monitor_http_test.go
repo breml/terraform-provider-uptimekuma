@@ -25,23 +25,71 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 				Config:             testAccMonitorHTTPResourceConfig(name, url, "GET", 60, 48),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("method"), knownvalue.StringExact("GET")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(48)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("method"),
+						knownvalue.StringExact("GET"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(48),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorHTTPResourceConfig(nameUpdated, urlUpdated, "POST", 120, 60),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(urlUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("method"), knownvalue.StringExact("POST")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("timeout"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(urlUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("method"),
+						knownvalue.StringExact("POST"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -77,11 +125,31 @@ func TestAccMonitorHTTPResourceWithAuth(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPResourceConfigWithAuth(name, url, "user", "pass"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("auth_method"), knownvalue.StringExact("basic")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("basic_auth_user"), knownvalue.StringExact("user")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("basic_auth_pass"), knownvalue.StringExact("pass")),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("auth_method"),
+						knownvalue.StringExact("basic"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("basic_auth_user"),
+						knownvalue.StringExact("user"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("basic_auth_pass"),
+						knownvalue.StringExact("pass"),
+					),
 				},
 			},
 		},
@@ -111,8 +179,16 @@ func TestAccMonitorHTTPResourceWithStatusCodes(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPResourceConfigWithStatusCodes(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("accepted_status_codes"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("200-299"),

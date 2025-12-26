@@ -21,7 +21,11 @@ func TestAccProxyDataSourceByID(t *testing.T) {
 			{
 				Config: testAccProxyDataSourceConfigByID(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_proxy.test", tfjsonpath.New("host"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_proxy.test",
+						tfjsonpath.New("host"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},

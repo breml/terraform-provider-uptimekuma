@@ -34,13 +34,18 @@ type MonitorDNSResource struct {
 
 type MonitorDNSResourceModel struct {
 	MonitorBaseModel
+
 	Hostname         types.String `tfsdk:"hostname"`
 	DNSResolveServer types.String `tfsdk:"dns_resolve_server"`
 	DNSResolveType   types.String `tfsdk:"dns_resolve_type"`
 	Port             types.Int64  `tfsdk:"port"`
 }
 
-func (r *MonitorDNSResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *MonitorDNSResource) Metadata(
+	ctx context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
@@ -80,7 +85,11 @@ func (r *MonitorDNSResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func (r *MonitorDNSResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *MonitorDNSResource) Configure(
+	ctx context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -90,7 +99,10 @@ func (r *MonitorDNSResource) Configure(ctx context.Context, req resource.Configu
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -306,7 +318,11 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
-func (r *MonitorDNSResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *MonitorDNSResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
