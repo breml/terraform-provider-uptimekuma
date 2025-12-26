@@ -116,6 +116,7 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 			resp.State.RemoveResource(ctx)
 			return
 		}
+
 		resp.Diagnostics.AddError("failed to read monitor maintenance", err.Error())
 		return
 	}

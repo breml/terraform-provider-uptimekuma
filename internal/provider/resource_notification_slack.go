@@ -184,12 +184,15 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	if slack.Username != "" {
 		data.Username = types.StringValue(slack.Username)
 	}
+
 	if slack.IconEmoji != "" {
 		data.IconEmoji = types.StringValue(slack.IconEmoji)
 	}
+
 	if slack.Channel != "" {
 		data.Channel = types.StringValue(slack.Channel)
 	}
+
 	data.RichMessage = types.BoolValue(slack.RichMessage)
 	data.ChannelNotify = types.BoolValue(slack.ChannelNotify)
 

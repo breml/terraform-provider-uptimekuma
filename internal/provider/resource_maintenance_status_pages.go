@@ -116,6 +116,7 @@ func (r *MaintenanceStatusPagesResource) Read(ctx context.Context, req resource.
 			resp.State.RemoveResource(ctx)
 			return
 		}
+
 		resp.Diagnostics.AddError("failed to read maintenance status pages", err.Error())
 		return
 	}

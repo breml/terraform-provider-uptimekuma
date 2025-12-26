@@ -87,6 +87,7 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 			resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(httpMonitor.Name)
 		data.URL = types.StringValue(httpMonitor.URL)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -111,12 +112,14 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 					)
 					return
 				}
+
 				var httpMon monitor.HTTP
 				err := m.As(&httpMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &httpMon
 			}
 		}

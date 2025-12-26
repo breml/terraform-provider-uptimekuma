@@ -79,10 +79,12 @@ func (d *NotificationWebhookDataSource) Read(ctx context.Context, req datasource
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		if notification.Type() != "webhook" {
 			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Webhook notification")
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -105,6 +107,7 @@ func (d *NotificationWebhookDataSource) Read(ctx context.Context, req datasource
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

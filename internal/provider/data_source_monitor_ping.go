@@ -86,6 +86,7 @@ func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadReq
 			resp.Diagnostics.AddError("failed to read PING monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(pingMonitor.Name)
 		data.Hostname = types.StringValue(pingMonitor.Hostname)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -109,12 +110,14 @@ func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadReq
 					)
 					return
 				}
+
 				var pingMon monitor.Ping
 				err := m.As(&pingMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &pingMon
 			}
 		}

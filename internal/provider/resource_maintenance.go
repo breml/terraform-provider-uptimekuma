@@ -294,6 +294,7 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 			resp.State.RemoveResource(ctx)
 			return
 		}
+
 		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
 		return
 	}
@@ -368,12 +369,15 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 			if err != nil {
 				return fmt.Errorf("invalid start_date: %w", err)
 			}
+
 			endDate, err := time.Parse(time.RFC3339, data.EndDate.ValueString())
 			if err != nil {
 				return fmt.Errorf("invalid end_date: %w", err)
 			}
+
 			m.DateRange = []*time.Time{&startDate, &endDate}
 		}
+
 		if !data.Timezone.IsNull() {
 			m.TimezoneOption = data.Timezone.ValueString()
 		}
@@ -382,10 +386,12 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 		if !data.IntervalDay.IsNull() {
 			m.IntervalDay = int(data.IntervalDay.ValueInt64())
 		}
+
 		m.DateRange = []*time.Time{nil, nil}
 		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
 			return err
 		}
+
 		if !data.Timezone.IsNull() {
 			m.TimezoneOption = data.Timezone.ValueString()
 		}
@@ -397,15 +403,18 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 			if diags.HasError() {
 				return fmt.Errorf("invalid weekdays")
 			}
+
 			m.Weekdays = make([]int, len(weekdays))
 			for i, w := range weekdays {
 				m.Weekdays[i] = int(w)
 			}
 		}
+
 		m.DateRange = []*time.Time{nil, nil}
 		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
 			return err
 		}
+
 		if !data.Timezone.IsNull() {
 			m.TimezoneOption = data.Timezone.ValueString()
 		}
@@ -417,15 +426,18 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 			if diags.HasError() {
 				return fmt.Errorf("invalid days_of_month")
 			}
+
 			m.DaysOfMonth = make([]interface{}, len(daysOfMonth))
 			for i, d := range daysOfMonth {
 				m.DaysOfMonth[i] = d
 			}
 		}
+
 		m.DateRange = []*time.Time{nil, nil}
 		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
 			return err
 		}
+
 		if !data.Timezone.IsNull() {
 			m.TimezoneOption = data.Timezone.ValueString()
 		}
@@ -434,9 +446,11 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, 
 		if !data.Cron.IsNull() {
 			m.Cron = data.Cron.ValueString()
 		}
+
 		if !data.DurationMinutes.IsNull() {
 			m.DurationMinutes = int(data.DurationMinutes.ValueInt64())
 		}
+
 		m.DateRange = []*time.Time{nil, nil}
 		if !data.Timezone.IsNull() {
 			m.TimezoneOption = data.Timezone.ValueString()
@@ -476,6 +490,7 @@ func (r *MaintenanceResource) populateTimeRange(ctx context.Context, data *Maint
 			},
 		}
 	}
+
 	return nil
 }
 
@@ -524,6 +539,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 		if m.IntervalDay > 0 {
 			data.IntervalDay = types.Int64Value(int64(m.IntervalDay))
 		}
+
 		r.populateModelTimeRange(m, data, diags)
 
 	case "recurring-weekday":
@@ -532,10 +548,12 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 			for i, w := range m.Weekdays {
 				weekdays[i] = int64(w)
 			}
+
 			listValue, d := types.ListValueFrom(ctx, types.Int64Type, weekdays)
 			diags.Append(d...)
 			data.Weekdays = listValue
 		}
+
 		r.populateModelTimeRange(m, data, diags)
 
 	case "recurring-day-of-month":
@@ -544,10 +562,12 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 			for i, d := range m.DaysOfMonth {
 				daysOfMonth[i] = fmt.Sprintf("%v", d)
 			}
+
 			listValue, d := types.ListValueFrom(ctx, types.StringType, daysOfMonth)
 			diags.Append(d...)
 			data.DaysOfMonth = listValue
 		}
+
 		r.populateModelTimeRange(m, data, diags)
 
 	case "cron":
@@ -646,6 +666,7 @@ func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.V
 				"interval_day is required for recurring-interval strategy",
 			)
 		}
+
 		if data.StartTime.IsNull() || data.EndTime.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("strategy"),
@@ -662,6 +683,7 @@ func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.V
 				"weekdays is required for recurring-weekday strategy",
 			)
 		}
+
 		if data.StartTime.IsNull() || data.EndTime.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("strategy"),
@@ -678,6 +700,7 @@ func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.V
 				"days_of_month is required for recurring-day-of-month strategy",
 			)
 		}
+
 		if data.StartTime.IsNull() || data.EndTime.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("strategy"),
@@ -694,6 +717,7 @@ func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.V
 				"cron is required for cron strategy",
 			)
 		}
+
 		if data.DurationMinutes.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("strategy"),

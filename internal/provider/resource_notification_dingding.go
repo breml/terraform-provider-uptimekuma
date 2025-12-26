@@ -164,6 +164,7 @@ func (r *NotificationDingDingResource) Read(ctx context.Context, req resource.Re
 	} else {
 		data.SecretKey = types.StringNull()
 	}
+
 	if dingding.Mentioning != "" {
 		data.Mentioning = types.StringValue(dingding.Mentioning)
 	} else {

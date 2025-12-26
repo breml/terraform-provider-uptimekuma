@@ -81,6 +81,7 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasourc
 			resp.Diagnostics.AddError("failed to read HTTP JSON Query monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(httpJSONMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasourc
 					)
 					return
 				}
+
 				var httpJSONMon monitor.HTTPJSONQuery
 				err := m.As(&httpJSONMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &httpJSONMon
 			}
 		}

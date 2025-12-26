@@ -132,9 +132,11 @@ func TestPool_ConcurrentRelease(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+
 			pool.Release()
 		}()
 	}
+
 	wg.Wait()
 
 	if pool.RefCount() != 0 {

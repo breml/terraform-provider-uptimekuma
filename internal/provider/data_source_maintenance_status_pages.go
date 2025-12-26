@@ -83,6 +83,7 @@ func (d *MaintenanceStatusPagesDataSource) Read(ctx context.Context, req datasou
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 	data.StatusPageIDs = listValue
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

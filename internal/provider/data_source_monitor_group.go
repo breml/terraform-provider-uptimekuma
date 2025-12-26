@@ -81,6 +81,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 			resp.Diagnostics.AddError("failed to read monitor group", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(groupMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 					)
 					return
 				}
+
 				var groupMon monitor.Group
 				err := m.As(&groupMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &groupMon
 			}
 		}

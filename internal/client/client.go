@@ -66,6 +66,7 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("connection cancelled: %w", ctx.Err())
+
 		case <-time.After(sleepDuration):
 			// Continue retry
 		}

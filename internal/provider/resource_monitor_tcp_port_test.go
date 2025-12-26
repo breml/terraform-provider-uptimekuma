@@ -60,6 +60,7 @@ func testAccMonitorTCPPortResourceConfigWithDescription(name, hostname string, p
 	if description != "" {
 		descField = fmt.Sprintf("  description = %q", description)
 	}
+
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tcp_port" "test" {
   name     = %[1]q

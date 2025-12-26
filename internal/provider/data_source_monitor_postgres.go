@@ -81,6 +81,7 @@ func (d *MonitorPostgresDataSource) Read(ctx context.Context, req datasource.Rea
 			resp.Diagnostics.AddError("failed to read PostgreSQL monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(postgresMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorPostgresDataSource) Read(ctx context.Context, req datasource.Rea
 					)
 					return
 				}
+
 				var postgresMon monitor.Postgres
 				err := m.As(&postgresMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &postgresMon
 			}
 		}

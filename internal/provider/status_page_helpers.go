@@ -42,6 +42,7 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 		if group.ID.IsUnknown() {
 			groups[i].ID = types.Int64Null()
 		}
+
 		// handle monitors
 		if !group.MonitorList.IsNull() {
 			var mons []PublicMonitorModel
@@ -54,14 +55,17 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 					},
 				})
 			}
+
 			for j := range mons {
 				if mons[j].ID.IsUnknown() {
 					mons[j].ID = types.Int64Null()
 				}
+
 				if mons[j].SendURL.IsUnknown() {
 					mons[j].SendURL = types.BoolNull()
 				}
 			}
+
 			monList, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, mons)
 			diags.Append(d...)
 			if diags.HasError() {
@@ -72,6 +76,7 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 					},
 				})
 			}
+
 			groups[i].MonitorList = monList
 		}
 	}
@@ -145,6 +150,7 @@ func buildPublicGroupListFromSaved(ctx context.Context, saved []statuspage.Publi
 			if diags.HasError() {
 				return types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
 			}
+
 			groups[i].MonitorList = monList
 		} else {
 			// No monitors returned by server - set to empty list for clarity
@@ -153,6 +159,7 @@ func buildPublicGroupListFromSaved(ctx context.Context, saved []statuspage.Publi
 			if diags.HasError() {
 				return types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
 			}
+
 			groups[i].MonitorList = emptyMonList
 		}
 	}

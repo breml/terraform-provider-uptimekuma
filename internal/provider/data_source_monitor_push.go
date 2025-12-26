@@ -81,6 +81,7 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 			resp.Diagnostics.AddError("failed to read Push monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(pushMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 					)
 					return
 				}
+
 				var pushMon monitor.Push
 				err := m.As(&pushMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &pushMon
 			}
 		}

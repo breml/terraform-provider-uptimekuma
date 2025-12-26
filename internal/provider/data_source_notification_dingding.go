@@ -79,10 +79,12 @@ func (d *NotificationDingDingDataSource) Read(ctx context.Context, req datasourc
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		if notification.Type() != "DingDing" {
 			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a DingDing notification")
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -105,6 +107,7 @@ func (d *NotificationDingDingDataSource) Read(ctx context.Context, req datasourc
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

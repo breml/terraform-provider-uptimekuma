@@ -187,6 +187,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		} else {
 			value = types.StringValue(monitorTag.Value)
 		}
+
 		tagModels[i] = MonitorTagModel{
 			TagID: types.Int64Value(monitorTag.TagID),
 			Value: value,
@@ -228,6 +229,7 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 		if !tag.Value.IsNull() {
 			value = tag.Value.ValueString()
 		}
+
 		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
 		oldTagMap[key] = tag
 	}
@@ -238,6 +240,7 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 		if !tag.Value.IsNull() {
 			value = tag.Value.ValueString()
 		}
+
 		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
 		newTagMap[key] = tag
 	}
@@ -248,6 +251,7 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 			if !oldTag.Value.IsNull() {
 				value = oldTag.Value.ValueString()
 			}
+
 			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
@@ -265,6 +269,7 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 			if !newTag.Value.IsNull() {
 				value = newTag.Value.ValueString()
 			}
+
 			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(

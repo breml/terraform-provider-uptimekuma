@@ -79,6 +79,7 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			resp.Diagnostics.AddError("failed to read Docker host", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(dockerHost.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -101,6 +102,7 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

@@ -84,6 +84,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 			resp.Diagnostics.AddError("failed to read maintenance", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(maintenance.Title)
 		data.Title = types.StringValue(maintenance.Title)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -111,6 +112,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 					)
 					return
 				}
+
 				found = &struct {
 					ID    int64
 					Title string

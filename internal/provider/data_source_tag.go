@@ -116,6 +116,7 @@ func (d *TagDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 					)
 					return
 				}
+
 				foundTag = &struct {
 					ID    int64
 					Name  string

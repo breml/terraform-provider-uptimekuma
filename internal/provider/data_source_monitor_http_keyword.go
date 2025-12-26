@@ -81,6 +81,7 @@ func (d *MonitorHTTPKeywordDataSource) Read(ctx context.Context, req datasource.
 			resp.Diagnostics.AddError("failed to read HTTP Keyword monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(httpKeywordMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorHTTPKeywordDataSource) Read(ctx context.Context, req datasource.
 					)
 					return
 				}
+
 				var httpKeywordMon monitor.HTTPKeyword
 				err := m.As(&httpKeywordMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &httpKeywordMon
 			}
 		}

@@ -91,6 +91,7 @@ func (d *MonitorTCPPortDataSource) Read(ctx context.Context, req datasource.Read
 			resp.Diagnostics.AddError("failed to read TCP Port monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(tcpMonitor.Name)
 		data.Hostname = types.StringValue(tcpMonitor.Hostname)
 		data.Port = types.Int64Value(int64(tcpMonitor.Port))
@@ -115,12 +116,14 @@ func (d *MonitorTCPPortDataSource) Read(ctx context.Context, req datasource.Read
 					)
 					return
 				}
+
 				var tcpMon monitor.TCPPort
 				err := m.As(&tcpMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &tcpMon
 			}
 		}

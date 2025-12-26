@@ -86,6 +86,7 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(dnsMonitor.Name)
 		data.Hostname = types.StringValue(dnsMonitor.Hostname)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -109,12 +110,14 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 					)
 					return
 				}
+
 				var dnsMon monitor.DNS
 				err := m.As(&dnsMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &dnsMon
 			}
 		}

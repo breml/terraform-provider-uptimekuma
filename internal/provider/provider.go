@@ -82,6 +82,7 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 	if hasUsername && !hasPassword {
 		resp.Diagnostics.AddError("password required", "password is required when username is provided")
 	}
+
 	if hasPassword && !hasUsername {
 		resp.Diagnostics.AddError("username required", "username is required when password is provided")
 	}

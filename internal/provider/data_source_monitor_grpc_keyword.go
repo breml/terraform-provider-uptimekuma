@@ -81,6 +81,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(ctx context.Context, req datasource.
 			resp.Diagnostics.AddError("failed to read gRPC Keyword monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(grpcKeywordMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorGrpcKeywordDataSource) Read(ctx context.Context, req datasource.
 					)
 					return
 				}
+
 				var grpcKeywordMon monitor.GrpcKeyword
 				err := m.As(&grpcKeywordMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &grpcKeywordMon
 			}
 		}

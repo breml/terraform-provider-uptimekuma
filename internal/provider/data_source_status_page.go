@@ -84,6 +84,7 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			resp.Diagnostics.AddError("failed to read status page", err.Error())
 			return
 		}
+
 		data.ID = types.Int64Value(statusPage.ID)
 		data.Title = types.StringValue(statusPage.Title)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -96,6 +97,7 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			resp.Diagnostics.AddError("failed to read status pages", err.Error())
 			return
 		}
+
 		for id, sp := range statusPages {
 			if id == data.ID.ValueInt64() {
 				data.Slug = types.StringValue(sp.Slug)
@@ -104,6 +106,7 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				return
 			}
 		}
+
 		resp.Diagnostics.AddError("failed to read status page", "Status page not found")
 		return
 	}

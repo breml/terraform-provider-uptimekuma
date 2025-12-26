@@ -190,26 +190,31 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	} else {
 		data.Username = types.StringNull()
 	}
+
 	if discord.ChannelType != "" {
 		data.ChannelType = types.StringValue(discord.ChannelType)
 	} else {
 		data.ChannelType = types.StringNull()
 	}
+
 	if discord.ThreadID != "" {
 		data.ThreadID = types.StringValue(discord.ThreadID)
 	} else {
 		data.ThreadID = types.StringNull()
 	}
+
 	if discord.PostName != "" {
 		data.PostName = types.StringValue(discord.PostName)
 	} else {
 		data.PostName = types.StringNull()
 	}
+
 	if discord.PrefixMessage != "" {
 		data.PrefixMessage = types.StringValue(discord.PrefixMessage)
 	} else {
 		data.PrefixMessage = types.StringNull()
 	}
+
 	data.DisableURL = types.BoolValue(discord.DisableURL)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

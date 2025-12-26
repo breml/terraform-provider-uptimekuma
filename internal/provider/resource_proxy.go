@@ -152,10 +152,12 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 			resp.Diagnostics.AddError("validation error", "username is required when auth is enabled")
 			return
 		}
+
 		if data.Password.IsNull() || data.Password.ValueString() == "" {
 			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
 			return
 		}
+
 		p.Username = data.Username.ValueString()
 		p.Password = data.Password.ValueString()
 	}
@@ -236,10 +238,12 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 			resp.Diagnostics.AddError("validation error", "username is required when auth is enabled")
 			return
 		}
+
 		if data.Password.IsNull() || data.Password.ValueString() == "" {
 			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
 			return
 		}
+
 		p.Username = data.Username.ValueString()
 		p.Password = data.Password.ValueString()
 	}

@@ -233,6 +233,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		sp.DomainNameList = domainNames
 	}
 
@@ -253,6 +254,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 			if !group.ID.IsNull() {
 				publicGroup.ID = group.ID.ValueInt64()
 			}
+
 			sp.PublicGroupList[i] = publicGroup
 
 			if !group.MonitorList.IsNull() {
@@ -288,6 +290,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError("failed to read status page after creation", err.Error())
 		return
 	}
+
 	data.ID = types.Int64Value(retrievedSP.ID)
 
 	planPublic := data.PublicGroupList
@@ -350,6 +353,7 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		data.DomainNameList = domainNames
 	} else {
 		data.DomainNameList = types.ListNull(types.StringType)
@@ -398,6 +402,7 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		sp.DomainNameList = domainNames
 	}
 
@@ -418,6 +423,7 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 			if !group.ID.IsNull() {
 				publicGroup.ID = group.ID.ValueInt64()
 			}
+
 			sp.PublicGroupList[i] = publicGroup
 
 			if !group.MonitorList.IsNull() {

@@ -83,6 +83,7 @@ func (d *MaintenanceMonitorsDataSource) Read(ctx context.Context, req datasource
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 	data.MonitorIDs = listValue
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

@@ -81,6 +81,7 @@ func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.
 			resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(realBrowserMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.
 					)
 					return
 				}
+
 				var realBrowserMon monitor.RealBrowser
 				err := m.As(&realBrowserMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &realBrowserMon
 			}
 		}

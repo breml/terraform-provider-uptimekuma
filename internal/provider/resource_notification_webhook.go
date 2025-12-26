@@ -194,6 +194,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		data.WebhookAdditionalHeaders = headersMap
 	} else {
 		data.WebhookAdditionalHeaders = types.MapNull(types.StringType)

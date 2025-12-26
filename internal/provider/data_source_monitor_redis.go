@@ -81,6 +81,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 			resp.Diagnostics.AddError("failed to read Redis monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(redisMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -103,12 +104,14 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 					)
 					return
 				}
+
 				var redisMon monitor.Redis
 				err := m.As(&redisMon)
 				if err != nil {
 					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
 					return
 				}
+
 				found = &redisMon
 			}
 		}

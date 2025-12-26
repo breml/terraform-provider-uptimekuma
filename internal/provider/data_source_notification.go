@@ -84,6 +84,7 @@ func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		data.Type = types.StringValue(notification.Type())
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -108,6 +109,7 @@ func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRe
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string
