@@ -116,28 +116,30 @@ func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		var found *monitor.Ping
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "ping" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple PING monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var pingMon monitor.Ping
-				err := m.As(&pingMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &pingMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "ping" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple PING monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var pingMon monitor.Ping
+			err := mon.As(&pingMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &pingMon
 		}
 
 		if found == nil {

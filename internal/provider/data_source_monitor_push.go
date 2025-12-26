@@ -110,28 +110,30 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		var found *monitor.Push
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "push" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple Push monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var pushMon monitor.Push
-				err := m.As(&pushMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &pushMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "push" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple Push monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var pushMon monitor.Push
+			err := mon.As(&pushMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &pushMon
 		}
 
 		if found == nil {

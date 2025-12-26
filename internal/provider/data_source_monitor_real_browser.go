@@ -114,28 +114,30 @@ func (d *MonitorRealBrowserDataSource) Read(
 		}
 
 		var found *monitor.RealBrowser
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "real-browser" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple Real Browser monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var realBrowserMon monitor.RealBrowser
-				err := m.As(&realBrowserMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &realBrowserMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "real-browser" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple Real Browser monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var realBrowserMon monitor.RealBrowser
+			err := mon.As(&realBrowserMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &realBrowserMon
 		}
 
 		if found == nil {

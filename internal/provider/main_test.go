@@ -25,6 +25,11 @@ const (
 var endpoint string
 
 func TestMain(m *testing.M) {
+	exitCode := runTests(m)
+	os.Exit(exitCode)
+}
+
+func runTests(m *testing.M) (exitcode int) {
 	// We only start the docker based test application, if the TF_ACC env var is
 	// set because they're slow.
 	if os.Getenv(resource.EnvTfAcc) != "" {
@@ -41,7 +46,7 @@ func TestMain(m *testing.M) {
 		}
 
 		// pulls an image, creates a container based on it and runs it
-		resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+		container, err := pool.RunWithOptions(&dockertest.RunOptions{
 			Repository: "louislam/uptime-kuma",
 			Tag:        "2",
 		}, func(config *docker.HostConfig) {
@@ -55,7 +60,7 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Could not start resource: %v", err)
 		}
 
-		err = resource.Expire(480)
+		err = container.Expire(480)
 		if err != nil {
 			log.Fatalf("Could not set expire on container: %v", err)
 		}
@@ -63,7 +68,7 @@ func TestMain(m *testing.M) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		endpoint = fmt.Sprintf("http://localhost:%s", resource.GetPort("3001/tcp"))
+		endpoint = fmt.Sprintf("http://localhost:%s", container.GetPort("3001/tcp"))
 
 		var kumaClient *kuma.Client
 
@@ -85,7 +90,8 @@ func TestMain(m *testing.M) {
 			return nil
 		})
 		if err != nil {
-			log.Fatalf("Could not connect to uptime kuma: %v", err)
+			log.Printf("Could not connect to uptime kuma: %v", err)
+			return 1 // exitcode
 		}
 
 		// Close connection again, after we know, the application is running and
@@ -93,7 +99,8 @@ func TestMain(m *testing.M) {
 		// Terraform will establish its own connection via the pool.
 		err = kumaClient.Disconnect()
 		if err != nil {
-			log.Fatalf("Failed to disconnect from uptime kuma: %v", err)
+			log.Printf("Failed to disconnect from uptime kuma: %v", err)
+			return 1 // exitcode
 		}
 
 		// As of go1.15 testing.M returns the exit code of m.Run(), so it is safe to use defer here
@@ -102,11 +109,13 @@ func TestMain(m *testing.M) {
 			err := client.CloseGlobalPool()
 			if err != nil {
 				log.Printf("Warning: failed to close connection pool: %v", err)
+				exitcode = 1
 			}
 
-			err = pool.Purge(resource)
+			err = pool.Purge(container)
 			if err != nil {
 				log.Fatalf("Could not purge resource: %v", err)
+				exitcode = 1
 			}
 		}()
 	}
@@ -120,7 +129,7 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	m.Run()
+	return m.Run()
 }
 
 func providerConfig() string {

@@ -118,28 +118,30 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		var found *monitor.HTTP
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "http" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple HTTP monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var httpMon monitor.HTTP
-				err := m.As(&httpMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &httpMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "http" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple HTTP monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var httpMon monitor.HTTP
+			err := mon.As(&httpMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &httpMon
 		}
 
 		if found == nil {

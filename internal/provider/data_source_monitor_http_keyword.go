@@ -114,28 +114,30 @@ func (d *MonitorHTTPKeywordDataSource) Read(
 		}
 
 		var found *monitor.HTTPKeyword
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "keyword" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple HTTP Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var httpKeywordMon monitor.HTTPKeyword
-				err := m.As(&httpKeywordMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &httpKeywordMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "keyword" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple HTTP Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var httpKeywordMon monitor.HTTPKeyword
+			err := mon.As(&httpKeywordMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &httpKeywordMon
 		}
 
 		if found == nil {

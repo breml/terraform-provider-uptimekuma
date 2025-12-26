@@ -114,28 +114,30 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 		}
 
 		var found *monitor.GrpcKeyword
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "grpc-keyword" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple gRPC Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var grpcKeywordMon monitor.GrpcKeyword
-				err := m.As(&grpcKeywordMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &grpcKeywordMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "grpc-keyword" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple gRPC Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var grpcKeywordMon monitor.GrpcKeyword
+			err := mon.As(&grpcKeywordMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &grpcKeywordMon
 		}
 
 		if found == nil {

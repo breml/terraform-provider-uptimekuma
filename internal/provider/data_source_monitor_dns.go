@@ -116,28 +116,30 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		var found *monitor.DNS
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "dns" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple DNS monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var dnsMon monitor.DNS
-				err := m.As(&dnsMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &dnsMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "dns" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple DNS monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var dnsMon monitor.DNS
+			err := mon.As(&dnsMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &dnsMon
 		}
 
 		if found == nil {

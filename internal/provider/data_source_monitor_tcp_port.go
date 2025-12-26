@@ -126,28 +126,30 @@ func (d *MonitorTCPPortDataSource) Read(
 		}
 
 		var found *monitor.TCPPort
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "port" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple TCP Port monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var tcpMon monitor.TCPPort
-				err := m.As(&tcpMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &tcpMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "port" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple TCP Port monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var tcpMon monitor.TCPPort
+			err := mon.As(&tcpMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &tcpMon
 		}
 
 		if found == nil {

@@ -124,7 +124,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	t, err := r.client.GetTag(ctx, data.ID.ValueInt64())
+	tagData, err := r.client.GetTag(ctx, data.ID.ValueInt64())
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -135,8 +135,8 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	data.Name = types.StringValue(t.Name)
-	data.Color = types.StringValue(t.Color)
+	data.Name = types.StringValue(tagData.Name)
+	data.Color = types.StringValue(tagData.Color)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

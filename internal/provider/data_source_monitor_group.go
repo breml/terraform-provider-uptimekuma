@@ -110,28 +110,30 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 		}
 
 		var found *monitor.Group
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "group" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple groups found",
-						fmt.Sprintf(
-							"Multiple monitor groups with name '%s' found. Please use 'id' to specify the group uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var groupMon monitor.Group
-				err := m.As(&groupMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &groupMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "group" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple groups found",
+					fmt.Sprintf(
+						"Multiple monitor groups with name '%s' found. Please use 'id' to specify the group uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var groupMon monitor.Group
+			err := mon.As(&groupMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &groupMon
 		}
 
 		if found == nil {

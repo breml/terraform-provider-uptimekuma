@@ -114,28 +114,30 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(
 		}
 
 		var found *monitor.HTTPJSONQuery
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "json-query" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple HTTP JSON Query monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var httpJSONMon monitor.HTTPJSONQuery
-				err := m.As(&httpJSONMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &httpJSONMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "json-query" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple HTTP JSON Query monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var httpJSONMon monitor.HTTPJSONQuery
+			err := mon.As(&httpJSONMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &httpJSONMon
 		}
 
 		if found == nil {

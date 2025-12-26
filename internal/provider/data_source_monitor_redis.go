@@ -110,28 +110,30 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 		}
 
 		var found *monitor.Redis
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "redis" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple Redis monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var redisMon monitor.Redis
-				err := m.As(&redisMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &redisMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "redis" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple Redis monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var redisMon monitor.Redis
+			err := mon.As(&redisMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &redisMon
 		}
 
 		if found == nil {

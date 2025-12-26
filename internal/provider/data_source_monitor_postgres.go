@@ -114,28 +114,30 @@ func (d *MonitorPostgresDataSource) Read(
 		}
 
 		var found *monitor.Postgres
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "postgres" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf(
-							"Multiple PostgreSQL monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				var postgresMon monitor.Postgres
-				err := m.As(&postgresMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-
-				found = &postgresMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "postgres" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple PostgreSQL monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var postgresMon monitor.Postgres
+			err := mon.As(&postgresMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &postgresMon
 		}
 
 		if found == nil {
