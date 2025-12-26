@@ -61,6 +61,7 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 
 		// Exponential backoff with jitter
 		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
+		//nolint:gosec // Not for cryptographic use, only for jitter in backoff
 		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
 		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
 
