@@ -247,58 +247,6 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(
-	data *MonitorGrpcKeywordResourceModel,
-	grpcKeywordMonitor *monitor.GrpcKeyword,
-	ctx context.Context,
-	diags *diag.Diagnostics,
-) {
-	data.Name = types.StringValue(grpcKeywordMonitor.Name)
-	if grpcKeywordMonitor.Description != nil {
-		data.Description = types.StringValue(*grpcKeywordMonitor.Description)
-	} else {
-		data.Description = types.StringNull()
-	}
-
-	data.Interval = types.Int64Value(grpcKeywordMonitor.Interval)
-	data.RetryInterval = types.Int64Value(grpcKeywordMonitor.RetryInterval)
-	data.ResendInterval = types.Int64Value(grpcKeywordMonitor.ResendInterval)
-	data.MaxRetries = types.Int64Value(grpcKeywordMonitor.MaxRetries)
-	data.UpsideDown = types.BoolValue(grpcKeywordMonitor.UpsideDown)
-	data.Active = types.BoolValue(grpcKeywordMonitor.IsActive)
-	data.GrpcURL = types.StringValue(grpcKeywordMonitor.GrpcURL)
-	data.GrpcProtobuf = stringOrNull(grpcKeywordMonitor.GrpcProtobuf)
-	data.GrpcServiceName = types.StringValue(grpcKeywordMonitor.GrpcServiceName)
-	data.GrpcMethod = types.StringValue(grpcKeywordMonitor.GrpcMethod)
-	data.GrpcEnableTLS = types.BoolValue(grpcKeywordMonitor.GrpcEnableTLS)
-	data.GrpcBody = stringOrNull(grpcKeywordMonitor.GrpcBody)
-	data.Keyword = types.StringValue(grpcKeywordMonitor.Keyword)
-	data.InvertKeyword = types.BoolValue(grpcKeywordMonitor.InvertKeyword)
-
-	if grpcKeywordMonitor.Parent != nil {
-		data.Parent = types.Int64Value(*grpcKeywordMonitor.Parent)
-	} else {
-		data.Parent = types.Int64Null()
-	}
-
-	if len(grpcKeywordMonitor.NotificationIDs) > 0 {
-		notificationIDs, diagsLocal := types.ListValueFrom(ctx, types.Int64Type, grpcKeywordMonitor.NotificationIDs)
-		diags.Append(diagsLocal...)
-		if diags.HasError() {
-			return
-		}
-
-		data.NotificationIDs = notificationIDs
-	} else {
-		data.NotificationIDs = types.ListNull(types.Int64Type)
-	}
-
-	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, diags)
-	if diags.HasError() {
-		return
-	}
-}
-
 func (r *MonitorGrpcKeywordResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -422,4 +370,56 @@ func (r *MonitorGrpcKeywordResource) ImportState(
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+}
+
+func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(
+	data *MonitorGrpcKeywordResourceModel,
+	grpcKeywordMonitor *monitor.GrpcKeyword,
+	ctx context.Context,
+	diags *diag.Diagnostics,
+) {
+	data.Name = types.StringValue(grpcKeywordMonitor.Name)
+	if grpcKeywordMonitor.Description != nil {
+		data.Description = types.StringValue(*grpcKeywordMonitor.Description)
+	} else {
+		data.Description = types.StringNull()
+	}
+
+	data.Interval = types.Int64Value(grpcKeywordMonitor.Interval)
+	data.RetryInterval = types.Int64Value(grpcKeywordMonitor.RetryInterval)
+	data.ResendInterval = types.Int64Value(grpcKeywordMonitor.ResendInterval)
+	data.MaxRetries = types.Int64Value(grpcKeywordMonitor.MaxRetries)
+	data.UpsideDown = types.BoolValue(grpcKeywordMonitor.UpsideDown)
+	data.Active = types.BoolValue(grpcKeywordMonitor.IsActive)
+	data.GrpcURL = types.StringValue(grpcKeywordMonitor.GrpcURL)
+	data.GrpcProtobuf = stringOrNull(grpcKeywordMonitor.GrpcProtobuf)
+	data.GrpcServiceName = types.StringValue(grpcKeywordMonitor.GrpcServiceName)
+	data.GrpcMethod = types.StringValue(grpcKeywordMonitor.GrpcMethod)
+	data.GrpcEnableTLS = types.BoolValue(grpcKeywordMonitor.GrpcEnableTLS)
+	data.GrpcBody = stringOrNull(grpcKeywordMonitor.GrpcBody)
+	data.Keyword = types.StringValue(grpcKeywordMonitor.Keyword)
+	data.InvertKeyword = types.BoolValue(grpcKeywordMonitor.InvertKeyword)
+
+	if grpcKeywordMonitor.Parent != nil {
+		data.Parent = types.Int64Value(*grpcKeywordMonitor.Parent)
+	} else {
+		data.Parent = types.Int64Null()
+	}
+
+	if len(grpcKeywordMonitor.NotificationIDs) > 0 {
+		notificationIDs, diagsLocal := types.ListValueFrom(ctx, types.Int64Type, grpcKeywordMonitor.NotificationIDs)
+		diags.Append(diagsLocal...)
+		if diags.HasError() {
+			return
+		}
+
+		data.NotificationIDs = notificationIDs
+	} else {
+		data.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+
+	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, diags)
+	if diags.HasError() {
+		return
+	}
 }

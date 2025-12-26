@@ -379,6 +379,118 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
+func (r *MaintenanceResource) ValidateConfig(
+	ctx context.Context,
+	req resource.ValidateConfigRequest,
+	resp *resource.ValidateConfigResponse,
+) {
+	var data MaintenanceResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	strategy := data.Strategy.ValueString()
+
+	switch strategy {
+	case "single":
+		if data.StartDate.IsNull() || data.EndDate.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"start_date and end_date are required for single strategy",
+			)
+		}
+
+	case "recurring-interval":
+		if data.IntervalDay.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"interval_day is required for recurring-interval strategy",
+			)
+		}
+
+		if data.StartTime.IsNull() || data.EndTime.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"start_time and end_time are required for recurring-interval strategy",
+			)
+		}
+
+	case "recurring-weekday":
+		if data.Weekdays.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"weekdays is required for recurring-weekday strategy",
+			)
+		}
+
+		if data.StartTime.IsNull() || data.EndTime.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"start_time and end_time are required for recurring-weekday strategy",
+			)
+		}
+
+	case "recurring-day-of-month":
+		if data.DaysOfMonth.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"days_of_month is required for recurring-day-of-month strategy",
+			)
+		}
+
+		if data.StartTime.IsNull() || data.EndTime.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"start_time and end_time are required for recurring-day-of-month strategy",
+			)
+		}
+
+	case "cron":
+		if data.Cron.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"cron is required for cron strategy",
+			)
+		}
+
+		if data.DurationMinutes.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("strategy"),
+				"Invalid Configuration",
+				"duration_minutes is required for cron strategy",
+			)
+		}
+	}
+}
+
+func (r *MaintenanceResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+}
+
 func (r *MaintenanceResource) populateMaintenanceFromModel(
 	ctx context.Context,
 	data *MaintenanceResourceModel,
@@ -677,116 +789,4 @@ func (r *MaintenanceResource) populateModelTimeRange(
 		diags.Append(d...)
 		data.EndTime = endTimeObj
 	}
-}
-
-func (r *MaintenanceResource) ValidateConfig(
-	ctx context.Context,
-	req resource.ValidateConfigRequest,
-	resp *resource.ValidateConfigResponse,
-) {
-	var data MaintenanceResourceModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	strategy := data.Strategy.ValueString()
-
-	switch strategy {
-	case "single":
-		if data.StartDate.IsNull() || data.EndDate.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_date and end_date are required for single strategy",
-			)
-		}
-
-	case "recurring-interval":
-		if data.IntervalDay.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"interval_day is required for recurring-interval strategy",
-			)
-		}
-
-		if data.StartTime.IsNull() || data.EndTime.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_time and end_time are required for recurring-interval strategy",
-			)
-		}
-
-	case "recurring-weekday":
-		if data.Weekdays.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"weekdays is required for recurring-weekday strategy",
-			)
-		}
-
-		if data.StartTime.IsNull() || data.EndTime.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_time and end_time are required for recurring-weekday strategy",
-			)
-		}
-
-	case "recurring-day-of-month":
-		if data.DaysOfMonth.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"days_of_month is required for recurring-day-of-month strategy",
-			)
-		}
-
-		if data.StartTime.IsNull() || data.EndTime.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_time and end_time are required for recurring-day-of-month strategy",
-			)
-		}
-
-	case "cron":
-		if data.Cron.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"cron is required for cron strategy",
-			)
-		}
-
-		if data.DurationMinutes.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"duration_minutes is required for cron strategy",
-			)
-		}
-	}
-}
-
-func (r *MaintenanceResource) ImportState(
-	ctx context.Context,
-	req resource.ImportStateRequest,
-	resp *resource.ImportStateResponse,
-) {
-	id, err := strconv.ParseInt(req.ID, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid Import ID",
-			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
-		)
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
