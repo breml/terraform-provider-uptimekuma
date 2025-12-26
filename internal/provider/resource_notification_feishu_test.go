@@ -20,7 +20,7 @@ func TestAccNotificationFeishuResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationFeishuResourceConfig(name),
+				Config: testAccNotificationFeishuResourceConfig(name, "https://open.feishu.cn/open-apis/bot/v2/hook/abcdefg123456"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_notification_feishu.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_feishu.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
@@ -28,23 +28,23 @@ func TestAccNotificationFeishuResource(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccNotificationFeishuResourceConfig(nameUpdated),
+				Config: testAccNotificationFeishuResourceConfig(nameUpdated, "https://open.feishu.cn/open-apis/bot/v2/hook/updated789012"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("uptimekuma_notification_feishu.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
 					statecheck.ExpectKnownValue("uptimekuma_notification_feishu.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_feishu.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact("https://open.feishu.cn/open-apis/bot/v2/hook/abcdefg123456")),
+					statecheck.ExpectKnownValue("uptimekuma_notification_feishu.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact("https://open.feishu.cn/open-apis/bot/v2/hook/updated789012")),
 				},
 			},
 		},
 	})
 }
 
-func testAccNotificationFeishuResourceConfig(name string) string {
+func testAccNotificationFeishuResourceConfig(name, webhookURL string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_feishu" "test" {
   name        = %[1]q
   is_active   = true
-  webhook_url = "https://open.feishu.cn/open-apis/bot/v2/hook/abcdefg123456"
+  webhook_url = %[2]q
 }
-`, name)
+`, name, webhookURL)
 }
