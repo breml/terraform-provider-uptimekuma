@@ -18,6 +18,7 @@ type Pool struct {
 	refs   int
 }
 
+//nolint:gochecknoglobals // Global pool is a singleton
 var (
 	globalPool     *Pool
 	globalPoolOnce sync.Once

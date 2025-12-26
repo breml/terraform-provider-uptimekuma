@@ -10,7 +10,7 @@ import (
 // testAccProtoV6ProviderFactories is used to instantiate a provider during acceptance testing.
 // The factory function is called for each Terraform CLI command to create a provider
 // server that the CLI can connect to and interact with.
-var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){ //nolint:gochecknoglobals // Ideomatic Terraform provider code.
 	"uptimekuma": providerserver.NewProtocol6WithError(New("test")()),
 }
 

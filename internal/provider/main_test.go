@@ -22,7 +22,7 @@ const (
 	password = "admin1"
 )
 
-var endpoint string
+var endpoint string //nolint:gochecknoglobals // OK in tests.
 
 func TestMain(m *testing.M) {
 	exitCode := runTests(m)
