@@ -237,25 +237,25 @@ func handleMonitorTagsUpdate(
 	}
 
 	oldTagMap := make(map[string]MonitorTagModel)
-	for _, tag := range oldMonitorTags {
+	for _, oldMonitorTag := range oldMonitorTags {
 		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
+		if !oldMonitorTag.Value.IsNull() {
+			value = oldMonitorTag.Value.ValueString()
 		}
 
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		oldTagMap[key] = tag
+		key := fmt.Sprintf("%d:%s", oldMonitorTag.TagID.ValueInt64(), value)
+		oldTagMap[key] = oldMonitorTag
 	}
 
 	newTagMap := make(map[string]MonitorTagModel)
-	for _, tag := range newMonitorTags {
+	for _, newMonitorTag := range newMonitorTags {
 		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
+		if !newMonitorTag.Value.IsNull() {
+			value = newMonitorTag.Value.ValueString()
 		}
 
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		newTagMap[key] = tag
+		key := fmt.Sprintf("%d:%s", newMonitorTag.TagID.ValueInt64(), value)
+		newTagMap[key] = newMonitorTag
 	}
 
 	for key, oldTag := range oldTagMap {
