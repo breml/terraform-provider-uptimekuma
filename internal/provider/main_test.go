@@ -68,7 +68,7 @@ func TestMain(m *testing.M) {
 		var kumaClient *kuma.Client
 
 		// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-		if err := pool.Retry(func() error {
+		err = pool.Retry(func() error {
 			var err error
 			kumaClient, err = kuma.New(
 				ctx,
@@ -83,7 +83,8 @@ func TestMain(m *testing.M) {
 			}
 
 			return nil
-		}); err != nil {
+		})
+		if err != nil {
 			log.Fatalf("Could not connect to uptime kuma: %v", err)
 		}
 

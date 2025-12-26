@@ -280,7 +280,8 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 		Active:      data.Active.ValueBool(),
 	}
 
-	if err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics); err != nil {
+	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
@@ -339,12 +340,13 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		Active:      data.Active.ValueBool(),
 	}
 
-	if err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics); err != nil {
+	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
 
-	err := r.client.UpdateMaintenance(ctx, m)
+	err = r.client.UpdateMaintenance(ctx, m)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update maintenance", err.Error())
 		return
