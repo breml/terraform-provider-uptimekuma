@@ -1,5 +1,8 @@
 *.dll
 *.exe
+*.exe~
+*.so
+*.dylib
 .DS_Store
 example.tf
 terraform.tfplan
@@ -24,6 +27,16 @@ website/node_modules
 *.iml
 *.test
 *.out
+bin/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
 
 website/vendor
 
@@ -36,3 +49,10 @@ terraform-provider-uptimekuma
 
 # Keep windows files with windows line endings
 *.winfile eol=crlf
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
