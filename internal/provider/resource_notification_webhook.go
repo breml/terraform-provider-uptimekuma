@@ -158,7 +158,7 @@ func (r *NotificationWebhookResource) Create(
 
 	tflog.Info(ctx, "Created webhook notification", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -172,7 +172,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -192,7 +192,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(webhook.Name)
 	data.IsActive = types.BoolValue(webhook.IsActive)
 	data.IsDefault = types.BoolValue(webhook.IsDefault)
@@ -246,7 +246,7 @@ func (r *NotificationWebhookResource) Update(
 
 	webhook := notification.Webhook{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -266,7 +266,7 @@ func (r *NotificationWebhookResource) Update(
 		return
 	}
 
-	tflog.Info(ctx, "Updated webhook notification", map[string]any{"id": data.Id.ValueInt64()})
+	tflog.Info(ctx, "Updated webhook notification", map[string]any{"id": data.ID.ValueInt64()})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -284,13 +284,13 @@ func (r *NotificationWebhookResource) Delete(
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
 
-	tflog.Info(ctx, "Deleted webhook notification", map[string]any{"id": data.Id.ValueInt64()})
+	tflog.Info(ctx, "Deleted webhook notification", map[string]any{"id": data.ID.ValueInt64()})
 }
 
 func (r *NotificationWebhookResource) ImportState(

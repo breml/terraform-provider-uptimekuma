@@ -9,7 +9,7 @@ import (
 )
 
 type NotificationBaseModel struct {
-	Id            types.Int64  `tfsdk:"id"`
+	ID            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
 	IsActive      types.Bool   `tfsdk:"is_active"`
 	IsDefault     types.Bool   `tfsdk:"is_default"`

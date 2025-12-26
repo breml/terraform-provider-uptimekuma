@@ -163,7 +163,7 @@ func (r *NotificationDiscordResource) Create(
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -177,7 +177,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -197,7 +197,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(discord.Name)
 	data.IsActive = types.BoolValue(discord.IsActive)
 	data.IsDefault = types.BoolValue(discord.IsDefault)
@@ -254,7 +254,7 @@ func (r *NotificationDiscordResource) Update(
 
 	discord := notification.Discord{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -293,7 +293,7 @@ func (r *NotificationDiscordResource) Delete(
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return

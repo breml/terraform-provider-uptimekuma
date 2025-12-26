@@ -35,7 +35,7 @@ type NotificationResource struct {
 
 // NotificationResourceModel describes the resource data model.
 type NotificationResourceModel struct {
-	Id            types.Int64  `tfsdk:"id"`
+	ID            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
 	IsActive      types.Bool   `tfsdk:"is_active"`
 	IsDefault     types.Bool   `tfsdk:"is_default"`
@@ -154,7 +154,7 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -169,7 +169,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -195,7 +195,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(genericNotification.Name)
 	data.IsActive = types.BoolValue(genericNotification.IsActive)
 	data.IsDefault = types.BoolValue(genericNotification.IsDefault)
@@ -226,7 +226,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 
 	genericNotification := notification.Generic{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -256,7 +256,7 @@ func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return

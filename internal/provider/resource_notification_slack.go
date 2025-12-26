@@ -159,7 +159,7 @@ func (r *NotificationSlackResource) Create(
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -173,7 +173,7 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -193,7 +193,7 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(slack.Name)
 	data.IsActive = types.BoolValue(slack.IsActive)
 	data.IsDefault = types.BoolValue(slack.IsDefault)
@@ -233,7 +233,7 @@ func (r *NotificationSlackResource) Update(
 
 	slack := notification.Slack{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -271,7 +271,7 @@ func (r *NotificationSlackResource) Delete(
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return

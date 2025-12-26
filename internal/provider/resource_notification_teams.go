@@ -122,7 +122,7 @@ func (r *NotificationTeamsResource) Create(
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -136,7 +136,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -156,7 +156,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(teams.Name)
 	data.IsActive = types.BoolValue(teams.IsActive)
 	data.IsDefault = types.BoolValue(teams.IsDefault)
@@ -182,7 +182,7 @@ func (r *NotificationTeamsResource) Update(
 
 	teams := notification.Teams{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -215,7 +215,7 @@ func (r *NotificationTeamsResource) Delete(
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
