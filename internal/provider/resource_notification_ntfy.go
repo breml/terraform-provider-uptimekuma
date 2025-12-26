@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -25,6 +27,45 @@ var (
 	_ resource.Resource                = &NotificationNtfyResource{}
 	_ resource.ResourceWithImportState = &NotificationNtfyResource{}
 )
+
+func isValidURL(value string) bool {
+	u, err := url.Parse(value)
+	if err != nil {
+		return false
+	}
+	return u.Scheme == "http" || u.Scheme == "https"
+}
+
+type urlValidator struct{}
+
+func (v urlValidator) Description(ctx context.Context) string {
+	return "string must be a valid URL with http:// or https:// scheme"
+}
+
+func (v urlValidator) MarkdownDescription(ctx context.Context) string {
+	return "string must be a valid URL with `http://` or `https://` scheme"
+}
+
+func (v urlValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := req.ConfigValue.ValueString()
+	if !isValidURL(value) {
+		resp.Diagnostics.Append(
+			diag.NewAttributeErrorDiagnostic(
+				req.Path,
+				"Invalid URL",
+				fmt.Sprintf("Attribute must be a valid URL with http:// or https:// scheme, got: %s", value),
+			),
+		)
+	}
+}
+
+func validateURL() validator.String {
+	return urlValidator{}
+}
 
 func NewNotificationNtfyResource() resource.Resource {
 	return &NotificationNtfyResource{}
@@ -98,7 +139,7 @@ func (r *NotificationNtfyResource) Schema(
 				Default:  stringdefault.StaticString("https://ntfy.sh"),
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
-					// TODO: Validate valid URL
+					validateURL(),
 				},
 			},
 			"topic": schema.StringAttribute{
