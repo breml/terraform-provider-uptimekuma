@@ -118,7 +118,9 @@ func (p *Pool) Close() error {
 		p.client = nil
 		p.config = nil
 		p.refs = 0
-		return err
+		if err != nil {
+			return fmt.Errorf("disconnect pooled client: %w", err)
+		}
 	}
 
 	return nil
