@@ -38,7 +38,7 @@ type DockerHostResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *DockerHostResource) Metadata(
+func (*DockerHostResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -47,7 +47,7 @@ func (_ *DockerHostResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Docker host resource for managing Docker daemon connections in Uptime Kuma",
 		Attributes: map[string]schema.Attribute{

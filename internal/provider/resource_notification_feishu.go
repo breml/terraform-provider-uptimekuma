@@ -41,7 +41,7 @@ type NotificationFeishuResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationFeishuResource) Metadata(
+func (*NotificationFeishuResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -50,7 +50,7 @@ func (_ *NotificationFeishuResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationFeishuResource) Schema(
+func (*NotificationFeishuResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -235,7 +235,7 @@ func (r *NotificationFeishuResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationFeishuResource) ImportState(
+func (*NotificationFeishuResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -31,7 +31,7 @@ type MonitorRedisDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorRedisDataSource) Metadata(
+func (*MonitorRedisDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *MonitorRedisDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorRedisDataSource) Schema(
+func (*MonitorRedisDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

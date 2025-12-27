@@ -31,7 +31,7 @@ type MonitorHTTPJSONQueryDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorHTTPJSONQueryDataSource) Metadata(
+func (*MonitorHTTPJSONQueryDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *MonitorHTTPJSONQueryDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorHTTPJSONQueryDataSource) Schema(
+func (*MonitorHTTPJSONQueryDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

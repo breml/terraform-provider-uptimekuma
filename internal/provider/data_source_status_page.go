@@ -31,7 +31,7 @@ type StatusPageDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *StatusPageDataSource) Metadata(
+func (*StatusPageDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *StatusPageDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *StatusPageDataSource) Schema(
+func (*StatusPageDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

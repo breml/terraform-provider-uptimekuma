@@ -39,7 +39,7 @@ type MonitorPostgresResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorPostgresResource) Metadata(
+func (*MonitorPostgresResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (_ *MonitorPostgresResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorPostgresResource) Schema(
+func (*MonitorPostgresResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -316,7 +316,7 @@ func (r *MonitorPostgresResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorPostgresResource) ImportState(
+func (*MonitorPostgresResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

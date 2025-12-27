@@ -42,7 +42,7 @@ type MonitorHTTPKeywordResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorHTTPKeywordResource) Metadata(
+func (*MonitorHTTPKeywordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -51,7 +51,7 @@ func (_ *MonitorHTTPKeywordResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorHTTPKeywordResource) Schema(
+func (*MonitorHTTPKeywordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -443,7 +443,7 @@ func (r *MonitorHTTPKeywordResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorHTTPKeywordResource) ImportState(
+func (*MonitorHTTPKeywordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

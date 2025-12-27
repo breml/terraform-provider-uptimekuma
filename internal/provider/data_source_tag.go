@@ -31,7 +31,7 @@ type TagDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *TagDataSource) Metadata(
+func (*TagDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *TagDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (*TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get tag information by ID or name",
 		Attributes: map[string]schema.Attribute{

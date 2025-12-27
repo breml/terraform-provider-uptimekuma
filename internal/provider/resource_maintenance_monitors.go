@@ -38,7 +38,7 @@ type MaintenanceMonitorsResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MaintenanceMonitorsResource) Metadata(
+func (*MaintenanceMonitorsResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -47,7 +47,7 @@ func (_ *MaintenanceMonitorsResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MaintenanceMonitorsResource) Schema(
+func (*MaintenanceMonitorsResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -206,7 +206,7 @@ func (r *MaintenanceMonitorsResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MaintenanceMonitorsResource) ImportState(
+func (*MaintenanceMonitorsResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

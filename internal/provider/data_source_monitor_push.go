@@ -31,7 +31,7 @@ type MonitorPushDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorPushDataSource) Metadata(
+func (*MonitorPushDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *MonitorPushDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorPushDataSource) Schema(
+func (*MonitorPushDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

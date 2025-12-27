@@ -47,7 +47,7 @@ type NotificationSlackResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationSlackResource) Metadata(
+func (*NotificationSlackResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -56,7 +56,7 @@ func (_ *NotificationSlackResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationSlackResource) Schema(
+func (*NotificationSlackResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -289,7 +289,7 @@ func (r *NotificationSlackResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationSlackResource) ImportState(
+func (*NotificationSlackResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

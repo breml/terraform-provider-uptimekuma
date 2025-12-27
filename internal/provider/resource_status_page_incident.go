@@ -49,7 +49,7 @@ type StatusPageIncidentResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *StatusPageIncidentResource) Metadata(
+func (*StatusPageIncidentResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -58,7 +58,7 @@ func (_ *StatusPageIncidentResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *StatusPageIncidentResource) Schema(
+func (*StatusPageIncidentResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -162,7 +162,7 @@ func (r *StatusPageIncidentResource) Create(
 }
 
 // Read reads the current state of the resource.
-func (_ *StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (*StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageIncidentResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

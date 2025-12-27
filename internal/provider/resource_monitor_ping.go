@@ -41,7 +41,7 @@ type MonitorPingResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorPingResource) Metadata(
+func (*MonitorPingResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -50,7 +50,7 @@ func (_ *MonitorPingResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Ping monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -304,7 +304,7 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorPingResource) ImportState(
+func (*MonitorPingResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -39,7 +39,7 @@ type MonitorRedisResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorRedisResource) Metadata(
+func (*MonitorRedisResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (_ *MonitorRedisResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Redis monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -300,7 +300,7 @@ func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorRedisResource) ImportState(
+func (*MonitorRedisResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

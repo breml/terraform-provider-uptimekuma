@@ -39,7 +39,7 @@ type MonitorPushResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorPushResource) Metadata(
+func (*MonitorPushResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (_ *MonitorPushResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorPushResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*MonitorPushResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Push monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -299,7 +299,7 @@ func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorPushResource) ImportState(
+func (*MonitorPushResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

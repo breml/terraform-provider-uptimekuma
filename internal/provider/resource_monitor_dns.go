@@ -45,7 +45,7 @@ type MonitorDNSResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorDNSResource) Metadata(
+func (*MonitorDNSResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -54,7 +54,7 @@ func (_ *MonitorDNSResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "DNS monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -329,7 +329,7 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorDNSResource) ImportState(
+func (*MonitorDNSResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -38,7 +38,7 @@ type MaintenanceStatusPagesResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MaintenanceStatusPagesResource) Metadata(
+func (*MaintenanceStatusPagesResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -47,7 +47,7 @@ func (_ *MaintenanceStatusPagesResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MaintenanceStatusPagesResource) Schema(
+func (*MaintenanceStatusPagesResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -210,7 +210,7 @@ func (r *MaintenanceStatusPagesResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MaintenanceStatusPagesResource) ImportState(
+func (*MaintenanceStatusPagesResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

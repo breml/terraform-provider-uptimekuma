@@ -43,12 +43,12 @@ type TagResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *TagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (*TagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
 // Schema returns the schema for the resource.
-func (_ *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Tag resource for organizing monitors with custom values",
 		Attributes: map[string]schema.Attribute{
@@ -190,7 +190,7 @@ func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *TagResource) ImportState(
+func (*TagResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -45,7 +45,7 @@ type NotificationWebhookResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationWebhookResource) Metadata(
+func (*NotificationWebhookResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -54,7 +54,7 @@ func (_ *NotificationWebhookResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationWebhookResource) Schema(
+func (*NotificationWebhookResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -304,7 +304,7 @@ func (r *NotificationWebhookResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationWebhookResource) ImportState(
+func (*NotificationWebhookResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -43,7 +43,7 @@ type NotificationDingDingResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationDingDingResource) Metadata(
+func (*NotificationDingDingResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -52,7 +52,7 @@ func (_ *NotificationDingDingResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationDingDingResource) Schema(
+func (*NotificationDingDingResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -265,7 +265,7 @@ func (r *NotificationDingDingResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationDingDingResource) ImportState(
+func (*NotificationDingDingResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -46,7 +46,7 @@ type NotificationResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationResource) Metadata(
+func (*NotificationResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -55,7 +55,7 @@ func (_ *NotificationResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: map[string]schema.Attribute{
@@ -272,7 +272,7 @@ func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationResource) ImportState(
+func (*NotificationResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

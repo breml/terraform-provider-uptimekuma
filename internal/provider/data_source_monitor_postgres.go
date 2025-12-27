@@ -31,7 +31,7 @@ type MonitorPostgresDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorPostgresDataSource) Metadata(
+func (*MonitorPostgresDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *MonitorPostgresDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorPostgresDataSource) Schema(
+func (*MonitorPostgresDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

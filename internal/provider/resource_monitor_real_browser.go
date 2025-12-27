@@ -51,7 +51,7 @@ type MonitorRealBrowserResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorRealBrowserResource) Metadata(
+func (*MonitorRealBrowserResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -60,7 +60,7 @@ func (_ *MonitorRealBrowserResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorRealBrowserResource) Schema(
+func (*MonitorRealBrowserResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -449,7 +449,7 @@ func (r *MonitorRealBrowserResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorRealBrowserResource) ImportState(
+func (*MonitorRealBrowserResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

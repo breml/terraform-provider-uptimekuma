@@ -31,7 +31,7 @@ type NotificationDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *NotificationDataSource) Metadata(
+func (*NotificationDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *NotificationDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *NotificationDataSource) Schema(
+func (*NotificationDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

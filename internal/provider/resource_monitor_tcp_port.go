@@ -41,7 +41,7 @@ type MonitorTCPPortResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorTCPPortResource) Metadata(
+func (*MonitorTCPPortResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -50,7 +50,7 @@ func (_ *MonitorTCPPortResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorTCPPortResource) Schema(
+func (*MonitorTCPPortResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -321,7 +321,7 @@ func (r *MonitorTCPPortResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorTCPPortResource) ImportState(
+func (*MonitorTCPPortResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -31,7 +31,7 @@ type MonitorGrpcKeywordDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorGrpcKeywordDataSource) Metadata(
+func (*MonitorGrpcKeywordDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *MonitorGrpcKeywordDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorGrpcKeywordDataSource) Schema(
+func (*MonitorGrpcKeywordDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

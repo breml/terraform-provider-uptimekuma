@@ -48,7 +48,7 @@ type NotificationDiscordResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationDiscordResource) Metadata(
+func (*NotificationDiscordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -57,7 +57,7 @@ func (_ *NotificationDiscordResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationDiscordResource) Schema(
+func (*NotificationDiscordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -311,7 +311,7 @@ func (r *NotificationDiscordResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationDiscordResource) ImportState(
+func (*NotificationDiscordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -32,7 +32,7 @@ type ProxyDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *ProxyDataSource) Metadata(
+func (*ProxyDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -41,7 +41,7 @@ func (_ *ProxyDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (*ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get proxy information by ID",
 		Attributes: map[string]schema.Attribute{

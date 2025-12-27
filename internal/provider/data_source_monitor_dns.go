@@ -32,7 +32,7 @@ type MonitorDNSDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorDNSDataSource) Metadata(
+func (*MonitorDNSDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -41,7 +41,7 @@ func (_ *MonitorDNSDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorDNSDataSource) Schema(
+func (*MonitorDNSDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

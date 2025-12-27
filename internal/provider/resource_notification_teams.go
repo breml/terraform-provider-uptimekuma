@@ -41,7 +41,7 @@ type NotificationTeamsResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *NotificationTeamsResource) Metadata(
+func (*NotificationTeamsResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -50,7 +50,7 @@ func (_ *NotificationTeamsResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *NotificationTeamsResource) Schema(
+func (*NotificationTeamsResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -233,7 +233,7 @@ func (r *NotificationTeamsResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *NotificationTeamsResource) ImportState(
+func (*NotificationTeamsResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

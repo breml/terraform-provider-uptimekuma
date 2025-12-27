@@ -31,7 +31,7 @@ type MonitorHTTPKeywordDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorHTTPKeywordDataSource) Metadata(
+func (*MonitorHTTPKeywordDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (_ *MonitorHTTPKeywordDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorHTTPKeywordDataSource) Schema(
+func (*MonitorHTTPKeywordDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

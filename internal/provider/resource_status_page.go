@@ -62,7 +62,7 @@ type PublicMonitorModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *StatusPageResource) Metadata(
+func (*StatusPageResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -71,7 +71,7 @@ func (_ *StatusPageResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page resource",
 		Attributes: map[string]schema.Attribute{

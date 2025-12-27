@@ -32,7 +32,7 @@ type MonitorHTTPDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *MonitorHTTPDataSource) Metadata(
+func (*MonitorHTTPDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -41,7 +41,7 @@ func (_ *MonitorHTTPDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *MonitorHTTPDataSource) Schema(
+func (*MonitorHTTPDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

@@ -48,7 +48,7 @@ type MonitorGrpcKeywordResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorGrpcKeywordResource) Metadata(
+func (*MonitorGrpcKeywordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -57,7 +57,7 @@ func (_ *MonitorGrpcKeywordResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorGrpcKeywordResource) Schema(
+func (*MonitorGrpcKeywordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -366,7 +366,7 @@ func (r *MonitorGrpcKeywordResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorGrpcKeywordResource) ImportState(
+func (*MonitorGrpcKeywordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
@@ -383,7 +383,7 @@ func (_ *MonitorGrpcKeywordResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-func (_ *MonitorGrpcKeywordResource) populateModelFromMonitor(
+func (*MonitorGrpcKeywordResource) populateModelFromMonitor(
 	data *MonitorGrpcKeywordResourceModel,
 	grpcKeywordMonitor *monitor.GrpcKeyword,
 	ctx context.Context,

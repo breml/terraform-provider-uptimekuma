@@ -46,7 +46,7 @@ func (p *UptimeKumaProvider) Metadata(
 }
 
 // Schema returns the schema for the provider.
-func (_ *UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
@@ -66,7 +66,7 @@ func (_ *UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest,
 }
 
 // Configure configures the provider with the API client.
-func (_ *UptimeKumaProvider) Configure(
+func (*UptimeKumaProvider) Configure(
 	ctx context.Context,
 	req provider.ConfigureRequest,
 	resp *provider.ConfigureResponse,
@@ -129,7 +129,7 @@ func (_ *UptimeKumaProvider) Configure(
 }
 
 // Resources returns the list of resources for the provider.
-func (_ *UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
+func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotificationAppriseResource,
@@ -164,7 +164,7 @@ func (_ *UptimeKumaProvider) Resources(_ context.Context) []func() resource.Reso
 }
 
 // DataSources returns the list of data sources for the provider.
-func (_ *UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewMaintenancesDataSource,
 		NewTagDataSource,

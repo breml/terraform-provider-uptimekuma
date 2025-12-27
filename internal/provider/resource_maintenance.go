@@ -80,7 +80,7 @@ type MaintenanceResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MaintenanceResource) Metadata(
+func (*MaintenanceResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -89,7 +89,7 @@ func (_ *MaintenanceResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
 		Attributes: map[string]schema.Attribute{
@@ -392,7 +392,7 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 // ValidateConfig validates the resource configuration.
-func (_ *MaintenanceResource) ValidateConfig(
+func (*MaintenanceResource) ValidateConfig(
 	ctx context.Context,
 	req resource.ValidateConfigRequest,
 	resp *resource.ValidateConfigResponse,
@@ -488,7 +488,7 @@ func (_ *MaintenanceResource) ValidateConfig(
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MaintenanceResource) ImportState(
+func (*MaintenanceResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
@@ -617,7 +617,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 	return nil
 }
 
-func (_ *MaintenanceResource) populateTimeRange(
+func (*MaintenanceResource) populateTimeRange(
 	ctx context.Context,
 	data *MaintenanceResourceModel,
 	m *maintenance.Maintenance,
@@ -775,7 +775,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 	}
 }
 
-func (_ *MaintenanceResource) populateModelTimeRange(
+func (*MaintenanceResource) populateModelTimeRange(
 	m *maintenance.Maintenance,
 	data *MaintenanceResourceModel,
 	diags *diag.Diagnostics,

@@ -36,7 +36,7 @@ type MonitorHTTPResourceModel struct {
 }
 
 // Metadata returns the metadata for the resource.
-func (_ *MonitorHTTPResource) Metadata(
+func (*MonitorHTTPResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -45,7 +45,7 @@ func (_ *MonitorHTTPResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
-func (_ *MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (*MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP monitor resource",
 		Attributes:          withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{})),
@@ -404,7 +404,7 @@ func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 // ImportState imports an existing resource by ID.
-func (_ *MonitorHTTPResource) ImportState(
+func (*MonitorHTTPResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

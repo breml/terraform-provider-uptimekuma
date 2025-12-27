@@ -30,7 +30,7 @@ type DockerHostDataSourceModel struct {
 }
 
 // Metadata returns the metadata for the data source.
-func (_ *DockerHostDataSource) Metadata(
+func (*DockerHostDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -39,7 +39,7 @@ func (_ *DockerHostDataSource) Metadata(
 }
 
 // Schema returns the schema for the data source.
-func (_ *DockerHostDataSource) Schema(
+func (*DockerHostDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
