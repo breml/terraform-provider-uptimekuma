@@ -36,14 +36,14 @@ type MonitorPushResourceModel struct {
 }
 
 func (r *MonitorPushResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_push"
 }
 
-func (r *MonitorPushResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorPushResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Push monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -59,7 +59,7 @@ func (r *MonitorPushResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *MonitorPushResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

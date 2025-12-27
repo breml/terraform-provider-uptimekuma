@@ -27,7 +27,7 @@ type DockerHostDataSourceModel struct {
 }
 
 func (d *DockerHostDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -35,8 +35,8 @@ func (d *DockerHostDataSource) Metadata(
 }
 
 func (d *DockerHostDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -57,7 +57,7 @@ func (d *DockerHostDataSource) Schema(
 }
 
 func (d *DockerHostDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

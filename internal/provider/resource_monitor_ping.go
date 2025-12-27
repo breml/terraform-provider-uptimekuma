@@ -38,14 +38,14 @@ type MonitorPingResourceModel struct {
 }
 
 func (r *MonitorPingResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
-func (r *MonitorPingResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Ping monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -67,7 +67,7 @@ func (r *MonitorPingResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *MonitorPingResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

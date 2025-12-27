@@ -75,14 +75,14 @@ type MaintenanceResourceModel struct {
 }
 
 func (r *MaintenanceResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
-func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
 		Attributes: map[string]schema.Attribute{
@@ -239,7 +239,7 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *MaintenanceResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

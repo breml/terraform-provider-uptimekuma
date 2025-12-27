@@ -29,7 +29,7 @@ type MonitorHTTPDataSourceModel struct {
 }
 
 func (d *MonitorHTTPDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -37,8 +37,8 @@ func (d *MonitorHTTPDataSource) Metadata(
 }
 
 func (d *MonitorHTTPDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -63,7 +63,7 @@ func (d *MonitorHTTPDataSource) Schema(
 }
 
 func (d *MonitorHTTPDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

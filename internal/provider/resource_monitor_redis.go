@@ -36,14 +36,14 @@ type MonitorRedisResourceModel struct {
 }
 
 func (r *MonitorRedisResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_redis"
 }
 
-func (r *MonitorRedisResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Redis monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -63,7 +63,7 @@ func (r *MonitorRedisResource) Schema(ctx context.Context, req resource.SchemaRe
 }
 
 func (r *MonitorRedisResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

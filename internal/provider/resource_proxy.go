@@ -42,11 +42,11 @@ type ProxyResourceModel struct {
 	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
 }
 
-func (r *ProxyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *ProxyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
-func (r *ProxyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Proxy resource for managing HTTP/HTTPS/SOCKS proxies in Uptime Kuma",
 		Attributes: map[string]schema.Attribute{
@@ -113,7 +113,7 @@ func (r *ProxyResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 }
 
 func (r *ProxyResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

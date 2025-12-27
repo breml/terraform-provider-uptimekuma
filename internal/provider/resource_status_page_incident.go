@@ -47,7 +47,7 @@ type StatusPageIncidentResourceModel struct {
 }
 
 func (r *StatusPageIncidentResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -55,8 +55,8 @@ func (r *StatusPageIncidentResource) Metadata(
 }
 
 func (r *StatusPageIncidentResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -99,7 +99,7 @@ func (r *StatusPageIncidentResource) Schema(
 }
 
 func (r *StatusPageIncidentResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

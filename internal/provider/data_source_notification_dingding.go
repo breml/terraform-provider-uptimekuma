@@ -27,7 +27,7 @@ type NotificationDingDingDataSourceModel struct {
 }
 
 func (d *NotificationDingDingDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -35,8 +35,8 @@ func (d *NotificationDingDingDataSource) Metadata(
 }
 
 func (d *NotificationDingDingDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -57,7 +57,7 @@ func (d *NotificationDingDingDataSource) Schema(
 }
 
 func (d *NotificationDingDingDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

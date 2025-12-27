@@ -35,14 +35,14 @@ type DockerHostResourceModel struct {
 }
 
 func (r *DockerHostResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
-func (r *DockerHostResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Docker host resource for managing Docker daemon connections in Uptime Kuma",
 		Attributes: map[string]schema.Attribute{
@@ -73,7 +73,7 @@ func (r *DockerHostResource) Schema(ctx context.Context, req resource.SchemaRequ
 }
 
 func (r *DockerHostResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

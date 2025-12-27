@@ -28,7 +28,7 @@ type MonitorPushDataSourceModel struct {
 }
 
 func (d *MonitorPushDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -36,8 +36,8 @@ func (d *MonitorPushDataSource) Metadata(
 }
 
 func (d *MonitorPushDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -58,7 +58,7 @@ func (d *MonitorPushDataSource) Schema(
 }
 
 func (d *MonitorPushDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

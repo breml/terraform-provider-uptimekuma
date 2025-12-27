@@ -42,14 +42,14 @@ type MonitorDNSResourceModel struct {
 }
 
 func (r *MonitorDNSResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
-func (r *MonitorDNSResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "DNS monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -86,7 +86,7 @@ func (r *MonitorDNSResource) Schema(ctx context.Context, req resource.SchemaRequ
 }
 
 func (r *MonitorDNSResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

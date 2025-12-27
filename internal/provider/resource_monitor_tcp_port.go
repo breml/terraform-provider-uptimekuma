@@ -38,7 +38,7 @@ type MonitorTCPPortResourceModel struct {
 }
 
 func (r *MonitorTCPPortResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -46,8 +46,8 @@ func (r *MonitorTCPPortResource) Metadata(
 }
 
 func (r *MonitorTCPPortResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -72,7 +72,7 @@ func (r *MonitorTCPPortResource) Schema(
 }
 
 func (r *MonitorTCPPortResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

@@ -32,14 +32,14 @@ type MonitorGroupResourceModel struct {
 }
 
 func (r *MonitorGroupResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_group"
 }
 
-func (r *MonitorGroupResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Monitor group resource for organizing monitors",
 		Attributes:          withMonitorBaseAttributes(map[string]schema.Attribute{}),
@@ -47,7 +47,7 @@ func (r *MonitorGroupResource) Schema(ctx context.Context, req resource.SchemaRe
 }
 
 func (r *MonitorGroupResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

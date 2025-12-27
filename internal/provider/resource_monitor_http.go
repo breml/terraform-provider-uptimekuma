@@ -33,14 +33,14 @@ type MonitorHTTPResourceModel struct {
 }
 
 func (r *MonitorHTTPResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http"
 }
 
-func (r *MonitorHTTPResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP monitor resource",
 		Attributes:          withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{})),
@@ -48,7 +48,7 @@ func (r *MonitorHTTPResource) Schema(ctx context.Context, req resource.SchemaReq
 }
 
 func (r *MonitorHTTPResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

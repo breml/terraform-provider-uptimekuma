@@ -36,15 +36,15 @@ type UptimeKumaProviderModel struct {
 }
 
 func (p *UptimeKumaProvider) Metadata(
-	ctx context.Context,
-	req provider.MetadataRequest,
+	_ context.Context,
+	_ provider.MetadataRequest,
 	resp *provider.MetadataResponse,
 ) {
 	resp.TypeName = "uptimekuma"
 	resp.Version = p.version
 }
 
-func (p *UptimeKumaProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
@@ -125,7 +125,7 @@ func (p *UptimeKumaProvider) Configure(
 	resp.ResourceData = kumaClient
 }
 
-func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotificationAppriseResource,
@@ -159,7 +159,7 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 	}
 }
 
-func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewMaintenancesDataSource,
 		NewTagDataSource,

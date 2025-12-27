@@ -45,7 +45,7 @@ type NotificationDiscordResourceModel struct {
 }
 
 func (r *NotificationDiscordResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -53,8 +53,8 @@ func (r *NotificationDiscordResource) Metadata(
 }
 
 func (r *NotificationDiscordResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -99,7 +99,7 @@ func (r *NotificationDiscordResource) Schema(
 }
 
 func (r *NotificationDiscordResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

@@ -27,7 +27,7 @@ type NotificationWebhookDataSourceModel struct {
 }
 
 func (d *NotificationWebhookDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -35,8 +35,8 @@ func (d *NotificationWebhookDataSource) Metadata(
 }
 
 func (d *NotificationWebhookDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -57,7 +57,7 @@ func (d *NotificationWebhookDataSource) Schema(
 }
 
 func (d *NotificationWebhookDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

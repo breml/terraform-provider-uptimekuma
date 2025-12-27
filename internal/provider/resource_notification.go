@@ -45,14 +45,14 @@ type NotificationResourceModel struct {
 }
 
 func (r *NotificationResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_notification"
 }
 
-func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: map[string]schema.Attribute{
@@ -95,7 +95,7 @@ func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRe
 }
 
 func (r *NotificationResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

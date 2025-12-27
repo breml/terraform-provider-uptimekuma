@@ -39,7 +39,7 @@ type NotificationAppriseResourceModel struct {
 }
 
 func (r *NotificationAppriseResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -47,8 +47,8 @@ func (r *NotificationAppriseResource) Metadata(
 }
 
 func (r *NotificationAppriseResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -70,7 +70,7 @@ func (r *NotificationAppriseResource) Schema(
 }
 
 func (r *NotificationAppriseResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

@@ -28,7 +28,7 @@ type NotificationDataSourceModel struct {
 }
 
 func (d *NotificationDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -36,8 +36,8 @@ func (d *NotificationDataSource) Metadata(
 }
 
 func (d *NotificationDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -62,7 +62,7 @@ func (d *NotificationDataSource) Schema(
 }
 
 func (d *NotificationDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

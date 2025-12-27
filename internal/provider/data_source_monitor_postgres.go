@@ -28,7 +28,7 @@ type MonitorPostgresDataSourceModel struct {
 }
 
 func (d *MonitorPostgresDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -36,8 +36,8 @@ func (d *MonitorPostgresDataSource) Metadata(
 }
 
 func (d *MonitorPostgresDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -58,7 +58,7 @@ func (d *MonitorPostgresDataSource) Schema(
 }
 
 func (d *MonitorPostgresDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

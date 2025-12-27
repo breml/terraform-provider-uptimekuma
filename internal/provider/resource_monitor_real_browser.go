@@ -48,7 +48,7 @@ type MonitorRealBrowserResourceModel struct {
 }
 
 func (r *MonitorRealBrowserResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -56,8 +56,8 @@ func (r *MonitorRealBrowserResource) Metadata(
 }
 
 func (r *MonitorRealBrowserResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -126,7 +126,7 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 }
 
 func (r *MonitorRealBrowserResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

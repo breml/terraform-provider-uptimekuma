@@ -44,7 +44,7 @@ type NotificationSlackResourceModel struct {
 }
 
 func (r *NotificationSlackResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -52,8 +52,8 @@ func (r *NotificationSlackResource) Metadata(
 }
 
 func (r *NotificationSlackResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -96,7 +96,7 @@ func (r *NotificationSlackResource) Schema(
 }
 
 func (r *NotificationSlackResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

@@ -27,7 +27,7 @@ type MaintenanceMonitorsDataSourceModel struct {
 }
 
 func (d *MaintenanceMonitorsDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -35,8 +35,8 @@ func (d *MaintenanceMonitorsDataSource) Metadata(
 }
 
 func (d *MaintenanceMonitorsDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -56,7 +56,7 @@ func (d *MaintenanceMonitorsDataSource) Schema(
 }
 
 func (d *MaintenanceMonitorsDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

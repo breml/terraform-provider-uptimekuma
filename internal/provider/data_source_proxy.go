@@ -29,14 +29,14 @@ type ProxyDataSourceModel struct {
 }
 
 func (d *ProxyDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
-func (d *ProxyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get proxy information by ID",
 		Attributes: map[string]schema.Attribute{
@@ -61,7 +61,7 @@ func (d *ProxyDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 }
 
 func (d *ProxyDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

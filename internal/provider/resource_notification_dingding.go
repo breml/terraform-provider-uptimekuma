@@ -40,7 +40,7 @@ type NotificationDingDingResourceModel struct {
 }
 
 func (r *NotificationDingDingResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -48,8 +48,8 @@ func (r *NotificationDingDingResource) Metadata(
 }
 
 func (r *NotificationDingDingResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -77,7 +77,7 @@ func (r *NotificationDingDingResource) Schema(
 }
 
 func (r *NotificationDingDingResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

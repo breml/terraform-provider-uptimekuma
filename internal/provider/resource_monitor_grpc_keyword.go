@@ -45,7 +45,7 @@ type MonitorGrpcKeywordResourceModel struct {
 }
 
 func (r *MonitorGrpcKeywordResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -53,8 +53,8 @@ func (r *MonitorGrpcKeywordResource) Metadata(
 }
 
 func (r *MonitorGrpcKeywordResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -115,7 +115,7 @@ func (r *MonitorGrpcKeywordResource) Schema(
 }
 
 func (r *MonitorGrpcKeywordResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

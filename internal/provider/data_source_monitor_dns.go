@@ -29,7 +29,7 @@ type MonitorDNSDataSourceModel struct {
 }
 
 func (d *MonitorDNSDataSource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
@@ -37,8 +37,8 @@ func (d *MonitorDNSDataSource) Metadata(
 }
 
 func (d *MonitorDNSDataSource) Schema(
-	ctx context.Context,
-	req datasource.SchemaRequest,
+	_ context.Context,
+	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -63,7 +63,7 @@ func (d *MonitorDNSDataSource) Schema(
 }
 
 func (d *MonitorDNSDataSource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
 ) {

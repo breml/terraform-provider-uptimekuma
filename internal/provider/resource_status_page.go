@@ -57,14 +57,14 @@ type PublicMonitorModel struct {
 }
 
 func (r *StatusPageResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_status_page"
 }
 
-func (r *StatusPageResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page resource",
 		Attributes: map[string]schema.Attribute{
@@ -181,7 +181,7 @@ func (r *StatusPageResource) Schema(ctx context.Context, req resource.SchemaRequ
 }
 
 func (r *StatusPageResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

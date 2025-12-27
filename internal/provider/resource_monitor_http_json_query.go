@@ -40,7 +40,7 @@ type MonitorHTTPJSONQueryResourceModel struct {
 }
 
 func (r *MonitorHTTPJSONQueryResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -48,8 +48,8 @@ func (r *MonitorHTTPJSONQueryResource) Metadata(
 }
 
 func (r *MonitorHTTPJSONQueryResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -80,7 +80,7 @@ func (r *MonitorHTTPJSONQueryResource) Schema(
 }
 
 func (r *MonitorHTTPJSONQueryResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {

@@ -39,15 +39,15 @@ func isValidURL(value string) bool {
 
 type urlValidator struct{}
 
-func (v urlValidator) Description(ctx context.Context) string {
+func (v urlValidator) Description(_ context.Context) string {
 	return "string must be a valid URL with http:// or https:// scheme"
 }
 
-func (v urlValidator) MarkdownDescription(ctx context.Context) string {
+func (v urlValidator) MarkdownDescription(_ context.Context) string {
 	return "string must be a valid URL with `http://` or `https://` scheme"
 }
 
-func (v urlValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (v urlValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -92,7 +92,7 @@ type NotificationNtfyResourceModel struct {
 }
 
 func (r *NotificationNtfyResource) Metadata(
-	ctx context.Context,
+	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
@@ -100,8 +100,8 @@ func (r *NotificationNtfyResource) Metadata(
 }
 
 func (r *NotificationNtfyResource) Schema(
-	ctx context.Context,
-	req resource.SchemaRequest,
+	_ context.Context,
+	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -157,7 +157,7 @@ func (r *NotificationNtfyResource) Schema(
 }
 
 func (r *NotificationNtfyResource) Configure(
-	ctx context.Context,
+	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
 ) {
