@@ -76,7 +76,7 @@ func TestAccMonitorGroupResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorGroupResourceConfig(name, description string, interval int64) string {
+func testAccMonitorGroupResourceConfig(name string, description string, interval int64) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name        = %[1]q
@@ -193,7 +193,7 @@ func TestAccMonitorGroupResourceWithAllOptions(t *testing.T) {
 	})
 }
 
-func testAccMonitorGroupResourceConfigWithAllOptions(name, description string) string {
+func testAccMonitorGroupResourceConfigWithAllOptions(name string, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name            = %[1]q

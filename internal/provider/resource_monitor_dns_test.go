@@ -120,7 +120,7 @@ func TestAccMonitorDNSResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorDNSResourceConfig(name, description, hostname, resolveType, server string, port int64) string {
+func testAccMonitorDNSResourceConfig(name string, description string, hostname string, resolveType string, server string, port int64) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
   name               = %[1]q
@@ -195,7 +195,7 @@ func TestAccMonitorDNSResourceMinimal(t *testing.T) {
 	})
 }
 
-func testAccMonitorDNSResourceConfigMinimal(name, hostname string) string {
+func testAccMonitorDNSResourceConfigMinimal(name string, hostname string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
   name     = %[1]q
@@ -281,7 +281,7 @@ func TestAccMonitorDNSResourceWithAllOptions(t *testing.T) {
 	})
 }
 
-func testAccMonitorDNSResourceConfigWithAllOptions(name, description string) string {
+func testAccMonitorDNSResourceConfigWithAllOptions(name string, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
   name               = %[1]q
@@ -337,7 +337,7 @@ func TestAccMonitorDNSResourceDifferentRecordTypes(t *testing.T) {
 	}
 }
 
-func testAccMonitorDNSResourceConfigRecordType(name, hostname, recordType string) string {
+func testAccMonitorDNSResourceConfigRecordType(name string, hostname string, recordType string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
   name             = %[1]q

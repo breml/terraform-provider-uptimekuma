@@ -74,7 +74,7 @@ func TestAccMaintenanceResource_Single(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceResourceConfigSingle(title, description string, active bool) string {
+func testAccMaintenanceResourceConfigSingle(title string, description string, active bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title       = %[1]q
@@ -337,7 +337,7 @@ func TestAccMaintenanceResource_Cron(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceResourceConfigCron(title, cronExpr string, durationMinutes int64) string {
+func testAccMaintenanceResourceConfigCron(title string, cronExpr string, durationMinutes int64) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title            = %[1]q
@@ -432,7 +432,7 @@ func TestAccMaintenanceResource_WithTimezone(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceResourceConfigWithTimezone(title, timezone string) string {
+func testAccMaintenanceResourceConfigWithTimezone(title string, timezone string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title       = %[1]q

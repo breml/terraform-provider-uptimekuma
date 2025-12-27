@@ -38,7 +38,7 @@ func TestAccMaintenanceStatusPagesDataSource(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceStatusPagesDataSourceConfig(maintenanceTitle, statusPageSlug1, statusPageSlug2 string) string {
+func testAccMaintenanceStatusPagesDataSourceConfig(maintenanceTitle string, statusPageSlug1 string, statusPageSlug2 string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q

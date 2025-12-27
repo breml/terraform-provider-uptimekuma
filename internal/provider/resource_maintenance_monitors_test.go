@@ -40,7 +40,7 @@ func TestAccMaintenanceMonitorsResource(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceMonitorsResourceConfigSingle(maintenanceTitle, monitorName string) string {
+func testAccMaintenanceMonitorsResourceConfigSingle(maintenanceTitle string, monitorName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -59,7 +59,7 @@ resource "uptimekuma_maintenance_monitors" "test" {
 `, maintenanceTitle, monitorName)
 }
 
-func testAccMaintenanceMonitorsResourceConfigMultiple(maintenanceTitle, monitorName1, monitorName2 string) string {
+func testAccMaintenanceMonitorsResourceConfigMultiple(maintenanceTitle string, monitorName1 string, monitorName2 string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -124,7 +124,7 @@ func TestAccMaintenanceMonitorsResource_Update(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceMonitorsResourceConfigUpdateInitial(maintenanceTitle, monitorName1, monitorName2 string) string {
+func testAccMaintenanceMonitorsResourceConfigUpdateInitial(maintenanceTitle string, monitorName1 string, monitorName2 string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -152,7 +152,7 @@ resource "uptimekuma_maintenance_monitors" "test" {
 }
 
 func testAccMaintenanceMonitorsResourceConfigUpdateChanged(
-	maintenanceTitle, monitorName1, monitorName2, monitorName3 string,
+	maintenanceTitle string, monitorName1 string, monitorName2 string, monitorName3 string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
@@ -246,7 +246,7 @@ func TestAccMaintenanceMonitorsResource_WithScheduledMaintenance(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceMonitorsResourceConfigWithScheduledMaintenance(maintenanceTitle, monitorName string) string {
+func testAccMaintenanceMonitorsResourceConfigWithScheduledMaintenance(maintenanceTitle string, monitorName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title       = %[1]q

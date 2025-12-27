@@ -144,7 +144,7 @@ message HealthCheckResponse {
 }
 
 func testAccMonitorGrpcKeywordResourceConfig(
-	name, grpcURL, serviceName, method, protobuf, keyword string,
+	name string, grpcURL string, serviceName string, method string, protobuf string, keyword string,
 	invertKeyword bool,
 	interval int64,
 ) string {
@@ -292,7 +292,7 @@ message HealthCheckResponse {
 }
 
 func testAccMonitorGrpcKeywordResourceConfigWithTLS(
-	name, grpcURL, serviceName, method, protobuf, keyword string,
+	name string, grpcURL string, serviceName string, method string, protobuf string, keyword string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_grpc_keyword" "test" {
@@ -368,7 +368,7 @@ message HealthCheckResponse {
 }
 
 func testAccMonitorGrpcKeywordResourceConfigWithBody(
-	name, grpcURL, serviceName, method, protobuf, keyword, grpcBody string,
+	name string, grpcURL string, serviceName string, method string, protobuf string, keyword string, grpcBody string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_grpc_keyword" "test" {

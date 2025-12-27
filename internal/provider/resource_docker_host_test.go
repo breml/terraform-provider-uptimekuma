@@ -69,7 +69,7 @@ func TestAccDockerHostResource(t *testing.T) {
 	})
 }
 
-func testAccDockerHostResourceConfig(name, daemon, dockerType string) string {
+func testAccDockerHostResourceConfig(name string, daemon string, dockerType string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_docker_host" "test" {
   name           = %[1]q

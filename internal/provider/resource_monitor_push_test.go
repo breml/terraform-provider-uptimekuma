@@ -146,7 +146,7 @@ func TestAccMonitorPushResourceWithOptionalFields(t *testing.T) {
 	})
 }
 
-func testAccMonitorPushResourceConfigWithOptionalFields(name, description string) string {
+func testAccMonitorPushResourceConfigWithOptionalFields(name string, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_push" "test" {
   name            = %[1]q
@@ -198,7 +198,7 @@ func TestAccMonitorPushResourceWithParent(t *testing.T) {
 	})
 }
 
-func testAccMonitorPushResourceConfigWithParent(groupName, monitorName string) string {
+func testAccMonitorPushResourceConfigWithParent(groupName string, monitorName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name = %[1]q

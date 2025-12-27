@@ -120,7 +120,7 @@ func TestAccNotificationSlackResource(t *testing.T) {
 }
 
 func testAccNotificationSlackResourceConfig(
-	name, webhookURL, username, iconEmoji, channel string,
+	name string, webhookURL string, username string, iconEmoji string, channel string,
 	channelNotify bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`

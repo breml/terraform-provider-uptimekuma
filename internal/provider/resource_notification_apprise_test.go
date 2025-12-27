@@ -99,7 +99,7 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 	})
 }
 
-func testAccNotificationAppriseResourceConfig(name, title string) string {
+func testAccNotificationAppriseResourceConfig(name string, title string) string {
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q
@@ -117,7 +117,7 @@ resource "uptimekuma_notification_apprise" "test" {
 	return config
 }
 
-func testAccNotificationAppriseResourceConfigWithTitle(name, title string) string {
+func testAccNotificationAppriseResourceConfigWithTitle(name string, title string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q

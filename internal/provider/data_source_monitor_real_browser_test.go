@@ -43,7 +43,7 @@ func TestAccMonitorRealBrowserDataSource(t *testing.T) {
 	})
 }
 
-func testAccMonitorRealBrowserDataSourceConfig(name, url string) string {
+func testAccMonitorRealBrowserDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
   name = %[1]q
@@ -56,7 +56,7 @@ data "uptimekuma_monitor_real_browser" "test" {
 `, name, url)
 }
 
-func testAccMonitorRealBrowserDataSourceConfigByID(name, url string) string {
+func testAccMonitorRealBrowserDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
   name = %[1]q

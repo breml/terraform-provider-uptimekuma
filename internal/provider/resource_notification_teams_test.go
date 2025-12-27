@@ -65,7 +65,7 @@ func TestAccNotificationTeamsResource(t *testing.T) {
 	})
 }
 
-func testAccNotificationTeamsResourceConfig(name, webhookURL string) string {
+func testAccNotificationTeamsResourceConfig(name string, webhookURL string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_teams" "test" {
   name        = %[1]q

@@ -104,8 +104,8 @@ func TestAccMonitorPingResource(t *testing.T) {
 }
 
 func testAccMonitorPingResourceConfigWithDescription(
-	name, hostname, description string,
-	interval, packetSize int64,
+	name string, hostname string, description string,
+	interval int64, packetSize int64,
 ) string {
 	descField := ""
 	if description != "" {

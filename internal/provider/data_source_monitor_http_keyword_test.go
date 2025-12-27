@@ -43,7 +43,7 @@ func TestAccMonitorHTTPKeywordDataSource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPKeywordDataSourceConfig(name, url string) string {
+func testAccMonitorHTTPKeywordDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name    = %[1]q
@@ -57,7 +57,7 @@ data "uptimekuma_monitor_http_keyword" "test" {
 `, name, url)
 }
 
-func testAccMonitorHTTPKeywordDataSourceConfigByID(name, url string) string {
+func testAccMonitorHTTPKeywordDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name    = %[1]q

@@ -118,9 +118,9 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 }
 
 func testAccMonitorHTTPKeywordResourceConfig(
-	name, url, keyword string,
+	name string, url string, keyword string,
 	invertKeyword bool,
-	interval, timeout int64,
+	interval int64, timeout int64,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
@@ -221,7 +221,7 @@ func TestAccMonitorHTTPKeywordResourceWithAuth(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPKeywordResourceConfigWithAuth(name, url, keyword, user, pass string) string {
+func testAccMonitorHTTPKeywordResourceConfigWithAuth(name string, url string, keyword string, user string, pass string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name            = %[1]q
@@ -275,7 +275,7 @@ func TestAccMonitorHTTPKeywordResourceWithStatusCodes(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPKeywordResourceConfigWithStatusCodes(name, url, keyword string) string {
+func testAccMonitorHTTPKeywordResourceConfigWithStatusCodes(name string, url string, keyword string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name                  = %[1]q

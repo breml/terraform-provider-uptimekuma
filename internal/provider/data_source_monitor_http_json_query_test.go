@@ -43,7 +43,7 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPJSONQueryDataSourceConfig(name, url string) string {
+func testAccMonitorHTTPJSONQueryDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name       = %[1]q
@@ -58,7 +58,7 @@ data "uptimekuma_monitor_http_json_query" "test" {
 `, name, url)
 }
 
-func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url string) string {
+func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name       = %[1]q

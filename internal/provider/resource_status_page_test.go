@@ -77,7 +77,7 @@ func TestAccStatusPageResource(t *testing.T) {
 	})
 }
 
-func testAccStatusPageResourceConfig(slug, title, description string, published bool) string {
+func testAccStatusPageResourceConfig(slug string, title string, description string, published bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug        = %[1]q
@@ -135,7 +135,7 @@ func TestAccStatusPageResourceMinimal(t *testing.T) {
 	})
 }
 
-func testAccStatusPageResourceConfigMinimal(slug, title string) string {
+func testAccStatusPageResourceConfigMinimal(slug string, title string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug  = %[1]q
@@ -202,7 +202,7 @@ func TestAccStatusPageResourceWithAllOptions(t *testing.T) {
 	})
 }
 
-func testAccStatusPageResourceConfigWithAllOptions(slug, title, description string) string {
+func testAccStatusPageResourceConfigWithAllOptions(slug string, title string, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug                    = %[1]q
@@ -247,7 +247,7 @@ func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 	})
 }
 
-func testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName string) string {
+func testAccStatusPageResourceConfigWithMonitors(slug string, title string, monitorName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[3]q

@@ -80,7 +80,7 @@ func TestAccMonitorPostgresResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorPostgresResourceConfig(name, connectionString, query string) string {
+func testAccMonitorPostgresResourceConfig(name string, connectionString string, query string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_postgres" "test" {
   name                        = %[1]q
@@ -160,7 +160,7 @@ func TestAccMonitorPostgresResourceWithOptionalFields(t *testing.T) {
 	})
 }
 
-func testAccMonitorPostgresResourceConfigWithOptionalFields(name, description, connectionString string) string {
+func testAccMonitorPostgresResourceConfigWithOptionalFields(name string, description string, connectionString string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_postgres" "test" {
   name                       = %[1]q
@@ -214,7 +214,7 @@ func TestAccMonitorPostgresResourceWithParent(t *testing.T) {
 	})
 }
 
-func testAccMonitorPostgresResourceConfigWithParent(groupName, monitorName, connectionString string) string {
+func testAccMonitorPostgresResourceConfigWithParent(groupName string, monitorName string, connectionString string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name = %[1]q

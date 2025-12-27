@@ -112,8 +112,8 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 }
 
 func testAccMonitorTCPPortResourceConfigWithDescription(
-	name, hostname string,
-	port, interval int64,
+	name string, hostname string,
+	port int64, interval int64,
 	description string,
 ) string {
 	descField := ""

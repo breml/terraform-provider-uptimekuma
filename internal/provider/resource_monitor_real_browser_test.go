@@ -86,7 +86,7 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorRealBrowserResourceConfig(name, url string, interval, timeout int64) string {
+func testAccMonitorRealBrowserResourceConfig(name string, url string, interval int64, timeout int64) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
   name     = %[1]q
@@ -133,7 +133,7 @@ func TestAccMonitorRealBrowserResourceWithStatusCodes(t *testing.T) {
 	})
 }
 
-func testAccMonitorRealBrowserResourceConfigWithStatusCodes(name, url string) string {
+func testAccMonitorRealBrowserResourceConfigWithStatusCodes(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
   name                  = %[1]q

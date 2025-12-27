@@ -101,7 +101,7 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPResourceConfig(name, url, method string, interval, timeout int64) string {
+func testAccMonitorHTTPResourceConfig(name string, url string, method string, interval int64, timeout int64) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name     = %[1]q
@@ -156,7 +156,7 @@ func TestAccMonitorHTTPResourceWithAuth(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPResourceConfigWithAuth(name, url, user, pass string) string {
+func testAccMonitorHTTPResourceConfigWithAuth(name string, url string, user string, pass string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name            = %[1]q
@@ -200,7 +200,7 @@ func TestAccMonitorHTTPResourceWithStatusCodes(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPResourceConfigWithStatusCodes(name, url string) string {
+func testAccMonitorHTTPResourceConfigWithStatusCodes(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name                  = %[1]q

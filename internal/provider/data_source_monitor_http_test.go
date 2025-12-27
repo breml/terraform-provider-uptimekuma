@@ -53,7 +53,7 @@ func TestAccMonitorHTTPDataSource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPDataSourceConfig(name, url string) string {
+func testAccMonitorHTTPDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[1]q
@@ -66,7 +66,7 @@ data "uptimekuma_monitor_http" "test" {
 `, name, url)
 }
 
-func testAccMonitorHTTPDataSourceConfigByID(name, url string) string {
+func testAccMonitorHTTPDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[1]q

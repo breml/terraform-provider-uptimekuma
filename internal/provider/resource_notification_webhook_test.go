@@ -134,7 +134,7 @@ func TestAccNotificationWebhookResource_CustomBody(t *testing.T) {
 	})
 }
 
-func testAccNotificationWebhookResourceConfig(name, webhookURL, contentType, customBody string) string {
+func testAccNotificationWebhookResourceConfig(name string, webhookURL string, contentType string, customBody string) string {
 	config := fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name                 = %[1]q
@@ -159,7 +159,7 @@ resource "uptimekuma_notification_webhook" "test" {
 	return providerConfig() + config
 }
 
-func testAccNotificationWebhookResourceConfigWithHeaders(name, webhookURL string) string {
+func testAccNotificationWebhookResourceConfigWithHeaders(name string, webhookURL string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name                   = %[1]q
@@ -174,7 +174,7 @@ resource "uptimekuma_notification_webhook" "test" {
 `, name, webhookURL)
 }
 
-func testAccNotificationWebhookResourceConfigWithCustomBody(name, webhookURL string) string {
+func testAccNotificationWebhookResourceConfigWithCustomBody(name string, webhookURL string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name                 = %[1]q

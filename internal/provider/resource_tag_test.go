@@ -57,7 +57,7 @@ func TestAccTagResource(t *testing.T) {
 	})
 }
 
-func testAccTagResourceConfig(name, color string) string {
+func testAccTagResourceConfig(name string, color string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test" {
   name  = %[1]q

@@ -220,7 +220,7 @@ func TestAccProxyResourceDelete(t *testing.T) {
 	})
 }
 
-func testAccProxyResourceConfig(host, port, protocol string) string {
+func testAccProxyResourceConfig(host string, port string, protocol string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_proxy" "test" {
   host     = %[1]q
@@ -231,7 +231,7 @@ resource "uptimekuma_proxy" "test" {
 `, host, port, protocol)
 }
 
-func testAccProxyResourceConfigWithAuth(host, port, protocol, username, password string) string {
+func testAccProxyResourceConfigWithAuth(host string, port string, protocol string, username string, password string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_proxy" "test" {
   host     = %[1]q
@@ -245,7 +245,7 @@ resource "uptimekuma_proxy" "test" {
 `, host, port, protocol, username, password)
 }
 
-func testAccProxyResourceConfigWithDefault(host, port, protocol string) string {
+func testAccProxyResourceConfigWithDefault(host string, port string, protocol string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_proxy" "test" {
   host     = %[1]q

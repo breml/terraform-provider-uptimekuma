@@ -34,7 +34,7 @@ func TestAccMaintenanceMonitorsDataSource(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceMonitorsDataSourceConfig(maintenanceTitle, monitorName1, monitorName2 string) string {
+func testAccMaintenanceMonitorsDataSourceConfig(maintenanceTitle string, monitorName1 string, monitorName2 string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q

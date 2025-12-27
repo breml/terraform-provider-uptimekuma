@@ -53,7 +53,7 @@ func TestAccMaintenanceStatusPagesResource(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceStatusPagesResourceConfigSingle(maintenanceTitle, statusPageSlug string) string {
+func testAccMaintenanceStatusPagesResourceConfigSingle(maintenanceTitle string, statusPageSlug string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -73,7 +73,7 @@ resource "uptimekuma_maintenance_status_pages" "test" {
 }
 
 func testAccMaintenanceStatusPagesResourceConfigMultiple(
-	maintenanceTitle, statusPageSlug1, statusPageSlug2 string,
+	maintenanceTitle string, statusPageSlug1 string, statusPageSlug2 string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
@@ -171,7 +171,7 @@ func TestAccMaintenanceStatusPagesResource_Update(t *testing.T) {
 }
 
 func testAccMaintenanceStatusPagesResourceConfigUpdateInitial(
-	maintenanceTitle, statusPageSlug1, statusPageSlug2 string,
+	maintenanceTitle string, statusPageSlug1 string, statusPageSlug2 string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
@@ -200,7 +200,7 @@ resource "uptimekuma_maintenance_status_pages" "test" {
 }
 
 func testAccMaintenanceStatusPagesResourceConfigUpdateChanged(
-	maintenanceTitle, statusPageSlug1, statusPageSlug2, statusPageSlug3 string,
+	maintenanceTitle string, statusPageSlug1 string, statusPageSlug2 string, statusPageSlug3 string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
@@ -301,7 +301,7 @@ func TestAccMaintenanceStatusPagesResource_WithScheduledMaintenance(t *testing.T
 }
 
 func testAccMaintenanceStatusPagesResourceConfigWithScheduledMaintenance(
-	maintenanceTitle, statusPageSlug string,
+	maintenanceTitle string, statusPageSlug string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
@@ -366,7 +366,7 @@ func TestAccMaintenanceStatusPagesResource_Combined(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceStatusPagesResourceConfigCombined(maintenanceTitle, monitorName, statusPageSlug string) string {
+func testAccMaintenanceStatusPagesResourceConfigCombined(maintenanceTitle string, monitorName string, statusPageSlug string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title       = %[1]q

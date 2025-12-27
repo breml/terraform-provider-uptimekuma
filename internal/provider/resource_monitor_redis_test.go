@@ -81,7 +81,7 @@ func TestAccMonitorRedisResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorRedisResourceConfig(name, connectionString string, ignoreTLS bool) string {
+func testAccMonitorRedisResourceConfig(name string, connectionString string, ignoreTLS bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_redis" "test" {
   name                        = %[1]q
@@ -161,7 +161,7 @@ func TestAccMonitorRedisResourceWithOptionalFields(t *testing.T) {
 	})
 }
 
-func testAccMonitorRedisResourceConfigWithOptionalFields(name, description, connectionString string) string {
+func testAccMonitorRedisResourceConfigWithOptionalFields(name string, description string, connectionString string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_redis" "test" {
   name                       = %[1]q
@@ -216,7 +216,7 @@ func TestAccMonitorRedisResourceWithParent(t *testing.T) {
 	})
 }
 
-func testAccMonitorRedisResourceConfigWithParent(groupName, monitorName, connectionString string) string {
+func testAccMonitorRedisResourceConfigWithParent(groupName string, monitorName string, connectionString string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name = %[1]q

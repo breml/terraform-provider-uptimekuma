@@ -69,7 +69,7 @@ func TestAccNotificationFeishuResource(t *testing.T) {
 	})
 }
 
-func testAccNotificationFeishuResourceConfig(name, webhookURL string) string {
+func testAccNotificationFeishuResourceConfig(name string, webhookURL string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_feishu" "test" {
   name        = %[1]q
