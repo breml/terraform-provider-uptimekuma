@@ -90,158 +90,233 @@ func (*MaintenanceResource) Metadata(
 
 // Schema returns the schema for the resource.
 func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	// Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{
-				MarkdownDescription: "Maintenance window ID",
-				Computed:            true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+		Attributes:          maintenanceSchemaAttributes(),
+	}
+}
+
+func maintenanceSchemaAttributes() map[string]schema.Attribute {
+	attrs := map[string]schema.Attribute{
+		"id":                maintenanceIDAttribute(),
+		"title":             maintenanceTitleAttribute(),
+		"description":       maintenanceDescriptionAttribute(),
+		"strategy":          maintenanceStrategyAttribute(),
+		"active":            maintenanceActiveAttribute(),
+		"start_date":        maintenanceStartDateAttribute(),
+		"end_date":          maintenanceEndDateAttribute(),
+		"interval_day":      maintenanceIntervalDayAttribute(),
+		"weekdays":          maintenanceWeekdaysAttribute(),
+		"days_of_month":     maintenanceDaysOfMonthAttribute(),
+		"cron":              maintenanceCronAttribute(),
+		"duration_minutes":  maintenanceDurationMinutesAttribute(),
+		"start_time":        maintenanceStartTimeAttribute(),
+		"end_time":          maintenanceEndTimeAttribute(),
+		"timezone":          maintenanceTimezoneAttribute(),
+		"status":            maintenanceStatusAttribute(),
+		"timezone_resolved": maintenanceTimezoneResolvedAttribute(),
+		"timezone_offset":   maintenanceTimezoneOffsetAttribute(),
+		"duration":          maintenanceDurationAttribute(),
+		"timeslot_list":     maintenanceTimeslotListAttribute(),
+	}
+	return attrs
+}
+
+func maintenanceIDAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Maintenance window ID",
+		Computed:            true,
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.UseStateForUnknown(),
+		},
+	}
+}
+
+func maintenanceTitleAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Name of the maintenance window",
+		Required:            true,
+	}
+}
+
+func maintenanceDescriptionAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Additional details about the maintenance",
+		Optional:            true,
+		Computed:            true,
+		Default:             stringdefault.StaticString(""),
+	}
+}
+
+func maintenanceStrategyAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
+		Required:            true,
+		Validators: []validator.String{
+			stringvalidator.OneOf(
+				"single",
+				"recurring-interval",
+				"recurring-weekday",
+				"recurring-day-of-month",
+				"cron",
+				"manual",
+			),
+		},
+	}
+}
+
+func maintenanceActiveAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Whether the maintenance window is active",
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(true),
+	}
+}
+
+func maintenanceStartDateAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Start date/time for single strategy (RFC3339 format)",
+		Optional:            true,
+	}
+}
+
+func maintenanceEndDateAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "End date/time for single strategy (RFC3339 format)",
+		Optional:            true,
+	}
+}
+
+func maintenanceIntervalDayAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Interval in days for recurring-interval strategy",
+		Optional:            true,
+	}
+}
+
+func maintenanceWeekdaysAttribute() schema.ListAttribute {
+	return schema.ListAttribute{
+		MarkdownDescription: "Days of week for recurring-weekday (1=Monday...7=Sunday)",
+		Optional:            true,
+		ElementType:         types.Int64Type,
+	}
+}
+
+func maintenanceDaysOfMonthAttribute() schema.ListAttribute {
+	return schema.ListAttribute{
+		MarkdownDescription: "Days of month for recurring-day-of-month (1-31 or lastDay1-lastDay4)",
+		Optional:            true,
+		ElementType:         types.StringType,
+	}
+}
+
+func maintenanceCronAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Cron expression for cron strategy",
+		Optional:            true,
+		Computed:            true,
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.UseStateForUnknown(),
+		},
+	}
+}
+
+func maintenanceDurationMinutesAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Duration in minutes for cron strategy",
+		Optional:            true,
+	}
+}
+
+func maintenanceStartTimeAttribute() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		MarkdownDescription: "Start time for recurring strategies",
+		Optional:            true,
+		Attributes:          timeOfDaySchemaAttributes(),
+	}
+}
+
+func maintenanceEndTimeAttribute() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		MarkdownDescription: "End time for recurring strategies",
+		Optional:            true,
+		Attributes:          timeOfDaySchemaAttributes(),
+	}
+}
+
+func maintenanceTimezoneAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Timezone option: UTC, SAME_AS_SERVER, or IANA timezone (e.g., America/New_York)",
+		Optional:            true,
+		Computed:            true,
+		Default:             stringdefault.StaticString("UTC"),
+	}
+}
+
+func maintenanceStatusAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Current status: inactive, scheduled, under-maintenance, ended, unknown",
+		Computed:            true,
+	}
+}
+
+func maintenanceTimezoneResolvedAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Resolved IANA timezone",
+		Computed:            true,
+	}
+}
+
+func maintenanceTimezoneOffsetAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Timezone offset from UTC",
+		Computed:            true,
+	}
+}
+
+func maintenanceDurationAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Duration in seconds (computed)",
+		Computed:            true,
+	}
+}
+
+func maintenanceTimeslotListAttribute() schema.ListNestedAttribute {
+	return schema.ListNestedAttribute{
+		MarkdownDescription: "Scheduled maintenance windows",
+		Computed:            true,
+		PlanModifiers: []planmodifier.List{
+			listplanmodifier.UseStateForUnknown(),
+		},
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"start_date": schema.StringAttribute{
+					MarkdownDescription: "RFC3339 timestamp",
+					Computed:            true,
+				},
+				"end_date": schema.StringAttribute{
+					MarkdownDescription: "RFC3339 timestamp",
+					Computed:            true,
 				},
 			},
-			"title": schema.StringAttribute{
-				MarkdownDescription: "Name of the maintenance window",
-				Required:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "Additional details about the maintenance",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString(""),
-			},
-			"strategy": schema.StringAttribute{
-				MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
-				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"single",
-						"recurring-interval",
-						"recurring-weekday",
-						"recurring-day-of-month",
-						"cron",
-						"manual",
-					),
-				},
-			},
-			"active": schema.BoolAttribute{
-				MarkdownDescription: "Whether the maintenance window is active",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(true),
-			},
-			"start_date": schema.StringAttribute{
-				MarkdownDescription: "Start date/time for single strategy (RFC3339 format)",
-				Optional:            true,
-			},
-			"end_date": schema.StringAttribute{
-				MarkdownDescription: "End date/time for single strategy (RFC3339 format)",
-				Optional:            true,
-			},
-			"interval_day": schema.Int64Attribute{
-				MarkdownDescription: "Interval in days for recurring-interval strategy",
-				Optional:            true,
-			},
-			"weekdays": schema.ListAttribute{
-				MarkdownDescription: "Days of week for recurring-weekday (1=Monday...7=Sunday)",
-				Optional:            true,
-				ElementType:         types.Int64Type,
-			},
-			"days_of_month": schema.ListAttribute{
-				MarkdownDescription: "Days of month for recurring-day-of-month (1-31 or lastDay1-lastDay4)",
-				Optional:            true,
-				ElementType:         types.StringType,
-			},
-			"cron": schema.StringAttribute{
-				MarkdownDescription: "Cron expression for cron strategy",
-				Optional:            true,
-				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"duration_minutes": schema.Int64Attribute{
-				MarkdownDescription: "Duration in minutes for cron strategy",
-				Optional:            true,
-			},
-			"start_time": schema.SingleNestedAttribute{
-				MarkdownDescription: "Start time for recurring strategies",
-				Optional:            true,
-				Attributes: map[string]schema.Attribute{
-					"hours": schema.Int64Attribute{
-						MarkdownDescription: "Hours (0-23)",
-						Required:            true,
-					},
-					"minutes": schema.Int64Attribute{
-						MarkdownDescription: "Minutes (0-59)",
-						Required:            true,
-					},
-					"seconds": schema.Int64Attribute{
-						MarkdownDescription: "Seconds (0-59)",
-						Required:            true,
-					},
-				},
-			},
-			"end_time": schema.SingleNestedAttribute{
-				MarkdownDescription: "End time for recurring strategies",
-				Optional:            true,
-				Attributes: map[string]schema.Attribute{
-					"hours": schema.Int64Attribute{
-						MarkdownDescription: "Hours (0-23)",
-						Required:            true,
-					},
-					"minutes": schema.Int64Attribute{
-						MarkdownDescription: "Minutes (0-59)",
-						Required:            true,
-					},
-					"seconds": schema.Int64Attribute{
-						MarkdownDescription: "Seconds (0-59)",
-						Required:            true,
-					},
-				},
-			},
-			"timezone": schema.StringAttribute{
-				MarkdownDescription: "Timezone option: UTC, SAME_AS_SERVER, or IANA timezone (e.g., America/New_York)",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("UTC"),
-			},
-			"status": schema.StringAttribute{
-				MarkdownDescription: "Current status: inactive, scheduled, under-maintenance, ended, unknown",
-				Computed:            true,
-			},
-			"timezone_resolved": schema.StringAttribute{
-				MarkdownDescription: "Resolved IANA timezone",
-				Computed:            true,
-			},
-			"timezone_offset": schema.StringAttribute{
-				MarkdownDescription: "Timezone offset from UTC",
-				Computed:            true,
-			},
-			"duration": schema.Int64Attribute{
-				MarkdownDescription: "Duration in seconds (computed)",
-				Computed:            true,
-			},
-			"timeslot_list": schema.ListNestedAttribute{
-				MarkdownDescription: "Scheduled maintenance windows",
-				Computed:            true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"start_date": schema.StringAttribute{
-							MarkdownDescription: "RFC3339 timestamp",
-							Computed:            true,
-						},
-						"end_date": schema.StringAttribute{
-							MarkdownDescription: "RFC3339 timestamp",
-							Computed:            true,
-						},
-					},
-				},
-			},
+		},
+	}
+}
+
+func timeOfDaySchemaAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"hours": schema.Int64Attribute{
+			MarkdownDescription: "Hours (0-23)",
+			Required:            true,
+		},
+		"minutes": schema.Int64Attribute{
+			MarkdownDescription: "Minutes (0-59)",
+			Required:            true,
+		},
+		"seconds": schema.Int64Attribute{
+			MarkdownDescription: "Seconds (0-59)",
+			Required:            true,
 		},
 	}
 }
@@ -550,112 +625,149 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 
 	switch strategy {
 	case "single":
-		if !data.StartDate.IsNull() && !data.EndDate.IsNull() {
-			startDate, err := time.Parse(time.RFC3339, data.StartDate.ValueString())
-			// Handle error.
-			if err != nil {
-				return fmt.Errorf("invalid start_date: %w", err)
-			}
-
-			endDate, err := time.Parse(time.RFC3339, data.EndDate.ValueString())
-			// Handle error.
-			if err != nil {
-				return fmt.Errorf("invalid end_date: %w", err)
-			}
-
-			m.DateRange = []*time.Time{&startDate, &endDate}
-		}
-
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
-
+		return r.populateMaintenanceFromModelSingle(data, m)
 	case "recurring-interval":
-		if !data.IntervalDay.IsNull() {
-			m.IntervalDay = int(data.IntervalDay.ValueInt64())
-		}
-
-		m.DateRange = []*time.Time{nil, nil}
-		err := r.populateTimeRange(ctx, data, m, diags)
-		// Handle error.
-		if err != nil {
-			return err
-		}
-
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
-
+		return r.populateMaintenanceFromModelRecurringInterval(ctx, data, m, diags)
 	case "recurring-weekday":
-		if !data.Weekdays.IsNull() {
-			var weekdays []int64
-			diags.Append(data.Weekdays.ElementsAs(ctx, &weekdays, false)...)
-			// Check for configuration errors.
-			if diags.HasError() {
-				return errors.New("invalid weekdays")
-			}
-
-			m.Weekdays = make([]int, len(weekdays))
-			// Iterate over items.
-			for i, w := range weekdays {
-				m.Weekdays[i] = int(w)
-			}
-		}
-
-		m.DateRange = []*time.Time{nil, nil}
-		err := r.populateTimeRange(ctx, data, m, diags)
-		// Handle error.
-		if err != nil {
-			return err
-		}
-
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
-
+		return r.populateMaintenanceFromModelRecurringWeekday(ctx, data, m, diags)
 	case "recurring-day-of-month":
-		if !data.DaysOfMonth.IsNull() {
-			var daysOfMonth []string
-			diags.Append(data.DaysOfMonth.ElementsAs(ctx, &daysOfMonth, false)...)
-			// Check for configuration errors.
-			if diags.HasError() {
-				return errors.New("invalid days_of_month")
-			}
-
-			m.DaysOfMonth = make([]any, len(daysOfMonth))
-			// Iterate over items.
-			for i, d := range daysOfMonth {
-				m.DaysOfMonth[i] = d
-			}
-		}
-
-		m.DateRange = []*time.Time{nil, nil}
-		err := r.populateTimeRange(ctx, data, m, diags)
-		// Handle error.
-		if err != nil {
-			return err
-		}
-
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
-
+		return r.populateMaintenanceFromModelRecurringDayOfMonth(ctx, data, m, diags)
 	case "cron":
-		if !data.Cron.IsNull() {
-			m.Cron = data.Cron.ValueString()
-		}
-
-		if !data.DurationMinutes.IsNull() {
-			m.DurationMinutes = int(data.DurationMinutes.ValueInt64())
-		}
-
-		m.DateRange = []*time.Time{nil, nil}
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
-
+		return r.populateMaintenanceFromModelCron(data, m)
 	case "manual":
 		m.DateRange = []*time.Time{nil, nil}
+	}
+
+	return nil
+}
+
+func (*MaintenanceResource) populateMaintenanceFromModelSingle(
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+) error {
+	if !data.StartDate.IsNull() && !data.EndDate.IsNull() {
+		startDate, err := time.Parse(time.RFC3339, data.StartDate.ValueString())
+		if err != nil {
+			return fmt.Errorf("invalid start_date: %w", err)
+		}
+
+		endDate, err := time.Parse(time.RFC3339, data.EndDate.ValueString())
+		if err != nil {
+			return fmt.Errorf("invalid end_date: %w", err)
+		}
+
+		m.DateRange = []*time.Time{&startDate, &endDate}
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModelRecurringInterval(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	if !data.IntervalDay.IsNull() {
+		m.IntervalDay = int(data.IntervalDay.ValueInt64())
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	err := r.populateTimeRange(ctx, data, m, diags)
+	if err != nil {
+		return err
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModelRecurringWeekday(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	if !data.Weekdays.IsNull() {
+		var weekdays []int64
+		diags.Append(data.Weekdays.ElementsAs(ctx, &weekdays, false)...)
+		if diags.HasError() {
+			return errors.New("invalid weekdays")
+		}
+
+		m.Weekdays = make([]int, len(weekdays))
+		for i, w := range weekdays {
+			m.Weekdays[i] = int(w)
+		}
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	err := r.populateTimeRange(ctx, data, m, diags)
+	if err != nil {
+		return err
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModelRecurringDayOfMonth(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	if !data.DaysOfMonth.IsNull() {
+		var daysOfMonth []string
+		diags.Append(data.DaysOfMonth.ElementsAs(ctx, &daysOfMonth, false)...)
+		if diags.HasError() {
+			return errors.New("invalid days_of_month")
+		}
+
+		m.DaysOfMonth = make([]any, len(daysOfMonth))
+		for i, d := range daysOfMonth {
+			m.DaysOfMonth[i] = d
+		}
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	err := r.populateTimeRange(ctx, data, m, diags)
+	if err != nil {
+		return err
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (*MaintenanceResource) populateMaintenanceFromModelCron(
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+) error {
+	if !data.Cron.IsNull() {
+		m.Cron = data.Cron.ValueString()
+	}
+
+	if !data.DurationMinutes.IsNull() {
+		m.DurationMinutes = int(data.DurationMinutes.ValueInt64())
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
 	}
 
 	return nil
@@ -740,54 +852,98 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 
 	switch m.Strategy {
 	case "single":
-		if len(m.DateRange) == 2 && m.DateRange[0] != nil && m.DateRange[1] != nil {
-			data.StartDate = types.StringValue(m.DateRange[0].Format(time.RFC3339))
-			data.EndDate = types.StringValue(m.DateRange[1].Format(time.RFC3339))
-		}
-
+		r.populateModelFromMaintenanceSingle(m, data)
 	case "recurring-interval":
-		if m.IntervalDay > 0 {
-			data.IntervalDay = types.Int64Value(int64(m.IntervalDay))
-		}
-
-		r.populateModelTimeRange(m, data, diags)
-
+		r.populateModelFromMaintenanceRecurringInterval(ctx, m, data, diags)
 	case "recurring-weekday":
-		if len(m.Weekdays) > 0 {
-			weekdays := make([]int64, len(m.Weekdays))
-			// Iterate over items.
-			for i, w := range m.Weekdays {
-				weekdays[i] = int64(w)
-			}
-
-			listValue, d := types.ListValueFrom(ctx, types.Int64Type, weekdays)
-			diags.Append(d...)
-			data.Weekdays = listValue
-		}
-
-		r.populateModelTimeRange(m, data, diags)
-
+		r.populateModelFromMaintenanceRecurringWeekday(ctx, m, data, diags)
 	case "recurring-day-of-month":
-		if len(m.DaysOfMonth) > 0 {
-			daysOfMonth := make([]string, len(m.DaysOfMonth))
-			// Iterate over items.
-			for i, d := range m.DaysOfMonth {
-				daysOfMonth[i] = fmt.Sprintf("%v", d)
-			}
-
-			listValue, d := types.ListValueFrom(ctx, types.StringType, daysOfMonth)
-			diags.Append(d...)
-			data.DaysOfMonth = listValue
-		}
-
-		r.populateModelTimeRange(m, data, diags)
-
+		r.populateModelFromMaintenanceRecurringDayOfMonth(ctx, m, data, diags)
 	case "cron":
-		if m.DurationMinutes > 0 {
-			data.DurationMinutes = types.Int64Value(int64(m.DurationMinutes))
-		}
+		r.populateModelFromMaintenanceCron(m, data)
 	}
 
+	r.populateMaintenanceTimeslotList(ctx, m, data, diags)
+}
+
+func (*MaintenanceResource) populateModelFromMaintenanceSingle(
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+) {
+	if len(m.DateRange) == 2 && m.DateRange[0] != nil && m.DateRange[1] != nil {
+		data.StartDate = types.StringValue(m.DateRange[0].Format(time.RFC3339))
+		data.EndDate = types.StringValue(m.DateRange[1].Format(time.RFC3339))
+	}
+}
+
+func (r *MaintenanceResource) populateModelFromMaintenanceRecurringInterval(
+	_ context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if m.IntervalDay > 0 {
+		data.IntervalDay = types.Int64Value(int64(m.IntervalDay))
+	}
+
+	r.populateModelTimeRange(m, data, diags)
+}
+
+func (r *MaintenanceResource) populateModelFromMaintenanceRecurringWeekday(
+	ctx context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if len(m.Weekdays) > 0 {
+		weekdays := make([]int64, len(m.Weekdays))
+		for i, w := range m.Weekdays {
+			weekdays[i] = int64(w)
+		}
+
+		listValue, d := types.ListValueFrom(ctx, types.Int64Type, weekdays)
+		diags.Append(d...)
+		data.Weekdays = listValue
+	}
+
+	r.populateModelTimeRange(m, data, diags)
+}
+
+func (r *MaintenanceResource) populateModelFromMaintenanceRecurringDayOfMonth(
+	ctx context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if len(m.DaysOfMonth) > 0 {
+		daysOfMonth := make([]string, len(m.DaysOfMonth))
+		for i, d := range m.DaysOfMonth {
+			daysOfMonth[i] = fmt.Sprintf("%v", d)
+		}
+
+		listValue, d := types.ListValueFrom(ctx, types.StringType, daysOfMonth)
+		diags.Append(d...)
+		data.DaysOfMonth = listValue
+	}
+
+	r.populateModelTimeRange(m, data, diags)
+}
+
+func (*MaintenanceResource) populateModelFromMaintenanceCron(
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+) {
+	if m.DurationMinutes > 0 {
+		data.DurationMinutes = types.Int64Value(int64(m.DurationMinutes))
+	}
+}
+
+func (*MaintenanceResource) populateMaintenanceTimeslotList(
+	_ context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
 	timeslotAttrTypes := map[string]attr.Type{
 		"start_date": types.StringType,
 		"end_date":   types.StringType,
@@ -795,7 +951,6 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 
 	if len(m.TimeslotList) > 0 {
 		timeslots := make([]TimeslotModel, len(m.TimeslotList))
-		// Iterate over items.
 		for i, ts := range m.TimeslotList {
 			timeslots[i] = TimeslotModel{
 				StartDate: types.StringValue(ts.StartDate.Format(time.RFC3339)),
@@ -804,7 +959,6 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 		}
 
 		timeslotList := make([]attr.Value, len(timeslots))
-		// Iterate over items.
 		for i, ts := range timeslots {
 			objValue, d := types.ObjectValue(timeslotAttrTypes, map[string]attr.Value{
 				"start_date": ts.StartDate,
@@ -818,7 +972,6 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 		diags.Append(d...)
 		data.TimeslotList = listValue
 	} else {
-		// Always set timeslot_list even if empty
 		listValue, d := types.ListValue(types.ObjectType{AttrTypes: timeslotAttrTypes}, []attr.Value{})
 		diags.Append(d...)
 		data.TimeslotList = listValue

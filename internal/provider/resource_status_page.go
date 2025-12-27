@@ -75,116 +75,204 @@ func (*StatusPageResource) Metadata(
 func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page resource",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{
-				MarkdownDescription: "Status page ID",
-				Computed:            true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
-			},
-			"slug": schema.StringAttribute{
-				MarkdownDescription: "URL-friendly slug for the status page",
-				Required:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"title": schema.StringAttribute{
-				MarkdownDescription: "Display title",
-				Required:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "Status page description",
-				Optional:            true,
-			},
-			"icon": schema.StringAttribute{
-				MarkdownDescription: "Base64-encoded icon image",
-				Optional:            true,
-			},
-			"theme": schema.StringAttribute{
-				MarkdownDescription: "Theme name for styling",
-				Optional:            true,
-			},
-			"published": schema.BoolAttribute{
-				MarkdownDescription: "Whether page is publicly visible",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(false),
-			},
-			"show_tags": schema.BoolAttribute{
-				MarkdownDescription: "Show monitor tags on status page",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(false),
-			},
-			"domain_name_list": schema.ListAttribute{
-				MarkdownDescription: "Custom domain names",
-				ElementType:         types.StringType,
-				Optional:            true,
-			},
-			"google_analytics_id": schema.StringAttribute{
-				MarkdownDescription: "Google Analytics tracking ID",
-				Optional:            true,
-			},
-			"custom_css": schema.StringAttribute{
-				MarkdownDescription: "Custom CSS styling",
-				Optional:            true,
-			},
-			"footer_text": schema.StringAttribute{
-				MarkdownDescription: "Footer content",
-				Optional:            true,
-			},
-			"show_powered_by": schema.BoolAttribute{
-				MarkdownDescription: "Display 'Powered by Uptime Kuma'",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(true),
-			},
-			"show_certificate_expiry": schema.BoolAttribute{
-				MarkdownDescription: "Show certificate expiry dates",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(false),
-			},
-			"public_group_list": schema.ListNestedAttribute{
-				MarkdownDescription: "Monitor grouping configuration",
-				Optional:            true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.Int64Attribute{
-							MarkdownDescription: "Public group ID",
-							Computed:            true,
-							Optional:            true,
-						},
-						"name": schema.StringAttribute{
-							MarkdownDescription: "Group display name",
-							Required:            true,
-						},
-						"weight": schema.Int64Attribute{
-							MarkdownDescription: "Display order/weight",
-							Optional:            true,
-						},
-						"monitor_list": schema.ListNestedAttribute{
-							MarkdownDescription: "Monitors in group",
-							Optional:            true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"id": schema.Int64Attribute{
-										MarkdownDescription: "Monitor ID",
-										Required:            true,
-									},
-									"send_url": schema.BoolAttribute{
-										MarkdownDescription: "Include monitor URL in status page",
-										Optional:            true,
-									},
-								},
-							},
-						},
-					},
-				},
+		Attributes:          statusPageSchemaAttributes(),
+	}
+}
+
+func statusPageSchemaAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"id":                      statusPageIDAttribute(),
+		"slug":                    statusPageSlugAttribute(),
+		"title":                   statusPageTitleAttribute(),
+		"description":             statusPageDescriptionAttribute(),
+		"icon":                    statusPageIconAttribute(),
+		"theme":                   statusPageThemeAttribute(),
+		"published":               statusPagePublishedAttribute(),
+		"show_tags":               statusPageShowTagsAttribute(),
+		"domain_name_list":        statusPageDomainNameListAttribute(),
+		"google_analytics_id":     statusPageGoogleAnalyticsIDAttribute(),
+		"custom_css":              statusPageCustomCSSAttribute(),
+		"footer_text":             statusPageFooterTextAttribute(),
+		"show_powered_by":         statusPageShowPoweredByAttribute(),
+		"show_certificate_expiry": statusPageShowCertificateExpiryAttribute(),
+		"public_group_list":       statusPagePublicGroupListAttribute(),
+	}
+}
+
+func statusPageIDAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Status page ID",
+		Computed:            true,
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.UseStateForUnknown(),
+		},
+	}
+}
+
+func statusPageSlugAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "URL-friendly slug for the status page",
+		Required:            true,
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+}
+
+func statusPageTitleAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Display title",
+		Required:            true,
+	}
+}
+
+func statusPageDescriptionAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Status page description",
+		Optional:            true,
+	}
+}
+
+func statusPageIconAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Base64-encoded icon image",
+		Optional:            true,
+	}
+}
+
+func statusPageThemeAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Theme name for styling",
+		Optional:            true,
+	}
+}
+
+func statusPagePublishedAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Whether page is publicly visible",
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(false),
+	}
+}
+
+func statusPageShowTagsAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Show monitor tags on status page",
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(false),
+	}
+}
+
+func statusPageDomainNameListAttribute() schema.ListAttribute {
+	return schema.ListAttribute{
+		MarkdownDescription: "Custom domain names",
+		ElementType:         types.StringType,
+		Optional:            true,
+	}
+}
+
+func statusPageGoogleAnalyticsIDAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Google Analytics tracking ID",
+		Optional:            true,
+	}
+}
+
+func statusPageCustomCSSAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Custom CSS styling",
+		Optional:            true,
+	}
+}
+
+func statusPageFooterTextAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Footer content",
+		Optional:            true,
+	}
+}
+
+func statusPageShowPoweredByAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Display 'Powered by Uptime Kuma'",
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(true),
+	}
+}
+
+func statusPageShowCertificateExpiryAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Show certificate expiry dates",
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(false),
+	}
+}
+
+func statusPagePublicGroupListAttribute() schema.ListNestedAttribute {
+	return schema.ListNestedAttribute{
+		MarkdownDescription: "Monitor grouping configuration",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"id":           statusPageGroupIDAttribute(),
+				"name":         statusPageGroupNameAttribute(),
+				"weight":       statusPageGroupWeightAttribute(),
+				"monitor_list": statusPageGroupMonitorListAttribute(),
 			},
 		},
+	}
+}
+
+func statusPageGroupIDAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Public group ID",
+		Computed:            true,
+		Optional:            true,
+	}
+}
+
+func statusPageGroupNameAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "Group display name",
+		Required:            true,
+	}
+}
+
+func statusPageGroupWeightAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Display order/weight",
+		Optional:            true,
+	}
+}
+
+func statusPageGroupMonitorListAttribute() schema.ListNestedAttribute {
+	return schema.ListNestedAttribute{
+		MarkdownDescription: "Monitors in group",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"id":       statusPageMonitorIDAttribute(),
+				"send_url": statusPageMonitorSendURLAttribute(),
+			},
+		},
+	}
+}
+
+func statusPageMonitorIDAttribute() schema.Int64Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: "Monitor ID",
+		Required:            true,
+	}
+}
+
+func statusPageMonitorSendURLAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Include monitor URL in status page",
+		Optional:            true,
 	}
 }
 
@@ -248,55 +336,14 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		PublicGroupList:       []statuspage.PublicGroup{},
 	}
 
-	if !data.DomainNameList.IsNull() {
-		var domainNames []string
-		resp.Diagnostics.Append(data.DomainNameList.ElementsAs(ctx, &domainNames, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		sp.DomainNameList = domainNames
+	r.populateStatusPageDomainNames(ctx, &data, sp, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if !data.PublicGroupList.IsNull() {
-		var groups []PublicGroupModel
-		resp.Diagnostics.Append(data.PublicGroupList.ElementsAs(ctx, &groups, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		sp.PublicGroupList = make([]statuspage.PublicGroup, len(groups))
-		for i, group := range groups {
-			publicGroup := statuspage.PublicGroup{
-				Name:        group.Name.ValueString(),
-				Weight:      int(group.Weight.ValueInt64()),
-				MonitorList: []statuspage.PublicMonitor{},
-			}
-			if !group.ID.IsNull() {
-				publicGroup.ID = group.ID.ValueInt64()
-			}
-
-			sp.PublicGroupList[i] = publicGroup
-
-			if !group.MonitorList.IsNull() {
-				var monitors []PublicMonitorModel
-				resp.Diagnostics.Append(group.MonitorList.ElementsAs(ctx, &monitors, false)...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-
-				sp.PublicGroupList[i].MonitorList = make([]statuspage.PublicMonitor, len(monitors))
-				for j, monitor := range monitors {
-					sp.PublicGroupList[i].MonitorList[j] = statuspage.PublicMonitor{
-						ID: monitor.ID.ValueInt64(),
-					}
-					if !monitor.SendURL.IsNull() {
-						sendURL := monitor.SendURL.ValueBool()
-						sp.PublicGroupList[i].MonitorList[j].SendURL = &sendURL
-					}
-				}
-			}
-		}
+	r.populateStatusPagePublicGroups(ctx, &data, sp, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	savedGroups, err := r.client.SaveStatusPage(ctx, sp)
@@ -305,7 +352,6 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Read back the status page to get the generated ID
 	retrievedSP, err := r.client.GetStatusPage(ctx, data.Slug.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read status page after creation", err.Error())
@@ -316,13 +362,11 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 
 	planPublic := data.PublicGroupList
 
-	// Build public_group_list from the savedGroups response when available
 	data.PublicGroupList = buildPublicGroupListFromSaved(ctx, savedGroups, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If server didn't return groups, preserve config but convert unknown IDs to null so values are known after create
 	if len(savedGroups) == 0 && !planPublic.IsNull() {
 		data.PublicGroupList = convertUnknownIDsToNull(ctx, planPublic, &resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
@@ -421,7 +465,11 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func buildStatusPageFromModel(ctx context.Context, data *StatusPageResourceModel, diags *diag.Diagnostics) *statuspage.StatusPage {
+func buildStatusPageFromModel(
+	ctx context.Context,
+	data *StatusPageResourceModel,
+	diags *diag.Diagnostics,
+) *statuspage.StatusPage {
 	sp := &statuspage.StatusPage{
 		Slug:                  data.Slug.ValueString(),
 		Title:                 data.Title.ValueString(),
@@ -462,7 +510,11 @@ func buildStatusPageFromModel(ctx context.Context, data *StatusPageResourceModel
 	return sp
 }
 
-func convertGroupModelsToAPI(ctx context.Context, groups []PublicGroupModel, diags *diag.Diagnostics) []statuspage.PublicGroup {
+func convertGroupModelsToAPI(
+	ctx context.Context,
+	groups []PublicGroupModel,
+	diags *diag.Diagnostics,
+) []statuspage.PublicGroup {
 	publicGroups := make([]statuspage.PublicGroup, len(groups))
 
 	for i, group := range groups {
@@ -507,7 +559,12 @@ func convertMonitorModelsToAPI(monitors []PublicMonitorModel) []statuspage.Publi
 	return apiMonitors
 }
 
-func updateStatusPageDataAfterSave(ctx context.Context, data *StatusPageResourceModel, savedGroups []statuspage.PublicGroup, diags *diag.Diagnostics) {
+func updateStatusPageDataAfterSave(
+	ctx context.Context,
+	data *StatusPageResourceModel,
+	savedGroups []statuspage.PublicGroup,
+	diags *diag.Diagnostics,
+) {
 	if len(savedGroups) > 0 {
 		data.PublicGroupList = buildPublicGroupListFromSaved(ctx, savedGroups, diags)
 	} else if !data.PublicGroupList.IsNull() {
@@ -529,5 +586,68 @@ func (r *StatusPageResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete status page", err.Error())
 		return
+	}
+}
+
+func (*StatusPageResource) populateStatusPageDomainNames(
+	ctx context.Context,
+	data *StatusPageResourceModel,
+	sp *statuspage.StatusPage,
+	diags *diag.Diagnostics,
+) {
+	if !data.DomainNameList.IsNull() {
+		var domainNames []string
+		diags.Append(data.DomainNameList.ElementsAs(ctx, &domainNames, false)...)
+		if !diags.HasError() {
+			sp.DomainNameList = domainNames
+		}
+	}
+}
+
+func (r *StatusPageResource) populateStatusPagePublicGroups(
+	ctx context.Context,
+	data *StatusPageResourceModel,
+	sp *statuspage.StatusPage,
+	diags *diag.Diagnostics,
+) {
+	if !data.PublicGroupList.IsNull() {
+		var groups []PublicGroupModel
+		diags.Append(data.PublicGroupList.ElementsAs(ctx, &groups, false)...)
+		if diags.HasError() {
+			return
+		}
+
+		sp.PublicGroupList = make([]statuspage.PublicGroup, len(groups))
+		for i, group := range groups {
+			publicGroup := statuspage.PublicGroup{
+				Name:        group.Name.ValueString(),
+				Weight:      int(group.Weight.ValueInt64()),
+				MonitorList: []statuspage.PublicMonitor{},
+			}
+			if !group.ID.IsNull() {
+				publicGroup.ID = group.ID.ValueInt64()
+			}
+
+			sp.PublicGroupList[i] = publicGroup
+
+			if !group.MonitorList.IsNull() {
+				var monitors []PublicMonitorModel
+				diags.Append(group.MonitorList.ElementsAs(ctx, &monitors, false)...)
+				if diags.HasError() {
+					return
+				}
+
+				sp.PublicGroupList[i].MonitorList = make([]statuspage.PublicMonitor, len(monitors))
+				for j, monitor := range monitors {
+					sp.PublicGroupList[i].MonitorList[j] = statuspage.PublicMonitor{
+						ID: monitor.ID.ValueInt64(),
+					}
+					if !monitor.SendURL.IsNull() {
+						sendURL := monitor.SendURL.ValueBool()
+						sp.PublicGroupList[i].MonitorList[j].SendURL = &sendURL
+					}
+				}
+			}
+		}
 	}
 }

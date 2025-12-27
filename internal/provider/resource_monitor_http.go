@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -82,16 +83,33 @@ func (r *MonitorHTTPResource) Configure(
 
 // Create creates a new resource.
 func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// Extract and validate configuration.
 	var data MonitorHTTPResourceModel
-
-	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	httpMonitor := buildHTTPMonitor(ctx, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id, err := r.client.CreateMonitor(ctx, httpMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create HTTP monitor", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func buildHTTPMonitor(ctx context.Context, data *MonitorHTTPResourceModel, diags *diag.Diagnostics) monitor.HTTP {
 	httpMonitor := monitor.HTTP{
 		Base: monitor.Base{
 			Name:           data.Name.ValueString(),
@@ -133,12 +151,10 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 		desc := data.Description.ValueString()
 		httpMonitor.Description = &desc
 	}
-
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
 		httpMonitor.Parent = &parent
 	}
-
 	if !data.ProxyID.IsNull() {
 		proxyID := data.ProxyID.ValueInt64()
 		httpMonitor.ProxyID = &proxyID
@@ -146,43 +162,23 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 
 	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
 		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
+		diags.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
+		if !diags.HasError() {
+			httpMonitor.AcceptedStatusCodes = statusCodes
 		}
-
-		httpMonitor.AcceptedStatusCodes = statusCodes
 	} else {
 		httpMonitor.AcceptedStatusCodes = []string{"200-299"}
 	}
 
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
-		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if resp.Diagnostics.HasError() {
-			return
+		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if !diags.HasError() {
+			httpMonitor.NotificationIDs = notificationIDs
 		}
-
-		httpMonitor.NotificationIDs = notificationIDs
 	}
 
-	// Create monitor via API.
-	id, err := r.client.CreateMonitor(ctx, httpMonitor)
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create HTTP monitor", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(id)
-
-	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Populate state.
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	return httpMonitor
 }
 
 func stringOrNull(s string) types.String {
@@ -197,98 +193,26 @@ func stringOrNull(s string) types.String {
 func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPResourceModel
 
-	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var httpMonitor monitor.HTTP
-	// Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpMonitor)
-	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
 		return
 	}
 
-	data.Name = types.StringValue(httpMonitor.Name)
-	if httpMonitor.Description != nil {
-		data.Description = types.StringValue(*httpMonitor.Description)
-	} else {
-		data.Description = types.StringNull()
-	}
-
-	data.Interval = types.Int64Value(httpMonitor.Interval)
-	data.RetryInterval = types.Int64Value(httpMonitor.RetryInterval)
-	data.ResendInterval = types.Int64Value(httpMonitor.ResendInterval)
-	data.MaxRetries = types.Int64Value(httpMonitor.MaxRetries)
-	data.UpsideDown = types.BoolValue(httpMonitor.UpsideDown)
-	data.Active = types.BoolValue(httpMonitor.IsActive)
-	data.URL = types.StringValue(httpMonitor.URL)
-	data.Timeout = types.Int64Value(httpMonitor.Timeout)
-	data.Method = types.StringValue(httpMonitor.Method)
-	data.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
-	data.IgnoreTLS = types.BoolValue(httpMonitor.IgnoreTLS)
-	data.MaxRedirects = types.Int64Value(int64(httpMonitor.MaxRedirects))
-	data.HTTPBodyEncoding = types.StringValue(httpMonitor.HTTPBodyEncoding)
-	data.Body = stringOrNull(httpMonitor.Body)
-	data.Headers = stringOrNull(httpMonitor.Headers)
-	data.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
-	data.BasicAuthUser = stringOrNull(httpMonitor.BasicAuthUser)
-	data.BasicAuthPass = stringOrNull(httpMonitor.BasicAuthPass)
-	data.AuthDomain = stringOrNull(httpMonitor.AuthDomain)
-	data.AuthWorkstation = stringOrNull(httpMonitor.AuthWorkstation)
-	data.TLSCert = stringOrNull(httpMonitor.TLSCert)
-	data.TLSKey = stringOrNull(httpMonitor.TLSKey)
-	data.TLSCa = stringOrNull(httpMonitor.TLSCa)
-	data.OAuthAuthMethod = stringOrNull(httpMonitor.OAuthAuthMethod)
-	data.OAuthTokenURL = stringOrNull(httpMonitor.OAuthTokenURL)
-	data.OAuthClientID = stringOrNull(httpMonitor.OAuthClientID)
-	data.OAuthClientSecret = stringOrNull(httpMonitor.OAuthClientSecret)
-	data.OAuthScopes = stringOrNull(httpMonitor.OAuthScopes)
-
-	if httpMonitor.Parent != nil {
-		data.Parent = types.Int64Value(*httpMonitor.Parent)
-	} else {
-		data.Parent = types.Int64Null()
-	}
-
-	if httpMonitor.ProxyID != nil {
-		data.ProxyID = types.Int64Value(*httpMonitor.ProxyID)
-	} else {
-		data.ProxyID = types.Int64Null()
-	}
-
-	if len(httpMonitor.AcceptedStatusCodes) > 0 {
-		statusCodes, diags := types.ListValueFrom(ctx, types.StringType, httpMonitor.AcceptedStatusCodes)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		data.AcceptedStatusCodes = statusCodes
-	}
-
-	if len(httpMonitor.NotificationIDs) > 0 {
-		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, httpMonitor.NotificationIDs)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		data.NotificationIDs = notificationIDs
-	} else {
-		data.NotificationIDs = types.ListNull(types.Int64Type)
-	}
+	populateHTTPMonitorBaseFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
+	populateHTTPMonitorOptionalFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpMonitor.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -297,96 +221,24 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	var data MonitorHTTPResourceModel
 	var state MonitorHTTPResourceModel
 
-	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	httpMonitor := monitor.HTTP{
-		Base: monitor.Base{
-			ID:             data.ID.ValueInt64(),
-			Name:           data.Name.ValueString(),
-			Interval:       data.Interval.ValueInt64(),
-			RetryInterval:  data.RetryInterval.ValueInt64(),
-			ResendInterval: data.ResendInterval.ValueInt64(),
-			MaxRetries:     data.MaxRetries.ValueInt64(),
-			UpsideDown:     data.UpsideDown.ValueBool(),
-			IsActive:       data.Active.ValueBool(),
-		},
-		HTTPDetails: monitor.HTTPDetails{
-			URL:                 data.URL.ValueString(),
-			Timeout:             data.Timeout.ValueInt64(),
-			Method:              data.Method.ValueString(),
-			ExpiryNotification:  data.ExpiryNotification.ValueBool(),
-			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
-			HTTPBodyEncoding:    data.HTTPBodyEncoding.ValueString(),
-			Body:                data.Body.ValueString(),
-			Headers:             data.Headers.ValueString(),
-			AuthMethod:          monitor.AuthMethod(data.AuthMethod.ValueString()),
-			BasicAuthUser:       data.BasicAuthUser.ValueString(),
-			BasicAuthPass:       data.BasicAuthPass.ValueString(),
-			AuthDomain:          data.AuthDomain.ValueString(),
-			AuthWorkstation:     data.AuthWorkstation.ValueString(),
-			TLSCert:             data.TLSCert.ValueString(),
-			TLSKey:              data.TLSKey.ValueString(),
-			TLSCa:               data.TLSCa.ValueString(),
-			OAuthAuthMethod:     data.OAuthAuthMethod.ValueString(),
-			OAuthTokenURL:       data.OAuthTokenURL.ValueString(),
-			OAuthClientID:       data.OAuthClientID.ValueString(),
-			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
-			OAuthScopes:         data.OAuthScopes.ValueString(),
-		},
+	httpMonitor := buildHTTPMonitor(ctx, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if !data.Description.IsNull() {
-		desc := data.Description.ValueString()
-		httpMonitor.Description = &desc
-	}
+	httpMonitor.ID = data.ID.ValueInt64()
 
-	if !data.Parent.IsNull() {
-		parent := data.Parent.ValueInt64()
-		httpMonitor.Parent = &parent
-	}
-
-	if !data.ProxyID.IsNull() {
-		proxyID := data.ProxyID.ValueInt64()
-		httpMonitor.ProxyID = &proxyID
-	}
-
-	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
-		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		httpMonitor.AcceptedStatusCodes = statusCodes
-	} else {
-		httpMonitor.AcceptedStatusCodes = []string{"200-299"}
-	}
-
-	if !data.NotificationIDs.IsNull() {
-		var notificationIDs []int64
-		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		httpMonitor.NotificationIDs = notificationIDs
-	}
-
-	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, httpMonitor)
-	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP monitor", err.Error())
 		return
@@ -397,7 +249,6 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

@@ -30,13 +30,21 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 	return buildGroupListFromModels(ctx, groups, diags)
 }
 
-func deserializeGroupsForConversion(ctx context.Context, publicGroupList types.List, diags *diag.Diagnostics) []PublicGroupModel {
+func deserializeGroupsForConversion(
+	ctx context.Context,
+	publicGroupList types.List,
+	diags *diag.Diagnostics,
+) []PublicGroupModel {
 	var configGroups []PublicGroupModel
 	diags.Append(publicGroupList.ElementsAs(ctx, &configGroups, true)...)
 	return configGroups
 }
 
-func convertGroupsUnknownToNull(ctx context.Context, configGroups []PublicGroupModel, diags *diag.Diagnostics) []PublicGroupModel {
+func convertGroupsUnknownToNull(
+	ctx context.Context,
+	configGroups []PublicGroupModel,
+	diags *diag.Diagnostics,
+) []PublicGroupModel {
 	groups := make([]PublicGroupModel, len(configGroups))
 
 	for i, group := range configGroups {
