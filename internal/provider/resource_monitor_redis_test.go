@@ -161,7 +161,11 @@ func TestAccMonitorRedisResourceWithOptionalFields(t *testing.T) {
 	})
 }
 
-func testAccMonitorRedisResourceConfigWithOptionalFields(name string, description string, connectionString string) string {
+func testAccMonitorRedisResourceConfigWithOptionalFields(
+	name string,
+	description string,
+	connectionString string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_redis" "test" {
   name                       = %[1]q

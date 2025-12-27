@@ -35,6 +35,7 @@ type MonitorHTTPResourceModel struct {
 	MonitorHTTPBaseModel
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorHTTPResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -43,6 +44,7 @@ func (_ *MonitorHTTPResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP monitor resource",
@@ -50,7 +52,7 @@ func (_ *MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
-// Configure configures the HTTP monitor resource with the API client.
+// Configure configures the resource with the API client.
 func (r *MonitorHTTPResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -77,7 +79,7 @@ func (r *MonitorHTTPResource) Configure(
 	r.client = client
 }
 
-// Create creates a new HTTP monitor resource.
+// Create creates a new resource.
 func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -185,7 +187,7 @@ func stringOrNull(s string) types.String {
 	return types.StringValue(s)
 }
 
-// Read reads the current state of the HTTP monitor resource.
+// Read reads the current state of the resource.
 func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -280,7 +282,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the HTTP monitor resource.
+// Update updates the resource.
 func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorHTTPResourceModel
 	var state MonitorHTTPResourceModel
@@ -384,7 +386,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the HTTP monitor resource.
+// Delete deletes the resource.
 func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorHTTPResourceModel
 

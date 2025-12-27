@@ -32,6 +32,7 @@ type MonitorTCPPortDataSourceModel struct {
 	Port     types.Int64  `tfsdk:"port"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorTCPPortDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -40,6 +41,7 @@ func (_ *MonitorTCPPortDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_tcp_port"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorTCPPortDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -70,7 +72,7 @@ func (_ *MonitorTCPPortDataSource) Schema(
 	}
 }
 
-// Configure configures the TCP Port monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorTCPPortDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -95,6 +97,7 @@ func (d *MonitorTCPPortDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorTCPPortDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

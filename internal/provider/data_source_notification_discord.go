@@ -29,6 +29,7 @@ type NotificationDiscordDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*NotificationDiscordDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*NotificationDiscordDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_discord"
 }
 
+// Schema returns the schema for the data source.
 func (*NotificationDiscordDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (*NotificationDiscordDataSource) Schema(
 	}
 }
 
-// Configure configures the Discord notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationDiscordDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *NotificationDiscordDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationDiscordDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

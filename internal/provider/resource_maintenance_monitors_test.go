@@ -59,7 +59,11 @@ resource "uptimekuma_maintenance_monitors" "test" {
 `, maintenanceTitle, monitorName)
 }
 
-func testAccMaintenanceMonitorsResourceConfigMultiple(maintenanceTitle string, monitorName1 string, monitorName2 string) string {
+func testAccMaintenanceMonitorsResourceConfigMultiple(
+	maintenanceTitle string,
+	monitorName1 string,
+	monitorName2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -124,7 +128,11 @@ func TestAccMaintenanceMonitorsResource_Update(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceMonitorsResourceConfigUpdateInitial(maintenanceTitle string, monitorName1 string, monitorName2 string) string {
+func testAccMaintenanceMonitorsResourceConfigUpdateInitial(
+	maintenanceTitle string,
+	monitorName1 string,
+	monitorName2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q
@@ -246,7 +254,10 @@ func TestAccMaintenanceMonitorsResource_WithScheduledMaintenance(t *testing.T) {
 	})
 }
 
-func testAccMaintenanceMonitorsResourceConfigWithScheduledMaintenance(maintenanceTitle string, monitorName string) string {
+func testAccMaintenanceMonitorsResourceConfigWithScheduledMaintenance(
+	maintenanceTitle string,
+	monitorName string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title       = %[1]q

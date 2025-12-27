@@ -30,6 +30,7 @@ type NotificationDataSourceModel struct {
 	Type types.String `tfsdk:"type"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *NotificationDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *NotificationDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification"
 }
 
+// Schema returns the schema for the data source.
 func (_ *NotificationDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -64,7 +66,7 @@ func (_ *NotificationDataSource) Schema(
 	}
 }
 
-// Configure configures the notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -89,6 +91,7 @@ func (d *NotificationDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data NotificationDataSourceModel
 

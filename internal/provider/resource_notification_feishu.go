@@ -40,6 +40,7 @@ type NotificationFeishuResourceModel struct {
 	WebHookURL types.String `tfsdk:"webhook_url"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationFeishuResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -48,6 +49,7 @@ func (_ *NotificationFeishuResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_feishu"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationFeishuResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

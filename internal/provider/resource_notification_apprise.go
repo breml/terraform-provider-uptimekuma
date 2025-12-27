@@ -41,6 +41,7 @@ type NotificationAppriseResourceModel struct {
 	Title      types.String `tfsdk:"title"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationAppriseResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -49,6 +50,7 @@ func (_ *NotificationAppriseResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_apprise"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationAppriseResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

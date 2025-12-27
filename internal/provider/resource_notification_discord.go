@@ -47,6 +47,7 @@ type NotificationDiscordResourceModel struct {
 	DisableURL    types.Bool   `tfsdk:"disable_url"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationDiscordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -55,6 +56,7 @@ func (_ *NotificationDiscordResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_discord"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationDiscordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

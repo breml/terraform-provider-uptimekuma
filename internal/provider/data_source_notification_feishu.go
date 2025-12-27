@@ -29,6 +29,7 @@ type NotificationFeishuDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*NotificationFeishuDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*NotificationFeishuDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_feishu"
 }
 
+// Schema returns the schema for the data source.
 func (*NotificationFeishuDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (*NotificationFeishuDataSource) Schema(
 	}
 }
 
-// Configure configures the Feishu notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationFeishuDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *NotificationFeishuDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationFeishuDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

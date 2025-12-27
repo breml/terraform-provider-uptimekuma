@@ -44,6 +44,7 @@ type NotificationWebhookResourceModel struct {
 	WebhookAdditionalHeaders types.Map    `tfsdk:"webhook_additional_headers"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationWebhookResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -52,6 +53,7 @@ func (_ *NotificationWebhookResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_webhook"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationWebhookResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

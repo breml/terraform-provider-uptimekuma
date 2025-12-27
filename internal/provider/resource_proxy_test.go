@@ -231,7 +231,13 @@ resource "uptimekuma_proxy" "test" {
 `, host, port, protocol)
 }
 
-func testAccProxyResourceConfigWithAuth(host string, port string, protocol string, username string, password string) string {
+func testAccProxyResourceConfigWithAuth(
+	host string,
+	port string,
+	protocol string,
+	username string,
+	password string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_proxy" "test" {
   host     = %[1]q

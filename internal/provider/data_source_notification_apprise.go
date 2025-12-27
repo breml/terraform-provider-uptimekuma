@@ -29,6 +29,7 @@ type NotificationAppriseDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*NotificationAppriseDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*NotificationAppriseDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_apprise"
 }
 
+// Schema returns the schema for the data source.
 func (*NotificationAppriseDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (*NotificationAppriseDataSource) Schema(
 	}
 }
 
-// Configure configures the Apprise notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationAppriseDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *NotificationAppriseDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationAppriseDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

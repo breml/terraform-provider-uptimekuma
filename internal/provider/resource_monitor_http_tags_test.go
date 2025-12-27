@@ -126,7 +126,12 @@ resource "uptimekuma_monitor_http" "test" {
 `, monitorName, url, tagName)
 }
 
-func testAccMonitorHTTPResourceConfigWithTwoTags(monitorName string, url string, tagName1 string, tagName2 string) string {
+func testAccMonitorHTTPResourceConfigWithTwoTags(
+	monitorName string,
+	url string,
+	tagName1 string,
+	tagName2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test1" {
   name  = %[3]q

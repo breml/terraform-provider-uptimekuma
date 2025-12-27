@@ -221,7 +221,13 @@ func TestAccMonitorHTTPKeywordResourceWithAuth(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPKeywordResourceConfigWithAuth(name string, url string, keyword string, user string, pass string) string {
+func testAccMonitorHTTPKeywordResourceConfigWithAuth(
+	name string,
+	url string,
+	keyword string,
+	user string,
+	pass string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name            = %[1]q

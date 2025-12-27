@@ -29,6 +29,7 @@ type NotificationWebhookDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*NotificationWebhookDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*NotificationWebhookDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_webhook"
 }
 
+// Schema returns the schema for the data source.
 func (*NotificationWebhookDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (*NotificationWebhookDataSource) Schema(
 	}
 }
 
-// Configure configures the Webhook notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationWebhookDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *NotificationWebhookDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationWebhookDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

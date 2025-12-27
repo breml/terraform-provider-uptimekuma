@@ -41,6 +41,7 @@ type MonitorHTTPKeywordResourceModel struct {
 	InvertKeyword types.Bool   `tfsdk:"invert_keyword"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorHTTPKeywordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -49,6 +50,7 @@ func (_ *MonitorHTTPKeywordResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_keyword"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorHTTPKeywordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -74,7 +76,7 @@ func (_ *MonitorHTTPKeywordResource) Schema(
 	}
 }
 
-// Configure configures the HTTP Keyword monitor resource with the API client.
+// Configure configures the resource with the API client.
 func (r *MonitorHTTPKeywordResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -101,7 +103,7 @@ func (r *MonitorHTTPKeywordResource) Configure(
 	r.client = client
 }
 
-// Create creates a new HTTP Keyword monitor resource.
+// Create creates a new resource.
 func (r *MonitorHTTPKeywordResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -209,7 +211,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the HTTP Keyword monitor resource.
+// Read reads the current state of the resource.
 func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPKeywordResourceModel
 
@@ -306,7 +308,7 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the HTTP Keyword monitor resource.
+// Update updates the resource.
 func (r *MonitorHTTPKeywordResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -419,7 +421,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the HTTP Keyword monitor resource.
+// Delete deletes the resource.
 func (r *MonitorHTTPKeywordResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

@@ -29,6 +29,7 @@ type MaintenanceStatusPagesDataSourceModel struct {
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*MaintenanceStatusPagesDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*MaintenanceStatusPagesDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
+// Schema returns the schema for the data source.
 func (*MaintenanceStatusPagesDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -58,7 +60,7 @@ func (*MaintenanceStatusPagesDataSource) Schema(
 	}
 }
 
-// Configure configures the maintenance status pages data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MaintenanceStatusPagesDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -83,6 +85,7 @@ func (d *MaintenanceStatusPagesDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MaintenanceStatusPagesDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

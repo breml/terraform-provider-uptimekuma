@@ -42,10 +42,12 @@ type TagResourceModel struct {
 	Color types.String `tfsdk:"color"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *TagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
+// Schema returns the schema for the resource.
 func (_ *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Tag resource for organizing monitors with custom values",
@@ -75,7 +77,7 @@ func (_ *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 	}
 }
 
-// Configure configures the tag resource with the API client.
+// Configure configures the resource with the API client.
 func (r *TagResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -96,7 +98,7 @@ func (r *TagResource) Configure(_ context.Context, req resource.ConfigureRequest
 	r.client = client
 }
 
-// Create creates a new tag resource.
+// Create creates a new resource.
 func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data TagResourceModel
 
@@ -121,7 +123,7 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the tag resource.
+// Read reads the current state of the resource.
 func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data TagResourceModel
 
@@ -147,7 +149,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the tag resource.
+// Update updates the resource.
 func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data TagResourceModel
 
@@ -171,7 +173,7 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the tag resource.
+// Delete deletes the resource.
 func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data TagResourceModel
 

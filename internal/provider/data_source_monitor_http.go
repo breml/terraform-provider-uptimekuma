@@ -31,6 +31,7 @@ type MonitorHTTPDataSourceModel struct {
 	URL  types.String `tfsdk:"url"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorHTTPDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -39,6 +40,7 @@ func (_ *MonitorHTTPDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorHTTPDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -65,7 +67,7 @@ func (_ *MonitorHTTPDataSource) Schema(
 	}
 }
 
-// Configure configures the HTTP monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorHTTPDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -90,6 +92,7 @@ func (d *MonitorHTTPDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorHTTPDataSourceModel
 

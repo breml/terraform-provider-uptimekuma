@@ -47,6 +47,7 @@ type MonitorGrpcKeywordResourceModel struct {
 	InvertKeyword   types.Bool   `tfsdk:"invert_keyword"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorGrpcKeywordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -55,6 +56,7 @@ func (_ *MonitorGrpcKeywordResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_grpc_keyword"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorGrpcKeywordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -117,7 +119,7 @@ func (_ *MonitorGrpcKeywordResource) Schema(
 	}
 }
 
-// Configure configures the gRPC Keyword monitor resource with the API client.
+// Configure configures the resource with the API client.
 func (r *MonitorGrpcKeywordResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -144,7 +146,7 @@ func (r *MonitorGrpcKeywordResource) Configure(
 	r.client = client
 }
 
-// Create creates a new gRPC Keyword monitor resource.
+// Create creates a new resource.
 func (r *MonitorGrpcKeywordResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -228,7 +230,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the gRPC Keyword monitor resource.
+// Read reads the current state of the resource.
 func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorGrpcKeywordResourceModel
 
@@ -253,7 +255,7 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the gRPC Keyword monitor resource.
+// Update updates the resource.
 func (r *MonitorGrpcKeywordResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -342,7 +344,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the gRPC Keyword monitor resource.
+// Delete deletes the resource.
 func (r *MonitorGrpcKeywordResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

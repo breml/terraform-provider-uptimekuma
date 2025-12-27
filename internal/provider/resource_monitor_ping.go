@@ -40,6 +40,7 @@ type MonitorPingResourceModel struct {
 	PacketSize types.Int64  `tfsdk:"packet_size"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorPingResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -48,6 +49,7 @@ func (_ *MonitorPingResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Ping monitor resource",

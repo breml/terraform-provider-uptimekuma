@@ -31,6 +31,7 @@ type ProxyDataSourceModel struct {
 	Protocol types.String `tfsdk:"protocol"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *ProxyDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -39,6 +40,7 @@ func (_ *ProxyDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
+// Schema returns the schema for the data source.
 func (_ *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get proxy information by ID",
@@ -63,7 +65,7 @@ func (_ *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	}
 }
 
-// Configure configures the proxy data source with the API client.
+// Configure configures the data source with the API client.
 func (d *ProxyDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -88,6 +90,7 @@ func (d *ProxyDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *ProxyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data ProxyDataSourceModel
 

@@ -44,6 +44,7 @@ type MonitorDNSResourceModel struct {
 	Port             types.Int64  `tfsdk:"port"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorDNSResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -52,6 +53,7 @@ func (_ *MonitorDNSResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "DNS monitor resource",
@@ -88,7 +90,7 @@ func (_ *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	}
 }
 
-// Configure configures the DNS monitor resource with the API client.
+// Configure configures the resource with the API client.
 func (r *MonitorDNSResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -115,7 +117,7 @@ func (r *MonitorDNSResource) Configure(
 	r.client = client
 }
 
-// Create creates a new DNS monitor resource.
+// Create creates a new resource.
 func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorDNSResourceModel
 
@@ -179,7 +181,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the DNS monitor resource.
+// Read reads the current state of the resource.
 func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorDNSResourceModel
 
@@ -240,7 +242,7 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the DNS monitor resource.
+// Update updates the resource.
 func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorDNSResourceModel
 
@@ -309,7 +311,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the DNS monitor resource.
+// Delete deletes the resource.
 func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorDNSResourceModel
 

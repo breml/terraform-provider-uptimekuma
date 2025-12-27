@@ -30,6 +30,7 @@ type MonitorRealBrowserDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorRealBrowserDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *MonitorRealBrowserDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorRealBrowserDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -60,7 +62,7 @@ func (_ *MonitorRealBrowserDataSource) Schema(
 	}
 }
 
-// Configure configures the Real Browser monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorRealBrowserDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -85,6 +87,7 @@ func (d *MonitorRealBrowserDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorRealBrowserDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

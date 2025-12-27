@@ -37,6 +37,7 @@ type MaintenanceStatusPagesResourceModel struct {
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MaintenanceStatusPagesResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -45,6 +46,7 @@ func (_ *MaintenanceStatusPagesResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MaintenanceStatusPagesResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -69,7 +71,7 @@ func (_ *MaintenanceStatusPagesResource) Schema(
 	}
 }
 
-// Configure configures the MaintenanceStatusPagesResource with the API client.
+// Configure configures the resource with the API client.
 func (r *MaintenanceStatusPagesResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -96,7 +98,7 @@ func (r *MaintenanceStatusPagesResource) Configure(
 	r.client = client
 }
 
-// Create creates a new MaintenanceStatusPages resource.
+// Create creates a new resource.
 func (r *MaintenanceStatusPagesResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -125,7 +127,7 @@ func (r *MaintenanceStatusPagesResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the MaintenanceStatusPages resource.
+// Read reads the current state of the resource.
 func (r *MaintenanceStatusPagesResource) Read(
 	ctx context.Context,
 	req resource.ReadRequest,
@@ -157,7 +159,7 @@ func (r *MaintenanceStatusPagesResource) Read(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the MaintenanceStatusPages resource.
+// Update updates the resource.
 func (r *MaintenanceStatusPagesResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -186,7 +188,7 @@ func (r *MaintenanceStatusPagesResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the MaintenanceStatusPages resource.
+// Delete deletes the resource.
 func (r *MaintenanceStatusPagesResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -207,6 +209,7 @@ func (r *MaintenanceStatusPagesResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (_ *MaintenanceStatusPagesResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

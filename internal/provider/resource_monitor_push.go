@@ -38,6 +38,7 @@ type MonitorPushResourceModel struct {
 	PushToken types.String `tfsdk:"push_token"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorPushResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -46,6 +47,7 @@ func (_ *MonitorPushResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_push"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorPushResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Push monitor resource",

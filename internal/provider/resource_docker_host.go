@@ -37,6 +37,7 @@ type DockerHostResourceModel struct {
 	DockerType   types.String `tfsdk:"docker_type"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *DockerHostResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -45,6 +46,7 @@ func (_ *DockerHostResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
+// Schema returns the schema for the resource.
 func (_ *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Docker host resource for managing Docker daemon connections in Uptime Kuma",
@@ -75,7 +77,7 @@ func (_ *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	}
 }
 
-// Configure configures the docker host resource with the API client.
+// Configure configures the resource with the API client.
 func (r *DockerHostResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -100,7 +102,7 @@ func (r *DockerHostResource) Configure(
 	r.client = client
 }
 
-// Create creates a new docker host resource.
+// Create creates a new resource.
 func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data DockerHostResourceModel
 
@@ -126,7 +128,7 @@ func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the docker host resource.
+// Read reads the current state of the resource.
 func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data DockerHostResourceModel
 
@@ -153,7 +155,7 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the docker host resource.
+// Update updates the resource.
 func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data DockerHostResourceModel
 
@@ -178,7 +180,7 @@ func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the docker host resource.
+// Delete deletes the resource.
 func (r *DockerHostResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data DockerHostResourceModel
 

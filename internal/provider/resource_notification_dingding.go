@@ -42,6 +42,7 @@ type NotificationDingDingResourceModel struct {
 	Mentioning types.String `tfsdk:"mentioning"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationDingDingResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -50,6 +51,7 @@ func (_ *NotificationDingDingResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_dingding"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationDingDingResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

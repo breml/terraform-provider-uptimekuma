@@ -134,7 +134,12 @@ func TestAccNotificationWebhookResource_CustomBody(t *testing.T) {
 	})
 }
 
-func testAccNotificationWebhookResourceConfig(name string, webhookURL string, contentType string, customBody string) string {
+func testAccNotificationWebhookResourceConfig(
+	name string,
+	webhookURL string,
+	contentType string,
+	customBody string,
+) string {
 	config := fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name                 = %[1]q

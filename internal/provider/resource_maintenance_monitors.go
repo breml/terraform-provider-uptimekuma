@@ -37,6 +37,7 @@ type MaintenanceMonitorsResourceModel struct {
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MaintenanceMonitorsResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -45,6 +46,7 @@ func (_ *MaintenanceMonitorsResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MaintenanceMonitorsResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -69,7 +71,7 @@ func (_ *MaintenanceMonitorsResource) Schema(
 	}
 }
 
-// Configure configures the MaintenanceMonitorsResource with the API client.
+// Configure configures the resource with the API client.
 func (r *MaintenanceMonitorsResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -96,7 +98,7 @@ func (r *MaintenanceMonitorsResource) Configure(
 	r.client = client
 }
 
-// Create creates a new MaintenanceMonitors resource.
+// Create creates a new resource.
 func (r *MaintenanceMonitorsResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -125,7 +127,7 @@ func (r *MaintenanceMonitorsResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the MaintenanceMonitors resource.
+// Read reads the current state of the resource.
 func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceMonitorsResourceModel
 
@@ -153,7 +155,7 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the MaintenanceMonitors resource.
+// Update updates the resource.
 func (r *MaintenanceMonitorsResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -182,7 +184,7 @@ func (r *MaintenanceMonitorsResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the MaintenanceMonitors resource.
+// Delete deletes the resource.
 func (r *MaintenanceMonitorsResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -203,6 +205,7 @@ func (r *MaintenanceMonitorsResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (_ *MaintenanceMonitorsResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

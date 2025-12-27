@@ -39,14 +39,17 @@ func isValidURL(value string) bool {
 
 type urlValidator struct{}
 
+// Description returns a plain text description of the validator's behavior.
 func (_ urlValidator) Description(_ context.Context) string {
 	return "string must be a valid URL with http:// or https:// scheme"
 }
 
+// MarkdownDescription returns a markdown formatted description of the validator's behavior.
 func (_ urlValidator) MarkdownDescription(_ context.Context) string {
 	return "string must be a valid URL with `http://` or `https://` scheme"
 }
 
+// ValidateString checks that the provided string value is a valid URL.
 func (_ urlValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
@@ -92,6 +95,7 @@ type NotificationNtfyResourceModel struct {
 	Username             types.String `tfsdk:"username"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationNtfyResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -100,6 +104,7 @@ func (_ *NotificationNtfyResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_ntfy"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationNtfyResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

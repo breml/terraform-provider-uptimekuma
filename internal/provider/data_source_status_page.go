@@ -30,6 +30,7 @@ type StatusPageDataSourceModel struct {
 	Title types.String `tfsdk:"title"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *StatusPageDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *StatusPageDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_status_page"
 }
 
+// Schema returns the schema for the data source.
 func (_ *StatusPageDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -64,7 +66,7 @@ func (_ *StatusPageDataSource) Schema(
 	}
 }
 
-// Configure configures the status page data source with the API client.
+// Configure configures the data source with the API client.
 func (d *StatusPageDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -89,6 +91,7 @@ func (d *StatusPageDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data StatusPageDataSourceModel
 

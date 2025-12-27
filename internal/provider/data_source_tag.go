@@ -30,6 +30,7 @@ type TagDataSourceModel struct {
 	Color types.String `tfsdk:"color"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *TagDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *TagDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
+// Schema returns the schema for the data source.
 func (_ *TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get tag information by ID or name",
@@ -60,7 +62,7 @@ func (_ *TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 	}
 }
 
-// Configure configures the tag data source with the API client.
+// Configure configures the data source with the API client.
 func (d *TagDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -85,6 +87,7 @@ func (d *TagDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *TagDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data TagDataSourceModel
 

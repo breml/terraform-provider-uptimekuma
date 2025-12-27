@@ -40,6 +40,7 @@ type MonitorTCPPortResourceModel struct {
 	Port     types.Int64  `tfsdk:"port"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorTCPPortResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -48,6 +49,7 @@ func (_ *MonitorTCPPortResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_tcp_port"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorTCPPortResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

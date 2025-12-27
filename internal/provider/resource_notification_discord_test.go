@@ -122,7 +122,13 @@ func TestAccNotificationDiscordResource(t *testing.T) {
 }
 
 func testAccNotificationDiscordResourceConfig(
-	name string, webhookURL string, username string, channelType string, threadID string, prefixMessage string, disableURL bool,
+	name string,
+	webhookURL string,
+	username string,
+	channelType string,
+	threadID string,
+	prefixMessage string,
+	disableURL bool,
 ) string {
 	// Build optional fields
 	threadIDField := ""

@@ -120,7 +120,14 @@ func TestAccMonitorDNSResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorDNSResourceConfig(name string, description string, hostname string, resolveType string, server string, port int64) string {
+func testAccMonitorDNSResourceConfig(
+	name string,
+	description string,
+	hostname string,
+	resolveType string,
+	server string,
+	port int64,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
   name               = %[1]q

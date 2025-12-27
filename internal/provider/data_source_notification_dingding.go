@@ -29,6 +29,7 @@ type NotificationDingDingDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*NotificationDingDingDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*NotificationDingDingDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_dingding"
 }
 
+// Schema returns the schema for the data source.
 func (*NotificationDingDingDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (*NotificationDingDingDataSource) Schema(
 	}
 }
 
-// Configure configures the DingDing notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationDingDingDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *NotificationDingDingDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationDingDingDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

@@ -31,6 +31,7 @@ type MonitorDNSDataSourceModel struct {
 	Hostname types.String `tfsdk:"hostname"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorDNSDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -39,6 +40,7 @@ func (_ *MonitorDNSDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorDNSDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -65,7 +67,7 @@ func (_ *MonitorDNSDataSource) Schema(
 	}
 }
 
-// Configure configures the DNS monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorDNSDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -90,6 +92,7 @@ func (d *MonitorDNSDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorDNSDataSourceModel
 

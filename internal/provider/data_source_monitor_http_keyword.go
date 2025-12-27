@@ -30,6 +30,7 @@ type MonitorHTTPKeywordDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorHTTPKeywordDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *MonitorHTTPKeywordDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_keyword"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorHTTPKeywordDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -60,7 +62,7 @@ func (_ *MonitorHTTPKeywordDataSource) Schema(
 	}
 }
 
-// Configure configures the HTTP Keyword monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorHTTPKeywordDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -85,6 +87,7 @@ func (d *MonitorHTTPKeywordDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorHTTPKeywordDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

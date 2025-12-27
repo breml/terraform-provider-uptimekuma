@@ -30,6 +30,7 @@ type MonitorPushDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorPushDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *MonitorPushDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_push"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorPushDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -60,7 +62,7 @@ func (_ *MonitorPushDataSource) Schema(
 	}
 }
 
-// Configure configures the Push monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorPushDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -85,6 +87,7 @@ func (d *MonitorPushDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorPushDataSourceModel
 

@@ -29,6 +29,7 @@ type DockerHostDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *DockerHostDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (_ *DockerHostDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
+// Schema returns the schema for the data source.
 func (_ *DockerHostDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (_ *DockerHostDataSource) Schema(
 	}
 }
 
-// Configure configures the Docker host data source with the API client.
+// Configure configures the data source with the API client.
 func (d *DockerHostDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *DockerHostDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data DockerHostDataSourceModel
 

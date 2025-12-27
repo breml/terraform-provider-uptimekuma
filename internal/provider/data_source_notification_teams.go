@@ -29,6 +29,7 @@ type NotificationTeamsDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*NotificationTeamsDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*NotificationTeamsDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_teams"
 }
 
+// Schema returns the schema for the data source.
 func (*NotificationTeamsDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -59,7 +61,7 @@ func (*NotificationTeamsDataSource) Schema(
 	}
 }
 
-// Configure configures the Microsoft Teams notification data source with the API client.
+// Configure configures the data source with the API client.
 func (d *NotificationTeamsDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -84,6 +86,7 @@ func (d *NotificationTeamsDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationTeamsDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

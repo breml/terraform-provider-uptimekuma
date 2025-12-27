@@ -45,6 +45,7 @@ type NotificationResourceModel struct {
 	Config        types.String `tfsdk:"config"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -53,6 +54,7 @@ func (_ *NotificationResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",

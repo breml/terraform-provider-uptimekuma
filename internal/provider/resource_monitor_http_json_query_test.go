@@ -201,7 +201,12 @@ func TestAccMonitorHTTPJSONQueryResourceWithDefaultOperator(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPJSONQueryResourceConfigWithDefaultOperator(name string, url string, jsonPath string, expectedValue string) string {
+func testAccMonitorHTTPJSONQueryResourceConfigWithDefaultOperator(
+	name string,
+	url string,
+	jsonPath string,
+	expectedValue string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name           = %[1]q
@@ -273,7 +278,14 @@ func TestAccMonitorHTTPJSONQueryResourceWithAuth(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPJSONQueryResourceConfigWithAuth(name string, url string, jsonPath string, expectedValue string, user string, pass string) string {
+func testAccMonitorHTTPJSONQueryResourceConfigWithAuth(
+	name string,
+	url string,
+	jsonPath string,
+	expectedValue string,
+	user string,
+	pass string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name            = %[1]q
@@ -334,7 +346,12 @@ func TestAccMonitorHTTPJSONQueryResourceWithStatusCodes(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPJSONQueryResourceConfigWithStatusCodes(name string, url string, jsonPath string, expectedValue string) string {
+func testAccMonitorHTTPJSONQueryResourceConfigWithStatusCodes(
+	name string,
+	url string,
+	jsonPath string,
+	expectedValue string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name                  = %[1]q

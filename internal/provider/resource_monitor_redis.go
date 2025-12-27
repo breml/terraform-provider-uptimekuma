@@ -38,6 +38,7 @@ type MonitorRedisResourceModel struct {
 	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorRedisResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -46,6 +47,7 @@ func (_ *MonitorRedisResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_redis"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Redis monitor resource",

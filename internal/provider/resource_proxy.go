@@ -45,10 +45,12 @@ type ProxyResourceModel struct {
 	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *ProxyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
+// Schema returns the schema for the resource.
 func (_ *ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Proxy resource for managing HTTP/HTTPS/SOCKS proxies in Uptime Kuma",
@@ -115,7 +117,7 @@ func (_ *ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	}
 }
 
-// Configure configures the proxy resource with the API client.
+// Configure configures the resource with the API client.
 func (r *ProxyResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -140,7 +142,7 @@ func (r *ProxyResource) Configure(
 	r.client = client
 }
 
-// Create creates a new proxy resource.
+// Create creates a new resource.
 func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ProxyResourceModel
 
@@ -185,7 +187,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the proxy resource.
+// Read reads the current state of the resource.
 func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ProxyResourceModel
 
@@ -227,7 +229,7 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the proxy resource.
+// Update updates the resource.
 func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data ProxyResourceModel
 
@@ -271,7 +273,7 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the proxy resource.
+// Delete deletes the resource.
 func (r *ProxyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data ProxyResourceModel
 

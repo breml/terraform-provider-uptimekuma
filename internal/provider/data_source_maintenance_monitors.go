@@ -29,6 +29,7 @@ type MaintenanceMonitorsDataSourceModel struct {
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*MaintenanceMonitorsDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -37,6 +38,7 @@ func (*MaintenanceMonitorsDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
+// Schema returns the schema for the data source.
 func (*MaintenanceMonitorsDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -58,7 +60,7 @@ func (*MaintenanceMonitorsDataSource) Schema(
 	}
 }
 
-// Configure configures the maintenance monitors data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MaintenanceMonitorsDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -83,6 +85,7 @@ func (d *MaintenanceMonitorsDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MaintenanceMonitorsDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

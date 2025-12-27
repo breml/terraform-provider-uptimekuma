@@ -50,6 +50,7 @@ type MonitorRealBrowserResourceModel struct {
 	RemoteBrowser       types.Int64  `tfsdk:"remote_browser"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorRealBrowserResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -58,6 +59,7 @@ func (_ *MonitorRealBrowserResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorRealBrowserResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

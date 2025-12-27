@@ -31,6 +31,7 @@ type MonitorPingDataSourceModel struct {
 	Hostname types.String `tfsdk:"hostname"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorPingDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -39,6 +40,7 @@ func (_ *MonitorPingDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorPingDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -65,7 +67,7 @@ func (_ *MonitorPingDataSource) Schema(
 	}
 }
 
-// Configure configures the PING monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorPingDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -90,6 +92,7 @@ func (d *MonitorPingDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorPingDataSourceModel
 

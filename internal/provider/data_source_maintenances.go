@@ -41,6 +41,7 @@ type MaintenanceDataModel struct {
 	TimezoneOffset   types.String `tfsdk:"timezone_offset"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*MaintenancesDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -49,6 +50,7 @@ func (*MaintenancesDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenances"
 }
 
+// Schema returns the schema for the data source.
 func (*MaintenancesDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -101,7 +103,7 @@ func (*MaintenancesDataSource) Schema(
 	}
 }
 
-// Configure configures the maintenances data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MaintenancesDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -128,6 +130,7 @@ func (d *MaintenancesDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MaintenancesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MaintenancesDataSourceModel
 

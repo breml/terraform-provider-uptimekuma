@@ -38,6 +38,7 @@ type MonitorPostgresResourceModel struct {
 	DatabaseQuery            types.String `tfsdk:"database_query"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorPostgresResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -46,6 +47,7 @@ func (_ *MonitorPostgresResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_postgres"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorPostgresResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,

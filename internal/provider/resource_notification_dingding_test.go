@@ -125,7 +125,11 @@ resource "uptimekuma_notification_dingding" "test" {
 `, name)
 }
 
-func testAccNotificationDingDingResourceConfigWithOptionalFields(name string, secretKey string, mentioning string) string {
+func testAccNotificationDingDingResourceConfigWithOptionalFields(
+	name string,
+	secretKey string,
+	mentioning string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_dingding" "test" {
   name        = %[1]q

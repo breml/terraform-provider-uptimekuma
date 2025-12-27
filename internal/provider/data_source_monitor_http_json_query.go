@@ -30,6 +30,7 @@ type MonitorHTTPJSONQueryDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorHTTPJSONQueryDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *MonitorHTTPJSONQueryDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorHTTPJSONQueryDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -60,7 +62,7 @@ func (_ *MonitorHTTPJSONQueryDataSource) Schema(
 	}
 }
 
-// Configure configures the HTTP JSON Query monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorHTTPJSONQueryDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -85,6 +87,7 @@ func (d *MonitorHTTPJSONQueryDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorHTTPJSONQueryDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

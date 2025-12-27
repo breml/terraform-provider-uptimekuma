@@ -51,7 +51,12 @@ func TestAccStatusPageIncidentResource(t *testing.T) {
 	})
 }
 
-func testAccStatusPageIncidentResourceConfig(slug string, statusPageTitle string, incidentTitle string, incidentContent string) string {
+func testAccStatusPageIncidentResourceConfig(
+	slug string,
+	statusPageTitle string,
+	incidentTitle string,
+	incidentContent string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug      = %[1]q

@@ -42,6 +42,7 @@ type MonitorHTTPJSONQueryResourceModel struct {
 	JSONPathOperator types.String `tfsdk:"json_path_operator"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *MonitorHTTPJSONQueryResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -50,6 +51,7 @@ func (_ *MonitorHTTPJSONQueryResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
+// Schema returns the schema for the resource.
 func (_ *MonitorHTTPJSONQueryResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -82,7 +84,7 @@ func (_ *MonitorHTTPJSONQueryResource) Schema(
 	}
 }
 
-// Configure configures the HTTP JSON Query monitor resource with the API client.
+// Configure configures the resource with the API client.
 func (r *MonitorHTTPJSONQueryResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -109,7 +111,7 @@ func (r *MonitorHTTPJSONQueryResource) Configure(
 	r.client = client
 }
 
-// Create creates a new HTTP JSON Query monitor resource.
+// Create creates a new resource.
 func (r *MonitorHTTPJSONQueryResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -218,7 +220,7 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the HTTP JSON Query monitor resource.
+// Read reads the current state of the resource.
 func (r *MonitorHTTPJSONQueryResource) Read(
 	ctx context.Context,
 	req resource.ReadRequest,
@@ -320,7 +322,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the HTTP JSON Query monitor resource.
+// Update updates the resource.
 func (r *MonitorHTTPJSONQueryResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -434,7 +436,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the HTTP JSON Query monitor resource.
+// Delete deletes the resource.
 func (r *MonitorHTTPJSONQueryResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

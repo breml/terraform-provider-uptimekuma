@@ -30,6 +30,7 @@ type MonitorPostgresDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
+// Metadata returns the metadata for the data source.
 func (_ *MonitorPostgresDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (_ *MonitorPostgresDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_postgres"
 }
 
+// Schema returns the schema for the data source.
 func (_ *MonitorPostgresDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -60,7 +62,7 @@ func (_ *MonitorPostgresDataSource) Schema(
 	}
 }
 
-// Configure configures the PostgreSQL monitor data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MonitorPostgresDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -85,6 +87,7 @@ func (d *MonitorPostgresDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorPostgresDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,

@@ -30,6 +30,7 @@ type MaintenanceDataSourceModel struct {
 	Title types.String `tfsdk:"title"`
 }
 
+// Metadata returns the metadata for the data source.
 func (*MaintenanceDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
@@ -38,6 +39,7 @@ func (*MaintenanceDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
+// Schema returns the schema for the data source.
 func (*MaintenanceDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -64,7 +66,7 @@ func (*MaintenanceDataSource) Schema(
 	}
 }
 
-// Configure configures the maintenance data source with the API client.
+// Configure configures the data source with the API client.
 func (d *MaintenanceDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
@@ -89,6 +91,7 @@ func (d *MaintenanceDataSource) Configure(
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MaintenanceDataSourceModel
 

@@ -48,6 +48,7 @@ type StatusPageIncidentResourceModel struct {
 	Pin            types.Bool   `tfsdk:"pin"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *StatusPageIncidentResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -56,6 +57,7 @@ func (_ *StatusPageIncidentResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_status_page_incident"
 }
 
+// Schema returns the schema for the resource.
 func (_ *StatusPageIncidentResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -100,7 +102,7 @@ func (_ *StatusPageIncidentResource) Schema(
 	}
 }
 
-// Configure configures the status page incident resource with the API client.
+// Configure configures the resource with the API client.
 func (r *StatusPageIncidentResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -127,7 +129,7 @@ func (r *StatusPageIncidentResource) Configure(
 	r.client = client
 }
 
-// Create creates a new status page incident resource.
+// Create creates a new resource.
 func (r *StatusPageIncidentResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -159,7 +161,7 @@ func (r *StatusPageIncidentResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the status page incident resource.
+// Read reads the current state of the resource.
 func (_ *StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageIncidentResourceModel
 
@@ -172,7 +174,7 @@ func (_ *StatusPageIncidentResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the status page incident resource.
+// Update updates the resource.
 func (r *StatusPageIncidentResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -202,7 +204,7 @@ func (r *StatusPageIncidentResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the status page incident resource.
+// Delete deletes the resource.
 func (r *StatusPageIncidentResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

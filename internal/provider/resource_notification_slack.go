@@ -46,6 +46,7 @@ type NotificationSlackResourceModel struct {
 	ChannelNotify types.Bool   `tfsdk:"channel_notify"`
 }
 
+// Metadata returns the metadata for the resource.
 func (_ *NotificationSlackResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
@@ -54,6 +55,7 @@ func (_ *NotificationSlackResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_slack"
 }
 
+// Schema returns the schema for the resource.
 func (_ *NotificationSlackResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
