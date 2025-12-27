@@ -21,13 +21,21 @@ func TestAccMonitorPushDataSource(t *testing.T) {
 			{
 				Config: testAccMonitorPushDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_push.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorPushDataSourceConfigByID(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_push.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},

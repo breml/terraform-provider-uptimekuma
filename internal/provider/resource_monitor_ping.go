@@ -22,25 +22,35 @@ var (
 	_ resource.ResourceWithImportState = &MonitorPingResource{}
 )
 
+// NewMonitorPingResource returns a new instance of the Ping monitor resource.
 func NewMonitorPingResource() resource.Resource {
 	return &MonitorPingResource{}
 }
 
+// MonitorPingResource defines the resource implementation.
 type MonitorPingResource struct {
 	client *kuma.Client
 }
 
+// MonitorPingResourceModel describes the resource data model.
 type MonitorPingResourceModel struct {
 	MonitorBaseModel
+
 	Hostname   types.String `tfsdk:"hostname"`
 	PacketSize types.Int64  `tfsdk:"packet_size"`
 }
 
-func (r *MonitorPingResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorPingResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
-func (r *MonitorPingResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Ping monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -61,7 +71,12 @@ func (r *MonitorPingResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func (r *MonitorPingResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the Ping monitor resource with the API client.
+func (r *MonitorPingResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -71,7 +86,10 @@ func (r *MonitorPingResource) Configure(ctx context.Context, req resource.Config
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -80,6 +98,7 @@ func (r *MonitorPingResource) Configure(ctx context.Context, req resource.Config
 	r.client = client
 }
 
+// Create creates a new Ping monitor resource.
 func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorPingResourceModel
 
@@ -141,6 +160,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Ping monitor resource.
 func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPingResourceModel
 
@@ -199,6 +219,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Ping monitor resource.
 func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorPingResourceModel
 
@@ -265,6 +286,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Ping monitor resource.
 func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorPingResourceModel
 
@@ -281,7 +303,12 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *MonitorPingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorPingResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

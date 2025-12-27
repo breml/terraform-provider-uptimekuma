@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &NotificationNtfyDataSource{}
 
+// NewNotificationNtfyDataSource returns a new instance of the ntfy notification data source.
 func NewNotificationNtfyDataSource() datasource.DataSource {
 	return &NotificationNtfyDataSource{}
 }
 
+// NotificationNtfyDataSource manages ntfy notification data source operations.
 type NotificationNtfyDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationNtfyDataSourceModel describes the data model for ntfy notification data source.
 type NotificationNtfyDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationNtfyDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*NotificationNtfyDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_ntfy"
 }
 
-func (d *NotificationNtfyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*NotificationNtfyDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get ntfy notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +61,12 @@ func (d *NotificationNtfyDataSource) Schema(ctx context.Context, req datasource.
 	}
 }
 
-func (d *NotificationNtfyDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationNtfyDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +75,10 @@ func (d *NotificationNtfyDataSource) Configure(ctx context.Context, req datasour
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +86,12 @@ func (d *NotificationNtfyDataSource) Configure(ctx context.Context, req datasour
 	d.client = client
 }
 
-func (d *NotificationNtfyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *NotificationNtfyDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationNtfyDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -79,10 +105,12 @@ func (d *NotificationNtfyDataSource) Read(ctx context.Context, req datasource.Re
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		if notification.Type() != "ntfy" {
 			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not an ntfy notification")
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -101,10 +129,14 @@ func (d *NotificationNtfyDataSource) Read(ctx context.Context, req datasource.Re
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
-						fmt.Sprintf("Multiple ntfy notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple ntfy notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

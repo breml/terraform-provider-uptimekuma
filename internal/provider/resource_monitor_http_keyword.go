@@ -22,26 +22,40 @@ var (
 	_ resource.ResourceWithImportState = &MonitorHTTPKeywordResource{}
 )
 
+// NewMonitorHTTPKeywordResource returns a new instance of the HTTP Keyword monitor resource.
 func NewMonitorHTTPKeywordResource() resource.Resource {
 	return &MonitorHTTPKeywordResource{}
 }
 
+// MonitorHTTPKeywordResource defines the resource implementation.
 type MonitorHTTPKeywordResource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPKeywordResourceModel describes the resource data model.
 type MonitorHTTPKeywordResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
+
 	Keyword       types.String `tfsdk:"keyword"`
 	InvertKeyword types.Bool   `tfsdk:"invert_keyword"`
 }
 
-func (r *MonitorHTTPKeywordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorHTTPKeywordResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_keyword"
 }
 
-func (r *MonitorHTTPKeywordResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorHTTPKeywordResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP Keyword monitor resource checks for the presence (or absence) of a specific keyword in the HTTP response body. The monitor makes an HTTP(S) request and searches for the specified keyword in the response. Use `invert_keyword` to reverse the logic: when false (default), finding the keyword means UP; when true, finding the keyword means DOWN.",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
@@ -62,7 +76,12 @@ func (r *MonitorHTTPKeywordResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (r *MonitorHTTPKeywordResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MonitorHTTPKeywordResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -72,7 +91,10 @@ func (r *MonitorHTTPKeywordResource) Configure(ctx context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -81,7 +103,12 @@ func (r *MonitorHTTPKeywordResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *MonitorHTTPKeywordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new resource.
+func (r *MonitorHTTPKeywordResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorHTTPKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -184,6 +211,7 @@ func (r *MonitorHTTPKeywordResource) Create(ctx context.Context, req resource.Cr
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPKeywordResourceModel
 
@@ -280,7 +308,12 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPKeywordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the resource.
+func (r *MonitorHTTPKeywordResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorHTTPKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -388,7 +421,12 @@ func (r *MonitorHTTPKeywordResource) Update(ctx context.Context, req resource.Up
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPKeywordResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the resource.
+func (r *MonitorHTTPKeywordResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorHTTPKeywordResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -404,7 +442,12 @@ func (r *MonitorHTTPKeywordResource) Delete(ctx context.Context, req resource.De
 	}
 }
 
-func (r *MonitorHTTPKeywordResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorHTTPKeywordResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

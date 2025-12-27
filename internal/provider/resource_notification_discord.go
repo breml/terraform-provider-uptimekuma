@@ -24,14 +24,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationDiscordResource{}
 )
 
+// NewNotificationDiscordResource returns a new instance of the Discord notification resource.
 func NewNotificationDiscordResource() resource.Resource {
 	return &NotificationDiscordResource{}
 }
 
+// NotificationDiscordResource defines the resource implementation.
 type NotificationDiscordResource struct {
 	client *kuma.Client
 }
 
+// NotificationDiscordResourceModel describes the resource data model.
 type NotificationDiscordResourceModel struct {
 	NotificationBaseModel
 
@@ -44,11 +47,21 @@ type NotificationDiscordResourceModel struct {
 	DisableURL    types.Bool   `tfsdk:"disable_url"`
 }
 
-func (r *NotificationDiscordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *NotificationDiscordResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_discord"
 }
 
-func (r *NotificationDiscordResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *NotificationDiscordResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Discord notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
@@ -90,7 +103,12 @@ func (r *NotificationDiscordResource) Schema(ctx context.Context, req resource.S
 	}
 }
 
-func (r *NotificationDiscordResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the Discord notification resource with the API client.
+func (r *NotificationDiscordResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -100,7 +118,10 @@ func (r *NotificationDiscordResource) Configure(ctx context.Context, req resourc
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -109,7 +130,12 @@ func (r *NotificationDiscordResource) Configure(ctx context.Context, req resourc
 	r.client = client
 }
 
-func (r *NotificationDiscordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new Discord notification resource.
+func (r *NotificationDiscordResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data NotificationDiscordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -144,11 +170,12 @@ func (r *NotificationDiscordResource) Create(ctx context.Context, req resource.C
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Discord notification resource.
 func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationDiscordResourceModel
 
@@ -158,7 +185,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -178,7 +205,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(discord.Name)
 	data.IsActive = types.BoolValue(discord.IsActive)
 	data.IsDefault = types.BoolValue(discord.IsDefault)
@@ -190,32 +217,42 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	} else {
 		data.Username = types.StringNull()
 	}
+
 	if discord.ChannelType != "" {
 		data.ChannelType = types.StringValue(discord.ChannelType)
 	} else {
 		data.ChannelType = types.StringNull()
 	}
+
 	if discord.ThreadID != "" {
 		data.ThreadID = types.StringValue(discord.ThreadID)
 	} else {
 		data.ThreadID = types.StringNull()
 	}
+
 	if discord.PostName != "" {
 		data.PostName = types.StringValue(discord.PostName)
 	} else {
 		data.PostName = types.StringNull()
 	}
+
 	if discord.PrefixMessage != "" {
 		data.PrefixMessage = types.StringValue(discord.PrefixMessage)
 	} else {
 		data.PrefixMessage = types.StringNull()
 	}
+
 	data.DisableURL = types.BoolValue(discord.DisableURL)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationDiscordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the Discord notification resource.
+func (r *NotificationDiscordResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data NotificationDiscordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -226,7 +263,7 @@ func (r *NotificationDiscordResource) Update(ctx context.Context, req resource.U
 
 	discord := notification.Discord{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -252,7 +289,12 @@ func (r *NotificationDiscordResource) Update(ctx context.Context, req resource.U
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationDiscordResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the Discord notification resource.
+func (r *NotificationDiscordResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data NotificationDiscordResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -261,14 +303,19 @@ func (r *NotificationDiscordResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
 }
 
-func (r *NotificationDiscordResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *NotificationDiscordResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

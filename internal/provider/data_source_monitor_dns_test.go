@@ -21,13 +21,21 @@ func TestAccMonitorDNSDataSource(t *testing.T) {
 			{
 				Config: testAccMonitorDNSDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_dns.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorDNSDataSourceConfigByID(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_dns.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_dns.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},

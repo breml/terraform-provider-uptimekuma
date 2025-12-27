@@ -25,25 +25,81 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorTCPPortResourceConfigWithDescription(name, hostname, port, 60, description),
+				Config: testAccMonitorTCPPortResourceConfigWithDescription(
+					name,
+					hostname,
+					port,
+					60,
+					description,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("hostname"), knownvalue.StringExact(hostname)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("port"), knownvalue.Int64Exact(port)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact(hostname),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(port),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorTCPPortResourceConfigWithDescription(nameUpdated, hostnameUpdated, portUpdated, 120, ""),
+				Config: testAccMonitorTCPPortResourceConfigWithDescription(
+					nameUpdated,
+					hostnameUpdated,
+					portUpdated,
+					120,
+					"",
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("hostname"), knownvalue.StringExact(hostnameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("port"), knownvalue.Int64Exact(portUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_tcp_port.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact(hostnameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(portUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -55,11 +111,16 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorTCPPortResourceConfigWithDescription(name, hostname string, port, interval int64, description string) string {
+func testAccMonitorTCPPortResourceConfigWithDescription(
+	name string, hostname string,
+	port int64, interval int64,
+	description string,
+) string {
 	descField := ""
 	if description != "" {
 		descField = fmt.Sprintf("  description = %q", description)
 	}
+
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tcp_port" "test" {
   name     = %[1]q

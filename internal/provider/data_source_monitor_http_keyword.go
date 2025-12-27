@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorHTTPKeywordDataSource{}
 
+// NewMonitorHTTPKeywordDataSource returns a new instance of the HTTP Keyword monitor data source.
 func NewMonitorHTTPKeywordDataSource() datasource.DataSource {
 	return &MonitorHTTPKeywordDataSource{}
 }
 
+// MonitorHTTPKeywordDataSource manages HTTP Keyword monitor data source operations.
 type MonitorHTTPKeywordDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPKeywordDataSourceModel describes the data model for HTTP Keyword monitor data source.
 type MonitorHTTPKeywordDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorHTTPKeywordDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorHTTPKeywordDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_keyword"
 }
 
-func (d *MonitorHTTPKeywordDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorHTTPKeywordDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get HTTP Keyword monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorHTTPKeywordDataSource) Schema(ctx context.Context, req datasourc
 	}
 }
 
-func (d *MonitorHTTPKeywordDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorHTTPKeywordDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorHTTPKeywordDataSource) Configure(ctx context.Context, req dataso
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,7 +87,12 @@ func (d *MonitorHTTPKeywordDataSource) Configure(ctx context.Context, req dataso
 	d.client = client
 }
 
-func (d *MonitorHTTPKeywordDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MonitorHTTPKeywordDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorHTTPKeywordDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -81,6 +107,7 @@ func (d *MonitorHTTPKeywordDataSource) Read(ctx context.Context, req datasource.
 			resp.Diagnostics.AddError("failed to read HTTP Keyword monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(httpKeywordMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -94,23 +121,30 @@ func (d *MonitorHTTPKeywordDataSource) Read(ctx context.Context, req datasource.
 		}
 
 		var found *monitor.HTTPKeyword
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "keyword" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple HTTP Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var httpKeywordMon monitor.HTTPKeyword
-				err := m.As(&httpKeywordMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &httpKeywordMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "keyword" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple HTTP Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var httpKeywordMon monitor.HTTPKeyword
+			err := mon.As(&httpKeywordMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &httpKeywordMon
 		}
 
 		if found == nil {

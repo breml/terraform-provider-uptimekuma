@@ -13,25 +13,38 @@ import (
 
 var _ datasource.DataSource = &NotificationDataSource{}
 
+// NewNotificationDataSource returns a new instance of the notification data source.
 func NewNotificationDataSource() datasource.DataSource {
 	return &NotificationDataSource{}
 }
 
+// NotificationDataSource manages notification data source operations.
 type NotificationDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationDataSourceModel describes the data model for notification data source.
 type NotificationDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	Type types.String `tfsdk:"type"`
 }
 
-func (d *NotificationDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *NotificationDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification"
 }
 
-func (d *NotificationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *NotificationDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -53,7 +66,12 @@ func (d *NotificationDataSource) Schema(ctx context.Context, req datasource.Sche
 	}
 }
 
-func (d *NotificationDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -62,7 +80,10 @@ func (d *NotificationDataSource) Configure(ctx context.Context, req datasource.C
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -70,6 +91,7 @@ func (d *NotificationDataSource) Configure(ctx context.Context, req datasource.C
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data NotificationDataSourceModel
 
@@ -84,6 +106,7 @@ func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRe
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		data.Type = types.StringValue(notification.Type())
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -104,10 +127,14 @@ func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRe
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
-						fmt.Sprintf("Multiple notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

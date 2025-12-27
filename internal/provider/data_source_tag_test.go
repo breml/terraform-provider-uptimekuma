@@ -21,13 +21,21 @@ func TestAccTagDataSource(t *testing.T) {
 			{
 				Config: testAccTagDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_tag.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{
 				Config: testAccTagDataSourceConfigByID(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_tag.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},

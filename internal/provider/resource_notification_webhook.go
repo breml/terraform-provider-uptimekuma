@@ -24,14 +24,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationWebhookResource{}
 )
 
+// NewNotificationWebhookResource returns a new instance of the Webhook notification resource.
 func NewNotificationWebhookResource() resource.Resource {
 	return &NotificationWebhookResource{}
 }
 
+// NotificationWebhookResource defines the resource implementation.
 type NotificationWebhookResource struct {
 	client *kuma.Client
 }
 
+// NotificationWebhookResourceModel describes the resource data model.
 type NotificationWebhookResourceModel struct {
 	NotificationBaseModel
 
@@ -41,11 +44,21 @@ type NotificationWebhookResourceModel struct {
 	WebhookAdditionalHeaders types.Map    `tfsdk:"webhook_additional_headers"`
 }
 
-func (r *NotificationWebhookResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *NotificationWebhookResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_webhook"
 }
 
-func (r *NotificationWebhookResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *NotificationWebhookResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Webhook notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
@@ -79,7 +92,12 @@ func (r *NotificationWebhookResource) Schema(ctx context.Context, req resource.S
 	}
 }
 
-func (r *NotificationWebhookResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the Webhook notification resource with the API client.
+func (r *NotificationWebhookResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -89,7 +107,10 @@ func (r *NotificationWebhookResource) Configure(ctx context.Context, req resourc
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -98,7 +119,12 @@ func (r *NotificationWebhookResource) Configure(ctx context.Context, req resourc
 	r.client = client
 }
 
-func (r *NotificationWebhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new Webhook notification resource.
+func (r *NotificationWebhookResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data NotificationWebhookResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -139,11 +165,12 @@ func (r *NotificationWebhookResource) Create(ctx context.Context, req resource.C
 
 	tflog.Info(ctx, "Created webhook notification", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Webhook notification resource.
 func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationWebhookResourceModel
 
@@ -153,7 +180,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -173,7 +200,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(webhook.Name)
 	data.IsActive = types.BoolValue(webhook.IsActive)
 	data.IsDefault = types.BoolValue(webhook.IsDefault)
@@ -194,6 +221,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		data.WebhookAdditionalHeaders = headersMap
 	} else {
 		data.WebhookAdditionalHeaders = types.MapNull(types.StringType)
@@ -202,7 +230,12 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationWebhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the Webhook notification resource.
+func (r *NotificationWebhookResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data NotificationWebhookResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -222,7 +255,7 @@ func (r *NotificationWebhookResource) Update(ctx context.Context, req resource.U
 
 	webhook := notification.Webhook{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -242,12 +275,17 @@ func (r *NotificationWebhookResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	tflog.Info(ctx, "Updated webhook notification", map[string]any{"id": data.Id.ValueInt64()})
+	tflog.Info(ctx, "Updated webhook notification", map[string]any{"id": data.ID.ValueInt64()})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationWebhookResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the Webhook notification resource.
+func (r *NotificationWebhookResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data NotificationWebhookResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -256,16 +294,21 @@ func (r *NotificationWebhookResource) Delete(ctx context.Context, req resource.D
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
 
-	tflog.Info(ctx, "Deleted webhook notification", map[string]any{"id": data.Id.ValueInt64()})
+	tflog.Info(ctx, "Deleted webhook notification", map[string]any{"id": data.ID.ValueInt64()})
 }
 
-func (r *NotificationWebhookResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *NotificationWebhookResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

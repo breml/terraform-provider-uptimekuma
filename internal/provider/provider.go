@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+
 	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
@@ -34,12 +35,18 @@ type UptimeKumaProviderModel struct {
 	Password types.String `tfsdk:"password"`
 }
 
-func (p *UptimeKumaProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+// Metadata returns the metadata for the provider.
+func (p *UptimeKumaProvider) Metadata(
+	_ context.Context,
+	_ provider.MetadataRequest,
+	resp *provider.MetadataResponse,
+) {
 	resp.TypeName = "uptimekuma"
 	resp.Version = p.version
 }
 
-func (p *UptimeKumaProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+// Schema returns the schema for the provider.
+func (_ *UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
@@ -58,7 +65,12 @@ func (p *UptimeKumaProvider) Schema(ctx context.Context, req provider.SchemaRequ
 	}
 }
 
-func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+// Configure configures the provider with the API client.
+func (_ *UptimeKumaProvider) Configure(
+	ctx context.Context,
+	req provider.ConfigureRequest,
+	resp *provider.ConfigureResponse,
+) {
 	var data UptimeKumaProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -82,6 +94,7 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 	if hasUsername && !hasPassword {
 		resp.Diagnostics.AddError("password required", "password is required when username is provided")
 	}
+
 	if hasPassword && !hasUsername {
 		resp.Diagnostics.AddError("username required", "username is required when password is provided")
 	}
@@ -115,7 +128,8 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 	resp.ResourceData = kumaClient
 }
 
-func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Resource {
+// Resources returns the list of resources for the provider.
+func (_ *UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotificationAppriseResource,
@@ -149,7 +163,8 @@ func (p *UptimeKumaProvider) Resources(ctx context.Context) []func() resource.Re
 	}
 }
 
-func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+// DataSources returns the list of data sources for the provider.
+func (_ *UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewMaintenancesDataSource,
 		NewTagDataSource,
@@ -183,6 +198,7 @@ func (p *UptimeKumaProvider) DataSources(ctx context.Context) []func() datasourc
 	}
 }
 
+// New returns a new instance of the provider.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
 		return &UptimeKumaProvider{

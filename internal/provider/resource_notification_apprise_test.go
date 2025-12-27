@@ -23,35 +23,83 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 			{
 				Config: testAccNotificationAppriseResourceConfig(name, ""),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("apprise_url"), knownvalue.StringExact("discord://webhook_id/webhook_token")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("apprise_url"),
+						knownvalue.StringExact("discord://webhook_id/webhook_token"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("title"),
+						knownvalue.Null(),
+					),
 				},
 			},
 			{
 				Config: testAccNotificationAppriseResourceConfigWithTitle(nameUpdated, title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("apprise_url"), knownvalue.StringExact("discord://webhook_id/webhook_token")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("apprise_url"),
+						knownvalue.StringExact("discord://webhook_id/webhook_token"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
 				},
 			},
 			{
 				Config: testAccNotificationAppriseResourceConfig(nameUpdated, ""),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("apprise_url"), knownvalue.StringExact("discord://webhook_id/webhook_token")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_apprise.test", tfjsonpath.New("title"), knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("apprise_url"),
+						knownvalue.StringExact("discord://webhook_id/webhook_token"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_apprise.test",
+						tfjsonpath.New("title"),
+						knownvalue.Null(),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccNotificationAppriseResourceConfig(name, title string) string {
+func testAccNotificationAppriseResourceConfig(name string, title string) string {
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q
@@ -69,7 +117,7 @@ resource "uptimekuma_notification_apprise" "test" {
 	return config
 }
 
-func testAccNotificationAppriseResourceConfigWithTitle(name, title string) string {
+func testAccNotificationAppriseResourceConfigWithTitle(name string, title string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q

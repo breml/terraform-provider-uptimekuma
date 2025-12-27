@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorPushDataSource{}
 
+// NewMonitorPushDataSource returns a new instance of the Push monitor data source.
 func NewMonitorPushDataSource() datasource.DataSource {
 	return &MonitorPushDataSource{}
 }
 
+// MonitorPushDataSource manages Push monitor data source operations.
 type MonitorPushDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPushDataSourceModel describes the data model for Push monitor data source.
 type MonitorPushDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorPushDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorPushDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_push"
 }
 
-func (d *MonitorPushDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorPushDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Push monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorPushDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (d *MonitorPushDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorPushDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorPushDataSource) Configure(ctx context.Context, req datasource.Co
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,6 +87,7 @@ func (d *MonitorPushDataSource) Configure(ctx context.Context, req datasource.Co
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorPushDataSourceModel
 
@@ -81,6 +103,7 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 			resp.Diagnostics.AddError("failed to read Push monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(pushMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -94,23 +117,30 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		var found *monitor.Push
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "push" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple Push monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var pushMon monitor.Push
-				err := m.As(&pushMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &pushMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "push" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple Push monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var pushMon monitor.Push
+			err := mon.As(&pushMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &pushMon
 		}
 
 		if found == nil {

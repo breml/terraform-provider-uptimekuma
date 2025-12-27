@@ -23,15 +23,22 @@ func TestAccMaintenanceMonitorsDataSource(t *testing.T) {
 			{
 				Config: testAccMaintenanceMonitorsDataSourceConfig(maintenanceTitle, monitorName1, monitorName2),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance_monitors.test", tfjsonpath.New("monitor_ids"),
-						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenance_monitors.test",
+						tfjsonpath.New("monitor_ids"),
+						knownvalue.ListSizeExact(2),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMaintenanceMonitorsDataSourceConfig(maintenanceTitle, monitorName1, monitorName2 string) string {
+func testAccMaintenanceMonitorsDataSourceConfig(
+	maintenanceTitle string,
+	monitorName1 string,
+	monitorName2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q

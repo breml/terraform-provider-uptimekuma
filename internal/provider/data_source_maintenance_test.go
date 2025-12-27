@@ -22,15 +22,31 @@ func TestAccMaintenanceDataSource(t *testing.T) {
 			{
 				Config: testAccMaintenanceDataSourceConfig(title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("name"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenance.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
 				},
 			},
 			{
 				Config: testAccMaintenanceDataSourceConfigByID(title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("name"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenance.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenance.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
 				},
 			},
 		},

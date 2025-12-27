@@ -19,14 +19,17 @@ import (
 
 var _ resource.Resource = &DockerHostResource{}
 
+// NewDockerHostResource returns a new instance of the docker host resource.
 func NewDockerHostResource() resource.Resource {
 	return &DockerHostResource{}
 }
 
+// DockerHostResource defines the resource implementation.
 type DockerHostResource struct {
 	client *kuma.Client
 }
 
+// DockerHostResourceModel describes the resource data model.
 type DockerHostResourceModel struct {
 	ID           types.Int64  `tfsdk:"id"`
 	Name         types.String `tfsdk:"name"`
@@ -34,11 +37,17 @@ type DockerHostResourceModel struct {
 	DockerType   types.String `tfsdk:"docker_type"`
 }
 
-func (r *DockerHostResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *DockerHostResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
-func (r *DockerHostResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Docker host resource for managing Docker daemon connections in Uptime Kuma",
 		Attributes: map[string]schema.Attribute{
@@ -68,7 +77,12 @@ func (r *DockerHostResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func (r *DockerHostResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *DockerHostResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -77,7 +91,10 @@ func (r *DockerHostResource) Configure(ctx context.Context, req resource.Configu
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -85,6 +102,7 @@ func (r *DockerHostResource) Configure(ctx context.Context, req resource.Configu
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data DockerHostResourceModel
 
@@ -110,6 +128,7 @@ func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data DockerHostResourceModel
 
@@ -136,6 +155,7 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data DockerHostResourceModel
 
@@ -160,6 +180,7 @@ func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *DockerHostResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data DockerHostResourceModel
 

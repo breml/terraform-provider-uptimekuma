@@ -22,34 +22,107 @@ func TestAccNotificationSlackResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationSlackResourceConfig(name, webhookURL, "test-bot", ":robot_face:", "#general", true),
+				Config: testAccNotificationSlackResourceConfig(
+					name,
+					webhookURL,
+					"test-bot",
+					":robot_face:",
+					"#general",
+					true,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURL)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("username"), knownvalue.StringExact("test-bot")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("icon_emoji"), knownvalue.StringExact(":robot_face:")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("channel"), knownvalue.StringExact("#general")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("channel_notify"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURL),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("username"),
+						knownvalue.StringExact("test-bot"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("icon_emoji"),
+						knownvalue.StringExact(":robot_face:"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("channel"),
+						knownvalue.StringExact("#general"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("channel_notify"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccNotificationSlackResourceConfig(nameUpdated, webhookURLUpdated, "updated-bot", ":bell:", "#alerts", false),
+				Config: testAccNotificationSlackResourceConfig(
+					nameUpdated,
+					webhookURLUpdated,
+					"updated-bot",
+					":bell:",
+					"#alerts",
+					false,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURLUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("username"), knownvalue.StringExact("updated-bot")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("icon_emoji"), knownvalue.StringExact(":bell:")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("channel"), knownvalue.StringExact("#alerts")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_slack.test", tfjsonpath.New("channel_notify"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURLUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("username"),
+						knownvalue.StringExact("updated-bot"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("icon_emoji"),
+						knownvalue.StringExact(":bell:"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("channel"),
+						knownvalue.StringExact("#alerts"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_slack.test",
+						tfjsonpath.New("channel_notify"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccNotificationSlackResourceConfig(name, webhookURL, username, iconEmoji, channel string, channelNotify bool) string {
+func testAccNotificationSlackResourceConfig(
+	name string, webhookURL string, username string, iconEmoji string, channel string,
+	channelNotify bool,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_slack" "test" {
   name           = %[1]q

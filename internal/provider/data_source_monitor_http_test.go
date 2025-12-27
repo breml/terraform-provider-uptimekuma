@@ -22,22 +22,38 @@ func TestAccMonitorHTTPDataSource(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPDataSourceConfig(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorHTTPDataSourceConfigByID(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorHTTPDataSourceConfig(name, url string) string {
+func testAccMonitorHTTPDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[1]q
@@ -50,7 +66,7 @@ data "uptimekuma_monitor_http" "test" {
 `, name, url)
 }
 
-func testAccMonitorHTTPDataSourceConfigByID(name, url string) string {
+func testAccMonitorHTTPDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[1]q

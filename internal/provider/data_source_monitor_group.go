@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorGroupDataSource{}
 
+// NewMonitorGroupDataSource returns a new instance of the monitor group data source.
 func NewMonitorGroupDataSource() datasource.DataSource {
 	return &MonitorGroupDataSource{}
 }
 
+// MonitorGroupDataSource manages monitor group data source operations.
 type MonitorGroupDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorGroupDataSourceModel describes the data model for monitor group data source.
 type MonitorGroupDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorGroupDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorGroupDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_group"
 }
 
-func (d *MonitorGroupDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorGroupDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get monitor group information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorGroupDataSource) Schema(ctx context.Context, req datasource.Sche
 	}
 }
 
-func (d *MonitorGroupDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorGroupDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorGroupDataSource) Configure(ctx context.Context, req datasource.C
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,6 +87,7 @@ func (d *MonitorGroupDataSource) Configure(ctx context.Context, req datasource.C
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorGroupDataSourceModel
 
@@ -81,6 +103,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 			resp.Diagnostics.AddError("failed to read monitor group", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(groupMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -94,23 +117,30 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 		}
 
 		var found *monitor.Group
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "group" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple groups found",
-						fmt.Sprintf("Multiple monitor groups with name '%s' found. Please use 'id' to specify the group uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var groupMon monitor.Group
-				err := m.As(&groupMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &groupMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "group" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple groups found",
+					fmt.Sprintf(
+						"Multiple monitor groups with name '%s' found. Please use 'id' to specify the group uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var groupMon monitor.Group
+			err := mon.As(&groupMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &groupMon
 		}
 
 		if found == nil {

@@ -22,25 +22,39 @@ var (
 	_ resource.ResourceWithImportState = &MonitorTCPPortResource{}
 )
 
+// NewMonitorTCPPortResource returns a new instance of the TCP Port monitor resource.
 func NewMonitorTCPPortResource() resource.Resource {
 	return &MonitorTCPPortResource{}
 }
 
+// MonitorTCPPortResource defines the resource implementation.
 type MonitorTCPPortResource struct {
 	client *kuma.Client
 }
 
+// MonitorTCPPortResourceModel describes the resource data model.
 type MonitorTCPPortResourceModel struct {
 	MonitorBaseModel
+
 	Hostname types.String `tfsdk:"hostname"`
 	Port     types.Int64  `tfsdk:"port"`
 }
 
-func (r *MonitorTCPPortResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorTCPPortResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_tcp_port"
 }
 
-func (r *MonitorTCPPortResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorTCPPortResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "TCP Port monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -62,7 +76,12 @@ func (r *MonitorTCPPortResource) Schema(ctx context.Context, req resource.Schema
 	}
 }
 
-func (r *MonitorTCPPortResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the TCP Port monitor resource with the API client.
+func (r *MonitorTCPPortResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -72,7 +91,10 @@ func (r *MonitorTCPPortResource) Configure(ctx context.Context, req resource.Con
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -81,7 +103,12 @@ func (r *MonitorTCPPortResource) Configure(ctx context.Context, req resource.Con
 	r.client = client
 }
 
-func (r *MonitorTCPPortResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new TCP Port monitor resource.
+func (r *MonitorTCPPortResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorTCPPortResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -142,6 +169,7 @@ func (r *MonitorTCPPortResource) Create(ctx context.Context, req resource.Create
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the TCP Port monitor resource.
 func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorTCPPortResourceModel
 
@@ -200,7 +228,12 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorTCPPortResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the TCP Port monitor resource.
+func (r *MonitorTCPPortResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorTCPPortResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -266,7 +299,12 @@ func (r *MonitorTCPPortResource) Update(ctx context.Context, req resource.Update
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorTCPPortResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the TCP Port monitor resource.
+func (r *MonitorTCPPortResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorTCPPortResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -282,7 +320,12 @@ func (r *MonitorTCPPortResource) Delete(ctx context.Context, req resource.Delete
 	}
 }
 
-func (r *MonitorTCPPortResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorTCPPortResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

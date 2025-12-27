@@ -27,25 +27,49 @@ func TestAccDockerHostResource(t *testing.T) {
 				Config:             testAccDockerHostResourceConfig(name, daemon, dockerType),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("docker_daemon"), knownvalue.StringExact(daemon)),
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("docker_type"), knownvalue.StringExact(dockerType)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("docker_daemon"),
+						knownvalue.StringExact(daemon),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("docker_type"),
+						knownvalue.StringExact(dockerType),
+					),
 				},
 			},
 			{
 				Config:             testAccDockerHostResourceConfig(nameUpdated, daemonUpdated, dockerTypeUpdated),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("docker_daemon"), knownvalue.StringExact(daemonUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("docker_type"), knownvalue.StringExact(dockerTypeUpdated)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("docker_daemon"),
+						knownvalue.StringExact(daemonUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("docker_type"),
+						knownvalue.StringExact(dockerTypeUpdated),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccDockerHostResourceConfig(name, daemon, dockerType string) string {
+func testAccDockerHostResourceConfig(name string, daemon string, dockerType string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_docker_host" "test" {
   name           = %[1]q
@@ -67,7 +91,11 @@ func TestAccDockerHostResourceDelete(t *testing.T) {
 			{
 				Config: testAccDockerHostResourceConfig(name, daemon, dockerType),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_docker_host.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_docker_host.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{

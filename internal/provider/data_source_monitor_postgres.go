@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorPostgresDataSource{}
 
+// NewMonitorPostgresDataSource returns a new instance of the PostgreSQL monitor data source.
 func NewMonitorPostgresDataSource() datasource.DataSource {
 	return &MonitorPostgresDataSource{}
 }
 
+// MonitorPostgresDataSource manages PostgreSQL monitor data source operations.
 type MonitorPostgresDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPostgresDataSourceModel describes the data model for PostgreSQL monitor data source.
 type MonitorPostgresDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorPostgresDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorPostgresDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_postgres"
 }
 
-func (d *MonitorPostgresDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorPostgresDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get PostgreSQL monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorPostgresDataSource) Schema(ctx context.Context, req datasource.S
 	}
 }
 
-func (d *MonitorPostgresDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorPostgresDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorPostgresDataSource) Configure(ctx context.Context, req datasourc
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,7 +87,12 @@ func (d *MonitorPostgresDataSource) Configure(ctx context.Context, req datasourc
 	d.client = client
 }
 
-func (d *MonitorPostgresDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MonitorPostgresDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorPostgresDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -81,6 +107,7 @@ func (d *MonitorPostgresDataSource) Read(ctx context.Context, req datasource.Rea
 			resp.Diagnostics.AddError("failed to read PostgreSQL monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(postgresMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -94,23 +121,30 @@ func (d *MonitorPostgresDataSource) Read(ctx context.Context, req datasource.Rea
 		}
 
 		var found *monitor.Postgres
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "postgres" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple PostgreSQL monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var postgresMon monitor.Postgres
-				err := m.As(&postgresMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &postgresMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "postgres" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple PostgreSQL monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var postgresMon monitor.Postgres
+			err := mon.As(&postgresMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &postgresMon
 		}
 
 		if found == nil {

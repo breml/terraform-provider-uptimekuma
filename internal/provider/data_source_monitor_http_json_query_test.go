@@ -22,20 +22,28 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPJSONQueryDataSourceConfig(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_json_query.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorHTTPJSONQueryDataSourceConfig(name, url string) string {
+func testAccMonitorHTTPJSONQueryDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name       = %[1]q
@@ -50,7 +58,7 @@ data "uptimekuma_monitor_http_json_query" "test" {
 `, name, url)
 }
 
-func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url string) string {
+func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
   name       = %[1]q

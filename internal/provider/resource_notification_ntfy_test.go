@@ -23,24 +23,72 @@ func TestAccNotificationNtfyResource(t *testing.T) {
 			{
 				Config: testAccNotificationNtfyResourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("authentication_method"), knownvalue.StringExact("none")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("server_url"), knownvalue.StringExact("https://ntfy.sh")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("priority"), knownvalue.Int32Exact(5)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("topic"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("authentication_method"),
+						knownvalue.StringExact("none"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("server_url"),
+						knownvalue.StringExact("https://ntfy.sh"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("priority"),
+						knownvalue.Int32Exact(5),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("topic"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			// Update and Read testing
 			{
 				Config: testAccNotificationNtfyResourceConfig(nameUpdated),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("authentication_method"), knownvalue.StringExact("none")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("server_url"), knownvalue.StringExact("https://ntfy.sh")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("priority"), knownvalue.Int32Exact(5)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_ntfy.test", tfjsonpath.New("topic"), knownvalue.StringExact(nameUpdated)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("authentication_method"),
+						knownvalue.StringExact("none"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("server_url"),
+						knownvalue.StringExact("https://ntfy.sh"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("priority"),
+						knownvalue.Int32Exact(5),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_ntfy.test",
+						tfjsonpath.New("topic"),
+						knownvalue.StringExact(nameUpdated),
+					),
 				},
 			},
 			// Delete testing automatically occurs in TestCase

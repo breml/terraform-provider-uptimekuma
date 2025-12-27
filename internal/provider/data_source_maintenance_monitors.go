@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &MaintenanceMonitorsDataSource{}
 
+// NewMaintenanceMonitorsDataSource returns a new instance of the maintenance monitors data source.
 func NewMaintenanceMonitorsDataSource() datasource.DataSource {
 	return &MaintenanceMonitorsDataSource{}
 }
 
+// MaintenanceMonitorsDataSource manages maintenance monitors data source operations.
 type MaintenanceMonitorsDataSource struct {
 	client *kuma.Client
 }
 
+// MaintenanceMonitorsDataSourceModel describes the data model for maintenance monitors data source.
 type MaintenanceMonitorsDataSourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
-func (d *MaintenanceMonitorsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MaintenanceMonitorsDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
-func (d *MaintenanceMonitorsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MaintenanceMonitorsDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get monitors associated with a maintenance window",
 		Attributes: map[string]schema.Attribute{
@@ -47,7 +60,12 @@ func (d *MaintenanceMonitorsDataSource) Schema(ctx context.Context, req datasour
 	}
 }
 
-func (d *MaintenanceMonitorsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MaintenanceMonitorsDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -56,7 +74,10 @@ func (d *MaintenanceMonitorsDataSource) Configure(ctx context.Context, req datas
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -64,7 +85,12 @@ func (d *MaintenanceMonitorsDataSource) Configure(ctx context.Context, req datas
 	d.client = client
 }
 
-func (d *MaintenanceMonitorsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MaintenanceMonitorsDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MaintenanceMonitorsDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -83,6 +109,7 @@ func (d *MaintenanceMonitorsDataSource) Read(ctx context.Context, req datasource
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 	data.MonitorIDs = listValue
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

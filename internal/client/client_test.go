@@ -16,7 +16,7 @@ func TestNew_EmptyEndpoint(t *testing.T) {
 		LogLevel: kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
 
-	_, err := New(context.Background(), config)
+	_, err := New(t.Context(), config)
 	if err == nil {
 		t.Error("expected error for empty endpoint, got nil")
 	}
@@ -41,7 +41,7 @@ func TestNew_PoolEnabledViaConfig(t *testing.T) {
 	}
 
 	// Use a cancelled context to make the connection fail immediately
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	// This will fail due to cancelled context, but we can verify pooling was enabled
@@ -67,7 +67,7 @@ func TestNew_PoolDisabled(t *testing.T) {
 	}
 
 	// Use a cancelled context to make the connection fail immediately
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
 	_, err := New(ctx, config)

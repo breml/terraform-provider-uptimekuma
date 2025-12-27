@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorTCPPortDataSource{}
 
+// NewMonitorTCPPortDataSource returns a new instance of the TCP Port monitor data source.
 func NewMonitorTCPPortDataSource() datasource.DataSource {
 	return &MonitorTCPPortDataSource{}
 }
 
+// MonitorTCPPortDataSource manages TCP Port monitor data source operations.
 type MonitorTCPPortDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorTCPPortDataSourceModel describes the data model for TCP Port monitor data source.
 type MonitorTCPPortDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
@@ -29,11 +32,21 @@ type MonitorTCPPortDataSourceModel struct {
 	Port     types.Int64  `tfsdk:"port"`
 }
 
-func (d *MonitorTCPPortDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorTCPPortDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_tcp_port"
 }
 
-func (d *MonitorTCPPortDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorTCPPortDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get TCP Port monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -59,7 +72,12 @@ func (d *MonitorTCPPortDataSource) Schema(ctx context.Context, req datasource.Sc
 	}
 }
 
-func (d *MonitorTCPPortDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorTCPPortDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -68,7 +86,10 @@ func (d *MonitorTCPPortDataSource) Configure(ctx context.Context, req datasource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -76,7 +97,12 @@ func (d *MonitorTCPPortDataSource) Configure(ctx context.Context, req datasource
 	d.client = client
 }
 
-func (d *MonitorTCPPortDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MonitorTCPPortDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorTCPPortDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -91,6 +117,7 @@ func (d *MonitorTCPPortDataSource) Read(ctx context.Context, req datasource.Read
 			resp.Diagnostics.AddError("failed to read TCP Port monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(tcpMonitor.Name)
 		data.Hostname = types.StringValue(tcpMonitor.Hostname)
 		data.Port = types.Int64Value(int64(tcpMonitor.Port))
@@ -106,23 +133,30 @@ func (d *MonitorTCPPortDataSource) Read(ctx context.Context, req datasource.Read
 		}
 
 		var found *monitor.TCPPort
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "port" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple TCP Port monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var tcpMon monitor.TCPPort
-				err := m.As(&tcpMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &tcpMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "port" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple TCP Port monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var tcpMon monitor.TCPPort
+			err := mon.As(&tcpMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &tcpMon
 		}
 
 		if found == nil {

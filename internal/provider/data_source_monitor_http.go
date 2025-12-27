@@ -14,25 +14,38 @@ import (
 
 var _ datasource.DataSource = &MonitorHTTPDataSource{}
 
+// NewMonitorHTTPDataSource returns a new instance of the HTTP monitor data source.
 func NewMonitorHTTPDataSource() datasource.DataSource {
 	return &MonitorHTTPDataSource{}
 }
 
+// MonitorHTTPDataSource manages HTTP monitor data source operations.
 type MonitorHTTPDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPDataSourceModel describes the data model for HTTP monitor data source.
 type MonitorHTTPDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 	URL  types.String `tfsdk:"url"`
 }
 
-func (d *MonitorHTTPDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorHTTPDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http"
 }
 
-func (d *MonitorHTTPDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorHTTPDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get HTTP monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -54,7 +67,12 @@ func (d *MonitorHTTPDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (d *MonitorHTTPDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorHTTPDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -63,7 +81,10 @@ func (d *MonitorHTTPDataSource) Configure(ctx context.Context, req datasource.Co
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -71,6 +92,7 @@ func (d *MonitorHTTPDataSource) Configure(ctx context.Context, req datasource.Co
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorHTTPDataSourceModel
 
@@ -87,6 +109,7 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 			resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(httpMonitor.Name)
 		data.URL = types.StringValue(httpMonitor.URL)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -102,23 +125,30 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 
 		var found *monitor.HTTP
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "http" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple HTTP monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var httpMon monitor.HTTP
-				err := m.As(&httpMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &httpMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "http" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple HTTP monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var httpMon monitor.HTTP
+			err := mon.As(&httpMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &httpMon
 		}
 
 		if found == nil {

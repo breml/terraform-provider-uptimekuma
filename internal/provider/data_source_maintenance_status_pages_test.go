@@ -21,17 +21,28 @@ func TestAccMaintenanceStatusPagesDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMaintenanceStatusPagesDataSourceConfig(maintenanceTitle, statusPageSlug1, statusPageSlug2),
+				Config: testAccMaintenanceStatusPagesDataSourceConfig(
+					maintenanceTitle,
+					statusPageSlug1,
+					statusPageSlug2,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenance_status_pages.test", tfjsonpath.New("status_page_ids"),
-						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenance_status_pages.test",
+						tfjsonpath.New("status_page_ids"),
+						knownvalue.ListSizeExact(2),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMaintenanceStatusPagesDataSourceConfig(maintenanceTitle, statusPageSlug1, statusPageSlug2 string) string {
+func testAccMaintenanceStatusPagesDataSourceConfig(
+	maintenanceTitle string,
+	statusPageSlug1 string,
+	statusPageSlug2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_maintenance" "test" {
   title    = %[1]q

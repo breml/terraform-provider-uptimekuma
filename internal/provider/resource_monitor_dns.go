@@ -24,27 +24,37 @@ var (
 	_ resource.ResourceWithImportState = &MonitorDNSResource{}
 )
 
+// NewMonitorDNSResource returns a new instance of the DNS monitor resource.
 func NewMonitorDNSResource() resource.Resource {
 	return &MonitorDNSResource{}
 }
 
+// MonitorDNSResource defines the resource implementation.
 type MonitorDNSResource struct {
 	client *kuma.Client
 }
 
+// MonitorDNSResourceModel describes the resource data model.
 type MonitorDNSResourceModel struct {
 	MonitorBaseModel
+
 	Hostname         types.String `tfsdk:"hostname"`
 	DNSResolveServer types.String `tfsdk:"dns_resolve_server"`
 	DNSResolveType   types.String `tfsdk:"dns_resolve_type"`
 	Port             types.Int64  `tfsdk:"port"`
 }
 
-func (r *MonitorDNSResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorDNSResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
-func (r *MonitorDNSResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "DNS monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -80,7 +90,12 @@ func (r *MonitorDNSResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func (r *MonitorDNSResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MonitorDNSResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -90,7 +105,10 @@ func (r *MonitorDNSResource) Configure(ctx context.Context, req resource.Configu
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -99,6 +117,7 @@ func (r *MonitorDNSResource) Configure(ctx context.Context, req resource.Configu
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorDNSResourceModel
 
@@ -162,6 +181,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorDNSResourceModel
 
@@ -222,6 +242,7 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorDNSResourceModel
 
@@ -290,6 +311,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorDNSResourceModel
 
@@ -306,7 +328,12 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
-func (r *MonitorDNSResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorDNSResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

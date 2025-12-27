@@ -19,11 +19,13 @@ import (
 	"github.com/breml/go-uptime-kuma-client/tag"
 )
 
+// MonitorTagModel describes the tag data model for monitors.
 type MonitorTagModel struct {
 	TagID types.Int64  `tfsdk:"tag_id"`
 	Value types.String `tfsdk:"value"`
 }
 
+// MonitorBaseModel describes the base data model for all monitor types.
 type MonitorBaseModel struct {
 	ID              types.Int64  `tfsdk:"id"`
 	Name            types.String `tfsdk:"name"`
@@ -140,7 +142,13 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 	return attrs
 }
 
-func handleMonitorTagsCreate(ctx context.Context, client *kuma.Client, monitorID int64, tags types.List, diags *diag.Diagnostics) {
+func handleMonitorTagsCreate(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	tags types.List,
+	diags *diag.Diagnostics,
+) {
 	if tags.IsNull() || tags.IsUnknown() {
 		return
 	}
@@ -187,6 +195,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		} else {
 			value = types.StringValue(monitorTag.Value)
 		}
+
 		tagModels[i] = MonitorTagModel{
 			TagID: types.Int64Value(monitorTag.TagID),
 			Value: value,
@@ -204,7 +213,14 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 	return tagsList
 }
 
-func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID int64, oldTags types.List, newTags types.List, diags *diag.Diagnostics) {
+func handleMonitorTagsUpdate(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTags types.List,
+	newTags types.List,
+	diags *diag.Diagnostics,
+) {
 	var oldMonitorTags []MonitorTagModel
 	var newMonitorTags []MonitorTagModel
 
@@ -223,23 +239,25 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 	}
 
 	oldTagMap := make(map[string]MonitorTagModel)
-	for _, tag := range oldMonitorTags {
+	for _, oldMonitorTag := range oldMonitorTags {
 		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
+		if !oldMonitorTag.Value.IsNull() {
+			value = oldMonitorTag.Value.ValueString()
 		}
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		oldTagMap[key] = tag
+
+		key := fmt.Sprintf("%d:%s", oldMonitorTag.TagID.ValueInt64(), value)
+		oldTagMap[key] = oldMonitorTag
 	}
 
 	newTagMap := make(map[string]MonitorTagModel)
-	for _, tag := range newMonitorTags {
+	for _, newMonitorTag := range newMonitorTags {
 		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
+		if !newMonitorTag.Value.IsNull() {
+			value = newMonitorTag.Value.ValueString()
 		}
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		newTagMap[key] = tag
+
+		key := fmt.Sprintf("%d:%s", newMonitorTag.TagID.ValueInt64(), value)
+		newTagMap[key] = newMonitorTag
 	}
 
 	for key, oldTag := range oldTagMap {
@@ -248,6 +266,7 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 			if !oldTag.Value.IsNull() {
 				value = oldTag.Value.ValueString()
 			}
+
 			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
@@ -265,6 +284,7 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 			if !newTag.Value.IsNull() {
 				value = newTag.Value.ValueString()
 			}
+
 			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(

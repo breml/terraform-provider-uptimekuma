@@ -19,31 +19,45 @@ var (
 	_ resource.ResourceWithImportState = &MonitorHTTPResource{}
 )
 
+// NewMonitorHTTPResource returns a new instance of the HTTP monitor resource.
 func NewMonitorHTTPResource() resource.Resource {
 	return &MonitorHTTPResource{}
 }
 
+// MonitorHTTPResource defines the resource implementation.
 type MonitorHTTPResource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPResourceModel describes the resource data model.
 type MonitorHTTPResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
 }
 
-func (r *MonitorHTTPResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorHTTPResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http"
 }
 
-func (r *MonitorHTTPResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP monitor resource",
 		Attributes:          withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{})),
 	}
 }
 
-func (r *MonitorHTTPResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MonitorHTTPResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -53,7 +67,10 @@ func (r *MonitorHTTPResource) Configure(ctx context.Context, req resource.Config
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -62,6 +79,7 @@ func (r *MonitorHTTPResource) Configure(ctx context.Context, req resource.Config
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -169,6 +187,7 @@ func stringOrNull(s string) types.String {
 	return types.StringValue(s)
 }
 
+// Read reads the current state of the resource.
 func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -263,6 +282,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorHTTPResourceModel
 	var state MonitorHTTPResourceModel
@@ -366,6 +386,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -382,7 +403,12 @@ func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *MonitorHTTPResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorHTTPResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

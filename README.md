@@ -14,7 +14,10 @@ A Terraform provider for managing Uptime Kuma monitors and notifications through
 
 ## Dependencies
 
-This provider uses the [go-uptime-kuma-client](https://github.com/breml/go-uptime-kuma-client) to interact with Uptime Kuma. The capabilities are limited to the features supported by the client library. If you need a feature not yet available, first check if it's supported in the client library.
+This provider uses the [go-uptime-kuma-client](https://github.com/breml/go-uptime-kuma-client) to
+interact with Uptime Kuma. The capabilities are limited to the features supported by the client
+library. If you need a feature not yet available, first check if it's supported in the client
+library.
 
 ## Requirements
 
@@ -25,7 +28,9 @@ This provider uses the [go-uptime-kuma-client](https://github.com/breml/go-uptim
 
 ## Installation
 
-The provider is available on the [Terraform Registry](https://registry.terraform.io/providers/breml/uptimekuma). Configure it in your Terraform code:
+The provider is available on the
+[Terraform Registry](https://registry.terraform.io/providers/breml/uptimekuma). Configure it in
+your Terraform code:
 
 ```hcl
 terraform {
@@ -83,6 +88,7 @@ resource "uptimekuma_proxy" "example" {
 ## Supported Resources
 
 ### Monitors
+
 - `uptimekuma_monitor_http` - HTTP/HTTPS monitoring
 - `uptimekuma_monitor_http_keyword` - HTTP monitoring with keyword detection
 - `uptimekuma_monitor_http_json_query` - HTTP monitoring with JSON query validation
@@ -97,6 +103,7 @@ resource "uptimekuma_proxy" "example" {
 - `uptimekuma_monitor_group` - Monitor groups for organization
 
 ### Notifications
+
 - `uptimekuma_notification` - Generic notification with JSON config
 - `uptimekuma_notification_webhook` - Webhook notifications
 - `uptimekuma_notification_slack` - Slack integration
@@ -104,14 +111,17 @@ resource "uptimekuma_proxy" "example" {
 - `uptimekuma_notification_ntfy` - ntfy.sh notifications
 
 ### Proxies
+
 - `uptimekuma_proxy` - HTTP/HTTPS/SOCKS5 proxy configuration
 
 ### Other
+
 - `uptimekuma_tag` - Tags for organizing monitors and notifications
 
 ## Documentation
 
-Full documentation including all resource attributes and examples is available on the [Terraform Registry](https://registry.terraform.io/providers/breml/uptimekuma/latest/docs).
+Full documentation including all resource attributes and examples is available on the
+[Terraform Registry](https://registry.terraform.io/providers/breml/uptimekuma/latest/docs).
 
 ## Development
 
@@ -147,6 +157,7 @@ make lint     # Run linters
 ## Contributing
 
 Contributions are welcome! Please ensure:
+
 - Code is formatted with `make fmt`
 - Code passes linting with `make lint`
 - Tests pass with `make test` and `make testacc`
@@ -158,4 +169,5 @@ This provider is licensed under the Mozilla Public License Version 2.0. See the 
 
 ## Support
 
-For issues, feature requests, or questions, please use the [GitHub repository](https://github.com/breml/terraform-provider-uptimekuma).
+For issues, feature requests, or questions, please use the
+[GitHub repository](https://github.com/breml/terraform-provider-uptimekuma).

@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &NotificationFeishuDataSource{}
 
+// NewNotificationFeishuDataSource returns a new instance of the Feishu notification data source.
 func NewNotificationFeishuDataSource() datasource.DataSource {
 	return &NotificationFeishuDataSource{}
 }
 
+// NotificationFeishuDataSource manages Feishu notification data source operations.
 type NotificationFeishuDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationFeishuDataSourceModel describes the data model for Feishu notification data source.
 type NotificationFeishuDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationFeishuDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*NotificationFeishuDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_feishu"
 }
 
-func (d *NotificationFeishuDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*NotificationFeishuDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Feishu notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +61,12 @@ func (d *NotificationFeishuDataSource) Schema(ctx context.Context, req datasourc
 	}
 }
 
-func (d *NotificationFeishuDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationFeishuDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +75,10 @@ func (d *NotificationFeishuDataSource) Configure(ctx context.Context, req dataso
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +86,12 @@ func (d *NotificationFeishuDataSource) Configure(ctx context.Context, req dataso
 	d.client = client
 }
 
-func (d *NotificationFeishuDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *NotificationFeishuDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationFeishuDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -79,10 +105,12 @@ func (d *NotificationFeishuDataSource) Read(ctx context.Context, req datasource.
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		if notification.Type() != "Feishu" {
 			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Feishu notification")
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -101,10 +129,14 @@ func (d *NotificationFeishuDataSource) Read(ctx context.Context, req datasource.
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
-						fmt.Sprintf("Multiple Feishu notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple Feishu notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

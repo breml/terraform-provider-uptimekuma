@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &NotificationDingDingDataSource{}
 
+// NewNotificationDingDingDataSource returns a new instance of the DingDing notification data source.
 func NewNotificationDingDingDataSource() datasource.DataSource {
 	return &NotificationDingDingDataSource{}
 }
 
+// NotificationDingDingDataSource manages DingDing notification data source operations.
 type NotificationDingDingDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationDingDingDataSourceModel describes the data model for DingDing notification data source.
 type NotificationDingDingDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationDingDingDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*NotificationDingDingDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_dingding"
 }
 
-func (d *NotificationDingDingDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*NotificationDingDingDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get DingDing notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +61,12 @@ func (d *NotificationDingDingDataSource) Schema(ctx context.Context, req datasou
 	}
 }
 
-func (d *NotificationDingDingDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationDingDingDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +75,10 @@ func (d *NotificationDingDingDataSource) Configure(ctx context.Context, req data
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +86,12 @@ func (d *NotificationDingDingDataSource) Configure(ctx context.Context, req data
 	d.client = client
 }
 
-func (d *NotificationDingDingDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *NotificationDingDingDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationDingDingDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -79,10 +105,12 @@ func (d *NotificationDingDingDataSource) Read(ctx context.Context, req datasourc
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		if notification.Type() != "DingDing" {
 			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a DingDing notification")
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -101,10 +129,14 @@ func (d *NotificationDingDingDataSource) Read(ctx context.Context, req datasourc
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
-						fmt.Sprintf("Multiple DingDing notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple DingDing notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

@@ -21,7 +21,11 @@ func TestAccNotificationFeishuDataSource(t *testing.T) {
 			{
 				Config: testAccNotificationFeishuDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_notification_feishu.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_feishu.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},

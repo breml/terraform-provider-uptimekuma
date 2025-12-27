@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorRealBrowserDataSource{}
 
+// NewMonitorRealBrowserDataSource returns a new instance of the Real Browser monitor data source.
 func NewMonitorRealBrowserDataSource() datasource.DataSource {
 	return &MonitorRealBrowserDataSource{}
 }
 
+// MonitorRealBrowserDataSource manages Real Browser monitor data source operations.
 type MonitorRealBrowserDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorRealBrowserDataSourceModel describes the data model for Real Browser monitor data source.
 type MonitorRealBrowserDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorRealBrowserDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorRealBrowserDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
-func (d *MonitorRealBrowserDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorRealBrowserDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Real Browser monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorRealBrowserDataSource) Schema(ctx context.Context, req datasourc
 	}
 }
 
-func (d *MonitorRealBrowserDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorRealBrowserDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorRealBrowserDataSource) Configure(ctx context.Context, req dataso
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,7 +87,12 @@ func (d *MonitorRealBrowserDataSource) Configure(ctx context.Context, req dataso
 	d.client = client
 }
 
-func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MonitorRealBrowserDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorRealBrowserDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -81,6 +107,7 @@ func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.
 			resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(realBrowserMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -94,23 +121,30 @@ func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.
 		}
 
 		var found *monitor.RealBrowser
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "real-browser" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple Real Browser monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var realBrowserMon monitor.RealBrowser
-				err := m.As(&realBrowserMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &realBrowserMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "real-browser" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple Real Browser monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var realBrowserMon monitor.RealBrowser
+			err := mon.As(&realBrowserMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &realBrowserMon
 		}
 
 		if found == nil {

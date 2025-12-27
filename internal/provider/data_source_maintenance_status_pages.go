@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &MaintenanceStatusPagesDataSource{}
 
+// NewMaintenanceStatusPagesDataSource returns a new instance of the maintenance status pages data source.
 func NewMaintenanceStatusPagesDataSource() datasource.DataSource {
 	return &MaintenanceStatusPagesDataSource{}
 }
 
+// MaintenanceStatusPagesDataSource manages maintenance status pages data source operations.
 type MaintenanceStatusPagesDataSource struct {
 	client *kuma.Client
 }
 
+// MaintenanceStatusPagesDataSourceModel describes the data model for maintenance status pages data source.
 type MaintenanceStatusPagesDataSourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
-func (d *MaintenanceStatusPagesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MaintenanceStatusPagesDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
-func (d *MaintenanceStatusPagesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MaintenanceStatusPagesDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get status pages associated with a maintenance window",
 		Attributes: map[string]schema.Attribute{
@@ -47,7 +60,12 @@ func (d *MaintenanceStatusPagesDataSource) Schema(ctx context.Context, req datas
 	}
 }
 
-func (d *MaintenanceStatusPagesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MaintenanceStatusPagesDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -56,7 +74,10 @@ func (d *MaintenanceStatusPagesDataSource) Configure(ctx context.Context, req da
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -64,7 +85,12 @@ func (d *MaintenanceStatusPagesDataSource) Configure(ctx context.Context, req da
 	d.client = client
 }
 
-func (d *MaintenanceStatusPagesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MaintenanceStatusPagesDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MaintenanceStatusPagesDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -83,6 +109,7 @@ func (d *MaintenanceStatusPagesDataSource) Read(ctx context.Context, req datasou
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 	data.StatusPageIDs = listValue
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

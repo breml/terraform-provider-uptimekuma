@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// MonitorHTTPBaseModel describes the base data model for HTTP-based monitor types.
 type MonitorHTTPBaseModel struct {
 	URL                 types.String `tfsdk:"url"`
 	Timeout             types.Int64  `tfsdk:"timeout"`
@@ -97,7 +98,9 @@ func withHTTPMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string
 		ElementType:         types.StringType,
 		Optional:            true,
 		Computed:            true,
-		Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")})),
+		Default: listdefault.StaticValue(
+			types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")}),
+		),
 		PlanModifiers: []planmodifier.List{
 			listplanmodifier.UseStateForUnknown(),
 		},

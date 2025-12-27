@@ -24,68 +24,112 @@ func TestAccNotificationResource(t *testing.T) {
 			{
 				Config: testAccNotificationResourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("type"), knownvalue.StringExact("ntfy")),
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("config"), knownvalue.StringFunc(func(v string) error {
-						configMap := make(map[string]any, 5)
-						err := json.Unmarshal([]byte(v), &configMap)
-						if err != nil {
-							return err
-						}
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("type"),
+						knownvalue.StringExact("ntfy"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("config"),
+						knownvalue.StringFunc(func(v string) error {
+							configMap := make(map[string]any, 5)
+							err := json.Unmarshal([]byte(v), &configMap)
+							if err != nil {
+								return err
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfyAuthenticationMethod"]) != "none" {
-							return fmt.Errorf(`"ntfyAuthenticationMethod" != "none", got: %v`, configMap["ntfyAuthenticationMethod"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfyAuthenticationMethod"]) != "none" {
+								return fmt.Errorf(
+									`"ntfyAuthenticationMethod" != "none", got: %v`,
+									configMap["ntfyAuthenticationMethod"],
+								)
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfyserverurl"]) != "https://ntfy.sh/" {
-							return fmt.Errorf(`"ntfyserverurl" != "https://ntfy.sh/", got: %v`, configMap["ntfyserverurl"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfyserverurl"]) != "https://ntfy.sh/" {
+								return fmt.Errorf(
+									`"ntfyserverurl" != "https://ntfy.sh/", got: %v`,
+									configMap["ntfyserverurl"],
+								)
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfyPriority"]) != "5" {
-							return fmt.Errorf(`"ntfyPriority" != "5", got: %v`, configMap["ntfyPriority"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfyPriority"]) != "5" {
+								return fmt.Errorf(`"ntfyPriority" != "5", got: %v`, configMap["ntfyPriority"])
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfytopic"]) != name {
-							return fmt.Errorf(`"ntfytopic" != %q, got: %v`, name, configMap["ntfytopic"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfytopic"]) != name {
+								return fmt.Errorf(`"ntfytopic" != %q, got: %v`, name, configMap["ntfytopic"])
+							}
 
-						return nil
-					})),
+							return nil
+						}),
+					),
 				},
 			},
 			// Update and Read testing
 			{
 				Config: testAccNotificationResourceConfig(nameUpdated),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("type"), knownvalue.StringExact("ntfy")),
-					statecheck.ExpectKnownValue("uptimekuma_notification.test", tfjsonpath.New("config"), knownvalue.StringFunc(func(v string) error {
-						configMap := make(map[string]any, 5)
-						err := json.Unmarshal([]byte(v), &configMap)
-						if err != nil {
-							return err
-						}
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("type"),
+						knownvalue.StringExact("ntfy"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification.test",
+						tfjsonpath.New("config"),
+						knownvalue.StringFunc(func(v string) error {
+							configMap := make(map[string]any, 5)
+							err := json.Unmarshal([]byte(v), &configMap)
+							if err != nil {
+								return err
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfyAuthenticationMethod"]) != "none" {
-							return fmt.Errorf(`"ntfyAuthenticationMethod" != "none", got: %v`, configMap["ntfyAuthenticationMethod"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfyAuthenticationMethod"]) != "none" {
+								return fmt.Errorf(
+									`"ntfyAuthenticationMethod" != "none", got: %v`,
+									configMap["ntfyAuthenticationMethod"],
+								)
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfyserverurl"]) != "https://ntfy.sh/" {
-							return fmt.Errorf(`"ntfyserverurl" != "https://ntfy.sh/", got: %v`, configMap["ntfyserverurl"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfyserverurl"]) != "https://ntfy.sh/" {
+								return fmt.Errorf(
+									`"ntfyserverurl" != "https://ntfy.sh/", got: %v`,
+									configMap["ntfyserverurl"],
+								)
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfyPriority"]) != "5" {
-							return fmt.Errorf(`"ntfyPriority" != "5", got: %v`, configMap["ntfyPriority"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfyPriority"]) != "5" {
+								return fmt.Errorf(`"ntfyPriority" != "5", got: %v`, configMap["ntfyPriority"])
+							}
 
-						if fmt.Sprintf("%v", configMap["ntfytopic"]) != nameUpdated {
-							return fmt.Errorf(`"ntfytopic" != %q, got: %v`, nameUpdated, configMap["ntfytopic"])
-						}
+							if fmt.Sprintf("%v", configMap["ntfytopic"]) != nameUpdated {
+								return fmt.Errorf(`"ntfytopic" != %q, got: %v`, nameUpdated, configMap["ntfytopic"])
+							}
 
-						return nil
-					})),
+							return nil
+						}),
+					),
 				},
 			},
 			// Delete testing automatically occurs in TestCase

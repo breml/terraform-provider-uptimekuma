@@ -21,7 +21,11 @@ func TestAccNotificationDingDingDataSource(t *testing.T) {
 			{
 				Config: testAccNotificationDingDingDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_notification_dingding.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_dingding.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},

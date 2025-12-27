@@ -23,25 +23,38 @@ var (
 	_ resource.ResourceWithImportState = &NotificationTeamsResource{}
 )
 
+// NewNotificationTeamsResource returns a new instance of the Teams notification resource.
 func NewNotificationTeamsResource() resource.Resource {
 	return &NotificationTeamsResource{}
 }
 
+// NotificationTeamsResource defines the resource implementation.
 type NotificationTeamsResource struct {
 	client *kuma.Client
 }
 
+// NotificationTeamsResourceModel describes the resource data model.
 type NotificationTeamsResourceModel struct {
 	NotificationBaseModel
 
 	WebhookURL types.String `tfsdk:"webhook_url"`
 }
 
-func (r *NotificationTeamsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *NotificationTeamsResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_teams"
 }
 
-func (r *NotificationTeamsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *NotificationTeamsResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
@@ -55,7 +68,12 @@ func (r *NotificationTeamsResource) Schema(ctx context.Context, req resource.Sch
 	}
 }
 
-func (r *NotificationTeamsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the Teams notification resource with the API client.
+func (r *NotificationTeamsResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -65,7 +83,10 @@ func (r *NotificationTeamsResource) Configure(ctx context.Context, req resource.
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -74,7 +95,12 @@ func (r *NotificationTeamsResource) Configure(ctx context.Context, req resource.
 	r.client = client
 }
 
-func (r *NotificationTeamsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new Teams notification resource.
+func (r *NotificationTeamsResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data NotificationTeamsResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -103,11 +129,12 @@ func (r *NotificationTeamsResource) Create(ctx context.Context, req resource.Cre
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Teams notification resource.
 func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationTeamsResourceModel
 
@@ -117,7 +144,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -137,7 +164,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(teams.Name)
 	data.IsActive = types.BoolValue(teams.IsActive)
 	data.IsDefault = types.BoolValue(teams.IsDefault)
@@ -148,7 +175,12 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationTeamsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the Teams notification resource.
+func (r *NotificationTeamsResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data NotificationTeamsResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -159,7 +191,7 @@ func (r *NotificationTeamsResource) Update(ctx context.Context, req resource.Upd
 
 	teams := notification.Teams{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -179,7 +211,12 @@ func (r *NotificationTeamsResource) Update(ctx context.Context, req resource.Upd
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationTeamsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the Teams notification resource.
+func (r *NotificationTeamsResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data NotificationTeamsResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -188,14 +225,19 @@ func (r *NotificationTeamsResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 }
 
-func (r *NotificationTeamsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *NotificationTeamsResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

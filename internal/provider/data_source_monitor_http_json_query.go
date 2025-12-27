@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorHTTPJSONQueryDataSource{}
 
+// NewMonitorHTTPJSONQueryDataSource returns a new instance of the HTTP JSON Query monitor data source.
 func NewMonitorHTTPJSONQueryDataSource() datasource.DataSource {
 	return &MonitorHTTPJSONQueryDataSource{}
 }
 
+// MonitorHTTPJSONQueryDataSource manages HTTP JSON Query monitor data source operations.
 type MonitorHTTPJSONQueryDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPJSONQueryDataSourceModel describes the data model for HTTP JSON Query monitor data source.
 type MonitorHTTPJSONQueryDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (_ *MonitorHTTPJSONQueryDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (_ *MonitorHTTPJSONQueryDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get HTTP JSON Query monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorHTTPJSONQueryDataSource) Schema(ctx context.Context, req datasou
 	}
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorHTTPJSONQueryDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorHTTPJSONQueryDataSource) Configure(ctx context.Context, req data
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,7 +87,12 @@ func (d *MonitorHTTPJSONQueryDataSource) Configure(ctx context.Context, req data
 	d.client = client
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MonitorHTTPJSONQueryDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorHTTPJSONQueryDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -81,6 +107,7 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasourc
 			resp.Diagnostics.AddError("failed to read HTTP JSON Query monitor", err.Error())
 			return
 		}
+
 		data.Name = types.StringValue(httpJSONMonitor.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -94,23 +121,30 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(ctx context.Context, req datasourc
 		}
 
 		var found *monitor.HTTPJSONQuery
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "json-query" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple HTTP JSON Query monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var httpJSONMon monitor.HTTPJSONQuery
-				err := m.As(&httpJSONMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &httpJSONMon
+		for _, mon := range monitors {
+			if mon.Name != data.Name.ValueString() || mon.Type() != "json-query" {
+				continue
 			}
+
+			if found != nil {
+				resp.Diagnostics.AddError(
+					"Multiple monitors found",
+					fmt.Sprintf(
+						"Multiple HTTP JSON Query monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
+						data.Name.ValueString(),
+					),
+				)
+				return
+			}
+
+			var httpJSONMon monitor.HTTPJSONQuery
+			err := mon.As(&httpJSONMon)
+			if err != nil {
+				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+				return
+			}
+
+			found = &httpJSONMon
 		}
 
 		if found == nil {

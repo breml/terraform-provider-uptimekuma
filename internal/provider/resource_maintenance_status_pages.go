@@ -21,24 +21,37 @@ var (
 	_ resource.ResourceWithImportState = &MaintenanceStatusPagesResource{}
 )
 
+// NewMaintenanceStatusPagesResource returns a new instance of the MaintenanceStatusPages resource.
 func NewMaintenanceStatusPagesResource() resource.Resource {
 	return &MaintenanceStatusPagesResource{}
 }
 
+// MaintenanceStatusPagesResource defines the resource implementation.
 type MaintenanceStatusPagesResource struct {
 	client *kuma.Client
 }
 
+// MaintenanceStatusPagesResourceModel describes the MaintenanceStatusPages resource data model.
 type MaintenanceStatusPagesResourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
-func (r *MaintenanceStatusPagesResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MaintenanceStatusPagesResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
-func (r *MaintenanceStatusPagesResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MaintenanceStatusPagesResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Associate status pages with a maintenance window",
 		Attributes: map[string]schema.Attribute{
@@ -58,7 +71,12 @@ func (r *MaintenanceStatusPagesResource) Schema(ctx context.Context, req resourc
 	}
 }
 
-func (r *MaintenanceStatusPagesResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MaintenanceStatusPagesResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -68,7 +86,10 @@ func (r *MaintenanceStatusPagesResource) Configure(ctx context.Context, req reso
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -77,7 +98,12 @@ func (r *MaintenanceStatusPagesResource) Configure(ctx context.Context, req reso
 	r.client = client
 }
 
-func (r *MaintenanceStatusPagesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new resource.
+func (r *MaintenanceStatusPagesResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MaintenanceStatusPagesResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -101,7 +127,12 @@ func (r *MaintenanceStatusPagesResource) Create(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceStatusPagesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read reads the current state of the resource.
+func (r *MaintenanceStatusPagesResource) Read(
+	ctx context.Context,
+	req resource.ReadRequest,
+	resp *resource.ReadResponse,
+) {
 	var data MaintenanceStatusPagesResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -116,6 +147,7 @@ func (r *MaintenanceStatusPagesResource) Read(ctx context.Context, req resource.
 			resp.State.RemoveResource(ctx)
 			return
 		}
+
 		resp.Diagnostics.AddError("failed to read maintenance status pages", err.Error())
 		return
 	}
@@ -127,7 +159,12 @@ func (r *MaintenanceStatusPagesResource) Read(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceStatusPagesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the resource.
+func (r *MaintenanceStatusPagesResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MaintenanceStatusPagesResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -151,7 +188,12 @@ func (r *MaintenanceStatusPagesResource) Update(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceStatusPagesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the resource.
+func (r *MaintenanceStatusPagesResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MaintenanceStatusPagesResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -167,7 +209,12 @@ func (r *MaintenanceStatusPagesResource) Delete(ctx context.Context, req resourc
 	}
 }
 
-func (r *MaintenanceStatusPagesResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MaintenanceStatusPagesResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

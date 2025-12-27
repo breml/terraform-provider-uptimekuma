@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &NotificationSlackDataSource{}
 
+// NewNotificationSlackDataSource returns a new instance of the Slack notification data source.
 func NewNotificationSlackDataSource() datasource.DataSource {
 	return &NotificationSlackDataSource{}
 }
 
+// NotificationSlackDataSource manages Slack notification data source operations.
 type NotificationSlackDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationSlackDataSourceModel describes the data model for Slack notification data source.
 type NotificationSlackDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationSlackDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*NotificationSlackDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_slack"
 }
 
-func (d *NotificationSlackDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*NotificationSlackDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Slack notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +61,12 @@ func (d *NotificationSlackDataSource) Schema(ctx context.Context, req datasource
 	}
 }
 
-func (d *NotificationSlackDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationSlackDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +75,10 @@ func (d *NotificationSlackDataSource) Configure(ctx context.Context, req datasou
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +86,12 @@ func (d *NotificationSlackDataSource) Configure(ctx context.Context, req datasou
 	d.client = client
 }
 
-func (d *NotificationSlackDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *NotificationSlackDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationSlackDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -79,10 +105,12 @@ func (d *NotificationSlackDataSource) Read(ctx context.Context, req datasource.R
 			resp.Diagnostics.AddError("failed to read notification", err.Error())
 			return
 		}
+
 		if notification.Type() != "slack" {
 			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Slack notification")
 			return
 		}
+
 		data.Name = types.StringValue(notification.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -101,10 +129,14 @@ func (d *NotificationSlackDataSource) Read(ctx context.Context, req datasource.R
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
-						fmt.Sprintf("Multiple Slack notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple Slack notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}
+
 				found = &struct {
 					ID   int64
 					Name string

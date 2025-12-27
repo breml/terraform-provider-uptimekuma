@@ -18,14 +18,17 @@ import (
 
 var _ resource.Resource = &StatusPageResource{}
 
+// NewStatusPageResource returns a new instance of the status page resource.
 func NewStatusPageResource() resource.Resource {
 	return &StatusPageResource{}
 }
 
+// StatusPageResource defines the resource implementation.
 type StatusPageResource struct {
 	client *kuma.Client
 }
 
+// StatusPageResourceModel describes the resource data model.
 type StatusPageResourceModel struct {
 	ID                    types.Int64  `tfsdk:"id"`
 	Slug                  types.String `tfsdk:"slug"`
@@ -44,6 +47,7 @@ type StatusPageResourceModel struct {
 	PublicGroupList       types.List   `tfsdk:"public_group_list"`
 }
 
+// PublicGroupModel describes a public group in a status page.
 type PublicGroupModel struct {
 	ID          types.Int64  `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
@@ -51,16 +55,23 @@ type PublicGroupModel struct {
 	MonitorList types.List   `tfsdk:"monitor_list"`
 }
 
+// PublicMonitorModel describes a monitor in a public group.
 type PublicMonitorModel struct {
 	ID      types.Int64 `tfsdk:"id"`
 	SendURL types.Bool  `tfsdk:"send_url"`
 }
 
-func (r *StatusPageResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *StatusPageResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_status_page"
 }
 
-func (r *StatusPageResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page resource",
 		Attributes: map[string]schema.Attribute{
@@ -176,7 +187,12 @@ func (r *StatusPageResource) Schema(ctx context.Context, req resource.SchemaRequ
 	}
 }
 
-func (r *StatusPageResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *StatusPageResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -186,7 +202,10 @@ func (r *StatusPageResource) Configure(ctx context.Context, req resource.Configu
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -195,6 +214,7 @@ func (r *StatusPageResource) Configure(ctx context.Context, req resource.Configu
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data StatusPageResourceModel
 
@@ -233,6 +253,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		sp.DomainNameList = domainNames
 	}
 
@@ -253,6 +274,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 			if !group.ID.IsNull() {
 				publicGroup.ID = group.ID.ValueInt64()
 			}
+
 			sp.PublicGroupList[i] = publicGroup
 
 			if !group.MonitorList.IsNull() {
@@ -288,6 +310,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError("failed to read status page after creation", err.Error())
 		return
 	}
+
 	data.ID = types.Int64Value(retrievedSP.ID)
 
 	planPublic := data.PublicGroupList
@@ -309,6 +332,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageResourceModel
 
@@ -350,6 +374,7 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		data.DomainNameList = domainNames
 	} else {
 		data.DomainNameList = types.ListNull(types.StringType)
@@ -367,6 +392,7 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data StatusPageResourceModel
 
@@ -398,6 +424,7 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		sp.DomainNameList = domainNames
 	}
 
@@ -418,6 +445,7 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 			if !group.ID.IsNull() {
 				publicGroup.ID = group.ID.ValueInt64()
 			}
+
 			sp.PublicGroupList[i] = publicGroup
 
 			if !group.MonitorList.IsNull() {
@@ -464,6 +492,7 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *StatusPageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data StatusPageResourceModel
 

@@ -20,25 +20,35 @@ var (
 	_ resource.ResourceWithImportState = &MonitorRedisResource{}
 )
 
+// NewMonitorRedisResource returns a new instance of the Redis monitor resource.
 func NewMonitorRedisResource() resource.Resource {
 	return &MonitorRedisResource{}
 }
 
+// MonitorRedisResource defines the resource implementation.
 type MonitorRedisResource struct {
 	client *kuma.Client
 }
 
+// MonitorRedisResourceModel describes the resource data model.
 type MonitorRedisResourceModel struct {
 	MonitorBaseModel
+
 	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
 	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
 }
 
-func (r *MonitorRedisResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorRedisResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_redis"
 }
 
-func (r *MonitorRedisResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Redis monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -57,7 +67,12 @@ func (r *MonitorRedisResource) Schema(ctx context.Context, req resource.SchemaRe
 	}
 }
 
-func (r *MonitorRedisResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the Redis monitor resource with the API client.
+func (r *MonitorRedisResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -67,7 +82,10 @@ func (r *MonitorRedisResource) Configure(ctx context.Context, req resource.Confi
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -76,6 +94,7 @@ func (r *MonitorRedisResource) Configure(ctx context.Context, req resource.Confi
 	r.client = client
 }
 
+// Create creates a new Redis monitor resource.
 func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorRedisResourceModel
 
@@ -137,6 +156,7 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Redis monitor resource.
 func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorRedisResourceModel
 
@@ -195,6 +215,7 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Redis monitor resource.
 func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorRedisResourceModel
 
@@ -261,6 +282,7 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Redis monitor resource.
 func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorRedisResourceModel
 
@@ -277,7 +299,12 @@ func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
-func (r *MonitorRedisResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorRedisResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

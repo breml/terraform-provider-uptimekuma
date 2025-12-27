@@ -23,16 +23,20 @@ var (
 	_ resource.ResourceWithImportState = &MonitorGrpcKeywordResource{}
 )
 
+// NewMonitorGrpcKeywordResource returns a new instance of the gRPC Keyword monitor resource.
 func NewMonitorGrpcKeywordResource() resource.Resource {
 	return &MonitorGrpcKeywordResource{}
 }
 
+// MonitorGrpcKeywordResource defines the resource implementation.
 type MonitorGrpcKeywordResource struct {
 	client *kuma.Client
 }
 
+// MonitorGrpcKeywordResourceModel describes the resource data model.
 type MonitorGrpcKeywordResourceModel struct {
 	MonitorBaseModel
+
 	GrpcURL         types.String `tfsdk:"grpc_url"`
 	GrpcProtobuf    types.String `tfsdk:"grpc_protobuf"`
 	GrpcServiceName types.String `tfsdk:"grpc_service_name"`
@@ -43,11 +47,21 @@ type MonitorGrpcKeywordResourceModel struct {
 	InvertKeyword   types.Bool   `tfsdk:"invert_keyword"`
 }
 
-func (r *MonitorGrpcKeywordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *MonitorGrpcKeywordResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_grpc_keyword"
 }
 
-func (r *MonitorGrpcKeywordResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *MonitorGrpcKeywordResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "gRPC Keyword monitor resource checks for the presence (or absence) of a specific keyword in the gRPC response. The monitor makes a gRPC request and searches for the specified keyword in the response. Use `invert_keyword` to reverse the logic: when false (default), finding the keyword means UP; when true, finding the keyword means DOWN.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -105,7 +119,12 @@ func (r *MonitorGrpcKeywordResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (r *MonitorGrpcKeywordResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MonitorGrpcKeywordResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -115,7 +134,10 @@ func (r *MonitorGrpcKeywordResource) Configure(ctx context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -124,7 +146,12 @@ func (r *MonitorGrpcKeywordResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *MonitorGrpcKeywordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new resource.
+func (r *MonitorGrpcKeywordResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorGrpcKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -203,6 +230,7 @@ func (r *MonitorGrpcKeywordResource) Create(ctx context.Context, req resource.Cr
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorGrpcKeywordResourceModel
 
@@ -227,54 +255,12 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(data *MonitorGrpcKeywordResourceModel, grpcKeywordMonitor *monitor.GrpcKeyword, ctx context.Context, diags *diag.Diagnostics) {
-	data.Name = types.StringValue(grpcKeywordMonitor.Name)
-	if grpcKeywordMonitor.Description != nil {
-		data.Description = types.StringValue(*grpcKeywordMonitor.Description)
-	} else {
-		data.Description = types.StringNull()
-	}
-
-	data.Interval = types.Int64Value(grpcKeywordMonitor.Interval)
-	data.RetryInterval = types.Int64Value(grpcKeywordMonitor.RetryInterval)
-	data.ResendInterval = types.Int64Value(grpcKeywordMonitor.ResendInterval)
-	data.MaxRetries = types.Int64Value(grpcKeywordMonitor.MaxRetries)
-	data.UpsideDown = types.BoolValue(grpcKeywordMonitor.UpsideDown)
-	data.Active = types.BoolValue(grpcKeywordMonitor.IsActive)
-	data.GrpcURL = types.StringValue(grpcKeywordMonitor.GrpcURL)
-	data.GrpcProtobuf = stringOrNull(grpcKeywordMonitor.GrpcProtobuf)
-	data.GrpcServiceName = types.StringValue(grpcKeywordMonitor.GrpcServiceName)
-	data.GrpcMethod = types.StringValue(grpcKeywordMonitor.GrpcMethod)
-	data.GrpcEnableTLS = types.BoolValue(grpcKeywordMonitor.GrpcEnableTLS)
-	data.GrpcBody = stringOrNull(grpcKeywordMonitor.GrpcBody)
-	data.Keyword = types.StringValue(grpcKeywordMonitor.Keyword)
-	data.InvertKeyword = types.BoolValue(grpcKeywordMonitor.InvertKeyword)
-
-	if grpcKeywordMonitor.Parent != nil {
-		data.Parent = types.Int64Value(*grpcKeywordMonitor.Parent)
-	} else {
-		data.Parent = types.Int64Null()
-	}
-
-	if len(grpcKeywordMonitor.NotificationIDs) > 0 {
-		notificationIDs, diagsLocal := types.ListValueFrom(ctx, types.Int64Type, grpcKeywordMonitor.NotificationIDs)
-		diags.Append(diagsLocal...)
-		if diags.HasError() {
-			return
-		}
-
-		data.NotificationIDs = notificationIDs
-	} else {
-		data.NotificationIDs = types.ListNull(types.Int64Type)
-	}
-
-	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, diags)
-	if diags.HasError() {
-		return
-	}
-}
-
-func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the resource.
+func (r *MonitorGrpcKeywordResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorGrpcKeywordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -358,7 +344,12 @@ func (r *MonitorGrpcKeywordResource) Update(ctx context.Context, req resource.Up
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorGrpcKeywordResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the resource.
+func (r *MonitorGrpcKeywordResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorGrpcKeywordResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -374,7 +365,12 @@ func (r *MonitorGrpcKeywordResource) Delete(ctx context.Context, req resource.De
 	}
 }
 
-func (r *MonitorGrpcKeywordResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *MonitorGrpcKeywordResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -385,4 +381,56 @@ func (r *MonitorGrpcKeywordResource) ImportState(ctx context.Context, req resour
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+}
+
+func (_ *MonitorGrpcKeywordResource) populateModelFromMonitor(
+	data *MonitorGrpcKeywordResourceModel,
+	grpcKeywordMonitor *monitor.GrpcKeyword,
+	ctx context.Context,
+	diags *diag.Diagnostics,
+) {
+	data.Name = types.StringValue(grpcKeywordMonitor.Name)
+	if grpcKeywordMonitor.Description != nil {
+		data.Description = types.StringValue(*grpcKeywordMonitor.Description)
+	} else {
+		data.Description = types.StringNull()
+	}
+
+	data.Interval = types.Int64Value(grpcKeywordMonitor.Interval)
+	data.RetryInterval = types.Int64Value(grpcKeywordMonitor.RetryInterval)
+	data.ResendInterval = types.Int64Value(grpcKeywordMonitor.ResendInterval)
+	data.MaxRetries = types.Int64Value(grpcKeywordMonitor.MaxRetries)
+	data.UpsideDown = types.BoolValue(grpcKeywordMonitor.UpsideDown)
+	data.Active = types.BoolValue(grpcKeywordMonitor.IsActive)
+	data.GrpcURL = types.StringValue(grpcKeywordMonitor.GrpcURL)
+	data.GrpcProtobuf = stringOrNull(grpcKeywordMonitor.GrpcProtobuf)
+	data.GrpcServiceName = types.StringValue(grpcKeywordMonitor.GrpcServiceName)
+	data.GrpcMethod = types.StringValue(grpcKeywordMonitor.GrpcMethod)
+	data.GrpcEnableTLS = types.BoolValue(grpcKeywordMonitor.GrpcEnableTLS)
+	data.GrpcBody = stringOrNull(grpcKeywordMonitor.GrpcBody)
+	data.Keyword = types.StringValue(grpcKeywordMonitor.Keyword)
+	data.InvertKeyword = types.BoolValue(grpcKeywordMonitor.InvertKeyword)
+
+	if grpcKeywordMonitor.Parent != nil {
+		data.Parent = types.Int64Value(*grpcKeywordMonitor.Parent)
+	} else {
+		data.Parent = types.Int64Null()
+	}
+
+	if len(grpcKeywordMonitor.NotificationIDs) > 0 {
+		notificationIDs, diagsLocal := types.ListValueFrom(ctx, types.Int64Type, grpcKeywordMonitor.NotificationIDs)
+		diags.Append(diagsLocal...)
+		if diags.HasError() {
+			return
+		}
+
+		data.NotificationIDs = notificationIDs
+	} else {
+		data.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+
+	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, diags)
+	if diags.HasError() {
+		return
+	}
 }

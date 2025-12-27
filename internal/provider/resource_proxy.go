@@ -21,14 +21,17 @@ import (
 
 var _ resource.Resource = &ProxyResource{}
 
+// NewProxyResource returns a new instance of the proxy resource.
 func NewProxyResource() resource.Resource {
 	return &ProxyResource{}
 }
 
+// ProxyResource defines the resource implementation.
 type ProxyResource struct {
 	client *kuma.Client
 }
 
+// ProxyResourceModel describes the resource data model.
 type ProxyResourceModel struct {
 	ID            types.Int64  `tfsdk:"id"`
 	Protocol      types.String `tfsdk:"protocol"`
@@ -42,11 +45,13 @@ type ProxyResourceModel struct {
 	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
 }
 
-func (r *ProxyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *ProxyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
-func (r *ProxyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Proxy resource for managing HTTP/HTTPS/SOCKS proxies in Uptime Kuma",
 		Attributes: map[string]schema.Attribute{
@@ -112,7 +117,12 @@ func (r *ProxyResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 	}
 }
 
-func (r *ProxyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *ProxyResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -121,7 +131,10 @@ func (r *ProxyResource) Configure(ctx context.Context, req resource.ConfigureReq
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -129,6 +142,7 @@ func (r *ProxyResource) Configure(ctx context.Context, req resource.ConfigureReq
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ProxyResourceModel
 
@@ -152,10 +166,12 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 			resp.Diagnostics.AddError("validation error", "username is required when auth is enabled")
 			return
 		}
+
 		if data.Password.IsNull() || data.Password.ValueString() == "" {
 			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
 			return
 		}
+
 		p.Username = data.Username.ValueString()
 		p.Password = data.Password.ValueString()
 	}
@@ -171,6 +187,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ProxyResourceModel
 
@@ -212,6 +229,7 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data ProxyResourceModel
 
@@ -236,10 +254,12 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 			resp.Diagnostics.AddError("validation error", "username is required when auth is enabled")
 			return
 		}
+
 		if data.Password.IsNull() || data.Password.ValueString() == "" {
 			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
 			return
 		}
+
 		p.Username = data.Username.ValueString()
 		p.Password = data.Password.ValueString()
 	}
@@ -253,6 +273,7 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *ProxyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data ProxyResourceModel
 

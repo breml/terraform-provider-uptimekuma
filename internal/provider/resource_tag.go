@@ -25,25 +25,30 @@ var (
 	_ resource.ResourceWithImportState = &TagResource{}
 )
 
+// NewTagResource returns a new instance of the tag resource.
 func NewTagResource() resource.Resource {
 	return &TagResource{}
 }
 
+// TagResource defines the resource implementation.
 type TagResource struct {
 	client *kuma.Client
 }
 
+// TagResourceModel describes the resource data model.
 type TagResourceModel struct {
 	ID    types.Int64  `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 	Color types.String `tfsdk:"color"`
 }
 
-func (r *TagResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (_ *TagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
-func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (_ *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Tag resource for organizing monitors with custom values",
 		Attributes: map[string]schema.Attribute{
@@ -72,7 +77,8 @@ func (r *TagResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 	}
 }
 
-func (r *TagResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *TagResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -81,7 +87,10 @@ func (r *TagResource) Configure(ctx context.Context, req resource.ConfigureReque
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -89,6 +98,7 @@ func (r *TagResource) Configure(ctx context.Context, req resource.ConfigureReque
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data TagResourceModel
 
@@ -113,6 +123,7 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data TagResourceModel
 
@@ -121,7 +132,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	t, err := r.client.GetTag(ctx, data.ID.ValueInt64())
+	tagData, err := r.client.GetTag(ctx, data.ID.ValueInt64())
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -132,12 +143,13 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	data.Name = types.StringValue(t.Name)
-	data.Color = types.StringValue(t.Color)
+	data.Name = types.StringValue(tagData.Name)
+	data.Color = types.StringValue(tagData.Color)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data TagResourceModel
 
@@ -161,6 +173,7 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data TagResourceModel
 
@@ -176,7 +189,12 @@ func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 }
 
-func (r *TagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (_ *TagResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

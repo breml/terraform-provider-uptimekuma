@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Terraform provider for Uptime Kuma, built using the Terraform Plugin Framework (not the older Plugin SDK). The provider allows managing Uptime Kuma monitors and notifications via Terraform.
+This is a Terraform provider for Uptime Kuma, built using the Terraform Plugin Framework (not
+the older Plugin SDK). The provider allows managing Uptime Kuma monitors and notifications via
+Terraform.
 
 ## Essential Commands
 
@@ -49,7 +51,8 @@ Resources follow a pattern-based architecture:
 
 ### Client Usage Pattern
 
-- Provider creates a single `*kuma.Client` instance in `Configure()` using `context.Background()` (not Terraform's context, which cancels too early)
+- Provider creates a single `*kuma.Client` instance in `Configure()` using
+  `context.Background()` (not Terraform's context, which cancels too early)
 - Client is passed to resources via `req.ProviderData` in resource `Configure()` methods
 - Resources use client methods like `CreateMonitor()`, `GetMonitorAs()`, `UpdateMonitor()`, `DeleteMonitor()`
 
