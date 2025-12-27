@@ -25,8 +25,7 @@ const (
 var endpoint string //nolint:gochecknoglobals // OK in tests.
 
 func TestMain(m *testing.M) {
-	exitCode := runTests(m)
-	os.Exit(exitCode)
+	runTests(m)
 }
 
 func runTests(m *testing.M) (exitcode int) {
