@@ -39,15 +39,15 @@ func isValidURL(value string) bool {
 
 type urlValidator struct{}
 
-func (v urlValidator) Description(_ context.Context) string {
+func (_ urlValidator) Description(_ context.Context) string {
 	return "string must be a valid URL with http:// or https:// scheme"
 }
 
-func (v urlValidator) MarkdownDescription(_ context.Context) string {
+func (_ urlValidator) MarkdownDescription(_ context.Context) string {
 	return "string must be a valid URL with `http://` or `https://` scheme"
 }
 
-func (v urlValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (_ urlValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -92,7 +92,7 @@ type NotificationNtfyResourceModel struct {
 	Username             types.String `tfsdk:"username"`
 }
 
-func (r *NotificationNtfyResource) Metadata(
+func (_ *NotificationNtfyResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -100,7 +100,7 @@ func (r *NotificationNtfyResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_ntfy"
 }
 
-func (r *NotificationNtfyResource) Schema(
+func (_ *NotificationNtfyResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -338,7 +338,7 @@ func (r *NotificationNtfyResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationNtfyResource) ImportState(
+func (_ *NotificationNtfyResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

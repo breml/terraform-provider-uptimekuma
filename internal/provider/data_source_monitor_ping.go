@@ -31,7 +31,7 @@ type MonitorPingDataSourceModel struct {
 	Hostname types.String `tfsdk:"hostname"`
 }
 
-func (d *MonitorPingDataSource) Metadata(
+func (_ *MonitorPingDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -39,7 +39,7 @@ func (d *MonitorPingDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
-func (d *MonitorPingDataSource) Schema(
+func (_ *MonitorPingDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

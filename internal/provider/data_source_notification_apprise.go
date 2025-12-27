@@ -29,7 +29,7 @@ type NotificationAppriseDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationAppriseDataSource) Metadata(
+func (*NotificationAppriseDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *NotificationAppriseDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_apprise"
 }
 
-func (d *NotificationAppriseDataSource) Schema(
+func (*NotificationAppriseDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

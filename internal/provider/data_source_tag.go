@@ -30,7 +30,7 @@ type TagDataSourceModel struct {
 	Color types.String `tfsdk:"color"`
 }
 
-func (d *TagDataSource) Metadata(
+func (_ *TagDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *TagDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
-func (d *TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (_ *TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get tag information by ID or name",
 		Attributes: map[string]schema.Attribute{

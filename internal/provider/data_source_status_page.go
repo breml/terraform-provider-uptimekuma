@@ -30,7 +30,7 @@ type StatusPageDataSourceModel struct {
 	Title types.String `tfsdk:"title"`
 }
 
-func (d *StatusPageDataSource) Metadata(
+func (_ *StatusPageDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *StatusPageDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_status_page"
 }
 
-func (d *StatusPageDataSource) Schema(
+func (_ *StatusPageDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

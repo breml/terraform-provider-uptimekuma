@@ -42,7 +42,7 @@ type MonitorHTTPJSONQueryResourceModel struct {
 	JSONPathOperator types.String `tfsdk:"json_path_operator"`
 }
 
-func (r *MonitorHTTPJSONQueryResource) Metadata(
+func (_ *MonitorHTTPJSONQueryResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -50,7 +50,7 @@ func (r *MonitorHTTPJSONQueryResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
-func (r *MonitorHTTPJSONQueryResource) Schema(
+func (_ *MonitorHTTPJSONQueryResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -456,7 +456,7 @@ func (r *MonitorHTTPJSONQueryResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorHTTPJSONQueryResource) ImportState(
+func (_ *MonitorHTTPJSONQueryResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

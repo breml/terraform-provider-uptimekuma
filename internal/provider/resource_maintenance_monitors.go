@@ -37,7 +37,7 @@ type MaintenanceMonitorsResourceModel struct {
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
-func (r *MaintenanceMonitorsResource) Metadata(
+func (_ *MaintenanceMonitorsResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -45,7 +45,7 @@ func (r *MaintenanceMonitorsResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
-func (r *MaintenanceMonitorsResource) Schema(
+func (_ *MaintenanceMonitorsResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -203,7 +203,7 @@ func (r *MaintenanceMonitorsResource) Delete(
 	}
 }
 
-func (r *MaintenanceMonitorsResource) ImportState(
+func (_ *MaintenanceMonitorsResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

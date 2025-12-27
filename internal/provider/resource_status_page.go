@@ -61,7 +61,7 @@ type PublicMonitorModel struct {
 	SendURL types.Bool  `tfsdk:"send_url"`
 }
 
-func (r *StatusPageResource) Metadata(
+func (_ *StatusPageResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -69,7 +69,7 @@ func (r *StatusPageResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_status_page"
 }
 
-func (r *StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page resource",
 		Attributes: map[string]schema.Attribute{

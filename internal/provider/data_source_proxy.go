@@ -31,7 +31,7 @@ type ProxyDataSourceModel struct {
 	Protocol types.String `tfsdk:"protocol"`
 }
 
-func (d *ProxyDataSource) Metadata(
+func (_ *ProxyDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -39,7 +39,7 @@ func (d *ProxyDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
-func (d *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (_ *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get proxy information by ID",
 		Attributes: map[string]schema.Attribute{

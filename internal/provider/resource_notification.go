@@ -45,7 +45,7 @@ type NotificationResourceModel struct {
 	Config        types.String `tfsdk:"config"`
 }
 
-func (r *NotificationResource) Metadata(
+func (_ *NotificationResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -53,7 +53,7 @@ func (r *NotificationResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification"
 }
 
-func (r *NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: map[string]schema.Attribute{
@@ -270,7 +270,7 @@ func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationResource) ImportState(
+func (_ *NotificationResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

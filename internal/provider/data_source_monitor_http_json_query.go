@@ -30,7 +30,7 @@ type MonitorHTTPJSONQueryDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Metadata(
+func (_ *MonitorHTTPJSONQueryDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorHTTPJSONQueryDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
-func (d *MonitorHTTPJSONQueryDataSource) Schema(
+func (_ *MonitorHTTPJSONQueryDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

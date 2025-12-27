@@ -30,7 +30,7 @@ type MonitorRealBrowserDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorRealBrowserDataSource) Metadata(
+func (_ *MonitorRealBrowserDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorRealBrowserDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
-func (d *MonitorRealBrowserDataSource) Schema(
+func (_ *MonitorRealBrowserDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

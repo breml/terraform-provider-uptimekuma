@@ -41,7 +41,7 @@ type NotificationAppriseResourceModel struct {
 	Title      types.String `tfsdk:"title"`
 }
 
-func (r *NotificationAppriseResource) Metadata(
+func (_ *NotificationAppriseResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -49,7 +49,7 @@ func (r *NotificationAppriseResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_apprise"
 }
 
-func (r *NotificationAppriseResource) Schema(
+func (_ *NotificationAppriseResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -244,7 +244,7 @@ func (r *NotificationAppriseResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationAppriseResource) ImportState(
+func (_ *NotificationAppriseResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

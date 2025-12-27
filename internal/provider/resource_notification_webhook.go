@@ -44,7 +44,7 @@ type NotificationWebhookResourceModel struct {
 	WebhookAdditionalHeaders types.Map    `tfsdk:"webhook_additional_headers"`
 }
 
-func (r *NotificationWebhookResource) Metadata(
+func (_ *NotificationWebhookResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -52,7 +52,7 @@ func (r *NotificationWebhookResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_webhook"
 }
 
-func (r *NotificationWebhookResource) Schema(
+func (_ *NotificationWebhookResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -302,7 +302,7 @@ func (r *NotificationWebhookResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationWebhookResource) ImportState(
+func (_ *NotificationWebhookResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

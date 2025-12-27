@@ -47,7 +47,7 @@ type MonitorGrpcKeywordResourceModel struct {
 	InvertKeyword   types.Bool   `tfsdk:"invert_keyword"`
 }
 
-func (r *MonitorGrpcKeywordResource) Metadata(
+func (_ *MonitorGrpcKeywordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -55,7 +55,7 @@ func (r *MonitorGrpcKeywordResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_grpc_keyword"
 }
 
-func (r *MonitorGrpcKeywordResource) Schema(
+func (_ *MonitorGrpcKeywordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -364,7 +364,7 @@ func (r *MonitorGrpcKeywordResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorGrpcKeywordResource) ImportState(
+func (_ *MonitorGrpcKeywordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
@@ -381,7 +381,7 @@ func (r *MonitorGrpcKeywordResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-func (r *MonitorGrpcKeywordResource) populateModelFromMonitor(
+func (_ *MonitorGrpcKeywordResource) populateModelFromMonitor(
 	data *MonitorGrpcKeywordResourceModel,
 	grpcKeywordMonitor *monitor.GrpcKeyword,
 	ctx context.Context,

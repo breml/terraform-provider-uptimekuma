@@ -30,7 +30,7 @@ type MonitorRedisDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorRedisDataSource) Metadata(
+func (_ *MonitorRedisDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorRedisDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_redis"
 }
 
-func (d *MonitorRedisDataSource) Schema(
+func (_ *MonitorRedisDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

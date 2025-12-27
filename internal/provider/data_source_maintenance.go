@@ -30,7 +30,7 @@ type MaintenanceDataSourceModel struct {
 	Title types.String `tfsdk:"title"`
 }
 
-func (d *MaintenanceDataSource) Metadata(
+func (*MaintenanceDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MaintenanceDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
-func (d *MaintenanceDataSource) Schema(
+func (*MaintenanceDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

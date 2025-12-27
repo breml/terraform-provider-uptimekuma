@@ -29,7 +29,7 @@ type MaintenanceStatusPagesDataSourceModel struct {
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
-func (d *MaintenanceStatusPagesDataSource) Metadata(
+func (*MaintenanceStatusPagesDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *MaintenanceStatusPagesDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
-func (d *MaintenanceStatusPagesDataSource) Schema(
+func (*MaintenanceStatusPagesDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

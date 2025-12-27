@@ -38,7 +38,7 @@ type MonitorRedisResourceModel struct {
 	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
 }
 
-func (r *MonitorRedisResource) Metadata(
+func (_ *MonitorRedisResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -46,7 +46,7 @@ func (r *MonitorRedisResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_redis"
 }
 
-func (r *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Redis monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -298,7 +298,7 @@ func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorRedisResource) ImportState(
+func (_ *MonitorRedisResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

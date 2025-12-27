@@ -42,11 +42,11 @@ type TagResourceModel struct {
 	Color types.String `tfsdk:"color"`
 }
 
-func (r *TagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (_ *TagResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
-func (r *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Tag resource for organizing monitors with custom values",
 		Attributes: map[string]schema.Attribute{
@@ -188,7 +188,7 @@ func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 // ImportState imports an existing resource by ID.
-func (r *TagResource) ImportState(
+func (_ *TagResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

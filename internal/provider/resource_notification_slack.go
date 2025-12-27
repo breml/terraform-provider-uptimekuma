@@ -46,7 +46,7 @@ type NotificationSlackResourceModel struct {
 	ChannelNotify types.Bool   `tfsdk:"channel_notify"`
 }
 
-func (r *NotificationSlackResource) Metadata(
+func (_ *NotificationSlackResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -54,7 +54,7 @@ func (r *NotificationSlackResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_slack"
 }
 
-func (r *NotificationSlackResource) Schema(
+func (_ *NotificationSlackResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -287,7 +287,7 @@ func (r *NotificationSlackResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationSlackResource) ImportState(
+func (_ *NotificationSlackResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -40,7 +40,7 @@ type MonitorTCPPortResourceModel struct {
 	Port     types.Int64  `tfsdk:"port"`
 }
 
-func (r *MonitorTCPPortResource) Metadata(
+func (_ *MonitorTCPPortResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (r *MonitorTCPPortResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_tcp_port"
 }
 
-func (r *MonitorTCPPortResource) Schema(
+func (_ *MonitorTCPPortResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -319,7 +319,7 @@ func (r *MonitorTCPPortResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorTCPPortResource) ImportState(
+func (_ *MonitorTCPPortResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

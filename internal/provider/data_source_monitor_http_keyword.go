@@ -30,7 +30,7 @@ type MonitorHTTPKeywordDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorHTTPKeywordDataSource) Metadata(
+func (_ *MonitorHTTPKeywordDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorHTTPKeywordDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_keyword"
 }
 
-func (d *MonitorHTTPKeywordDataSource) Schema(
+func (_ *MonitorHTTPKeywordDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

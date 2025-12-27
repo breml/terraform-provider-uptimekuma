@@ -29,7 +29,7 @@ type NotificationDingDingDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationDingDingDataSource) Metadata(
+func (*NotificationDingDingDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *NotificationDingDingDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_dingding"
 }
 
-func (d *NotificationDingDingDataSource) Schema(
+func (*NotificationDingDingDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

@@ -30,7 +30,7 @@ type MonitorPushDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorPushDataSource) Metadata(
+func (_ *MonitorPushDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorPushDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_push"
 }
 
-func (d *MonitorPushDataSource) Schema(
+func (_ *MonitorPushDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

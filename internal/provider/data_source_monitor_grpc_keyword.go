@@ -30,7 +30,7 @@ type MonitorGrpcKeywordDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorGrpcKeywordDataSource) Metadata(
+func (_ *MonitorGrpcKeywordDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorGrpcKeywordDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_grpc_keyword"
 }
 
-func (d *MonitorGrpcKeywordDataSource) Schema(
+func (_ *MonitorGrpcKeywordDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

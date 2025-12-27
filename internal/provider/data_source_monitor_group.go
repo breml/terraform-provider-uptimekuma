@@ -30,7 +30,7 @@ type MonitorGroupDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorGroupDataSource) Metadata(
+func (_ *MonitorGroupDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorGroupDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_group"
 }
 
-func (d *MonitorGroupDataSource) Schema(
+func (_ *MonitorGroupDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

@@ -37,7 +37,7 @@ type DockerHostResourceModel struct {
 	DockerType   types.String `tfsdk:"docker_type"`
 }
 
-func (r *DockerHostResource) Metadata(
+func (_ *DockerHostResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -45,7 +45,7 @@ func (r *DockerHostResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
-func (r *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Docker host resource for managing Docker daemon connections in Uptime Kuma",
 		Attributes: map[string]schema.Attribute{

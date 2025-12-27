@@ -79,7 +79,7 @@ type MaintenanceResourceModel struct {
 	TimeslotList     types.List   `tfsdk:"timeslot_list"`
 }
 
-func (r *MaintenanceResource) Metadata(
+func (_ *MaintenanceResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -87,7 +87,7 @@ func (r *MaintenanceResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
-func (r *MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
 		Attributes: map[string]schema.Attribute{
@@ -389,7 +389,7 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *MaintenanceResource) ValidateConfig(
+func (_ *MaintenanceResource) ValidateConfig(
 	ctx context.Context,
 	req resource.ValidateConfigRequest,
 	resp *resource.ValidateConfigResponse,
@@ -484,7 +484,7 @@ func (r *MaintenanceResource) ValidateConfig(
 	}
 }
 
-func (r *MaintenanceResource) ImportState(
+func (_ *MaintenanceResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
@@ -613,7 +613,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 	return nil
 }
 
-func (r *MaintenanceResource) populateTimeRange(
+func (_ *MaintenanceResource) populateTimeRange(
 	ctx context.Context,
 	data *MaintenanceResourceModel,
 	m *maintenance.Maintenance,
@@ -771,7 +771,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 	}
 }
 
-func (r *MaintenanceResource) populateModelTimeRange(
+func (_ *MaintenanceResource) populateModelTimeRange(
 	m *maintenance.Maintenance,
 	data *MaintenanceResourceModel,
 	diags *diag.Diagnostics,

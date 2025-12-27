@@ -40,7 +40,7 @@ type MonitorPingResourceModel struct {
 	PacketSize types.Int64  `tfsdk:"packet_size"`
 }
 
-func (r *MonitorPingResource) Metadata(
+func (_ *MonitorPingResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (r *MonitorPingResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
-func (r *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Ping monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -302,7 +302,7 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorPingResource) ImportState(
+func (_ *MonitorPingResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

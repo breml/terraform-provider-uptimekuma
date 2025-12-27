@@ -47,7 +47,7 @@ type NotificationDiscordResourceModel struct {
 	DisableURL    types.Bool   `tfsdk:"disable_url"`
 }
 
-func (r *NotificationDiscordResource) Metadata(
+func (_ *NotificationDiscordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -55,7 +55,7 @@ func (r *NotificationDiscordResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_discord"
 }
 
-func (r *NotificationDiscordResource) Schema(
+func (_ *NotificationDiscordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -309,7 +309,7 @@ func (r *NotificationDiscordResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationDiscordResource) ImportState(
+func (_ *NotificationDiscordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

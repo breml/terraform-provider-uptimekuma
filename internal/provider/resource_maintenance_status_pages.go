@@ -37,7 +37,7 @@ type MaintenanceStatusPagesResourceModel struct {
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
 }
 
-func (r *MaintenanceStatusPagesResource) Metadata(
+func (_ *MaintenanceStatusPagesResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -45,7 +45,7 @@ func (r *MaintenanceStatusPagesResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_status_pages"
 }
 
-func (r *MaintenanceStatusPagesResource) Schema(
+func (_ *MaintenanceStatusPagesResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -207,7 +207,7 @@ func (r *MaintenanceStatusPagesResource) Delete(
 	}
 }
 
-func (r *MaintenanceStatusPagesResource) ImportState(
+func (_ *MaintenanceStatusPagesResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

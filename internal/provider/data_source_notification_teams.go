@@ -29,7 +29,7 @@ type NotificationTeamsDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationTeamsDataSource) Metadata(
+func (*NotificationTeamsDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *NotificationTeamsDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_teams"
 }
 
-func (d *NotificationTeamsDataSource) Schema(
+func (*NotificationTeamsDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

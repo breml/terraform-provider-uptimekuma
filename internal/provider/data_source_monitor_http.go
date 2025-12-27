@@ -31,7 +31,7 @@ type MonitorHTTPDataSourceModel struct {
 	URL  types.String `tfsdk:"url"`
 }
 
-func (d *MonitorHTTPDataSource) Metadata(
+func (_ *MonitorHTTPDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -39,7 +39,7 @@ func (d *MonitorHTTPDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http"
 }
 
-func (d *MonitorHTTPDataSource) Schema(
+func (_ *MonitorHTTPDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

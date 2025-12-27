@@ -31,7 +31,7 @@ type MonitorDNSDataSourceModel struct {
 	Hostname types.String `tfsdk:"hostname"`
 }
 
-func (d *MonitorDNSDataSource) Metadata(
+func (_ *MonitorDNSDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -39,7 +39,7 @@ func (d *MonitorDNSDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
-func (d *MonitorDNSDataSource) Schema(
+func (_ *MonitorDNSDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

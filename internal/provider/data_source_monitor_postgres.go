@@ -30,7 +30,7 @@ type MonitorPostgresDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorPostgresDataSource) Metadata(
+func (_ *MonitorPostgresDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -38,7 +38,7 @@ func (d *MonitorPostgresDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_postgres"
 }
 
-func (d *MonitorPostgresDataSource) Schema(
+func (_ *MonitorPostgresDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

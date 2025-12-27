@@ -32,7 +32,7 @@ type MonitorTCPPortDataSourceModel struct {
 	Port     types.Int64  `tfsdk:"port"`
 }
 
-func (d *MonitorTCPPortDataSource) Metadata(
+func (_ *MonitorTCPPortDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -40,7 +40,7 @@ func (d *MonitorTCPPortDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_tcp_port"
 }
 
-func (d *MonitorTCPPortDataSource) Schema(
+func (_ *MonitorTCPPortDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

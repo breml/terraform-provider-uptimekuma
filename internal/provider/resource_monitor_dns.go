@@ -44,7 +44,7 @@ type MonitorDNSResourceModel struct {
 	Port             types.Int64  `tfsdk:"port"`
 }
 
-func (r *MonitorDNSResource) Metadata(
+func (_ *MonitorDNSResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -52,7 +52,7 @@ func (r *MonitorDNSResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
-func (r *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "DNS monitor resource",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -327,7 +327,7 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorDNSResource) ImportState(
+func (_ *MonitorDNSResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

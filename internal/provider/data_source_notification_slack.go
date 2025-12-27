@@ -29,7 +29,7 @@ type NotificationSlackDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationSlackDataSource) Metadata(
+func (*NotificationSlackDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *NotificationSlackDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_slack"
 }
 
-func (d *NotificationSlackDataSource) Schema(
+func (*NotificationSlackDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

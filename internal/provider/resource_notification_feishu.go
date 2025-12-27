@@ -40,7 +40,7 @@ type NotificationFeishuResourceModel struct {
 	WebHookURL types.String `tfsdk:"webhook_url"`
 }
 
-func (r *NotificationFeishuResource) Metadata(
+func (_ *NotificationFeishuResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (r *NotificationFeishuResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_feishu"
 }
 
-func (r *NotificationFeishuResource) Schema(
+func (_ *NotificationFeishuResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -233,7 +233,7 @@ func (r *NotificationFeishuResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationFeishuResource) ImportState(
+func (_ *NotificationFeishuResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

@@ -50,7 +50,7 @@ type MonitorRealBrowserResourceModel struct {
 	RemoteBrowser       types.Int64  `tfsdk:"remote_browser"`
 }
 
-func (r *MonitorRealBrowserResource) Metadata(
+func (_ *MonitorRealBrowserResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -58,7 +58,7 @@ func (r *MonitorRealBrowserResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
-func (r *MonitorRealBrowserResource) Schema(
+func (_ *MonitorRealBrowserResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -447,7 +447,7 @@ func (r *MonitorRealBrowserResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorRealBrowserResource) ImportState(
+func (_ *MonitorRealBrowserResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

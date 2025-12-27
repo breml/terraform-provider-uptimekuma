@@ -48,7 +48,7 @@ type StatusPageIncidentResourceModel struct {
 	Pin            types.Bool   `tfsdk:"pin"`
 }
 
-func (r *StatusPageIncidentResource) Metadata(
+func (_ *StatusPageIncidentResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -56,7 +56,7 @@ func (r *StatusPageIncidentResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_status_page_incident"
 }
 
-func (r *StatusPageIncidentResource) Schema(
+func (_ *StatusPageIncidentResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -160,7 +160,7 @@ func (r *StatusPageIncidentResource) Create(
 }
 
 // Read reads the current state of the status page incident resource.
-func (r *StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (_ *StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageIncidentResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

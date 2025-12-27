@@ -41,7 +41,7 @@ type MonitorHTTPKeywordResourceModel struct {
 	InvertKeyword types.Bool   `tfsdk:"invert_keyword"`
 }
 
-func (r *MonitorHTTPKeywordResource) Metadata(
+func (_ *MonitorHTTPKeywordResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -49,7 +49,7 @@ func (r *MonitorHTTPKeywordResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_keyword"
 }
 
-func (r *MonitorHTTPKeywordResource) Schema(
+func (_ *MonitorHTTPKeywordResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -441,7 +441,7 @@ func (r *MonitorHTTPKeywordResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorHTTPKeywordResource) ImportState(
+func (_ *MonitorHTTPKeywordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

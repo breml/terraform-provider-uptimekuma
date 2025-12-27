@@ -34,7 +34,7 @@ type MonitorGroupResourceModel struct {
 	MonitorBaseModel
 }
 
-func (r *MonitorGroupResource) Metadata(
+func (_ *MonitorGroupResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -42,7 +42,7 @@ func (r *MonitorGroupResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_group"
 }
 
-func (r *MonitorGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (_ *MonitorGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Monitor group resource for organizing monitors",
 		Attributes:          withMonitorBaseAttributes(map[string]schema.Attribute{}),
@@ -272,7 +272,7 @@ func (r *MonitorGroupResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorGroupResource) ImportState(
+func (_ *MonitorGroupResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

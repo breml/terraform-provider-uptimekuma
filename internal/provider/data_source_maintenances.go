@@ -41,7 +41,7 @@ type MaintenanceDataModel struct {
 	TimezoneOffset   types.String `tfsdk:"timezone_offset"`
 }
 
-func (d *MaintenancesDataSource) Metadata(
+func (*MaintenancesDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -49,7 +49,7 @@ func (d *MaintenancesDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenances"
 }
 
-func (d *MaintenancesDataSource) Schema(
+func (*MaintenancesDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

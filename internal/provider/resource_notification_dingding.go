@@ -42,7 +42,7 @@ type NotificationDingDingResourceModel struct {
 	Mentioning types.String `tfsdk:"mentioning"`
 }
 
-func (r *NotificationDingDingResource) Metadata(
+func (_ *NotificationDingDingResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -50,7 +50,7 @@ func (r *NotificationDingDingResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_dingding"
 }
 
-func (r *NotificationDingDingResource) Schema(
+func (_ *NotificationDingDingResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -263,7 +263,7 @@ func (r *NotificationDingDingResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationDingDingResource) ImportState(
+func (_ *NotificationDingDingResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

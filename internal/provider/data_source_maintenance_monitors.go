@@ -29,7 +29,7 @@ type MaintenanceMonitorsDataSourceModel struct {
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
-func (d *MaintenanceMonitorsDataSource) Metadata(
+func (*MaintenanceMonitorsDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *MaintenanceMonitorsDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
-func (d *MaintenanceMonitorsDataSource) Schema(
+func (*MaintenanceMonitorsDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

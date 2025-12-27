@@ -29,7 +29,7 @@ type NotificationWebhookDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationWebhookDataSource) Metadata(
+func (*NotificationWebhookDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *NotificationWebhookDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_webhook"
 }
 
-func (d *NotificationWebhookDataSource) Schema(
+func (*NotificationWebhookDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

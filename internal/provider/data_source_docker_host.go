@@ -29,7 +29,7 @@ type DockerHostDataSourceModel struct {
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *DockerHostDataSource) Metadata(
+func (_ *DockerHostDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
@@ -37,7 +37,7 @@ func (d *DockerHostDataSource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_docker_host"
 }
 
-func (d *DockerHostDataSource) Schema(
+func (_ *DockerHostDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,

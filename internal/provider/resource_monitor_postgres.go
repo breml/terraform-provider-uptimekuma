@@ -38,7 +38,7 @@ type MonitorPostgresResourceModel struct {
 	DatabaseQuery            types.String `tfsdk:"database_query"`
 }
 
-func (r *MonitorPostgresResource) Metadata(
+func (_ *MonitorPostgresResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -46,7 +46,7 @@ func (r *MonitorPostgresResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_postgres"
 }
 
-func (r *MonitorPostgresResource) Schema(
+func (_ *MonitorPostgresResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -314,7 +314,7 @@ func (r *MonitorPostgresResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *MonitorPostgresResource) ImportState(
+func (_ *MonitorPostgresResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,

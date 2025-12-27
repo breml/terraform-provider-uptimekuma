@@ -40,7 +40,7 @@ type NotificationTeamsResourceModel struct {
 	WebhookURL types.String `tfsdk:"webhook_url"`
 }
 
-func (r *NotificationTeamsResource) Metadata(
+func (_ *NotificationTeamsResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
@@ -48,7 +48,7 @@ func (r *NotificationTeamsResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_notification_teams"
 }
 
-func (r *NotificationTeamsResource) Schema(
+func (_ *NotificationTeamsResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
@@ -231,7 +231,7 @@ func (r *NotificationTeamsResource) Delete(
 }
 
 // ImportState imports an existing resource by ID.
-func (r *NotificationTeamsResource) ImportState(
+func (_ *NotificationTeamsResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
