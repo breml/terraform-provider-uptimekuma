@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides base monitor resource schema and utilities.
 package provider
 
 import (
@@ -20,25 +22,27 @@ import (
 )
 
 // MonitorTagModel describes the tag data model for monitors.
+// Tags are used to organize and categorize monitors in Uptime Kuma.
 type MonitorTagModel struct {
-	TagID types.Int64  `tfsdk:"tag_id"`
-	Value types.String `tfsdk:"value"`
+	TagID types.Int64  `tfsdk:"tag_id"` // Unique identifier of the tag.
+	Value types.String `tfsdk:"value"`  // Display value or name of the tag.
 }
 
 // MonitorBaseModel describes the base data model for all monitor types.
+// All monitor types inherit these common attributes for management and configuration.
 type MonitorBaseModel struct {
-	ID              types.Int64  `tfsdk:"id"`
-	Name            types.String `tfsdk:"name"`
-	Description     types.String `tfsdk:"description"`
-	Parent          types.Int64  `tfsdk:"parent"`
-	Interval        types.Int64  `tfsdk:"interval"`
-	RetryInterval   types.Int64  `tfsdk:"retry_interval"`
-	ResendInterval  types.Int64  `tfsdk:"resend_interval"`
-	MaxRetries      types.Int64  `tfsdk:"max_retries"`
-	UpsideDown      types.Bool   `tfsdk:"upside_down"`
-	Active          types.Bool   `tfsdk:"active"`
-	NotificationIDs types.List   `tfsdk:"notification_ids"`
-	Tags            types.List   `tfsdk:"tags"`
+	ID              types.Int64  `tfsdk:"id"`               // Unique monitor identifier.
+	Name            types.String `tfsdk:"name"`             // Display name for the monitor.
+	Description     types.String `tfsdk:"description"`      // Optional description of the monitor's purpose.
+	Parent          types.Int64  `tfsdk:"parent"`           // Parent monitor group ID.
+	Interval        types.Int64  `tfsdk:"interval"`         // Check interval in seconds.
+	RetryInterval   types.Int64  `tfsdk:"retry_interval"`   // Retry interval in seconds when failing.
+	ResendInterval  types.Int64  `tfsdk:"resend_interval"`  // Resend notification interval in seconds.
+	MaxRetries      types.Int64  `tfsdk:"max_retries"`      // Maximum number of retries before marking down.
+	UpsideDown      types.Bool   `tfsdk:"upside_down"`      // Invert status logic (down=up, up=down).
+	Active          types.Bool   `tfsdk:"active"`           // Whether the monitor is actively checking.
+	NotificationIDs types.List   `tfsdk:"notification_ids"` // List of notification channel IDs.
+	Tags            types.List   `tfsdk:"tags"`             // List of tags for organization.
 }
 
 // withMonitorBaseAttributes adds common monitor schema attributes to the provided attribute map.
@@ -294,15 +298,15 @@ func deserializeMonitorTags(ctx context.Context, tags types.List, diags *diag.Di
 }
 
 func buildMonitorTagMap(tags []MonitorTagModel) map[string]MonitorTagModel {
-	tagMap := make(map[string]MonitorTagModel)
-	for _, tag := range tags {
+	tagMap := map[string]MonitorTagModel{}
+	for _, monitorTag := range tags {
 		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
+		if !monitorTag.Value.IsNull() {
+			value = monitorTag.Value.ValueString()
 		}
 
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		tagMap[key] = tag
+		key := fmt.Sprintf("%d:%s", monitorTag.TagID.ValueInt64(), value)
+		tagMap[key] = monitorTag
 	}
 
 	return tagMap

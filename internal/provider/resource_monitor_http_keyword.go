@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides HTTP Keyword monitor resource management.
 package provider
 
 import (
@@ -187,10 +189,12 @@ func buildHTTPKeywordMonitor(
 		desc := data.Description.ValueString()
 		httpKeywordMonitor.Description = &desc
 	}
+
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
 		httpKeywordMonitor.Parent = &parent
 	}
+
 	if !data.ProxyID.IsNull() {
 		proxyID := data.ProxyID.ValueInt64()
 		httpKeywordMonitor.ProxyID = &proxyID

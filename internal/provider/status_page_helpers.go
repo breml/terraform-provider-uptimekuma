@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides helper functions for status page resource operations.
 package provider
 
 import (
@@ -12,39 +14,50 @@ import (
 
 // convertUnknownIDsToNull converts unknown group and monitor IDs to null values.
 // This ensures all computed values are known in Terraform state after Create/Update.
+// Unknown values from Terraform planning are replaced with explicit nulls.
 func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, diags *diag.Diagnostics) types.List {
+	// Handle null input gracefully by returning it unchanged.
 	if publicGroupList.IsNull() {
 		return publicGroupList
 	}
 
+	// Deserialize the public group list from Terraform types.
 	configGroups := deserializeGroupsForConversion(ctx, publicGroupList, diags)
 	if diags.HasError() {
 		return nullGroupList()
 	}
 
+	// Convert unknown values in groups and monitors to explicit nulls.
 	groups := convertGroupsUnknownToNull(ctx, configGroups, diags)
 	if diags.HasError() {
 		return nullGroupList()
 	}
 
+	// Rebuild the list with nulls instead of unknowns.
 	return buildGroupListFromModels(ctx, groups, diags)
 }
 
+// deserializeGroupsForConversion extracts PublicGroupModel values from a Terraform list.
+// It handles deserialization errors by appending diagnostics.
 func deserializeGroupsForConversion(
 	ctx context.Context,
 	publicGroupList types.List,
 	diags *diag.Diagnostics,
 ) []PublicGroupModel {
 	var configGroups []PublicGroupModel
+	// Convert Terraform list to Go slice, preserving unknown values.
 	diags.Append(publicGroupList.ElementsAs(ctx, &configGroups, true)...)
 	return configGroups
 }
 
+// convertGroupsUnknownToNull converts unknown IDs in groups and their monitors to nulls.
+// Iterates through each group and monitor to replace unknown values.
 func convertGroupsUnknownToNull(
 	ctx context.Context,
 	configGroups []PublicGroupModel,
 	diags *diag.Diagnostics,
 ) []PublicGroupModel {
+	// Create a new slice with updated group values.
 	groups := make([]PublicGroupModel, len(configGroups))
 
 	for i, group := range configGroups {

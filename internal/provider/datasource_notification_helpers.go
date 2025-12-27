@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides helper functions for notification data source operations.
 package provider
 
 import (
@@ -11,6 +13,7 @@ import (
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
+// findNotificationByName searches for a notification by name and type.
 func findNotificationByName(
 	ctx context.Context,
 	client *kuma.Client,
@@ -55,6 +58,7 @@ func findNotificationByName(
 	return found, true
 }
 
+// validateNotificationDataSourceInput validates that either id or name is provided.
 func validateNotificationDataSourceInput(
 	resp *datasource.ReadResponse,
 	idValue types.Int64,

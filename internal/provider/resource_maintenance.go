@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides maintenance window resource management.
 package provider
 
 import (
@@ -96,6 +98,8 @@ func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	}
 }
 
+// maintenanceSchemaAttributes builds the schema for all maintenance window resource attributes.
+// Combines all attribute types including schedule, timezone, and status fields.
 func maintenanceSchemaAttributes() map[string]schema.Attribute {
 	attrs := map[string]schema.Attribute{
 		"id":                maintenanceIDAttribute(),
@@ -122,6 +126,8 @@ func maintenanceSchemaAttributes() map[string]schema.Attribute {
 	return attrs
 }
 
+// maintenanceIDAttribute returns the schema for the maintenance ID.
+// This is computed by the server and used to track the resource.
 func maintenanceIDAttribute() schema.Int64Attribute {
 	return schema.Int64Attribute{
 		MarkdownDescription: "Maintenance window ID",
@@ -132,6 +138,8 @@ func maintenanceIDAttribute() schema.Int64Attribute {
 	}
 }
 
+// maintenanceTitleAttribute returns the schema for maintenance title/name.
+// A required field that identifies the maintenance window.
 func maintenanceTitleAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "Name of the maintenance window",
@@ -139,6 +147,8 @@ func maintenanceTitleAttribute() schema.StringAttribute {
 	}
 }
 
+// maintenanceDescriptionAttribute returns the schema for maintenance description.
+// Provides optional details about the maintenance window purpose or scope.
 func maintenanceDescriptionAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "Additional details about the maintenance",
@@ -148,6 +158,8 @@ func maintenanceDescriptionAttribute() schema.StringAttribute {
 	}
 }
 
+// maintenanceStrategyAttribute returns the schema for maintenance scheduling strategy.
+// Determines how the maintenance window recurs or is scheduled.
 func maintenanceStrategyAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
@@ -165,6 +177,8 @@ func maintenanceStrategyAttribute() schema.StringAttribute {
 	}
 }
 
+// maintenanceActiveAttribute returns the schema for the active flag.
+// Controls whether the maintenance window is enforced.
 func maintenanceActiveAttribute() schema.BoolAttribute {
 	return schema.BoolAttribute{
 		MarkdownDescription: "Whether the maintenance window is active",
@@ -195,6 +209,8 @@ func maintenanceIntervalDayAttribute() schema.Int64Attribute {
 	}
 }
 
+// maintenanceWeekdaysAttribute returns the schema for weekdays selection (recurring-weekday strategy).
+// Values: 1=Monday, 2=Tuesday, ..., 7=Sunday.
 func maintenanceWeekdaysAttribute() schema.ListAttribute {
 	return schema.ListAttribute{
 		MarkdownDescription: "Days of week for recurring-weekday (1=Monday...7=Sunday)",
@@ -203,6 +219,8 @@ func maintenanceWeekdaysAttribute() schema.ListAttribute {
 	}
 }
 
+// maintenanceDaysOfMonthAttribute returns the schema for days of month selection (recurring-day-of-month strategy).
+// Accepts numeric days (1-31) or special values like lastDay1-lastDay4 for last occurrence.
 func maintenanceDaysOfMonthAttribute() schema.ListAttribute {
 	return schema.ListAttribute{
 		MarkdownDescription: "Days of month for recurring-day-of-month (1-31 or lastDay1-lastDay4)",
@@ -211,6 +229,8 @@ func maintenanceDaysOfMonthAttribute() schema.ListAttribute {
 	}
 }
 
+// maintenanceCronAttribute returns the schema for cron expression (cron strategy).
+// Allows flexible scheduling using standard cron syntax.
 func maintenanceCronAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "Cron expression for cron strategy",
@@ -222,6 +242,8 @@ func maintenanceCronAttribute() schema.StringAttribute {
 	}
 }
 
+// maintenanceDurationMinutesAttribute returns the schema for maintenance duration (cron strategy).
+// Specifies how long the maintenance window lasts.
 func maintenanceDurationMinutesAttribute() schema.Int64Attribute {
 	return schema.Int64Attribute{
 		MarkdownDescription: "Duration in minutes for cron strategy",
@@ -237,6 +259,8 @@ func maintenanceStartTimeAttribute() schema.SingleNestedAttribute {
 	}
 }
 
+// maintenanceEndTimeAttribute returns the schema for the end time.
+// Only used for recurring maintenance strategies.
 func maintenanceEndTimeAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		MarkdownDescription: "End time for recurring strategies",
@@ -245,6 +269,8 @@ func maintenanceEndTimeAttribute() schema.SingleNestedAttribute {
 	}
 }
 
+// maintenanceTimezoneAttribute returns the schema for timezone configuration.
+// Defaults to UTC but can use server's timezone or specific IANA timezone.
 func maintenanceTimezoneAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "Timezone option: UTC, SAME_AS_SERVER, or IANA timezone (e.g., America/New_York)",
@@ -501,14 +527,19 @@ func (*MaintenanceResource) ValidateConfig(
 	switch strategy {
 	case "single":
 		validateMaintenanceSingleStrategy(&data, &resp.Diagnostics)
+
 	case "recurring-interval":
 		validateMaintenanceRecurringIntervalStrategy(&data, &resp.Diagnostics)
+
 	case "recurring-weekday":
 		validateMaintenanceRecurringWeekdayStrategy(&data, &resp.Diagnostics)
+
 	case "recurring-day-of-month":
 		validateMaintenanceRecurringDayOfMonthStrategy(&data, &resp.Diagnostics)
+
 	case "cron":
 		validateMaintenanceCronStrategy(&data, &resp.Diagnostics)
+
 	default:
 		// manual strategy has no validation
 	}
@@ -628,14 +659,19 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 	switch strategy {
 	case "single":
 		return r.populateMaintenanceFromModelSingle(data, m)
+
 	case "recurring-interval":
 		return r.populateMaintenanceFromModelRecurringInterval(ctx, data, m, diags)
+
 	case "recurring-weekday":
 		return r.populateMaintenanceFromModelRecurringWeekday(ctx, data, m, diags)
+
 	case "recurring-day-of-month":
 		return r.populateMaintenanceFromModelRecurringDayOfMonth(ctx, data, m, diags)
+
 	case "cron":
 		return r.populateMaintenanceFromModelCron(data, m)
+
 	default:
 		m.DateRange = []*time.Time{nil, nil}
 	}
@@ -855,14 +891,19 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 	switch m.Strategy {
 	case "single":
 		r.populateModelFromMaintenanceSingle(m, data)
+
 	case "recurring-interval":
 		r.populateModelFromMaintenanceRecurringInterval(ctx, m, data, diags)
+
 	case "recurring-weekday":
 		r.populateModelFromMaintenanceRecurringWeekday(ctx, m, data, diags)
+
 	case "recurring-day-of-month":
 		r.populateModelFromMaintenanceRecurringDayOfMonth(ctx, m, data, diags)
+
 	case "cron":
 		r.populateModelFromMaintenanceCron(m, data)
+
 	default:
 		// manual strategy has no special handling
 	}

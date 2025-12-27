@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides Redis monitor data source functionality.
 package provider
 
 import (

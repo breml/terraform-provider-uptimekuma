@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides HTTP monitor resource management.
 package provider
 
 import (
@@ -151,10 +153,12 @@ func buildHTTPMonitor(ctx context.Context, data *MonitorHTTPResourceModel, diags
 		desc := data.Description.ValueString()
 		httpMonitor.Description = &desc
 	}
+
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
 		httpMonitor.Parent = &parent
 	}
+
 	if !data.ProxyID.IsNull() {
 		proxyID := data.ProxyID.ValueInt64()
 		httpMonitor.ProxyID = &proxyID

@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides base HTTP monitor schema and utilities.
 package provider
 
 import (
@@ -16,31 +18,32 @@ import (
 )
 
 // MonitorHTTPBaseModel describes the base data model for HTTP-based monitor types.
+// This includes network config, authentication (Basic, NTLM, OAuth), and TLS settings.
 type MonitorHTTPBaseModel struct {
-	URL                 types.String `tfsdk:"url"`
-	Timeout             types.Int64  `tfsdk:"timeout"`
-	Method              types.String `tfsdk:"method"`
-	ExpiryNotification  types.Bool   `tfsdk:"expiry_notification"`
-	IgnoreTLS           types.Bool   `tfsdk:"ignore_tls"`
-	MaxRedirects        types.Int64  `tfsdk:"max_redirects"`
-	AcceptedStatusCodes types.List   `tfsdk:"accepted_status_codes"`
-	ProxyID             types.Int64  `tfsdk:"proxy_id"`
-	HTTPBodyEncoding    types.String `tfsdk:"http_body_encoding"`
-	Body                types.String `tfsdk:"body"`
-	Headers             types.String `tfsdk:"headers"`
-	AuthMethod          types.String `tfsdk:"auth_method"`
-	BasicAuthUser       types.String `tfsdk:"basic_auth_user"`
-	BasicAuthPass       types.String `tfsdk:"basic_auth_pass"`
-	AuthDomain          types.String `tfsdk:"auth_domain"`
-	AuthWorkstation     types.String `tfsdk:"auth_workstation"`
-	TLSCert             types.String `tfsdk:"tls_cert"`
-	TLSKey              types.String `tfsdk:"tls_key"`
-	TLSCa               types.String `tfsdk:"tls_ca"`
-	OAuthAuthMethod     types.String `tfsdk:"oauth_auth_method"`
-	OAuthTokenURL       types.String `tfsdk:"oauth_token_url"`
-	OAuthClientID       types.String `tfsdk:"oauth_client_id"`
-	OAuthClientSecret   types.String `tfsdk:"oauth_client_secret"`
-	OAuthScopes         types.String `tfsdk:"oauth_scopes"`
+	URL                 types.String `tfsdk:"url"`                   // HTTP(S) endpoint URL to monitor.
+	Timeout             types.Int64  `tfsdk:"timeout"`               // Request timeout in seconds.
+	Method              types.String `tfsdk:"method"`                // HTTP method (GET, POST, etc).
+	ExpiryNotification  types.Bool   `tfsdk:"expiry_notification"`   // Notify on certificate expiry.
+	IgnoreTLS           types.Bool   `tfsdk:"ignore_tls"`            // Skip TLS/SSL certificate validation.
+	MaxRedirects        types.Int64  `tfsdk:"max_redirects"`         // Maximum HTTP redirects to follow.
+	AcceptedStatusCodes types.List   `tfsdk:"accepted_status_codes"` // HTTP status codes to treat as success.
+	ProxyID             types.Int64  `tfsdk:"proxy_id"`              // Optional proxy ID for routing requests.
+	HTTPBodyEncoding    types.String `tfsdk:"http_body_encoding"`    // Encoding for request body.
+	Body                types.String `tfsdk:"body"`                  // Request body for POST/PUT methods.
+	Headers             types.String `tfsdk:"headers"`               // Custom HTTP headers as JSON.
+	AuthMethod          types.String `tfsdk:"auth_method"`           // Authentication method (basic, digest, ntlm, oauth).
+	BasicAuthUser       types.String `tfsdk:"basic_auth_user"`       // Basic auth username.
+	BasicAuthPass       types.String `tfsdk:"basic_auth_pass"`       // Basic auth password.
+	AuthDomain          types.String `tfsdk:"auth_domain"`           // Domain for NTLM authentication.
+	AuthWorkstation     types.String `tfsdk:"auth_workstation"`      // Workstation for NTLM authentication.
+	TLSCert             types.String `tfsdk:"tls_cert"`              // Client TLS certificate in PEM format.
+	TLSKey              types.String `tfsdk:"tls_key"`               // Client TLS key in PEM format.
+	TLSCa               types.String `tfsdk:"tls_ca"`                // CA certificate for server verification.
+	OAuthAuthMethod     types.String `tfsdk:"oauth_auth_method"`     // OAuth authentication method.
+	OAuthTokenURL       types.String `tfsdk:"oauth_token_url"`       // OAuth token endpoint URL.
+	OAuthClientID       types.String `tfsdk:"oauth_client_id"`       // OAuth client ID.
+	OAuthClientSecret   types.String `tfsdk:"oauth_client_secret"`   // OAuth client secret.
+	OAuthScopes         types.String `tfsdk:"oauth_scopes"`          // OAuth scopes to request.
 }
 
 // withHTTPMonitorBaseAttributes adds HTTP-specific schema attributes to the provided attribute map.

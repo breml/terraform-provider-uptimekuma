@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides monitor group data source functionality.
 package provider
 
 import (
@@ -12,6 +14,7 @@ import (
 	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
+// _ ensures the interface is implemented.
 var _ datasource.DataSource = &MonitorGroupDataSource{}
 
 // NewMonitorGroupDataSource returns a new instance of the monitor group data source.

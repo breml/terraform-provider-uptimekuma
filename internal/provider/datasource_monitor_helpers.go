@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides helper functions for data source operations.
 package provider
 
 import (
@@ -12,6 +14,8 @@ import (
 	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
+// findMonitorByName searches for a monitor by name and type.
+// Returns nil if not found or if multiple matches exist.
 func findMonitorByName(
 	ctx context.Context,
 	client *kuma.Client,
@@ -19,18 +23,22 @@ func findMonitorByName(
 	monitorType string,
 	diags *diag.Diagnostics,
 ) monitor.Monitor {
+	// Fetch all monitors from the API.
 	monitors, err := client.GetMonitors(ctx)
 	if err != nil {
 		diags.AddError("failed to read monitors", err.Error())
 		return nil
 	}
 
+	// Search for the monitor matching the given name and type.
 	var found monitor.Monitor
 	for _, mon := range monitors {
+		// Skip monitors that don't match the name or type.
 		if mon.Name != name || mon.Type() != monitorType {
 			continue
 		}
 
+		// Report error if multiple monitors match.
 		if found != nil {
 			diags.AddError(
 				"Multiple monitors found",
@@ -46,6 +54,7 @@ func findMonitorByName(
 		found = mon
 	}
 
+	// Report error if no monitor matches.
 	if found == nil {
 		diags.AddError(
 			fmt.Sprintf("%s monitor not found", monitorType),
@@ -57,6 +66,7 @@ func findMonitorByName(
 	return found
 }
 
+// validateMonitorDataSourceInput validates that either id or name is provided.
 func validateMonitorDataSourceInput(
 	resp *datasource.ReadResponse,
 	idValue types.Int64,

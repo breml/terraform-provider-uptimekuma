@@ -113,7 +113,7 @@ func runTests(m *testing.M) (exitcode int) {
 
 			err = pool.Purge(container)
 			if err != nil {
-				log.Fatalf("Could not purge resource: %v", err)
+				log.Printf("Warning: could not purge resource: %v", err)
 				exitcode = 1
 			}
 		}()

@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides HTTP JSON Query monitor resource management.
 package provider
 
 import (
@@ -196,10 +198,12 @@ func buildHTTPJSONQueryMonitor(
 		desc := data.Description.ValueString()
 		httpJSONQueryMonitor.Description = &desc
 	}
+
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
 		httpJSONQueryMonitor.Parent = &parent
 	}
+
 	if !data.ProxyID.IsNull() {
 		proxyID := data.ProxyID.ValueInt64()
 		httpJSONQueryMonitor.ProxyID = &proxyID

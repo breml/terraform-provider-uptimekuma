@@ -1,3 +1,5 @@
+// Package provider implements the Uptime Kuma Terraform provider.
+// This file provides status page resource management.
 package provider
 
 import (
@@ -79,6 +81,9 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	}
 }
 
+// statusPageSchemaAttributes returns the attribute schema map for status page resource.
+// This map defines all available attributes including identification, display settings,
+// analytics configuration, and the public group list for monitor organization.
 func statusPageSchemaAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id":                      statusPageIDAttribute(),
@@ -303,22 +308,25 @@ func (r *StatusPageResource) Configure(
 	r.client = client
 }
 
-// Create creates a new resource.
+// Create creates a new status page resource.
+// First creates the base status page via AddStatusPage, then saves configuration with groups/domains.
 func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	// Extract planned configuration from Terraform.
 	var data StatusPageResourceModel
-
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// First, create the base status page. Some fields like domain names and groups
+	// are managed separately via SaveStatusPage, so we start with title and slug.
 	err := r.client.AddStatusPage(ctx, data.Title.ValueString(), data.Slug.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create status page", err.Error())
 		return
 	}
 
+	// Build the status page object with all configuration.
 	sp := &statuspage.StatusPage{
 		Slug:                  data.Slug.ValueString(),
 		Title:                 data.Title.ValueString(),
@@ -336,22 +344,26 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		PublicGroupList:       []statuspage.PublicGroup{},
 	}
 
+	// Populate domain names from configuration.
 	r.populateStatusPageDomainNames(ctx, &data, sp, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Populate public groups (monitor groupings) from configuration.
 	r.populateStatusPagePublicGroups(ctx, &data, sp, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Save the complete status page configuration and get back group IDs.
 	savedGroups, err := r.client.SaveStatusPage(ctx, sp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to save status page", err.Error())
 		return
 	}
 
+	// Retrieve the saved status page to get the assigned ID.
 	retrievedSP, err := r.client.GetStatusPage(ctx, data.Slug.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read status page after creation", err.Error())
@@ -604,6 +616,7 @@ func (*StatusPageResource) populateStatusPageDomainNames(
 	}
 }
 
+// populateStatusPagePublicGroups populates the public group list from the resource model.
 func (r *StatusPageResource) populateStatusPagePublicGroups(
 	ctx context.Context,
 	data *StatusPageResourceModel,
@@ -619,34 +632,44 @@ func (r *StatusPageResource) populateStatusPagePublicGroups(
 
 		sp.PublicGroupList = make([]statuspage.PublicGroup, len(groups))
 		for i, group := range groups {
-			publicGroup := statuspage.PublicGroup{
-				Name:        group.Name.ValueString(),
-				Weight:      int(group.Weight.ValueInt64()),
-				MonitorList: []statuspage.PublicMonitor{},
+			r.populatePublicGroup(ctx, &group, &sp.PublicGroupList[i], diags)
+			if diags.HasError() {
+				return
 			}
-			if !group.ID.IsNull() {
-				publicGroup.ID = group.ID.ValueInt64()
+		}
+	}
+}
+
+// populatePublicGroup populates a single public group and its monitors.
+func (*StatusPageResource) populatePublicGroup(
+	ctx context.Context,
+	groupModel *PublicGroupModel,
+	publicGroup *statuspage.PublicGroup,
+	diags *diag.Diagnostics,
+) {
+	publicGroup.Name = groupModel.Name.ValueString()
+	publicGroup.Weight = int(groupModel.Weight.ValueInt64())
+	publicGroup.MonitorList = []statuspage.PublicMonitor{}
+
+	if !groupModel.ID.IsNull() {
+		publicGroup.ID = groupModel.ID.ValueInt64()
+	}
+
+	if !groupModel.MonitorList.IsNull() {
+		var monitors []PublicMonitorModel
+		diags.Append(groupModel.MonitorList.ElementsAs(ctx, &monitors, false)...)
+		if diags.HasError() {
+			return
+		}
+
+		publicGroup.MonitorList = make([]statuspage.PublicMonitor, len(monitors))
+		for j, monitor := range monitors {
+			publicGroup.MonitorList[j] = statuspage.PublicMonitor{
+				ID: monitor.ID.ValueInt64(),
 			}
-
-			sp.PublicGroupList[i] = publicGroup
-
-			if !group.MonitorList.IsNull() {
-				var monitors []PublicMonitorModel
-				diags.Append(group.MonitorList.ElementsAs(ctx, &monitors, false)...)
-				if diags.HasError() {
-					return
-				}
-
-				sp.PublicGroupList[i].MonitorList = make([]statuspage.PublicMonitor, len(monitors))
-				for j, monitor := range monitors {
-					sp.PublicGroupList[i].MonitorList[j] = statuspage.PublicMonitor{
-						ID: monitor.ID.ValueInt64(),
-					}
-					if !monitor.SendURL.IsNull() {
-						sendURL := monitor.SendURL.ValueBool()
-						sp.PublicGroupList[i].MonitorList[j].SendURL = &sendURL
-					}
-				}
+			if !monitor.SendURL.IsNull() {
+				sendURL := monitor.SendURL.ValueBool()
+				publicGroup.MonitorList[j].SendURL = &sendURL
 			}
 		}
 	}
