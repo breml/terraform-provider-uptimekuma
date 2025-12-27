@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides HTTP Keyword monitor resource management.
 package provider
 
 import (
@@ -21,6 +19,7 @@ import (
 )
 
 var (
+	// Ensure MonitorHTTPKeywordResource satisfies various resource interfaces.
 	_ resource.Resource                = &MonitorHTTPKeywordResource{}
 	_ resource.ResourceWithImportState = &MonitorHTTPKeywordResource{}
 )
@@ -35,7 +34,7 @@ type MonitorHTTPKeywordResource struct {
 	client *kuma.Client
 }
 
-// MonitorHTTPKeywordResourceModel describes the resource data model.
+// MonitorHTTPKeywordResourceModel describes the resource data model for HTTP Keyword monitors.
 type MonitorHTTPKeywordResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
@@ -139,6 +138,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// buildHTTPKeywordMonitor constructs a monitor.HTTPKeyword from the Terraform resource model.
 func buildHTTPKeywordMonitor(
 	ctx context.Context,
 	data *MonitorHTTPKeywordResourceModel,

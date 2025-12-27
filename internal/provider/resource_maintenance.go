@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides maintenance window resource management.
 package provider
 
 import (
@@ -30,6 +28,7 @@ import (
 )
 
 var (
+	// Ensure MaintenanceResource satisfies various resource interfaces.
 	_ resource.Resource                = &MaintenanceResource{}
 	_ resource.ResourceWithImportState = &MaintenanceResource{}
 )
@@ -39,7 +38,7 @@ func NewMaintenanceResource() resource.Resource {
 	return &MaintenanceResource{}
 }
 
-// MaintenanceResource defines the resource implementation.
+// MaintenanceResource defines the resource implementation for maintenance windows.
 type MaintenanceResource struct {
 	client *kuma.Client
 }
@@ -51,7 +50,7 @@ type TimeOfDayModel struct {
 	Seconds types.Int64 `tfsdk:"seconds"`
 }
 
-// TimeslotModel describes the timeslot data model.
+// TimeslotModel describes the timeslot data model with start and end date times for the maintenance window.
 type TimeslotModel struct {
 	StartDate types.String `tfsdk:"start_date"`
 	EndDate   types.String `tfsdk:"end_date"`

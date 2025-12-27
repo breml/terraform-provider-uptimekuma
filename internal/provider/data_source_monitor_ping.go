@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides Ping monitor data source functionality.
 package provider
 
 import (
@@ -115,6 +113,7 @@ func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadReq
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the Ping monitor data by its ID.
 func (d *MonitorPingDataSource) readByID(
 	ctx context.Context,
 	data *MonitorPingDataSourceModel,
@@ -132,6 +131,7 @@ func (d *MonitorPingDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the Ping monitor data by its name.
 func (d *MonitorPingDataSource) readByName(
 	ctx context.Context,
 	data *MonitorPingDataSourceModel,

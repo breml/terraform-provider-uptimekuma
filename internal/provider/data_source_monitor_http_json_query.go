@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides HTTP JSON Query monitor data source functionality.
 package provider
 
 import (
@@ -114,6 +112,7 @@ func (d *MonitorHTTPJSONQueryDataSource) Read(
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the HTTP JSON Query monitor data by its ID.
 func (d *MonitorHTTPJSONQueryDataSource) readByID(
 	ctx context.Context,
 	data *MonitorHTTPJSONQueryDataSourceModel,
@@ -130,6 +129,7 @@ func (d *MonitorHTTPJSONQueryDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the HTTP JSON Query monitor data by its name.
 func (d *MonitorHTTPJSONQueryDataSource) readByName(
 	ctx context.Context,
 	data *MonitorHTTPJSONQueryDataSourceModel,

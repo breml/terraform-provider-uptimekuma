@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides Real Browser monitor data source functionality.
 package provider
 
 import (
@@ -114,6 +112,7 @@ func (d *MonitorRealBrowserDataSource) Read(
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the Real Browser monitor data by its ID.
 func (d *MonitorRealBrowserDataSource) readByID(
 	ctx context.Context,
 	data *MonitorRealBrowserDataSourceModel,
@@ -130,6 +129,7 @@ func (d *MonitorRealBrowserDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the Real Browser monitor data by its name.
 func (d *MonitorRealBrowserDataSource) readByName(
 	ctx context.Context,
 	data *MonitorRealBrowserDataSourceModel,

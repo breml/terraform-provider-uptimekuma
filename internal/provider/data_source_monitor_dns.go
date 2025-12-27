@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides DNS monitor data source functionality.
 package provider
 
 import (
@@ -115,6 +113,7 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the DNS monitor data by its ID from the Uptime Kuma API.
 func (d *MonitorDNSDataSource) readByID(
 	ctx context.Context,
 	data *MonitorDNSDataSourceModel,
@@ -132,6 +131,7 @@ func (d *MonitorDNSDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the DNS monitor data by its name from the Uptime Kuma API.
 func (d *MonitorDNSDataSource) readByName(
 	ctx context.Context,
 	data *MonitorDNSDataSourceModel,

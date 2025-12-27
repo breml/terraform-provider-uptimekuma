@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides Redis monitor data source functionality.
 package provider
 
 import (
@@ -110,6 +108,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the Redis monitor data by its ID.
 func (d *MonitorRedisDataSource) readByID(
 	ctx context.Context,
 	data *MonitorRedisDataSourceModel,
@@ -126,6 +125,7 @@ func (d *MonitorRedisDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the Redis monitor data by its name.
 func (d *MonitorRedisDataSource) readByName(
 	ctx context.Context,
 	data *MonitorRedisDataSourceModel,

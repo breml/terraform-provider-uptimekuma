@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides TCP Port monitor data source functionality.
 package provider
 
 import (
@@ -124,6 +122,7 @@ func (d *MonitorTCPPortDataSource) Read(
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the TCP Port monitor data by its ID.
 func (d *MonitorTCPPortDataSource) readByID(
 	ctx context.Context,
 	data *MonitorTCPPortDataSourceModel,
@@ -142,6 +141,7 @@ func (d *MonitorTCPPortDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the TCP Port monitor data by its name.
 func (d *MonitorTCPPortDataSource) readByName(
 	ctx context.Context,
 	data *MonitorTCPPortDataSourceModel,

@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides gRPC Keyword monitor data source functionality.
 package provider
 
 import (
@@ -114,6 +112,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the gRPC Keyword monitor data by its ID.
 func (d *MonitorGrpcKeywordDataSource) readByID(
 	ctx context.Context,
 	data *MonitorGrpcKeywordDataSourceModel,
@@ -130,6 +129,7 @@ func (d *MonitorGrpcKeywordDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the gRPC Keyword monitor data by its name.
 func (d *MonitorGrpcKeywordDataSource) readByName(
 	ctx context.Context,
 	data *MonitorGrpcKeywordDataSourceModel,

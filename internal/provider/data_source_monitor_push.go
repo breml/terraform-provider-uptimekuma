@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides Push monitor data source functionality.
 package provider
 
 import (
@@ -110,6 +108,7 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the Push monitor data by its ID.
 func (d *MonitorPushDataSource) readByID(
 	ctx context.Context,
 	data *MonitorPushDataSourceModel,
@@ -126,6 +125,7 @@ func (d *MonitorPushDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the Push monitor data by its name.
 func (d *MonitorPushDataSource) readByName(
 	ctx context.Context,
 	data *MonitorPushDataSourceModel,

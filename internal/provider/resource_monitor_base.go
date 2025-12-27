@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides base monitor resource schema and utilities.
 package provider
 
 import (

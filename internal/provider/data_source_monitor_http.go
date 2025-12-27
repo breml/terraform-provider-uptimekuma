@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides HTTP monitor data source functionality.
 package provider
 
 import (
@@ -115,6 +113,7 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the HTTP monitor data by its ID.
 func (d *MonitorHTTPDataSource) readByID(
 	ctx context.Context,
 	data *MonitorHTTPDataSourceModel,
@@ -132,6 +131,7 @@ func (d *MonitorHTTPDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the HTTP monitor data by its name.
 func (d *MonitorHTTPDataSource) readByName(
 	ctx context.Context,
 	data *MonitorHTTPDataSourceModel,

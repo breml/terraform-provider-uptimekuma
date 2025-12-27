@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides HTTP monitor resource management.
 package provider
 
 import (
@@ -18,6 +16,7 @@ import (
 )
 
 var (
+	// Ensure MonitorHTTPResource satisfies various resource interfaces.
 	_ resource.Resource                = &MonitorHTTPResource{}
 	_ resource.ResourceWithImportState = &MonitorHTTPResource{}
 )
@@ -32,7 +31,7 @@ type MonitorHTTPResource struct {
 	client *kuma.Client
 }
 
-// MonitorHTTPResourceModel describes the resource data model.
+// MonitorHTTPResourceModel describes the resource data model for HTTP monitors.
 type MonitorHTTPResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
@@ -185,6 +184,7 @@ func buildHTTPMonitor(ctx context.Context, data *MonitorHTTPResourceModel, diags
 	return httpMonitor
 }
 
+// stringOrNull returns a Terraform String type that is null if the input string is empty, otherwise returns the string value.
 func stringOrNull(s string) types.String {
 	if s == "" {
 		return types.StringNull()

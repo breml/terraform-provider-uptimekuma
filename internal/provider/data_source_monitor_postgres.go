@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides Postgres monitor data source functionality.
 package provider
 
 import (
@@ -114,6 +112,7 @@ func (d *MonitorPostgresDataSource) Read(
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the PostgreSQL monitor data by its ID.
 func (d *MonitorPostgresDataSource) readByID(
 	ctx context.Context,
 	data *MonitorPostgresDataSourceModel,
@@ -130,6 +129,7 @@ func (d *MonitorPostgresDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the PostgreSQL monitor data by its name.
 func (d *MonitorPostgresDataSource) readByName(
 	ctx context.Context,
 	data *MonitorPostgresDataSourceModel,

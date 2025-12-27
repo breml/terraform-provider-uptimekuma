@@ -1,3 +1,4 @@
+// Package provider implements the Uptime Kuma Terraform provider.
 package provider
 
 import (

@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides HTTP JSON Query monitor resource management.
 package provider
 
 import (
@@ -21,6 +19,7 @@ import (
 )
 
 var (
+	// Ensure MonitorHTTPJSONQueryResource satisfies various resource interfaces.
 	_ resource.Resource                = &MonitorHTTPJSONQueryResource{}
 	_ resource.ResourceWithImportState = &MonitorHTTPJSONQueryResource{}
 )
@@ -35,7 +34,7 @@ type MonitorHTTPJSONQueryResource struct {
 	client *kuma.Client
 }
 
-// MonitorHTTPJSONQueryResourceModel describes the resource data model.
+// MonitorHTTPJSONQueryResourceModel describes the resource data model for HTTP JSON Query monitors.
 type MonitorHTTPJSONQueryResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
@@ -147,6 +146,7 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// buildHTTPJSONQueryMonitor constructs a monitor.HTTPJSONQuery from the Terraform resource model.
 func buildHTTPJSONQueryMonitor(
 	ctx context.Context,
 	data *MonitorHTTPJSONQueryResourceModel,

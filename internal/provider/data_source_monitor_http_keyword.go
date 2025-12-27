@@ -1,5 +1,3 @@
-// Package provider implements the Uptime Kuma Terraform provider.
-// This file provides HTTP Keyword monitor data source functionality.
 package provider
 
 import (
@@ -114,6 +112,7 @@ func (d *MonitorHTTPKeywordDataSource) Read(
 	d.readByName(ctx, &data, resp)
 }
 
+// readByID fetches the HTTP Keyword monitor data by its ID.
 func (d *MonitorHTTPKeywordDataSource) readByID(
 	ctx context.Context,
 	data *MonitorHTTPKeywordDataSourceModel,
@@ -130,6 +129,7 @@ func (d *MonitorHTTPKeywordDataSource) readByID(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readByName fetches the HTTP Keyword monitor data by its name.
 func (d *MonitorHTTPKeywordDataSource) readByName(
 	ctx context.Context,
 	data *MonitorHTTPKeywordDataSourceModel,
