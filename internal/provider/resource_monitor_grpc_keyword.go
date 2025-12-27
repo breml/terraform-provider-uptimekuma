@@ -230,7 +230,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 		return
 	}
 
-	r.populateModelFromMonitor(&data, &createdMonitor, ctx, &resp.Diagnostics)
+	r.populateModelFromMonitor(ctx, &data, &createdMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -259,7 +259,7 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-	r.populateModelFromMonitor(&data, &grpcKeywordMonitor, ctx, &resp.Diagnostics)
+	r.populateModelFromMonitor(ctx, &data, &grpcKeywordMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -355,7 +355,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 		return
 	}
 
-	r.populateModelFromMonitor(&data, &updatedMonitor, ctx, &resp.Diagnostics)
+	r.populateModelFromMonitor(ctx, &data, &updatedMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -410,9 +410,9 @@ func (*MonitorGrpcKeywordResource) ImportState(
 }
 
 func (*MonitorGrpcKeywordResource) populateModelFromMonitor(
+	ctx context.Context,
 	data *MonitorGrpcKeywordResourceModel,
 	grpcKeywordMonitor *monitor.GrpcKeyword,
-	ctx context.Context,
 	diags *diag.Diagnostics,
 ) {
 	data.Name = types.StringValue(grpcKeywordMonitor.Name)
