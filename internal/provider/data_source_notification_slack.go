@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &NotificationSlackDataSource{}
 
+// NewNotificationSlackDataSource returns a new instance of the Slack notification data source.
 func NewNotificationSlackDataSource() datasource.DataSource {
 	return &NotificationSlackDataSource{}
 }
 
+// NotificationSlackDataSource manages Slack notification data source operations.
 type NotificationSlackDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationSlackDataSourceModel describes the data model for Slack notification data source.
 type NotificationSlackDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -56,6 +59,7 @@ func (d *NotificationSlackDataSource) Schema(
 	}
 }
 
+// Configure configures the Slack notification data source with the API client.
 func (d *NotificationSlackDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

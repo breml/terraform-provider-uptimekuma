@@ -19,11 +19,13 @@ import (
 	"github.com/breml/go-uptime-kuma-client/tag"
 )
 
+// MonitorTagModel describes the tag data model for monitors.
 type MonitorTagModel struct {
 	TagID types.Int64  `tfsdk:"tag_id"`
 	Value types.String `tfsdk:"value"`
 }
 
+// MonitorBaseModel describes the base data model for all monitor types.
 type MonitorBaseModel struct {
 	ID              types.Int64  `tfsdk:"id"`
 	Name            types.String `tfsdk:"name"`

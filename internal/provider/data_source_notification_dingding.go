@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &NotificationDingDingDataSource{}
 
+// NewNotificationDingDingDataSource returns a new instance of the DingDing notification data source.
 func NewNotificationDingDingDataSource() datasource.DataSource {
 	return &NotificationDingDingDataSource{}
 }
 
+// NotificationDingDingDataSource manages DingDing notification data source operations.
 type NotificationDingDingDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationDingDingDataSourceModel describes the data model for DingDing notification data source.
 type NotificationDingDingDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -56,6 +59,7 @@ func (d *NotificationDingDingDataSource) Schema(
 	}
 }
 
+// Configure configures the DingDing notification data source with the API client.
 func (d *NotificationDingDingDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

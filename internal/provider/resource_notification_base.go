@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// NotificationBaseModel describes the base data model for all notification types.
 type NotificationBaseModel struct {
 	ID            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`

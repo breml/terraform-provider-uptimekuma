@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorPostgresDataSource{}
 
+// NewMonitorPostgresDataSource returns a new instance of the PostgreSQL monitor data source.
 func NewMonitorPostgresDataSource() datasource.DataSource {
 	return &MonitorPostgresDataSource{}
 }
 
+// MonitorPostgresDataSource manages PostgreSQL monitor data source operations.
 type MonitorPostgresDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPostgresDataSourceModel describes the data model for PostgreSQL monitor data source.
 type MonitorPostgresDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorPostgresDataSource) Schema(
 	}
 }
 
+// Configure configures the PostgreSQL monitor data source with the API client.
 func (d *MonitorPostgresDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

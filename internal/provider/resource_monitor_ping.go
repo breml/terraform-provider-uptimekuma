@@ -22,14 +22,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorPingResource{}
 )
 
+// NewMonitorPingResource returns a new instance of the Ping monitor resource.
 func NewMonitorPingResource() resource.Resource {
 	return &MonitorPingResource{}
 }
 
+// MonitorPingResource defines the resource implementation.
 type MonitorPingResource struct {
 	client *kuma.Client
 }
 
+// MonitorPingResourceModel describes the resource data model.
 type MonitorPingResourceModel struct {
 	MonitorBaseModel
 
@@ -66,6 +69,7 @@ func (r *MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
+// Configure configures the Ping monitor resource with the API client.
 func (r *MonitorPingResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -92,6 +96,7 @@ func (r *MonitorPingResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Ping monitor resource.
 func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorPingResourceModel
 
@@ -153,6 +158,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Ping monitor resource.
 func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPingResourceModel
 
@@ -211,6 +217,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Ping monitor resource.
 func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorPingResourceModel
 
@@ -277,6 +284,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Ping monitor resource.
 func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorPingResourceModel
 
@@ -293,6 +301,7 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorPingResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

@@ -23,14 +23,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationTeamsResource{}
 )
 
+// NewNotificationTeamsResource returns a new instance of the Teams notification resource.
 func NewNotificationTeamsResource() resource.Resource {
 	return &NotificationTeamsResource{}
 }
 
+// NotificationTeamsResource defines the resource implementation.
 type NotificationTeamsResource struct {
 	client *kuma.Client
 }
 
+// NotificationTeamsResourceModel describes the resource data model.
 type NotificationTeamsResourceModel struct {
 	NotificationBaseModel
 
@@ -63,6 +66,7 @@ func (r *NotificationTeamsResource) Schema(
 	}
 }
 
+// Configure configures the Teams notification resource with the API client.
 func (r *NotificationTeamsResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -89,6 +93,7 @@ func (r *NotificationTeamsResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Teams notification resource.
 func (r *NotificationTeamsResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -127,6 +132,7 @@ func (r *NotificationTeamsResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Teams notification resource.
 func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationTeamsResourceModel
 
@@ -167,6 +173,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Teams notification resource.
 func (r *NotificationTeamsResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -202,6 +209,7 @@ func (r *NotificationTeamsResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Teams notification resource.
 func (r *NotificationTeamsResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -222,6 +230,7 @@ func (r *NotificationTeamsResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationTeamsResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

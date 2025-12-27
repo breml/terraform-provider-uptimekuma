@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorPingDataSource{}
 
+// NewMonitorPingDataSource returns a new instance of the PING monitor data source.
 func NewMonitorPingDataSource() datasource.DataSource {
 	return &MonitorPingDataSource{}
 }
 
+// MonitorPingDataSource manages PING monitor data source operations.
 type MonitorPingDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPingDataSourceModel describes the data model for PING monitor data source.
 type MonitorPingDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
@@ -62,6 +65,7 @@ func (d *MonitorPingDataSource) Schema(
 	}
 }
 
+// Configure configures the PING monitor data source with the API client.
 func (d *MonitorPingDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

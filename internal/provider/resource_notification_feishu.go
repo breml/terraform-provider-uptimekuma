@@ -23,14 +23,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationFeishuResource{}
 )
 
+// NewNotificationFeishuResource returns a new instance of the Feishu notification resource.
 func NewNotificationFeishuResource() resource.Resource {
 	return &NotificationFeishuResource{}
 }
 
+// NotificationFeishuResource defines the resource implementation.
 type NotificationFeishuResource struct {
 	client *kuma.Client
 }
 
+// NotificationFeishuResourceModel describes the resource data model.
 type NotificationFeishuResourceModel struct {
 	NotificationBaseModel
 
@@ -65,6 +68,7 @@ func (r *NotificationFeishuResource) Schema(
 	}
 }
 
+// Configure configures the Feishu notification resource with the API client.
 func (r *NotificationFeishuResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -91,6 +95,7 @@ func (r *NotificationFeishuResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Feishu notification resource.
 func (r *NotificationFeishuResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -129,6 +134,7 @@ func (r *NotificationFeishuResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Feishu notification resource.
 func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationFeishuResourceModel
 
@@ -169,6 +175,7 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Feishu notification resource.
 func (r *NotificationFeishuResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -204,6 +211,7 @@ func (r *NotificationFeishuResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Feishu notification resource.
 func (r *NotificationFeishuResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -224,6 +232,7 @@ func (r *NotificationFeishuResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationFeishuResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

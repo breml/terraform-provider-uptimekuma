@@ -24,6 +24,7 @@ var (
 	_ resource.ResourceWithImportState = &NotificationResource{}
 )
 
+// NewNotificationResource returns a new instance of the notification resource.
 func NewNotificationResource() resource.Resource {
 	return &NotificationResource{}
 }
@@ -94,6 +95,7 @@ func (r *NotificationResource) Schema(_ context.Context, _ resource.SchemaReques
 	}
 }
 
+// Configure configures the notification resource with the API client.
 func (r *NotificationResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -121,6 +123,7 @@ func (r *NotificationResource) Configure(
 	r.client = client
 }
 
+// Create creates a new notification resource.
 func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data NotificationResourceModel
 
@@ -159,6 +162,7 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the notification resource.
 func (r *NotificationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationResourceModel
 
@@ -207,6 +211,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the notification resource.
 func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data NotificationResourceModel
 
@@ -246,6 +251,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the notification resource.
 func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data NotificationResourceModel
 
@@ -263,6 +269,7 @@ func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

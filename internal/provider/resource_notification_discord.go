@@ -24,14 +24,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationDiscordResource{}
 )
 
+// NewNotificationDiscordResource returns a new instance of the Discord notification resource.
 func NewNotificationDiscordResource() resource.Resource {
 	return &NotificationDiscordResource{}
 }
 
+// NotificationDiscordResource defines the resource implementation.
 type NotificationDiscordResource struct {
 	client *kuma.Client
 }
 
+// NotificationDiscordResourceModel describes the resource data model.
 type NotificationDiscordResourceModel struct {
 	NotificationBaseModel
 
@@ -98,6 +101,7 @@ func (r *NotificationDiscordResource) Schema(
 	}
 }
 
+// Configure configures the Discord notification resource with the API client.
 func (r *NotificationDiscordResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -124,6 +128,7 @@ func (r *NotificationDiscordResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Discord notification resource.
 func (r *NotificationDiscordResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -168,6 +173,7 @@ func (r *NotificationDiscordResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Discord notification resource.
 func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationDiscordResourceModel
 
@@ -239,6 +245,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Discord notification resource.
 func (r *NotificationDiscordResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -280,6 +287,7 @@ func (r *NotificationDiscordResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Discord notification resource.
 func (r *NotificationDiscordResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -300,6 +308,7 @@ func (r *NotificationDiscordResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationDiscordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

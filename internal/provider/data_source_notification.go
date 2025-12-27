@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &NotificationDataSource{}
 
+// NewNotificationDataSource returns a new instance of the notification data source.
 func NewNotificationDataSource() datasource.DataSource {
 	return &NotificationDataSource{}
 }
 
+// NotificationDataSource manages notification data source operations.
 type NotificationDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationDataSourceModel describes the data model for notification data source.
 type NotificationDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -61,6 +64,7 @@ func (d *NotificationDataSource) Schema(
 	}
 }
 
+// Configure configures the notification data source with the API client.
 func (d *NotificationDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

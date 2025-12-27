@@ -35,6 +35,7 @@ type UptimeKumaProviderModel struct {
 	Password types.String `tfsdk:"password"`
 }
 
+// Metadata returns the metadata for the provider.
 func (p *UptimeKumaProvider) Metadata(
 	_ context.Context,
 	_ provider.MetadataRequest,
@@ -193,6 +194,7 @@ func (p *UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.
 	}
 }
 
+// New returns a new instance of the provider.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
 		return &UptimeKumaProvider{

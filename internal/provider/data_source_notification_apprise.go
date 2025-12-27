@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &NotificationAppriseDataSource{}
 
+// NewNotificationAppriseDataSource returns a new instance of the Apprise notification data source.
 func NewNotificationAppriseDataSource() datasource.DataSource {
 	return &NotificationAppriseDataSource{}
 }
 
+// NotificationAppriseDataSource manages Apprise notification data source operations.
 type NotificationAppriseDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationAppriseDataSourceModel describes the data model for Apprise notification data source.
 type NotificationAppriseDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -56,6 +59,7 @@ func (d *NotificationAppriseDataSource) Schema(
 	}
 }
 
+// Configure configures the Apprise notification data source with the API client.
 func (d *NotificationAppriseDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

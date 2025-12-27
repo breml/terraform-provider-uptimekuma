@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &StatusPageDataSource{}
 
+// NewStatusPageDataSource returns a new instance of the status page data source.
 func NewStatusPageDataSource() datasource.DataSource {
 	return &StatusPageDataSource{}
 }
 
+// StatusPageDataSource manages status page data source operations.
 type StatusPageDataSource struct {
 	client *kuma.Client
 }
 
+// StatusPageDataSourceModel describes the data model for status page data source.
 type StatusPageDataSourceModel struct {
 	ID    types.Int64  `tfsdk:"id"`
 	Slug  types.String `tfsdk:"slug"`
@@ -61,6 +64,7 @@ func (d *StatusPageDataSource) Schema(
 	}
 }
 
+// Configure configures the status page data source with the API client.
 func (d *StatusPageDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

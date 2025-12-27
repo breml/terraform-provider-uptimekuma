@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorRedisDataSource{}
 
+// NewMonitorRedisDataSource returns a new instance of the Redis monitor data source.
 func NewMonitorRedisDataSource() datasource.DataSource {
 	return &MonitorRedisDataSource{}
 }
 
+// MonitorRedisDataSource manages Redis monitor data source operations.
 type MonitorRedisDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorRedisDataSourceModel describes the data model for Redis monitor data source.
 type MonitorRedisDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorRedisDataSource) Schema(
 	}
 }
 
+// Configure configures the Redis monitor data source with the API client.
 func (d *MonitorRedisDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

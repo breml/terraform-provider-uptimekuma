@@ -23,14 +23,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationDingDingResource{}
 )
 
+// NewNotificationDingDingResource returns a new instance of the DingDing notification resource.
 func NewNotificationDingDingResource() resource.Resource {
 	return &NotificationDingDingResource{}
 }
 
+// NotificationDingDingResource defines the resource implementation.
 type NotificationDingDingResource struct {
 	client *kuma.Client
 }
 
+// NotificationDingDingResourceModel describes the resource data model.
 type NotificationDingDingResourceModel struct {
 	NotificationBaseModel
 
@@ -76,6 +79,7 @@ func (r *NotificationDingDingResource) Schema(
 	}
 }
 
+// Configure configures the DingDing notification resource with the API client.
 func (r *NotificationDingDingResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -102,6 +106,7 @@ func (r *NotificationDingDingResource) Configure(
 	r.client = client
 }
 
+// Create creates a new DingDing notification resource.
 func (r *NotificationDingDingResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -142,6 +147,7 @@ func (r *NotificationDingDingResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the DingDing notification resource.
 func (r *NotificationDingDingResource) Read(
 	ctx context.Context,
 	req resource.ReadRequest,
@@ -197,6 +203,7 @@ func (r *NotificationDingDingResource) Read(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the DingDing notification resource.
 func (r *NotificationDingDingResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -234,6 +241,7 @@ func (r *NotificationDingDingResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the DingDing notification resource.
 func (r *NotificationDingDingResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -254,6 +262,7 @@ func (r *NotificationDingDingResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationDingDingResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

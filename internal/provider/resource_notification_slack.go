@@ -24,14 +24,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationSlackResource{}
 )
 
+// NewNotificationSlackResource returns a new instance of the Slack notification resource.
 func NewNotificationSlackResource() resource.Resource {
 	return &NotificationSlackResource{}
 }
 
+// NotificationSlackResource defines the resource implementation.
 type NotificationSlackResource struct {
 	client *kuma.Client
 }
 
+// NotificationSlackResourceModel describes the resource data model.
 type NotificationSlackResourceModel struct {
 	NotificationBaseModel
 
@@ -95,6 +98,7 @@ func (r *NotificationSlackResource) Schema(
 	}
 }
 
+// Configure configures the Slack notification resource with the API client.
 func (r *NotificationSlackResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -121,6 +125,7 @@ func (r *NotificationSlackResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Slack notification resource.
 func (r *NotificationSlackResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -164,6 +169,7 @@ func (r *NotificationSlackResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Slack notification resource.
 func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationSlackResourceModel
 
@@ -218,6 +224,7 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Slack notification resource.
 func (r *NotificationSlackResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -258,6 +265,7 @@ func (r *NotificationSlackResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Slack notification resource.
 func (r *NotificationSlackResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -278,6 +286,7 @@ func (r *NotificationSlackResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationSlackResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

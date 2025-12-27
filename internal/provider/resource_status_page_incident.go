@@ -18,6 +18,7 @@ import (
 
 var _ resource.Resource = &StatusPageIncidentResource{}
 
+// NewStatusPageIncidentResource returns a new instance of the status page incident resource.
 func NewStatusPageIncidentResource() resource.Resource {
 	return &StatusPageIncidentResource{}
 }
@@ -37,6 +38,7 @@ type StatusPageIncidentResource struct {
 	client *kuma.Client
 }
 
+// StatusPageIncidentResourceModel describes the resource data model.
 type StatusPageIncidentResourceModel struct {
 	ID             types.Int64  `tfsdk:"id"`
 	StatusPageSlug types.String `tfsdk:"status_page_slug"`
@@ -98,6 +100,7 @@ func (r *StatusPageIncidentResource) Schema(
 	}
 }
 
+// Configure configures the status page incident resource with the API client.
 func (r *StatusPageIncidentResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -124,6 +127,7 @@ func (r *StatusPageIncidentResource) Configure(
 	r.client = client
 }
 
+// Create creates a new status page incident resource.
 func (r *StatusPageIncidentResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -155,6 +159,7 @@ func (r *StatusPageIncidentResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the status page incident resource.
 func (r *StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageIncidentResourceModel
 
@@ -167,6 +172,7 @@ func (r *StatusPageIncidentResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the status page incident resource.
 func (r *StatusPageIncidentResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -196,6 +202,7 @@ func (r *StatusPageIncidentResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the status page incident resource.
 func (r *StatusPageIncidentResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

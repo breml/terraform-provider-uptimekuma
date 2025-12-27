@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorTCPPortDataSource{}
 
+// NewMonitorTCPPortDataSource returns a new instance of the TCP Port monitor data source.
 func NewMonitorTCPPortDataSource() datasource.DataSource {
 	return &MonitorTCPPortDataSource{}
 }
 
+// MonitorTCPPortDataSource manages TCP Port monitor data source operations.
 type MonitorTCPPortDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorTCPPortDataSourceModel describes the data model for TCP Port monitor data source.
 type MonitorTCPPortDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
@@ -67,6 +70,7 @@ func (d *MonitorTCPPortDataSource) Schema(
 	}
 }
 
+// Configure configures the TCP Port monitor data source with the API client.
 func (d *MonitorTCPPortDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

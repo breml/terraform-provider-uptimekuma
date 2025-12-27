@@ -18,14 +18,17 @@ import (
 
 var _ resource.Resource = &StatusPageResource{}
 
+// NewStatusPageResource returns a new instance of the status page resource.
 func NewStatusPageResource() resource.Resource {
 	return &StatusPageResource{}
 }
 
+// StatusPageResource defines the resource implementation.
 type StatusPageResource struct {
 	client *kuma.Client
 }
 
+// StatusPageResourceModel describes the resource data model.
 type StatusPageResourceModel struct {
 	ID                    types.Int64  `tfsdk:"id"`
 	Slug                  types.String `tfsdk:"slug"`
@@ -44,6 +47,7 @@ type StatusPageResourceModel struct {
 	PublicGroupList       types.List   `tfsdk:"public_group_list"`
 }
 
+// PublicGroupModel describes a public group in a status page.
 type PublicGroupModel struct {
 	ID          types.Int64  `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
@@ -51,6 +55,7 @@ type PublicGroupModel struct {
 	MonitorList types.List   `tfsdk:"monitor_list"`
 }
 
+// PublicMonitorModel describes a monitor in a public group.
 type PublicMonitorModel struct {
 	ID      types.Int64 `tfsdk:"id"`
 	SendURL types.Bool  `tfsdk:"send_url"`
@@ -180,6 +185,7 @@ func (r *StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	}
 }
 
+// Configure configures the status page resource with the API client.
 func (r *StatusPageResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -206,6 +212,7 @@ func (r *StatusPageResource) Configure(
 	r.client = client
 }
 
+// Create creates a new status page resource.
 func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data StatusPageResourceModel
 
@@ -323,6 +330,7 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the status page resource.
 func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageResourceModel
 
@@ -382,6 +390,7 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the status page resource.
 func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data StatusPageResourceModel
 
@@ -481,6 +490,7 @@ func (r *StatusPageResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the status page resource.
 func (r *StatusPageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data StatusPageResourceModel
 

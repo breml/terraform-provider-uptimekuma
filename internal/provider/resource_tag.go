@@ -25,14 +25,17 @@ var (
 	_ resource.ResourceWithImportState = &TagResource{}
 )
 
+// NewTagResource returns a new instance of the tag resource.
 func NewTagResource() resource.Resource {
 	return &TagResource{}
 }
 
+// TagResource defines the resource implementation.
 type TagResource struct {
 	client *kuma.Client
 }
 
+// TagResourceModel describes the resource data model.
 type TagResourceModel struct {
 	ID    types.Int64  `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
@@ -72,6 +75,7 @@ func (r *TagResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 	}
 }
 
+// Configure configures the tag resource with the API client.
 func (r *TagResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -92,6 +96,7 @@ func (r *TagResource) Configure(_ context.Context, req resource.ConfigureRequest
 	r.client = client
 }
 
+// Create creates a new tag resource.
 func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data TagResourceModel
 
@@ -116,6 +121,7 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the tag resource.
 func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data TagResourceModel
 
@@ -141,6 +147,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the tag resource.
 func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data TagResourceModel
 
@@ -164,6 +171,7 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the tag resource.
 func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data TagResourceModel
 
@@ -179,6 +187,7 @@ func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *TagResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

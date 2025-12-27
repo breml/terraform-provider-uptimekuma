@@ -32,25 +32,30 @@ var (
 	_ resource.ResourceWithImportState = &MaintenanceResource{}
 )
 
+// NewMaintenanceResource returns a new instance of the Maintenance resource.
 func NewMaintenanceResource() resource.Resource {
 	return &MaintenanceResource{}
 }
 
+// MaintenanceResource defines the resource implementation.
 type MaintenanceResource struct {
 	client *kuma.Client
 }
 
+// TimeOfDayModel describes the time of day data model.
 type TimeOfDayModel struct {
 	Hours   types.Int64 `tfsdk:"hours"`
 	Minutes types.Int64 `tfsdk:"minutes"`
 	Seconds types.Int64 `tfsdk:"seconds"`
 }
 
+// TimeslotModel describes the timeslot data model.
 type TimeslotModel struct {
 	StartDate types.String `tfsdk:"start_date"`
 	EndDate   types.String `tfsdk:"end_date"`
 }
 
+// MaintenanceResourceModel describes the Maintenance resource data model.
 type MaintenanceResourceModel struct {
 	ID               types.Int64  `tfsdk:"id"`
 	Title            types.String `tfsdk:"title"`
@@ -238,6 +243,7 @@ func (r *MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
+// Configure configures the MaintenanceResource with the API client.
 func (r *MaintenanceResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -264,6 +270,7 @@ func (r *MaintenanceResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Maintenance resource.
 func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MaintenanceResourceModel
 
@@ -298,6 +305,7 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Maintenance resource.
 func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceResourceModel
 
@@ -323,6 +331,7 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Maintenance resource.
 func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MaintenanceResourceModel
 
@@ -363,6 +372,7 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Maintenance resource.
 func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MaintenanceResourceModel
 

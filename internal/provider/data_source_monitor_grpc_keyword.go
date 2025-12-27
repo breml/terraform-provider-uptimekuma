@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorGrpcKeywordDataSource{}
 
+// NewMonitorGrpcKeywordDataSource returns a new instance of the gRPC Keyword monitor data source.
 func NewMonitorGrpcKeywordDataSource() datasource.DataSource {
 	return &MonitorGrpcKeywordDataSource{}
 }
 
+// MonitorGrpcKeywordDataSource manages gRPC Keyword monitor data source operations.
 type MonitorGrpcKeywordDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorGrpcKeywordDataSourceModel describes the data model for gRPC Keyword monitor data source.
 type MonitorGrpcKeywordDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorGrpcKeywordDataSource) Schema(
 	}
 }
 
+// Configure configures the gRPC Keyword monitor data source with the API client.
 func (d *MonitorGrpcKeywordDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

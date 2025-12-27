@@ -21,14 +21,17 @@ import (
 
 var _ resource.Resource = &ProxyResource{}
 
+// NewProxyResource returns a new instance of the proxy resource.
 func NewProxyResource() resource.Resource {
 	return &ProxyResource{}
 }
 
+// ProxyResource defines the resource implementation.
 type ProxyResource struct {
 	client *kuma.Client
 }
 
+// ProxyResourceModel describes the resource data model.
 type ProxyResourceModel struct {
 	ID            types.Int64  `tfsdk:"id"`
 	Protocol      types.String `tfsdk:"protocol"`
@@ -112,6 +115,7 @@ func (r *ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	}
 }
 
+// Configure configures the proxy resource with the API client.
 func (r *ProxyResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -136,6 +140,7 @@ func (r *ProxyResource) Configure(
 	r.client = client
 }
 
+// Create creates a new proxy resource.
 func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ProxyResourceModel
 
@@ -180,6 +185,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the proxy resource.
 func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ProxyResourceModel
 
@@ -221,6 +227,7 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the proxy resource.
 func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data ProxyResourceModel
 
@@ -264,6 +271,7 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the proxy resource.
 func (r *ProxyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data ProxyResourceModel
 

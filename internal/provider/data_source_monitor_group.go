@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorGroupDataSource{}
 
+// NewMonitorGroupDataSource returns a new instance of the monitor group data source.
 func NewMonitorGroupDataSource() datasource.DataSource {
 	return &MonitorGroupDataSource{}
 }
 
+// MonitorGroupDataSource manages monitor group data source operations.
 type MonitorGroupDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorGroupDataSourceModel describes the data model for monitor group data source.
 type MonitorGroupDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorGroupDataSource) Schema(
 	}
 }
 
+// Configure configures the monitor group data source with the API client.
 func (d *MonitorGroupDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

@@ -19,14 +19,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorHTTPResource{}
 )
 
+// NewMonitorHTTPResource returns a new instance of the HTTP monitor resource.
 func NewMonitorHTTPResource() resource.Resource {
 	return &MonitorHTTPResource{}
 }
 
+// MonitorHTTPResource defines the resource implementation.
 type MonitorHTTPResource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPResourceModel describes the resource data model.
 type MonitorHTTPResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
@@ -47,6 +50,7 @@ func (r *MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
+// Configure configures the HTTP monitor resource with the API client.
 func (r *MonitorHTTPResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -73,6 +77,7 @@ func (r *MonitorHTTPResource) Configure(
 	r.client = client
 }
 
+// Create creates a new HTTP monitor resource.
 func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -180,6 +185,7 @@ func stringOrNull(s string) types.String {
 	return types.StringValue(s)
 }
 
+// Read reads the current state of the HTTP monitor resource.
 func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -274,6 +280,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the HTTP monitor resource.
 func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorHTTPResourceModel
 	var state MonitorHTTPResourceModel
@@ -377,6 +384,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the HTTP monitor resource.
 func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorHTTPResourceModel
 
@@ -393,6 +401,7 @@ func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorHTTPResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

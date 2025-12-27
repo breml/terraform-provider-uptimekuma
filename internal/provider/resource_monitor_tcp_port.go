@@ -22,14 +22,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorTCPPortResource{}
 )
 
+// NewMonitorTCPPortResource returns a new instance of the TCP Port monitor resource.
 func NewMonitorTCPPortResource() resource.Resource {
 	return &MonitorTCPPortResource{}
 }
 
+// MonitorTCPPortResource defines the resource implementation.
 type MonitorTCPPortResource struct {
 	client *kuma.Client
 }
 
+// MonitorTCPPortResourceModel describes the resource data model.
 type MonitorTCPPortResourceModel struct {
 	MonitorBaseModel
 
@@ -71,6 +74,7 @@ func (r *MonitorTCPPortResource) Schema(
 	}
 }
 
+// Configure configures the TCP Port monitor resource with the API client.
 func (r *MonitorTCPPortResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -97,6 +101,7 @@ func (r *MonitorTCPPortResource) Configure(
 	r.client = client
 }
 
+// Create creates a new TCP Port monitor resource.
 func (r *MonitorTCPPortResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -162,6 +167,7 @@ func (r *MonitorTCPPortResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the TCP Port monitor resource.
 func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorTCPPortResourceModel
 
@@ -220,6 +226,7 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the TCP Port monitor resource.
 func (r *MonitorTCPPortResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -290,6 +297,7 @@ func (r *MonitorTCPPortResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the TCP Port monitor resource.
 func (r *MonitorTCPPortResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -310,6 +318,7 @@ func (r *MonitorTCPPortResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorTCPPortResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

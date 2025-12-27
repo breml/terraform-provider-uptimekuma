@@ -68,6 +68,7 @@ func validateURL() validator.String {
 	return urlValidator{}
 }
 
+// NewNotificationNtfyResource returns a new instance of the ntfy notification resource.
 func NewNotificationNtfyResource() resource.Resource {
 	return &NotificationNtfyResource{}
 }
@@ -156,6 +157,7 @@ func (r *NotificationNtfyResource) Schema(
 	}
 }
 
+// Configure configures the ntfy notification resource with the API client.
 func (r *NotificationNtfyResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -183,6 +185,7 @@ func (r *NotificationNtfyResource) Configure(
 	r.client = client
 }
 
+// Create creates a new ntfy notification resource.
 func (r *NotificationNtfyResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -224,6 +227,7 @@ func (r *NotificationNtfyResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the ntfy notification resource.
 func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationNtfyResourceModel
 
@@ -270,6 +274,7 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the ntfy notification resource.
 func (r *NotificationNtfyResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -310,6 +315,7 @@ func (r *NotificationNtfyResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the ntfy notification resource.
 func (r *NotificationNtfyResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -331,6 +337,7 @@ func (r *NotificationNtfyResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationNtfyResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

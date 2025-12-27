@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorHTTPKeywordDataSource{}
 
+// NewMonitorHTTPKeywordDataSource returns a new instance of the HTTP Keyword monitor data source.
 func NewMonitorHTTPKeywordDataSource() datasource.DataSource {
 	return &MonitorHTTPKeywordDataSource{}
 }
 
+// MonitorHTTPKeywordDataSource manages HTTP Keyword monitor data source operations.
 type MonitorHTTPKeywordDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPKeywordDataSourceModel describes the data model for HTTP Keyword monitor data source.
 type MonitorHTTPKeywordDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorHTTPKeywordDataSource) Schema(
 	}
 }
 
+// Configure configures the HTTP Keyword monitor data source with the API client.
 func (d *MonitorHTTPKeywordDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

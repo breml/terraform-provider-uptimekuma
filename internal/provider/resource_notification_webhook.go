@@ -24,14 +24,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationWebhookResource{}
 )
 
+// NewNotificationWebhookResource returns a new instance of the Webhook notification resource.
 func NewNotificationWebhookResource() resource.Resource {
 	return &NotificationWebhookResource{}
 }
 
+// NotificationWebhookResource defines the resource implementation.
 type NotificationWebhookResource struct {
 	client *kuma.Client
 }
 
+// NotificationWebhookResourceModel describes the resource data model.
 type NotificationWebhookResourceModel struct {
 	NotificationBaseModel
 
@@ -87,6 +90,7 @@ func (r *NotificationWebhookResource) Schema(
 	}
 }
 
+// Configure configures the Webhook notification resource with the API client.
 func (r *NotificationWebhookResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -113,6 +117,7 @@ func (r *NotificationWebhookResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Webhook notification resource.
 func (r *NotificationWebhookResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -163,6 +168,7 @@ func (r *NotificationWebhookResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Webhook notification resource.
 func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationWebhookResourceModel
 
@@ -222,6 +228,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Webhook notification resource.
 func (r *NotificationWebhookResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -271,6 +278,7 @@ func (r *NotificationWebhookResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Webhook notification resource.
 func (r *NotificationWebhookResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -293,6 +301,7 @@ func (r *NotificationWebhookResource) Delete(
 	tflog.Info(ctx, "Deleted webhook notification", map[string]any{"id": data.ID.ValueInt64()})
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationWebhookResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

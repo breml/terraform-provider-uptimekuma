@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorPushDataSource{}
 
+// NewMonitorPushDataSource returns a new instance of the Push monitor data source.
 func NewMonitorPushDataSource() datasource.DataSource {
 	return &MonitorPushDataSource{}
 }
 
+// MonitorPushDataSource manages Push monitor data source operations.
 type MonitorPushDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPushDataSourceModel describes the data model for Push monitor data source.
 type MonitorPushDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorPushDataSource) Schema(
 	}
 }
 
+// Configure configures the Push monitor data source with the API client.
 func (d *MonitorPushDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

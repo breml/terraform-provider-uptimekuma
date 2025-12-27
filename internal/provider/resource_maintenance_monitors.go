@@ -21,14 +21,17 @@ var (
 	_ resource.ResourceWithImportState = &MaintenanceMonitorsResource{}
 )
 
+// NewMaintenanceMonitorsResource returns a new instance of the MaintenanceMonitors resource.
 func NewMaintenanceMonitorsResource() resource.Resource {
 	return &MaintenanceMonitorsResource{}
 }
 
+// MaintenanceMonitorsResource defines the resource implementation.
 type MaintenanceMonitorsResource struct {
 	client *kuma.Client
 }
 
+// MaintenanceMonitorsResourceModel describes the MaintenanceMonitors resource data model.
 type MaintenanceMonitorsResourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
@@ -66,6 +69,7 @@ func (r *MaintenanceMonitorsResource) Schema(
 	}
 }
 
+// Configure configures the MaintenanceMonitorsResource with the API client.
 func (r *MaintenanceMonitorsResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -92,6 +96,7 @@ func (r *MaintenanceMonitorsResource) Configure(
 	r.client = client
 }
 
+// Create creates a new MaintenanceMonitors resource.
 func (r *MaintenanceMonitorsResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -120,6 +125,7 @@ func (r *MaintenanceMonitorsResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the MaintenanceMonitors resource.
 func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceMonitorsResourceModel
 
@@ -147,6 +153,7 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the MaintenanceMonitors resource.
 func (r *MaintenanceMonitorsResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -175,6 +182,7 @@ func (r *MaintenanceMonitorsResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the MaintenanceMonitors resource.
 func (r *MaintenanceMonitorsResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

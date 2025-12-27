@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &NotificationDiscordDataSource{}
 
+// NewNotificationDiscordDataSource returns a new instance of the Discord notification data source.
 func NewNotificationDiscordDataSource() datasource.DataSource {
 	return &NotificationDiscordDataSource{}
 }
 
+// NotificationDiscordDataSource manages Discord notification data source operations.
 type NotificationDiscordDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationDiscordDataSourceModel describes the data model for Discord notification data source.
 type NotificationDiscordDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -56,6 +59,7 @@ func (d *NotificationDiscordDataSource) Schema(
 	}
 }
 
+// Configure configures the Discord notification data source with the API client.
 func (d *NotificationDiscordDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

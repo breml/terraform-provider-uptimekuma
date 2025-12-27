@@ -19,14 +19,17 @@ import (
 
 var _ resource.Resource = &DockerHostResource{}
 
+// NewDockerHostResource returns a new instance of the docker host resource.
 func NewDockerHostResource() resource.Resource {
 	return &DockerHostResource{}
 }
 
+// DockerHostResource defines the resource implementation.
 type DockerHostResource struct {
 	client *kuma.Client
 }
 
+// DockerHostResourceModel describes the resource data model.
 type DockerHostResourceModel struct {
 	ID           types.Int64  `tfsdk:"id"`
 	Name         types.String `tfsdk:"name"`
@@ -72,6 +75,7 @@ func (r *DockerHostResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	}
 }
 
+// Configure configures the docker host resource with the API client.
 func (r *DockerHostResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -96,6 +100,7 @@ func (r *DockerHostResource) Configure(
 	r.client = client
 }
 
+// Create creates a new docker host resource.
 func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data DockerHostResourceModel
 
@@ -121,6 +126,7 @@ func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the docker host resource.
 func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data DockerHostResourceModel
 
@@ -147,6 +153,7 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the docker host resource.
 func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data DockerHostResourceModel
 
@@ -171,6 +178,7 @@ func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the docker host resource.
 func (r *DockerHostResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data DockerHostResourceModel
 

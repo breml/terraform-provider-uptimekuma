@@ -20,14 +20,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorPostgresResource{}
 )
 
+// NewMonitorPostgresResource returns a new instance of the PostgreSQL monitor resource.
 func NewMonitorPostgresResource() resource.Resource {
 	return &MonitorPostgresResource{}
 }
 
+// MonitorPostgresResource defines the resource implementation.
 type MonitorPostgresResource struct {
 	client *kuma.Client
 }
 
+// MonitorPostgresResourceModel describes the resource data model.
 type MonitorPostgresResourceModel struct {
 	MonitorBaseModel
 
@@ -66,6 +69,7 @@ func (r *MonitorPostgresResource) Schema(
 	}
 }
 
+// Configure configures the PostgreSQL monitor resource with the API client.
 func (r *MonitorPostgresResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -92,6 +96,7 @@ func (r *MonitorPostgresResource) Configure(
 	r.client = client
 }
 
+// Create creates a new PostgreSQL monitor resource.
 func (r *MonitorPostgresResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -157,6 +162,7 @@ func (r *MonitorPostgresResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the PostgreSQL monitor resource.
 func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPostgresResourceModel
 
@@ -215,6 +221,7 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the PostgreSQL monitor resource.
 func (r *MonitorPostgresResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -285,6 +292,7 @@ func (r *MonitorPostgresResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the PostgreSQL monitor resource.
 func (r *MonitorPostgresResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -305,6 +313,7 @@ func (r *MonitorPostgresResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorPostgresResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

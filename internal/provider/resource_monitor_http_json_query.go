@@ -22,14 +22,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorHTTPJSONQueryResource{}
 )
 
+// NewMonitorHTTPJSONQueryResource returns a new instance of the HTTP JSON Query monitor resource.
 func NewMonitorHTTPJSONQueryResource() resource.Resource {
 	return &MonitorHTTPJSONQueryResource{}
 }
 
+// MonitorHTTPJSONQueryResource defines the resource implementation.
 type MonitorHTTPJSONQueryResource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPJSONQueryResourceModel describes the resource data model.
 type MonitorHTTPJSONQueryResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
@@ -79,6 +82,7 @@ func (r *MonitorHTTPJSONQueryResource) Schema(
 	}
 }
 
+// Configure configures the HTTP JSON Query monitor resource with the API client.
 func (r *MonitorHTTPJSONQueryResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -105,6 +109,7 @@ func (r *MonitorHTTPJSONQueryResource) Configure(
 	r.client = client
 }
 
+// Create creates a new HTTP JSON Query monitor resource.
 func (r *MonitorHTTPJSONQueryResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -213,6 +218,7 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the HTTP JSON Query monitor resource.
 func (r *MonitorHTTPJSONQueryResource) Read(
 	ctx context.Context,
 	req resource.ReadRequest,
@@ -314,6 +320,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the HTTP JSON Query monitor resource.
 func (r *MonitorHTTPJSONQueryResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -427,6 +434,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the HTTP JSON Query monitor resource.
 func (r *MonitorHTTPJSONQueryResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -447,6 +455,7 @@ func (r *MonitorHTTPJSONQueryResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorHTTPJSONQueryResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

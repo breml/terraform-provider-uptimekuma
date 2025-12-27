@@ -21,14 +21,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorPushResource{}
 )
 
+// NewMonitorPushResource returns a new instance of the Push monitor resource.
 func NewMonitorPushResource() resource.Resource {
 	return &MonitorPushResource{}
 }
 
+// MonitorPushResource defines the resource implementation.
 type MonitorPushResource struct {
 	client *kuma.Client
 }
 
+// MonitorPushResourceModel describes the resource data model.
 type MonitorPushResourceModel struct {
 	MonitorBaseModel
 
@@ -58,6 +61,7 @@ func (r *MonitorPushResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
+// Configure configures the Push monitor resource with the API client.
 func (r *MonitorPushResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -84,6 +88,7 @@ func (r *MonitorPushResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Push monitor resource.
 func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorPushResourceModel
 
@@ -150,6 +155,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Push monitor resource.
 func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPushResourceModel
 
@@ -207,6 +213,7 @@ func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Push monitor resource.
 func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorPushResourceModel
 
@@ -272,6 +279,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Push monitor resource.
 func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorPushResourceModel
 
@@ -288,6 +296,7 @@ func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorPushResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

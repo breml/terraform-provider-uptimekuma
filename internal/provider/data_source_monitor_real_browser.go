@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorRealBrowserDataSource{}
 
+// NewMonitorRealBrowserDataSource returns a new instance of the Real Browser monitor data source.
 func NewMonitorRealBrowserDataSource() datasource.DataSource {
 	return &MonitorRealBrowserDataSource{}
 }
 
+// MonitorRealBrowserDataSource manages Real Browser monitor data source operations.
 type MonitorRealBrowserDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorRealBrowserDataSourceModel describes the data model for Real Browser monitor data source.
 type MonitorRealBrowserDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorRealBrowserDataSource) Schema(
 	}
 }
 
+// Configure configures the Real Browser monitor data source with the API client.
 func (d *MonitorRealBrowserDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

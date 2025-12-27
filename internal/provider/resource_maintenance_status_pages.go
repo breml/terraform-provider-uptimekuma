@@ -21,14 +21,17 @@ var (
 	_ resource.ResourceWithImportState = &MaintenanceStatusPagesResource{}
 )
 
+// NewMaintenanceStatusPagesResource returns a new instance of the MaintenanceStatusPages resource.
 func NewMaintenanceStatusPagesResource() resource.Resource {
 	return &MaintenanceStatusPagesResource{}
 }
 
+// MaintenanceStatusPagesResource defines the resource implementation.
 type MaintenanceStatusPagesResource struct {
 	client *kuma.Client
 }
 
+// MaintenanceStatusPagesResourceModel describes the MaintenanceStatusPages resource data model.
 type MaintenanceStatusPagesResourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
@@ -66,6 +69,7 @@ func (r *MaintenanceStatusPagesResource) Schema(
 	}
 }
 
+// Configure configures the MaintenanceStatusPagesResource with the API client.
 func (r *MaintenanceStatusPagesResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -92,6 +96,7 @@ func (r *MaintenanceStatusPagesResource) Configure(
 	r.client = client
 }
 
+// Create creates a new MaintenanceStatusPages resource.
 func (r *MaintenanceStatusPagesResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -120,6 +125,7 @@ func (r *MaintenanceStatusPagesResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the MaintenanceStatusPages resource.
 func (r *MaintenanceStatusPagesResource) Read(
 	ctx context.Context,
 	req resource.ReadRequest,
@@ -151,6 +157,7 @@ func (r *MaintenanceStatusPagesResource) Read(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the MaintenanceStatusPages resource.
 func (r *MaintenanceStatusPagesResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -179,6 +186,7 @@ func (r *MaintenanceStatusPagesResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the MaintenanceStatusPages resource.
 func (r *MaintenanceStatusPagesResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &MaintenanceStatusPagesDataSource{}
 
+// NewMaintenanceStatusPagesDataSource returns a new instance of the maintenance status pages data source.
 func NewMaintenanceStatusPagesDataSource() datasource.DataSource {
 	return &MaintenanceStatusPagesDataSource{}
 }
 
+// MaintenanceStatusPagesDataSource manages maintenance status pages data source operations.
 type MaintenanceStatusPagesDataSource struct {
 	client *kuma.Client
 }
 
+// MaintenanceStatusPagesDataSourceModel describes the data model for maintenance status pages data source.
 type MaintenanceStatusPagesDataSourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	StatusPageIDs types.List  `tfsdk:"status_page_ids"`
@@ -55,6 +58,7 @@ func (d *MaintenanceStatusPagesDataSource) Schema(
 	}
 }
 
+// Configure configures the maintenance status pages data source with the API client.
 func (d *MaintenanceStatusPagesDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

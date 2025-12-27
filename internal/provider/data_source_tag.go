@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &TagDataSource{}
 
+// NewTagDataSource returns a new instance of the tag data source.
 func NewTagDataSource() datasource.DataSource {
 	return &TagDataSource{}
 }
 
+// TagDataSource manages tag data source operations.
 type TagDataSource struct {
 	client *kuma.Client
 }
 
+// TagDataSourceModel describes the data model for tag data source.
 type TagDataSourceModel struct {
 	ID    types.Int64  `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 	}
 }
 
+// Configure configures the tag data source with the API client.
 func (d *TagDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

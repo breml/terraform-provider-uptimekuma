@@ -20,14 +20,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorRedisResource{}
 )
 
+// NewMonitorRedisResource returns a new instance of the Redis monitor resource.
 func NewMonitorRedisResource() resource.Resource {
 	return &MonitorRedisResource{}
 }
 
+// MonitorRedisResource defines the resource implementation.
 type MonitorRedisResource struct {
 	client *kuma.Client
 }
 
+// MonitorRedisResourceModel describes the resource data model.
 type MonitorRedisResourceModel struct {
 	MonitorBaseModel
 
@@ -62,6 +65,7 @@ func (r *MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaReques
 	}
 }
 
+// Configure configures the Redis monitor resource with the API client.
 func (r *MonitorRedisResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -88,6 +92,7 @@ func (r *MonitorRedisResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Redis monitor resource.
 func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorRedisResourceModel
 
@@ -149,6 +154,7 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Redis monitor resource.
 func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorRedisResourceModel
 
@@ -207,6 +213,7 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Redis monitor resource.
 func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorRedisResourceModel
 
@@ -273,6 +280,7 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Redis monitor resource.
 func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorRedisResourceModel
 
@@ -289,6 +297,7 @@ func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorRedisResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

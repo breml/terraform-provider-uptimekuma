@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &MaintenanceMonitorsDataSource{}
 
+// NewMaintenanceMonitorsDataSource returns a new instance of the maintenance monitors data source.
 func NewMaintenanceMonitorsDataSource() datasource.DataSource {
 	return &MaintenanceMonitorsDataSource{}
 }
 
+// MaintenanceMonitorsDataSource manages maintenance monitors data source operations.
 type MaintenanceMonitorsDataSource struct {
 	client *kuma.Client
 }
 
+// MaintenanceMonitorsDataSourceModel describes the data model for maintenance monitors data source.
 type MaintenanceMonitorsDataSourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
@@ -55,6 +58,7 @@ func (d *MaintenanceMonitorsDataSource) Schema(
 	}
 }
 
+// Configure configures the maintenance monitors data source with the API client.
 func (d *MaintenanceMonitorsDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

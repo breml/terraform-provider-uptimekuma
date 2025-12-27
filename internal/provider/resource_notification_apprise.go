@@ -23,14 +23,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationAppriseResource{}
 )
 
+// NewNotificationAppriseResource returns a new instance of the Apprise notification resource.
 func NewNotificationAppriseResource() resource.Resource {
 	return &NotificationAppriseResource{}
 }
 
+// NotificationAppriseResource defines the resource implementation.
 type NotificationAppriseResource struct {
 	client *kuma.Client
 }
 
+// NotificationAppriseResourceModel describes the resource data model.
 type NotificationAppriseResourceModel struct {
 	NotificationBaseModel
 
@@ -69,6 +72,7 @@ func (r *NotificationAppriseResource) Schema(
 	}
 }
 
+// Configure configures the Apprise notification resource with the API client.
 func (r *NotificationAppriseResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -95,6 +99,7 @@ func (r *NotificationAppriseResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Apprise notification resource.
 func (r *NotificationAppriseResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -134,6 +139,7 @@ func (r *NotificationAppriseResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Apprise notification resource.
 func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationAppriseResourceModel
 
@@ -179,6 +185,7 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Apprise notification resource.
 func (r *NotificationAppriseResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -215,6 +222,7 @@ func (r *NotificationAppriseResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Apprise notification resource.
 func (r *NotificationAppriseResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -235,6 +243,7 @@ func (r *NotificationAppriseResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *NotificationAppriseResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

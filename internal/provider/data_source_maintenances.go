@@ -14,18 +14,22 @@ import (
 
 var _ datasource.DataSource = &MaintenancesDataSource{}
 
+// NewMaintenancesDataSource returns a new instance of the maintenances data source.
 func NewMaintenancesDataSource() datasource.DataSource {
 	return &MaintenancesDataSource{}
 }
 
+// MaintenancesDataSource manages maintenances data source operations.
 type MaintenancesDataSource struct {
 	client *kuma.Client
 }
 
+// MaintenancesDataSourceModel describes the data model for maintenances data source.
 type MaintenancesDataSourceModel struct {
 	Maintenances types.List `tfsdk:"maintenances"`
 }
 
+// MaintenanceDataModel describes the data model for maintenance data.
 type MaintenanceDataModel struct {
 	ID               types.Int64  `tfsdk:"id"`
 	Title            types.String `tfsdk:"title"`
@@ -97,6 +101,7 @@ func (d *MaintenancesDataSource) Schema(
 	}
 }
 
+// Configure configures the maintenances data source with the API client.
 func (d *MaintenancesDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

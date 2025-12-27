@@ -27,14 +27,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorRealBrowserResource{}
 )
 
+// NewMonitorRealBrowserResource returns a new instance of the Real Browser monitor resource.
 func NewMonitorRealBrowserResource() resource.Resource {
 	return &MonitorRealBrowserResource{}
 }
 
+// MonitorRealBrowserResource defines the resource implementation.
 type MonitorRealBrowserResource struct {
 	client *kuma.Client
 }
 
+// MonitorRealBrowserResourceModel describes the resource data model.
 type MonitorRealBrowserResourceModel struct {
 	MonitorBaseModel
 
@@ -125,6 +128,7 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	return attrs
 }
 
+// Configure configures the Real Browser monitor resource with the API client.
 func (r *MonitorRealBrowserResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -151,6 +155,7 @@ func (r *MonitorRealBrowserResource) Configure(
 	r.client = client
 }
 
+// Create creates a new Real Browser monitor resource.
 func (r *MonitorRealBrowserResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -241,6 +246,7 @@ func (r *MonitorRealBrowserResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Real Browser monitor resource.
 func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorRealBrowserResourceModel
 
@@ -323,6 +329,7 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the Real Browser monitor resource.
 func (r *MonitorRealBrowserResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -418,6 +425,7 @@ func (r *MonitorRealBrowserResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the Real Browser monitor resource.
 func (r *MonitorRealBrowserResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -438,6 +446,7 @@ func (r *MonitorRealBrowserResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorRealBrowserResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

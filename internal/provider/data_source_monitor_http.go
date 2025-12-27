@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorHTTPDataSource{}
 
+// NewMonitorHTTPDataSource returns a new instance of the HTTP monitor data source.
 func NewMonitorHTTPDataSource() datasource.DataSource {
 	return &MonitorHTTPDataSource{}
 }
 
+// MonitorHTTPDataSource manages HTTP monitor data source operations.
 type MonitorHTTPDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPDataSourceModel describes the data model for HTTP monitor data source.
 type MonitorHTTPDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -62,6 +65,7 @@ func (d *MonitorHTTPDataSource) Schema(
 	}
 }
 
+// Configure configures the HTTP monitor data source with the API client.
 func (d *MonitorHTTPDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

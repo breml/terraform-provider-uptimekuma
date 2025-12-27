@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &NotificationTeamsDataSource{}
 
+// NewNotificationTeamsDataSource returns a new instance of the Microsoft Teams notification data source.
 func NewNotificationTeamsDataSource() datasource.DataSource {
 	return &NotificationTeamsDataSource{}
 }
 
+// NotificationTeamsDataSource manages Microsoft Teams notification data source operations.
 type NotificationTeamsDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationTeamsDataSourceModel describes the data model for Microsoft Teams notification data source.
 type NotificationTeamsDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -56,6 +59,7 @@ func (d *NotificationTeamsDataSource) Schema(
 	}
 }
 
+// Configure configures the Microsoft Teams notification data source with the API client.
 func (d *NotificationTeamsDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

@@ -23,14 +23,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorGrpcKeywordResource{}
 )
 
+// NewMonitorGrpcKeywordResource returns a new instance of the gRPC Keyword monitor resource.
 func NewMonitorGrpcKeywordResource() resource.Resource {
 	return &MonitorGrpcKeywordResource{}
 }
 
+// MonitorGrpcKeywordResource defines the resource implementation.
 type MonitorGrpcKeywordResource struct {
 	client *kuma.Client
 }
 
+// MonitorGrpcKeywordResourceModel describes the resource data model.
 type MonitorGrpcKeywordResourceModel struct {
 	MonitorBaseModel
 
@@ -114,6 +117,7 @@ func (r *MonitorGrpcKeywordResource) Schema(
 	}
 }
 
+// Configure configures the gRPC Keyword monitor resource with the API client.
 func (r *MonitorGrpcKeywordResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -140,6 +144,7 @@ func (r *MonitorGrpcKeywordResource) Configure(
 	r.client = client
 }
 
+// Create creates a new gRPC Keyword monitor resource.
 func (r *MonitorGrpcKeywordResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -223,6 +228,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the gRPC Keyword monitor resource.
 func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorGrpcKeywordResourceModel
 
@@ -247,6 +253,7 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the gRPC Keyword monitor resource.
 func (r *MonitorGrpcKeywordResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -335,6 +342,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the gRPC Keyword monitor resource.
 func (r *MonitorGrpcKeywordResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -355,6 +363,7 @@ func (r *MonitorGrpcKeywordResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorGrpcKeywordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

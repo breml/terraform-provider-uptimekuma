@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorHTTPJSONQueryDataSource{}
 
+// NewMonitorHTTPJSONQueryDataSource returns a new instance of the HTTP JSON Query monitor data source.
 func NewMonitorHTTPJSONQueryDataSource() datasource.DataSource {
 	return &MonitorHTTPJSONQueryDataSource{}
 }
 
+// MonitorHTTPJSONQueryDataSource manages HTTP JSON Query monitor data source operations.
 type MonitorHTTPJSONQueryDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPJSONQueryDataSourceModel describes the data model for HTTP JSON Query monitor data source.
 type MonitorHTTPJSONQueryDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -57,6 +60,7 @@ func (d *MonitorHTTPJSONQueryDataSource) Schema(
 	}
 }
 
+// Configure configures the HTTP JSON Query monitor data source with the API client.
 func (d *MonitorHTTPJSONQueryDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

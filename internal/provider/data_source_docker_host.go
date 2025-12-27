@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &DockerHostDataSource{}
 
+// NewDockerHostDataSource returns a new instance of the Docker host data source.
 func NewDockerHostDataSource() datasource.DataSource {
 	return &DockerHostDataSource{}
 }
 
+// DockerHostDataSource manages Docker host data source operations.
 type DockerHostDataSource struct {
 	client *kuma.Client
 }
 
+// DockerHostDataSourceModel describes the data model for Docker host data source.
 type DockerHostDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -56,6 +59,7 @@ func (d *DockerHostDataSource) Schema(
 	}
 }
 
+// Configure configures the Docker host data source with the API client.
 func (d *DockerHostDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

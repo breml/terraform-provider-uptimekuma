@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &ProxyDataSource{}
 
+// NewProxyDataSource returns a new instance of the proxy data source.
 func NewProxyDataSource() datasource.DataSource {
 	return &ProxyDataSource{}
 }
 
+// ProxyDataSource manages proxy data source operations.
 type ProxyDataSource struct {
 	client *kuma.Client
 }
 
+// ProxyDataSourceModel describes the data model for proxy data source.
 type ProxyDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Host     types.String `tfsdk:"host"`
@@ -60,6 +63,7 @@ func (d *ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	}
 }
 
+// Configure configures the proxy data source with the API client.
 func (d *ProxyDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,

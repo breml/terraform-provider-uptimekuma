@@ -22,14 +22,17 @@ var (
 	_ resource.ResourceWithImportState = &MonitorHTTPKeywordResource{}
 )
 
+// NewMonitorHTTPKeywordResource returns a new instance of the HTTP Keyword monitor resource.
 func NewMonitorHTTPKeywordResource() resource.Resource {
 	return &MonitorHTTPKeywordResource{}
 }
 
+// MonitorHTTPKeywordResource defines the resource implementation.
 type MonitorHTTPKeywordResource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPKeywordResourceModel describes the resource data model.
 type MonitorHTTPKeywordResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
@@ -71,6 +74,7 @@ func (r *MonitorHTTPKeywordResource) Schema(
 	}
 }
 
+// Configure configures the HTTP Keyword monitor resource with the API client.
 func (r *MonitorHTTPKeywordResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
@@ -97,6 +101,7 @@ func (r *MonitorHTTPKeywordResource) Configure(
 	r.client = client
 }
 
+// Create creates a new HTTP Keyword monitor resource.
 func (r *MonitorHTTPKeywordResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -204,6 +209,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the HTTP Keyword monitor resource.
 func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPKeywordResourceModel
 
@@ -300,6 +306,7 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the HTTP Keyword monitor resource.
 func (r *MonitorHTTPKeywordResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -412,6 +419,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the HTTP Keyword monitor resource.
 func (r *MonitorHTTPKeywordResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -432,6 +440,7 @@ func (r *MonitorHTTPKeywordResource) Delete(
 	}
 }
 
+// ImportState imports an existing resource by ID.
 func (r *MonitorHTTPKeywordResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,

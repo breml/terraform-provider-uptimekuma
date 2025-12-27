@@ -14,14 +14,17 @@ import (
 
 var _ datasource.DataSource = &MonitorDNSDataSource{}
 
+// NewMonitorDNSDataSource returns a new instance of the DNS monitor data source.
 func NewMonitorDNSDataSource() datasource.DataSource {
 	return &MonitorDNSDataSource{}
 }
 
+// MonitorDNSDataSource manages DNS monitor data source operations.
 type MonitorDNSDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorDNSDataSourceModel describes the data model for DNS monitor data source.
 type MonitorDNSDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
@@ -62,6 +65,7 @@ func (d *MonitorDNSDataSource) Schema(
 	}
 }
 
+// Configure configures the DNS monitor data source with the API client.
 func (d *MonitorDNSDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
