@@ -509,6 +509,8 @@ func (*MaintenanceResource) ValidateConfig(
 		validateMaintenanceRecurringDayOfMonthStrategy(&data, &resp.Diagnostics)
 	case "cron":
 		validateMaintenanceCronStrategy(&data, &resp.Diagnostics)
+	default:
+		// manual strategy has no validation
 	}
 }
 
@@ -634,7 +636,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 		return r.populateMaintenanceFromModelRecurringDayOfMonth(ctx, data, m, diags)
 	case "cron":
 		return r.populateMaintenanceFromModelCron(data, m)
-	case "manual":
+	default:
 		m.DateRange = []*time.Time{nil, nil}
 	}
 
@@ -861,6 +863,8 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 		r.populateModelFromMaintenanceRecurringDayOfMonth(ctx, m, data, diags)
 	case "cron":
 		r.populateModelFromMaintenanceCron(m, data)
+	default:
+		// manual strategy has no special handling
 	}
 
 	r.populateMaintenanceTimeslotList(ctx, m, data, diags)
