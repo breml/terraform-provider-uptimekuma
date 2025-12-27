@@ -96,6 +96,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+ // Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		var redisMonitor monitor.Redis
 		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &redisMonitor)
@@ -109,6 +110,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+ // Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		monitors, err := d.client.GetMonitors(ctx)
 		if err != nil {
@@ -122,6 +124,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 				continue
 			}
 
+   // Error if multiple matches found.
 			if found != nil {
 				resp.Diagnostics.AddError(
 					"Multiple monitors found",
@@ -143,6 +146,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 			found = &redisMon
 		}
 
+  // Error if no matching item found.
 		if found == nil {
 			resp.Diagnostics.AddError(
 				"Redis monitor not found",
@@ -157,6 +161,7 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	resp.Diagnostics.AddError(
+ // Error if neither ID nor name provided.
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)

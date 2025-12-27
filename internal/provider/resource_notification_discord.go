@@ -163,6 +163,7 @@ func (r *NotificationDiscordResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, discord)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -172,6 +173,7 @@ func (r *NotificationDiscordResource) Create(
 
 	data.ID = types.Int64Value(id)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -179,6 +181,7 @@ func (r *NotificationDiscordResource) Create(
 func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationDiscordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -188,6 +191,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
+ // Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -200,6 +204,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 
 	discord := notification.Discord{}
 	err = base.As(&discord)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "discord"`, err.Error())
 		return
@@ -244,6 +249,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 
 	data.DisableURL = types.BoolValue(discord.DisableURL)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -281,11 +287,13 @@ func (r *NotificationDiscordResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, discord)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -297,6 +305,7 @@ func (r *NotificationDiscordResource) Delete(
 ) {
 	var data NotificationDiscordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -304,6 +313,7 @@ func (r *NotificationDiscordResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
@@ -317,6 +327,7 @@ func (*NotificationDiscordResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -325,5 +336,6 @@ func (*NotificationDiscordResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

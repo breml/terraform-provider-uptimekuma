@@ -96,6 +96,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+ // Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		var groupMonitor monitor.Group
 		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &groupMonitor)
@@ -109,6 +110,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+ // Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		monitors, err := d.client.GetMonitors(ctx)
 		if err != nil {
@@ -122,6 +124,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 				continue
 			}
 
+   // Error if multiple matches found.
 			if found != nil {
 				resp.Diagnostics.AddError(
 					"Multiple groups found",
@@ -143,6 +146,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 			found = &groupMon
 		}
 
+  // Error if no matching item found.
 		if found == nil {
 			resp.Diagnostics.AddError(
 				"Monitor group not found",
@@ -157,6 +161,7 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	resp.Diagnostics.AddError(
+ // Error if neither ID nor name provided.
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)

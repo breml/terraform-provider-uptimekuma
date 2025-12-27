@@ -56,6 +56,7 @@ func (*MonitorHTTPKeywordResource) Schema(
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
+ // Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP Keyword monitor resource checks for the presence (or absence) of a specific keyword in the HTTP response body. The monitor makes an HTTP(S) request and searches for the specified keyword in the response. Use `invert_keyword` to reverse the logic: when false (default), finding the keyword means UP; when true, finding the keyword means DOWN.",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
@@ -105,12 +106,14 @@ func (r *MonitorHTTPKeywordResource) Configure(
 
 // Create creates a new resource.
 func (r *MonitorHTTPKeywordResource) Create(
+    // Extract and validate configuration.
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
 	var data MonitorHTTPKeywordResourceModel
 
+ // Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -195,7 +198,9 @@ func (r *MonitorHTTPKeywordResource) Create(
 		httpKeywordMonitor.NotificationIDs = notificationIDs
 	}
 
+ // Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, httpKeywordMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create HTTP Keyword monitor", err.Error())
 		return
@@ -208,6 +213,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -215,6 +221,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPKeywordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -222,7 +229,9 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	}
 
 	var httpKeywordMonitor monitor.HTTPKeyword
+ // Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpKeywordMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read HTTP Keyword monitor", err.Error())
 		return
@@ -305,6 +314,7 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -316,6 +326,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 ) {
 	var data MonitorHTTPKeywordResourceModel
 
+ // Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -323,6 +334,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 
 	var state MonitorHTTPKeywordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -407,7 +419,9 @@ func (r *MonitorHTTPKeywordResource) Update(
 		httpKeywordMonitor.NotificationIDs = notificationIDs
 	}
 
+ // Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, httpKeywordMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP Keyword monitor", err.Error())
 		return
@@ -418,6 +432,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -429,13 +444,16 @@ func (r *MonitorHTTPKeywordResource) Delete(
 ) {
 	var data MonitorHTTPKeywordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+ // Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete HTTP Keyword monitor", err.Error())
 		return
@@ -444,11 +462,13 @@ func (r *MonitorHTTPKeywordResource) Delete(
 
 // ImportState imports an existing resource by ID.
 func (*MonitorHTTPKeywordResource) ImportState(
+    // Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -457,5 +477,6 @@ func (*MonitorHTTPKeywordResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

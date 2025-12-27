@@ -106,23 +106,27 @@ func (r *DockerHostResource) Configure(
 func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data DockerHostResourceModel
 
+	// Extract planned configuration.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Build Docker host configuration from plan.
 	config := dockerhost.Config{
 		Name:         data.Name.ValueString(),
 		DockerDaemon: data.DockerDaemon.ValueString(),
 		DockerType:   data.DockerType.ValueString(),
 	}
 
+	// Call API to create Docker host.
 	id, err := r.client.CreateDockerHost(ctx, config)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create docker host", err.Error())
 		return
 	}
 
+	// Set computed ID and save state.
 	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -132,13 +136,16 @@ func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data DockerHostResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Fetch current Docker host configuration from API.
 	dh, err := r.client.GetDockerHost(ctx, data.ID.ValueInt64())
 	if err != nil {
+		// Handle resource not found error.
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
@@ -148,6 +155,7 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
+	// Update resource attributes from API response.
 	data.Name = types.StringValue(dh.Name)
 	data.DockerDaemon = types.StringValue(dh.DockerDaemon)
 	data.DockerType = types.StringValue(dh.DockerType)
@@ -159,11 +167,13 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data DockerHostResourceModel
 
+	// Extract planned configuration.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Build Docker host configuration with updated values.
 	config := dockerhost.Config{
 		ID:           data.ID.ValueInt64(),
 		Name:         data.Name.ValueString(),
@@ -171,12 +181,14 @@ func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequ
 		DockerType:   data.DockerType.ValueString(),
 	}
 
+	// Call API to update Docker host.
 	err := r.client.UpdateDockerHost(ctx, config)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update docker host", err.Error())
 		return
 	}
 
+	// Save updated state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -184,11 +196,13 @@ func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *DockerHostResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data DockerHostResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Call API to delete Docker host.
 	err := r.client.DeleteDockerHost(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete docker host", err.Error())

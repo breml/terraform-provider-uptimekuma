@@ -41,7 +41,10 @@ type MonitorBaseModel struct {
 	Tags            types.List   `tfsdk:"tags"`
 }
 
+// withMonitorBaseAttributes adds common monitor schema attributes to the provided attribute map.
+// These attributes are shared across all monitor types: id, name, description, parent, interval, retry, etc.
 func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	// Monitor identifier (computed).
 	attrs["id"] = schema.Int64Attribute{
 		Computed:            true,
 		MarkdownDescription: "Monitor identifier",
@@ -50,21 +53,25 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		},
 	}
 
+	// Human-readable monitor name.
 	attrs["name"] = schema.StringAttribute{
 		MarkdownDescription: "Friendly name",
 		Required:            true,
 	}
 
+	// Optional monitor description.
 	attrs["description"] = schema.StringAttribute{
 		MarkdownDescription: "Description",
 		Optional:            true,
 	}
 
+	// Parent monitor ID for hierarchical relationships.
 	attrs["parent"] = schema.Int64Attribute{
 		MarkdownDescription: "Parent monitor ID for hierarchical organization",
 		Optional:            true,
 	}
 
+	// Heartbeat interval between checks.
 	attrs["interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Heartbeat interval in seconds",
 		Optional:            true,
@@ -75,6 +82,7 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		},
 	}
 
+	// Retry interval after failure.
 	attrs["retry_interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Retry interval in seconds",
 		Optional:            true,
@@ -85,6 +93,7 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		},
 	}
 
+	// Resend interval for notifications.
 	attrs["resend_interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Resend interval in seconds",
 		Optional:            true,
@@ -92,6 +101,7 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		Default:             int64default.StaticInt64(0),
 	}
 
+	// Maximum retry attempts.
 	attrs["max_retries"] = schema.Int64Attribute{
 		MarkdownDescription: "Maximum number of retries",
 		Optional:            true,
@@ -102,6 +112,7 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		},
 	}
 
+	// Invert monitor status logic.
 	attrs["upside_down"] = schema.BoolAttribute{
 		MarkdownDescription: "Invert monitor status (treat DOWN as UP and vice versa)",
 		Optional:            true,
@@ -109,6 +120,7 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		Default:             booldefault.StaticBool(false),
 	}
 
+	// Monitor activation status.
 	attrs["active"] = schema.BoolAttribute{
 		MarkdownDescription: "Monitor is active",
 		Optional:            true,
@@ -116,12 +128,14 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		Default:             booldefault.StaticBool(true),
 	}
 
+	// Associated notification IDs.
 	attrs["notification_ids"] = schema.ListAttribute{
 		MarkdownDescription: "List of notification IDs",
 		ElementType:         types.Int64Type,
 		Optional:            true,
 	}
 
+	// Monitor tags with optional values.
 	attrs["tags"] = schema.ListNestedAttribute{
 		MarkdownDescription: "List of tags assigned to this monitor",
 		Optional:            true,
@@ -139,6 +153,7 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		},
 	}
 
+	// Return enriched attributes map.
 	return attrs
 }
 
@@ -159,22 +174,24 @@ func handleMonitorTagsCreate(
 		return
 	}
 
-	for _, monitorTag := range monitorTags {
-		tagID := monitorTag.TagID.ValueInt64()
-		value := ""
-		if !monitorTag.Value.IsNull() {
-			value = monitorTag.Value.ValueString()
-		}
+ // Iterate over tags and add each to the monitor.
+ for _, monitorTag := range monitorTags {
+ 	tagID := monitorTag.TagID.ValueInt64()
+ 	value := ""
+ 	if !monitorTag.Value.IsNull() {
+ 		value = monitorTag.Value.ValueString()
+ 	}
 
-		_, err := client.AddMonitorTag(ctx, tagID, monitorID, value)
-		if err != nil {
-			diags.AddError(
-				fmt.Sprintf("failed to add tag %d to monitor %d", tagID, monitorID),
-				err.Error(),
-			)
-			return
-		}
-	}
+ 	// Call API to add tag to monitor.
+ 	_, err := client.AddMonitorTag(ctx, tagID, monitorID, value)
+ 	if err != nil {
+ 		diags.AddError(
+ 			fmt.Sprintf("failed to add tag %d to monitor %d", tagID, monitorID),
+ 			err.Error(),
+ 		)
+ 		return
+ 	}
+ }
 }
 
 func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, diags *diag.Diagnostics) types.List {
@@ -187,6 +204,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		})
 	}
 
+	// Convert API tag models to Terraform models.
 	tagModels := make([]MonitorTagModel, len(monitorTags))
 	for i, monitorTag := range monitorTags {
 		var value types.String
@@ -238,6 +256,7 @@ func handleMonitorTagsUpdate(
 		}
 	}
 
+	// Build map of old tags for comparison.
 	oldTagMap := make(map[string]MonitorTagModel)
 	for _, oldMonitorTag := range oldMonitorTags {
 		value := ""
@@ -249,6 +268,7 @@ func handleMonitorTagsUpdate(
 		oldTagMap[key] = oldMonitorTag
 	}
 
+	// Build map of new tags for comparison.
 	newTagMap := make(map[string]MonitorTagModel)
 	for _, newMonitorTag := range newMonitorTags {
 		value := ""
@@ -260,6 +280,7 @@ func handleMonitorTagsUpdate(
 		newTagMap[key] = newMonitorTag
 	}
 
+	// Delete tags that are no longer in new configuration.
 	for key, oldTag := range oldTagMap {
 		if _, exists := newTagMap[key]; !exists {
 			value := ""
@@ -267,6 +288,7 @@ func handleMonitorTagsUpdate(
 				value = oldTag.Value.ValueString()
 			}
 
+			// Call API to remove tag from monitor.
 			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
@@ -278,6 +300,7 @@ func handleMonitorTagsUpdate(
 		}
 	}
 
+	// Add new tags that are in new configuration but not in old.
 	for key, newTag := range newTagMap {
 		if _, exists := oldTagMap[key]; !exists {
 			value := ""
@@ -285,6 +308,7 @@ func handleMonitorTagsUpdate(
 				value = newTag.Value.ValueString()
 			}
 
+			// Call API to add tag to monitor.
 			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(

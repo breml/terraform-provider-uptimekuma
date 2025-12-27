@@ -99,6 +99,7 @@ func (d *NotificationDiscordDataSource) Read(
 		return
 	}
 
+ // Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 		if err != nil {
@@ -116,6 +117,7 @@ func (d *NotificationDiscordDataSource) Read(
 		return
 	}
 
+ // Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		notifications := d.client.GetNotifications(ctx)
 
@@ -126,6 +128,7 @@ func (d *NotificationDiscordDataSource) Read(
 
 		for i := range notifications {
 			if notifications[i].Name == data.Name.ValueString() && notifications[i].Type() == "discord" {
+    // Error if multiple matches found.
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple notifications found",
@@ -137,6 +140,7 @@ func (d *NotificationDiscordDataSource) Read(
 					return
 				}
 
+    // Store matched item.
 				found = &struct {
 					ID   int64
 					Name string
@@ -147,6 +151,7 @@ func (d *NotificationDiscordDataSource) Read(
 			}
 		}
 
+  // Error if no matching item found.
 		if found == nil {
 			resp.Diagnostics.AddError(
 				"Notification not found",
@@ -161,6 +166,7 @@ func (d *NotificationDiscordDataSource) Read(
 	}
 
 	resp.Diagnostics.AddError(
+ // Error if neither ID nor name provided.
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)

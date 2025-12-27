@@ -62,9 +62,11 @@ func (*MonitorGrpcKeywordResource) Schema(
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
+ // Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "gRPC Keyword monitor resource checks for the presence (or absence) of a specific keyword in the gRPC response. The monitor makes a gRPC request and searches for the specified keyword in the response. Use `invert_keyword` to reverse the logic: when false (default), finding the keyword means UP; when true, finding the keyword means DOWN.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
+      // Monitor-specific attributes.
 			"grpc_url": schema.StringAttribute{
 				MarkdownDescription: "gRPC server URL (e.g., localhost:50051 or example.com:443)",
 				Required:            true,
@@ -148,12 +150,14 @@ func (r *MonitorGrpcKeywordResource) Configure(
 
 // Create creates a new resource.
 func (r *MonitorGrpcKeywordResource) Create(
+    // Extract and validate configuration.
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
 	var data MonitorGrpcKeywordResourceModel
 
+ // Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -202,7 +206,9 @@ func (r *MonitorGrpcKeywordResource) Create(
 		grpcKeywordMonitor.NotificationIDs = notificationIDs
 	}
 
+ // Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, grpcKeywordMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create gRPC Keyword monitor", err.Error())
 		return
@@ -216,7 +222,9 @@ func (r *MonitorGrpcKeywordResource) Create(
 	}
 
 	var createdMonitor monitor.GrpcKeyword
+ // Fetch monitor from API.
 	err = r.client.GetMonitorAs(ctx, id, &createdMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read created gRPC Keyword monitor", err.Error())
 		return
@@ -227,6 +235,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -234,6 +243,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorGrpcKeywordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -241,7 +251,9 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	}
 
 	var grpcKeywordMonitor monitor.GrpcKeyword
+ // Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &grpcKeywordMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read gRPC Keyword monitor", err.Error())
 		return
@@ -252,6 +264,7 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -263,6 +276,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 ) {
 	var data MonitorGrpcKeywordResourceModel
 
+ // Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -270,6 +284,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 
 	var state MonitorGrpcKeywordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -318,7 +333,9 @@ func (r *MonitorGrpcKeywordResource) Update(
 		grpcKeywordMonitor.NotificationIDs = notificationIDs
 	}
 
+ // Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, grpcKeywordMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update gRPC Keyword monitor", err.Error())
 		return
@@ -330,7 +347,9 @@ func (r *MonitorGrpcKeywordResource) Update(
 	}
 
 	var updatedMonitor monitor.GrpcKeyword
+ // Fetch monitor from API.
 	err = r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &updatedMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read updated gRPC Keyword monitor", err.Error())
 		return
@@ -341,6 +360,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -352,13 +372,16 @@ func (r *MonitorGrpcKeywordResource) Delete(
 ) {
 	var data MonitorGrpcKeywordResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+ // Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete gRPC Keyword monitor", err.Error())
 		return
@@ -367,11 +390,13 @@ func (r *MonitorGrpcKeywordResource) Delete(
 
 // ImportState imports an existing resource by ID.
 func (*MonitorGrpcKeywordResource) ImportState(
+    // Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -380,6 +405,7 @@ func (*MonitorGrpcKeywordResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
@@ -420,6 +446,7 @@ func (*MonitorGrpcKeywordResource) populateModelFromMonitor(
 	if len(grpcKeywordMonitor.NotificationIDs) > 0 {
 		notificationIDs, diagsLocal := types.ListValueFrom(ctx, types.Int64Type, grpcKeywordMonitor.NotificationIDs)
 		diags.Append(diagsLocal...)
+  // Check for configuration errors.
 		if diags.HasError() {
 			return
 		}
@@ -430,6 +457,7 @@ func (*MonitorGrpcKeywordResource) populateModelFromMonitor(
 	}
 
 	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, diags)
+ // Check for configuration errors.
 	if diags.HasError() {
 		return
 	}

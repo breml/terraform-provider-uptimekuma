@@ -113,6 +113,7 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	id, err := r.client.CreateTag(ctx, t)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create tag", err.Error())
 		return
@@ -120,6 +121,7 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 
 	data.ID = types.Int64Value(id)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -127,12 +129,14 @@ func (r *TagResource) Create(ctx context.Context, req resource.CreateRequest, re
 func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data TagResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	tagData, err := r.client.GetTag(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -146,6 +150,7 @@ func (r *TagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	data.Name = types.StringValue(tagData.Name)
 	data.Color = types.StringValue(tagData.Color)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -165,11 +170,13 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	err := r.client.UpdateTag(ctx, t)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update tag", err.Error())
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -177,12 +184,14 @@ func (r *TagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 func (r *TagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data TagResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	err := r.client.DeleteTag(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete tag", err.Error())
 		return
@@ -196,6 +205,7 @@ func (*TagResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -204,5 +214,6 @@ func (*TagResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

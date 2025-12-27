@@ -100,6 +100,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 		return
 	}
 
+ // Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		var grpcKeywordMonitor monitor.GrpcKeyword
 		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &grpcKeywordMonitor)
@@ -113,6 +114,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 		return
 	}
 
+ // Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		monitors, err := d.client.GetMonitors(ctx)
 		if err != nil {
@@ -126,6 +128,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 				continue
 			}
 
+   // Error if multiple matches found.
 			if found != nil {
 				resp.Diagnostics.AddError(
 					"Multiple monitors found",
@@ -147,6 +150,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 			found = &grpcKeywordMon
 		}
 
+  // Error if no matching item found.
 		if found == nil {
 			resp.Diagnostics.AddError(
 				"gRPC Keyword monitor not found",
@@ -161,6 +165,7 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 	}
 
 	resp.Diagnostics.AddError(
+ // Error if neither ID nor name provided.
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)

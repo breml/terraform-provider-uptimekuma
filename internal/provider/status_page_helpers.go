@@ -37,6 +37,7 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 
 	// Convert unknown IDs to null so terraform state has known values
 	groups := make([]PublicGroupModel, len(configGroups))
+ // Iterate over items.
 	for i, group := range configGroups {
 		groups[i] = group
 		if group.ID.IsUnknown() {
@@ -56,6 +57,7 @@ func convertUnknownIDsToNull(ctx context.Context, publicGroupList types.List, di
 				})
 			}
 
+   // Iterate over items.
 			for j := range mons {
 				if mons[j].ID.IsUnknown() {
 					mons[j].ID = types.Int64Null()
@@ -136,6 +138,7 @@ func buildPublicGroupListFromSaved(
 	}
 
 	groups := make([]PublicGroupModel, len(saved))
+ // Iterate over items.
 	for i, g := range saved {
 		groups[i] = PublicGroupModel{}
 		groups[i].ID = types.Int64Value(g.ID)
@@ -144,6 +147,7 @@ func buildPublicGroupListFromSaved(
 
 		if len(g.MonitorList) > 0 {
 			monitors := make([]PublicMonitorModel, len(g.MonitorList))
+   // Iterate over items.
 			for j, m := range g.MonitorList {
 				monitors[j] = PublicMonitorModel{ID: types.Int64Value(m.ID)}
 				if m.SendURL != nil {

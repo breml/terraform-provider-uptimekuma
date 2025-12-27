@@ -145,6 +145,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	id, err := r.client.CreateMonitor(ctx, pingMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Ping monitor", err.Error())
 		return
@@ -157,6 +158,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -164,6 +166,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPingResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -172,6 +175,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 
 	var pingMonitor monitor.Ping
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pingMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read Ping monitor", err.Error())
 		return
@@ -216,6 +220,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -230,6 +235,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 
 	var state MonitorPingResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -273,6 +279,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	err := r.client.UpdateMonitor(ctx, pingMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Ping monitor", err.Error())
 		return
@@ -283,6 +290,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -290,6 +298,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorPingResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -297,6 +306,7 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete Ping monitor", err.Error())
 		return
@@ -310,6 +320,7 @@ func (*MonitorPingResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -318,5 +329,6 @@ func (*MonitorPingResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

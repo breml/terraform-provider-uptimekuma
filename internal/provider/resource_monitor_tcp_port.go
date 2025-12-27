@@ -154,6 +154,7 @@ func (r *MonitorTCPPortResource) Create(
 	}
 
 	id, err := r.client.CreateMonitor(ctx, tcpPortMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create TCP Port monitor", err.Error())
 		return
@@ -166,6 +167,7 @@ func (r *MonitorTCPPortResource) Create(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -173,6 +175,7 @@ func (r *MonitorTCPPortResource) Create(
 func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorTCPPortResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -181,6 +184,7 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 
 	var tcpPortMonitor monitor.TCPPort
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &tcpPortMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read TCP Port monitor", err.Error())
 		return
@@ -225,6 +229,7 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -243,6 +248,7 @@ func (r *MonitorTCPPortResource) Update(
 
 	var state MonitorTCPPortResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -286,6 +292,7 @@ func (r *MonitorTCPPortResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, tcpPortMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update TCP Port monitor", err.Error())
 		return
@@ -296,6 +303,7 @@ func (r *MonitorTCPPortResource) Update(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -307,6 +315,7 @@ func (r *MonitorTCPPortResource) Delete(
 ) {
 	var data MonitorTCPPortResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -314,6 +323,7 @@ func (r *MonitorTCPPortResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete TCP Port monitor", err.Error())
 		return
@@ -327,6 +337,7 @@ func (*MonitorTCPPortResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -335,5 +346,6 @@ func (*MonitorTCPPortResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

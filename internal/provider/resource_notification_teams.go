@@ -122,6 +122,7 @@ func (r *NotificationTeamsResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, teams)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -131,6 +132,7 @@ func (r *NotificationTeamsResource) Create(
 
 	data.ID = types.Int64Value(id)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -138,6 +140,7 @@ func (r *NotificationTeamsResource) Create(
 func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationTeamsResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -147,6 +150,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
+ // Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -159,6 +163,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 
 	teams := notification.Teams{}
 	err = base.As(&teams)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "teams"`, err.Error())
 		return
@@ -172,6 +177,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 
 	data.WebhookURL = types.StringValue(teams.WebhookURL)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -203,11 +209,13 @@ func (r *NotificationTeamsResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, teams)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -219,6 +227,7 @@ func (r *NotificationTeamsResource) Delete(
 ) {
 	var data NotificationTeamsResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -226,6 +235,7 @@ func (r *NotificationTeamsResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
@@ -239,6 +249,7 @@ func (*NotificationTeamsResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -247,5 +258,6 @@ func (*NotificationTeamsResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

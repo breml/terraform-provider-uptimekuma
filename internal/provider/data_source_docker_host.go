@@ -95,6 +95,7 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		dockerHost, err := d.client.GetDockerHost(ctx, data.ID.ValueInt64())
 		if err != nil {
@@ -102,14 +103,17 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			return
 		}
 
+		// Populate name and set response state.
 		data.Name = types.StringValue(dockerHost.Name)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
+	// Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		dockerHosts := d.client.GetDockerHostList(ctx)
 
+		// Search for Docker host by name.
 		var found *struct {
 			ID   int64
 			Name string
@@ -117,6 +121,7 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 		for i := range dockerHosts {
 			if dockerHosts[i].Name == data.Name.ValueString() {
+				// Error if multiple hosts match name.
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple Docker hosts found",
@@ -128,6 +133,7 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 					return
 				}
 
+				// Store matched host.
 				found = &struct {
 					ID   int64
 					Name string
@@ -138,6 +144,7 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			}
 		}
 
+		// Error if no host found with given name.
 		if found == nil {
 			resp.Diagnostics.AddError(
 				"Docker host not found",
@@ -146,11 +153,13 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			return
 		}
 
+		// Populate ID and set response state.
 		data.ID = types.Int64Value(found.ID)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
+	// Error if neither ID nor name provided.
 	resp.Diagnostics.AddError(
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",

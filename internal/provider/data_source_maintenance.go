@@ -100,6 +100,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		maintenance, err := d.client.GetMaintenance(ctx, data.ID.ValueInt64())
 		if err != nil {
@@ -107,12 +108,14 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 			return
 		}
 
+		// Populate name and title from API response.
 		data.Name = types.StringValue(maintenance.Title)
 		data.Title = types.StringValue(maintenance.Title)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
+	// Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
 		maintenances, err := d.client.GetMaintenances(ctx)
 		if err != nil {
@@ -120,6 +123,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 			return
 		}
 
+		// Search for matching maintenance by title.
 		var found *struct {
 			ID    int64
 			Title string
@@ -127,6 +131,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		for i := range maintenances {
 			if maintenances[i].Title == data.Name.ValueString() {
+				// Error if multiple matches found.
 				if found != nil {
 					resp.Diagnostics.AddError(
 						"Multiple maintenances found",
@@ -138,6 +143,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 					return
 				}
 
+				// Store matched maintenance record.
 				found = &struct {
 					ID    int64
 					Title string
@@ -148,6 +154,7 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 			}
 		}
 
+		// Error if no matching maintenance found.
 		if found == nil {
 			resp.Diagnostics.AddError(
 				"Maintenance not found",
@@ -156,12 +163,14 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 			return
 		}
 
+		// Populate ID and title from matched result.
 		data.ID = types.Int64Value(found.ID)
 		data.Title = types.StringValue(found.Title)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
+	// Error if neither ID nor name provided.
 	resp.Diagnostics.AddError(
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",

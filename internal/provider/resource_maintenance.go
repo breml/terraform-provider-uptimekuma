@@ -90,6 +90,7 @@ func (*MaintenanceResource) Metadata(
 
 // Schema returns the schema for the resource.
 func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+ // Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
 		Attributes: map[string]schema.Attribute{
@@ -274,8 +275,10 @@ func (r *MaintenanceResource) Configure(
 
 // Create creates a new resource.
 func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+    // Extract and validate configuration.
 	var data MaintenanceResourceModel
 
+ // Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -290,12 +293,14 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
 
 	created, err := r.client.CreateMaintenance(ctx, m)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create maintenance", err.Error())
 		return
@@ -304,6 +309,7 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	data.ID = types.Int64Value(created.ID)
 	r.populateModelFromMaintenance(ctx, created, &data, &resp.Diagnostics)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -311,6 +317,7 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -318,6 +325,7 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	m, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -330,6 +338,7 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 
 	r.populateModelFromMaintenance(ctx, m, &data, &resp.Diagnostics)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -337,6 +346,7 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MaintenanceResourceModel
 
+ // Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -352,18 +362,21 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
 
 	err = r.client.UpdateMaintenance(ctx, m)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update maintenance", err.Error())
 		return
 	}
 
 	updated, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read updated maintenance", err.Error())
 		return
@@ -371,6 +384,7 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 
 	r.populateModelFromMaintenance(ctx, updated, &data, &resp.Diagnostics)
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -378,6 +392,7 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MaintenanceResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -385,6 +400,7 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMaintenance(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete maintenance", err.Error())
 		return
@@ -489,11 +505,13 @@ func (*MaintenanceResource) ValidateConfig(
 
 // ImportState imports an existing resource by ID.
 func (*MaintenanceResource) ImportState(
+    // Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -502,6 +520,7 @@ func (*MaintenanceResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
@@ -517,11 +536,13 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 	case "single":
 		if !data.StartDate.IsNull() && !data.EndDate.IsNull() {
 			startDate, err := time.Parse(time.RFC3339, data.StartDate.ValueString())
+   // Handle error.
 			if err != nil {
 				return fmt.Errorf("invalid start_date: %w", err)
 			}
 
 			endDate, err := time.Parse(time.RFC3339, data.EndDate.ValueString())
+   // Handle error.
 			if err != nil {
 				return fmt.Errorf("invalid end_date: %w", err)
 			}
@@ -540,6 +561,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 
 		m.DateRange = []*time.Time{nil, nil}
 		err := r.populateTimeRange(ctx, data, m, diags)
+  // Handle error.
 		if err != nil {
 			return err
 		}
@@ -552,11 +574,13 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 		if !data.Weekdays.IsNull() {
 			var weekdays []int64
 			diags.Append(data.Weekdays.ElementsAs(ctx, &weekdays, false)...)
+   // Check for configuration errors.
 			if diags.HasError() {
 				return errors.New("invalid weekdays")
 			}
 
 			m.Weekdays = make([]int, len(weekdays))
+   // Iterate over items.
 			for i, w := range weekdays {
 				m.Weekdays[i] = int(w)
 			}
@@ -564,6 +588,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 
 		m.DateRange = []*time.Time{nil, nil}
 		err := r.populateTimeRange(ctx, data, m, diags)
+  // Handle error.
 		if err != nil {
 			return err
 		}
@@ -576,11 +601,13 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 		if !data.DaysOfMonth.IsNull() {
 			var daysOfMonth []string
 			diags.Append(data.DaysOfMonth.ElementsAs(ctx, &daysOfMonth, false)...)
+   // Check for configuration errors.
 			if diags.HasError() {
 				return errors.New("invalid days_of_month")
 			}
 
 			m.DaysOfMonth = make([]any, len(daysOfMonth))
+   // Iterate over items.
 			for i, d := range daysOfMonth {
 				m.DaysOfMonth[i] = d
 			}
@@ -588,6 +615,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 
 		m.DateRange = []*time.Time{nil, nil}
 		err := r.populateTimeRange(ctx, data, m, diags)
+  // Handle error.
 		if err != nil {
 			return err
 		}
@@ -626,12 +654,14 @@ func (*MaintenanceResource) populateTimeRange(
 	if !data.StartTime.IsNull() && !data.EndTime.IsNull() {
 		var startTime TimeOfDayModel
 		diags.Append(data.StartTime.As(ctx, &startTime, basetypes.ObjectAsOptions{})...)
+  // Check for configuration errors.
 		if diags.HasError() {
 			return errors.New("invalid start_time")
 		}
 
 		var endTime TimeOfDayModel
 		diags.Append(data.EndTime.As(ctx, &endTime, basetypes.ObjectAsOptions{})...)
+  // Check for configuration errors.
 		if diags.HasError() {
 			return errors.New("invalid end_time")
 		}
@@ -709,6 +739,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 	case "recurring-weekday":
 		if len(m.Weekdays) > 0 {
 			weekdays := make([]int64, len(m.Weekdays))
+   // Iterate over items.
 			for i, w := range m.Weekdays {
 				weekdays[i] = int64(w)
 			}
@@ -723,6 +754,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 	case "recurring-day-of-month":
 		if len(m.DaysOfMonth) > 0 {
 			daysOfMonth := make([]string, len(m.DaysOfMonth))
+   // Iterate over items.
 			for i, d := range m.DaysOfMonth {
 				daysOfMonth[i] = fmt.Sprintf("%v", d)
 			}
@@ -747,6 +779,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 
 	if len(m.TimeslotList) > 0 {
 		timeslots := make([]TimeslotModel, len(m.TimeslotList))
+  // Iterate over items.
 		for i, ts := range m.TimeslotList {
 			timeslots[i] = TimeslotModel{
 				StartDate: types.StringValue(ts.StartDate.Format(time.RFC3339)),
@@ -755,6 +788,7 @@ func (r *MaintenanceResource) populateModelFromMaintenance(
 		}
 
 		timeslotList := make([]attr.Value, len(timeslots))
+  // Iterate over items.
 		for i, ts := range timeslots {
 			objValue, d := types.ObjectValue(timeslotAttrTypes, map[string]attr.Value{
 				"start_date": ts.StartDate,

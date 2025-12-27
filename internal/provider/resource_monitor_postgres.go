@@ -149,6 +149,7 @@ func (r *MonitorPostgresResource) Create(
 	}
 
 	id, err := r.client.CreateMonitor(ctx, postgresMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create PostgreSQL monitor", err.Error())
 		return
@@ -161,6 +162,7 @@ func (r *MonitorPostgresResource) Create(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -168,6 +170,7 @@ func (r *MonitorPostgresResource) Create(
 func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPostgresResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -176,6 +179,7 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 
 	var postgresMonitor monitor.Postgres
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &postgresMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read PostgreSQL monitor", err.Error())
 		return
@@ -220,6 +224,7 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -238,6 +243,7 @@ func (r *MonitorPostgresResource) Update(
 
 	var state MonitorPostgresResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -281,6 +287,7 @@ func (r *MonitorPostgresResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, postgresMonitor)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update PostgreSQL monitor", err.Error())
 		return
@@ -291,6 +298,7 @@ func (r *MonitorPostgresResource) Update(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -302,6 +310,7 @@ func (r *MonitorPostgresResource) Delete(
 ) {
 	var data MonitorPostgresResourceModel
 
+ // Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -309,6 +318,7 @@ func (r *MonitorPostgresResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete PostgreSQL monitor", err.Error())
 		return
@@ -322,6 +332,7 @@ func (*MonitorPostgresResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+ // Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -330,5 +341,6 @@ func (*MonitorPostgresResource) ImportState(
 		return
 	}
 
+ // Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
