@@ -124,7 +124,7 @@ func (r *NotificationFeishuResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, feishu)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -134,7 +134,7 @@ func (r *NotificationFeishuResource) Create(
 
 	data.ID = types.Int64Value(id)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -142,7 +142,7 @@ func (r *NotificationFeishuResource) Create(
 func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationFeishuResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -152,7 +152,7 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -165,7 +165,7 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 
 	feishu := notification.Feishu{}
 	err = base.As(&feishu)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "Feishu"`, err.Error())
 		return
@@ -179,7 +179,7 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 
 	data.WebHookURL = types.StringValue(feishu.WebHookURL)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -211,13 +211,13 @@ func (r *NotificationFeishuResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, feishu)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -229,7 +229,7 @@ func (r *NotificationFeishuResource) Delete(
 ) {
 	var data NotificationFeishuResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -237,7 +237,7 @@ func (r *NotificationFeishuResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
@@ -251,7 +251,7 @@ func (*NotificationFeishuResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -260,6 +260,6 @@ func (*NotificationFeishuResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

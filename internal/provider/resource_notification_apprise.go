@@ -129,7 +129,7 @@ func (r *NotificationAppriseResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, apprise)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -139,7 +139,7 @@ func (r *NotificationAppriseResource) Create(
 
 	data.ID = types.Int64Value(id)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -147,7 +147,7 @@ func (r *NotificationAppriseResource) Create(
 func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationAppriseResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -157,7 +157,7 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -170,7 +170,7 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 
 	apprise := notification.Apprise{}
 	err = base.As(&apprise)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "apprise"`, err.Error())
 		return
@@ -189,7 +189,7 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 		data.Title = types.StringNull()
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -222,13 +222,13 @@ func (r *NotificationAppriseResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, apprise)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -240,7 +240,7 @@ func (r *NotificationAppriseResource) Delete(
 ) {
 	var data NotificationAppriseResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -248,7 +248,7 @@ func (r *NotificationAppriseResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
@@ -262,7 +262,7 @@ func (*NotificationAppriseResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -271,6 +271,6 @@ func (*NotificationAppriseResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

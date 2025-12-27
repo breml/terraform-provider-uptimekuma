@@ -174,24 +174,24 @@ func handleMonitorTagsCreate(
 		return
 	}
 
- // Iterate over tags and add each to the monitor.
- for _, monitorTag := range monitorTags {
- 	tagID := monitorTag.TagID.ValueInt64()
- 	value := ""
- 	if !monitorTag.Value.IsNull() {
- 		value = monitorTag.Value.ValueString()
- 	}
+	// Iterate over tags and add each to the monitor.
+	for _, monitorTag := range monitorTags {
+		tagID := monitorTag.TagID.ValueInt64()
+		value := ""
+		if !monitorTag.Value.IsNull() {
+			value = monitorTag.Value.ValueString()
+		}
 
- 	// Call API to add tag to monitor.
- 	_, err := client.AddMonitorTag(ctx, tagID, monitorID, value)
- 	if err != nil {
- 		diags.AddError(
- 			fmt.Sprintf("failed to add tag %d to monitor %d", tagID, monitorID),
- 			err.Error(),
- 		)
- 		return
- 	}
- }
+		// Call API to add tag to monitor.
+		_, err := client.AddMonitorTag(ctx, tagID, monitorID, value)
+		if err != nil {
+			diags.AddError(
+				fmt.Sprintf("failed to add tag %d to monitor %d", tagID, monitorID),
+				err.Error(),
+			)
+			return
+		}
+	}
 }
 
 func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, diags *diag.Diagnostics) types.List {
@@ -239,48 +239,60 @@ func handleMonitorTagsUpdate(
 	newTags types.List,
 	diags *diag.Diagnostics,
 ) {
-	var oldMonitorTags []MonitorTagModel
-	var newMonitorTags []MonitorTagModel
-
-	if !oldTags.IsNull() && !oldTags.IsUnknown() {
-		diags.Append(oldTags.ElementsAs(ctx, &oldMonitorTags, false)...)
-		if diags.HasError() {
-			return
-		}
+	oldMonitorTags := deserializeMonitorTags(ctx, oldTags, diags)
+	if diags.HasError() {
+		return
 	}
 
-	if !newTags.IsNull() && !newTags.IsUnknown() {
-		diags.Append(newTags.ElementsAs(ctx, &newMonitorTags, false)...)
-		if diags.HasError() {
-			return
-		}
+	newMonitorTags := deserializeMonitorTags(ctx, newTags, diags)
+	if diags.HasError() {
+		return
 	}
 
-	// Build map of old tags for comparison.
-	oldTagMap := make(map[string]MonitorTagModel)
-	for _, oldMonitorTag := range oldMonitorTags {
+	oldTagMap := buildMonitorTagMap(oldMonitorTags)
+	newTagMap := buildMonitorTagMap(newMonitorTags)
+
+	handleDeletedMonitorTags(ctx, client, monitorID, oldTagMap, newTagMap, diags)
+	if diags.HasError() {
+		return
+	}
+
+	handleAddedMonitorTags(ctx, client, monitorID, oldTagMap, newTagMap, diags)
+}
+
+func deserializeMonitorTags(ctx context.Context, tags types.List, diags *diag.Diagnostics) []MonitorTagModel {
+	if tags.IsNull() || tags.IsUnknown() {
+		return []MonitorTagModel{}
+	}
+
+	var monitorTags []MonitorTagModel
+	diags.Append(tags.ElementsAs(ctx, &monitorTags, false)...)
+	return monitorTags
+}
+
+func buildMonitorTagMap(tags []MonitorTagModel) map[string]MonitorTagModel {
+	tagMap := make(map[string]MonitorTagModel)
+	for _, tag := range tags {
 		value := ""
-		if !oldMonitorTag.Value.IsNull() {
-			value = oldMonitorTag.Value.ValueString()
+		if !tag.Value.IsNull() {
+			value = tag.Value.ValueString()
 		}
 
-		key := fmt.Sprintf("%d:%s", oldMonitorTag.TagID.ValueInt64(), value)
-		oldTagMap[key] = oldMonitorTag
+		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
+		tagMap[key] = tag
 	}
 
-	// Build map of new tags for comparison.
-	newTagMap := make(map[string]MonitorTagModel)
-	for _, newMonitorTag := range newMonitorTags {
-		value := ""
-		if !newMonitorTag.Value.IsNull() {
-			value = newMonitorTag.Value.ValueString()
-		}
+	return tagMap
+}
 
-		key := fmt.Sprintf("%d:%s", newMonitorTag.TagID.ValueInt64(), value)
-		newTagMap[key] = newMonitorTag
-	}
-
-	// Delete tags that are no longer in new configuration.
+func handleDeletedMonitorTags(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTagMap map[string]MonitorTagModel,
+	newTagMap map[string]MonitorTagModel,
+	diags *diag.Diagnostics,
+) {
 	for key, oldTag := range oldTagMap {
 		if _, exists := newTagMap[key]; !exists {
 			value := ""
@@ -288,7 +300,6 @@ func handleMonitorTagsUpdate(
 				value = oldTag.Value.ValueString()
 			}
 
-			// Call API to remove tag from monitor.
 			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
@@ -299,8 +310,16 @@ func handleMonitorTagsUpdate(
 			}
 		}
 	}
+}
 
-	// Add new tags that are in new configuration but not in old.
+func handleAddedMonitorTags(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTagMap map[string]MonitorTagModel,
+	newTagMap map[string]MonitorTagModel,
+	diags *diag.Diagnostics,
+) {
 	for key, newTag := range newTagMap {
 		if _, exists := oldTagMap[key]; !exists {
 			value := ""
@@ -308,7 +327,6 @@ func handleMonitorTagsUpdate(
 				value = newTag.Value.ValueString()
 			}
 
-			// Call API to add tag to monitor.
 			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(

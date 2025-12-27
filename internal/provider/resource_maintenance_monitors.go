@@ -119,13 +119,13 @@ func (r *MaintenanceMonitorsResource) Create(
 	}
 
 	err := r.client.SetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64(), monitorIDs)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to set monitor maintenance", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -133,7 +133,7 @@ func (r *MaintenanceMonitorsResource) Create(
 func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceMonitorsResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -141,7 +141,7 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	monitorIDs, err := r.client.GetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -156,7 +156,7 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(diags...)
 	data.MonitorIDs = listValue
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -181,13 +181,13 @@ func (r *MaintenanceMonitorsResource) Update(
 	}
 
 	err := r.client.SetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64(), monitorIDs)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update monitor maintenance", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -199,7 +199,7 @@ func (r *MaintenanceMonitorsResource) Delete(
 ) {
 	var data MaintenanceMonitorsResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -207,7 +207,7 @@ func (r *MaintenanceMonitorsResource) Delete(
 	}
 
 	err := r.client.SetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64(), []int64{})
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete monitor maintenance", err.Error())
 		return
@@ -221,7 +221,7 @@ func (*MaintenanceMonitorsResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -230,6 +230,6 @@ func (*MaintenanceMonitorsResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("maintenance_id"), id)...)
 }

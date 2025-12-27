@@ -137,7 +137,7 @@ func (r *NotificationDingDingResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, dingding)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -147,7 +147,7 @@ func (r *NotificationDingDingResource) Create(
 
 	data.ID = types.Int64Value(id)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -159,7 +159,7 @@ func (r *NotificationDingDingResource) Read(
 ) {
 	var data NotificationDingDingResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -169,7 +169,7 @@ func (r *NotificationDingDingResource) Read(
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -182,7 +182,7 @@ func (r *NotificationDingDingResource) Read(
 
 	dingding := notification.DingDing{}
 	err = base.As(&dingding)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "DingDing"`, err.Error())
 		return
@@ -207,7 +207,7 @@ func (r *NotificationDingDingResource) Read(
 		data.Mentioning = types.StringNull()
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -241,13 +241,13 @@ func (r *NotificationDingDingResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, dingding)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -259,7 +259,7 @@ func (r *NotificationDingDingResource) Delete(
 ) {
 	var data NotificationDingDingResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -267,7 +267,7 @@ func (r *NotificationDingDingResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
@@ -281,7 +281,7 @@ func (*NotificationDingDingResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -290,6 +290,6 @@ func (*NotificationDingDingResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

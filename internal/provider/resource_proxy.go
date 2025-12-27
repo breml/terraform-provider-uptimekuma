@@ -151,7 +151,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
- // Build configuration from plan.
+	// Build configuration from plan.
 	p := proxy.Config{
 		Protocol:      data.Protocol.ValueString(),
 		Host:          data.Host.ValueString(),
@@ -178,7 +178,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	id, err := r.client.CreateProxy(ctx, p)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create proxy", err.Error())
 		return
@@ -186,7 +186,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	data.ID = types.Int64Value(id)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -194,14 +194,14 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ProxyResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	p, err := r.client.GetProxy(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -231,7 +231,7 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		data.Password = types.StringNull()
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -244,7 +244,7 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
- // Build configuration from plan.
+	// Build configuration from plan.
 	p := proxy.Config{
 		ID:            data.ID.ValueInt64(),
 		Protocol:      data.Protocol.ValueString(),
@@ -272,13 +272,13 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	err := r.client.UpdateProxy(ctx, p)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update proxy", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -286,14 +286,14 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 func (r *ProxyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data ProxyResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	err := r.client.DeleteProxy(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete proxy", err.Error())
 		return

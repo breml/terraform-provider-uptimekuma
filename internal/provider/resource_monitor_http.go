@@ -46,7 +46,7 @@ func (*MonitorHTTPResource) Metadata(
 
 // Schema returns the schema for the resource.
 func (*MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
- // Define resource schema attributes and validation.
+	// Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "HTTP monitor resource",
 		Attributes:          withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{})),
@@ -82,10 +82,10 @@ func (r *MonitorHTTPResource) Configure(
 
 // Create creates a new resource.
 func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-    // Extract and validate configuration.
+	// Extract and validate configuration.
 	var data MonitorHTTPResourceModel
 
- // Extract plan data.
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -166,9 +166,9 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 		httpMonitor.NotificationIDs = notificationIDs
 	}
 
- // Create monitor via API.
+	// Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, httpMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create HTTP monitor", err.Error())
 		return
@@ -181,7 +181,7 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -197,7 +197,7 @@ func stringOrNull(s string) types.String {
 func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -205,9 +205,9 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	var httpMonitor monitor.HTTP
- // Fetch monitor from API.
+	// Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
 		return
@@ -288,7 +288,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -297,13 +297,13 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	var data MonitorHTTPResourceModel
 	var state MonitorHTTPResourceModel
 
- // Extract plan data.
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -384,9 +384,9 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 		httpMonitor.NotificationIDs = notificationIDs
 	}
 
- // Update monitor via API.
+	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, httpMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP monitor", err.Error())
 		return
@@ -397,7 +397,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -405,16 +405,16 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorHTTPResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
- // Delete monitor via API.
+	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete HTTP monitor", err.Error())
 		return
@@ -423,13 +423,13 @@ func (r *MonitorHTTPResource) Delete(ctx context.Context, req resource.DeleteReq
 
 // ImportState imports an existing resource by ID.
 func (*MonitorHTTPResource) ImportState(
-    // Import monitor by ID.
+	// Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -438,6 +438,6 @@ func (*MonitorHTTPResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

@@ -121,7 +121,7 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	id, err := r.client.CreateMonitor(ctx, groupMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create group monitor", err.Error())
 		return
@@ -134,7 +134,7 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -142,7 +142,7 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRe
 func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorGroupResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -151,7 +151,7 @@ func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadReques
 
 	var groupMonitor monitor.Group
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &groupMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read group monitor", err.Error())
 		return
@@ -194,7 +194,7 @@ func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -209,7 +209,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 
 	var state MonitorGroupResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -249,7 +249,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	err := r.client.UpdateMonitor(ctx, groupMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update group monitor", err.Error())
 		return
@@ -260,7 +260,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -268,7 +268,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 func (r *MonitorGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorGroupResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -276,7 +276,7 @@ func (r *MonitorGroupResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete group monitor", err.Error())
 		return
@@ -290,7 +290,7 @@ func (*MonitorGroupResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -299,6 +299,6 @@ func (*MonitorGroupResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

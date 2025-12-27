@@ -101,75 +101,53 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var dnsMonitor monitor.DNS
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &dnsMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(dnsMonitor.Name)
-		data.Hostname = types.StringValue(dnsMonitor.Hostname)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.DNS
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "dns" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple monitors found",
-					fmt.Sprintf(
-						"Multiple DNS monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var dnsMon monitor.DNS
-			err := mon.As(&dnsMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &dnsMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"DNS monitor not found",
-				fmt.Sprintf("No DNS monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		data.Hostname = types.StringValue(found.Hostname)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorDNSDataSource) readByID(
+	ctx context.Context,
+	data *MonitorDNSDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var dnsMonitor monitor.DNS
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &dnsMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(dnsMonitor.Name)
+	data.Hostname = types.StringValue(dnsMonitor.Hostname)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorDNSDataSource) readByName(
+	ctx context.Context,
+	data *MonitorDNSDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "dns", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var dnsMon monitor.DNS
+	err := found.As(&dnsMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(dnsMon.ID)
+	data.Hostname = types.StringValue(dnsMon.Hostname)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

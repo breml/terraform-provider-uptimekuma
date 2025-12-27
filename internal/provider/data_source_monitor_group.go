@@ -96,73 +96,51 @@ func (d *MonitorGroupDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var groupMonitor monitor.Group
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &groupMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitor group", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(groupMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.Group
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "group" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple groups found",
-					fmt.Sprintf(
-						"Multiple monitor groups with name '%s' found. Please use 'id' to specify the group uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var groupMon monitor.Group
-			err := mon.As(&groupMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &groupMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Monitor group not found",
-				fmt.Sprintf("No monitor group with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorGroupDataSource) readByID(
+	ctx context.Context,
+	data *MonitorGroupDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var groupMonitor monitor.Group
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &groupMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read monitor group", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(groupMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorGroupDataSource) readByName(
+	ctx context.Context,
+	data *MonitorGroupDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "group", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var groupMon monitor.Group
+	err := found.As(&groupMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(groupMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

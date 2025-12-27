@@ -99,75 +99,50 @@ func (d *NotificationSlackDataSource) Read(
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateNotificationDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read notification", err.Error())
-			return
-		}
-
-		if notification.Type() != "slack" {
-			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Slack notification")
-			return
-		}
-
-		data.Name = types.StringValue(notification.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		notifications := d.client.GetNotifications(ctx)
+	// Attempt to read by name if ID not provided.
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *struct {
-			ID   int64
-			Name string
-		}
-
-		for i := range notifications {
-			if notifications[i].Name == data.Name.ValueString() && notifications[i].Type() == "slack" {
-    // Error if multiple matches found.
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple notifications found",
-						fmt.Sprintf(
-							"Multiple Slack notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-    // Store matched item.
-				found = &struct {
-					ID   int64
-					Name string
-				}{
-					ID:   notifications[i].GetID(),
-					Name: notifications[i].Name,
-				}
-			}
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Notification not found",
-				fmt.Sprintf("No Slack notification with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *NotificationSlackDataSource) readByID(
+	ctx context.Context,
+	data *NotificationSlackDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	if notification.Type() != "slack" {
+		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Slack notification")
+		return
+	}
+
+	data.Name = types.StringValue(notification.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *NotificationSlackDataSource) readByName(
+	ctx context.Context,
+	data *NotificationSlackDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "slack", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

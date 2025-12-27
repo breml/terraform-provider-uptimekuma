@@ -119,13 +119,13 @@ func (r *MaintenanceStatusPagesResource) Create(
 	}
 
 	err := r.client.SetMaintenanceStatusPage(ctx, data.MaintenanceID.ValueInt64(), statusPageIDs)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to set maintenance status pages", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -137,7 +137,7 @@ func (r *MaintenanceStatusPagesResource) Read(
 ) {
 	var data MaintenanceStatusPagesResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -145,7 +145,7 @@ func (r *MaintenanceStatusPagesResource) Read(
 	}
 
 	statusPageIDs, err := r.client.GetMaintenanceStatusPage(ctx, data.MaintenanceID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -160,7 +160,7 @@ func (r *MaintenanceStatusPagesResource) Read(
 	resp.Diagnostics.Append(diags...)
 	data.StatusPageIDs = listValue
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -185,13 +185,13 @@ func (r *MaintenanceStatusPagesResource) Update(
 	}
 
 	err := r.client.SetMaintenanceStatusPage(ctx, data.MaintenanceID.ValueInt64(), statusPageIDs)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update maintenance status pages", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -203,7 +203,7 @@ func (r *MaintenanceStatusPagesResource) Delete(
 ) {
 	var data MaintenanceStatusPagesResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -211,7 +211,7 @@ func (r *MaintenanceStatusPagesResource) Delete(
 	}
 
 	err := r.client.SetMaintenanceStatusPage(ctx, data.MaintenanceID.ValueInt64(), []int64{})
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete maintenance status pages", err.Error())
 		return
@@ -225,7 +225,7 @@ func (*MaintenanceStatusPagesResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -234,6 +234,6 @@ func (*MaintenanceStatusPagesResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("maintenance_id"), id)...)
 }

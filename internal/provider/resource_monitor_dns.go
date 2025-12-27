@@ -166,7 +166,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	id, err := r.client.CreateMonitor(ctx, dnsMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create DNS monitor", err.Error())
 		return
@@ -179,7 +179,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -187,7 +187,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorDNSResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -196,7 +196,7 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	var dnsMonitor monitor.DNS
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &dnsMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
 		return
@@ -243,7 +243,7 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -258,7 +258,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	var state MonitorDNSResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -304,7 +304,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	err := r.client.UpdateMonitor(ctx, dnsMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update DNS monitor", err.Error())
 		return
@@ -315,7 +315,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -323,7 +323,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorDNSResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -331,7 +331,7 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete DNS monitor", err.Error())
 		return
@@ -345,7 +345,7 @@ func (*MonitorDNSResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -354,6 +354,6 @@ func (*MonitorDNSResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

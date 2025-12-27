@@ -133,7 +133,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	id, err := r.client.CreateMonitor(ctx, pushMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Push monitor", err.Error())
 		return
@@ -148,7 +148,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 
 	var createdMonitor monitor.Push
 	err = r.client.GetMonitorAs(ctx, id, &createdMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read created Push monitor", err.Error())
 		return
@@ -156,7 +156,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 
 	data.PushToken = types.StringValue(createdMonitor.PushToken)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -164,7 +164,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorPushResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -173,7 +173,7 @@ func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest
 
 	var pushMonitor monitor.Push
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pushMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read Push monitor", err.Error())
 		return
@@ -217,7 +217,7 @@ func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -232,7 +232,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 
 	var state MonitorPushResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -275,7 +275,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	err := r.client.UpdateMonitor(ctx, pushMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Push monitor", err.Error())
 		return
@@ -286,7 +286,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -294,7 +294,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorPushResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -302,7 +302,7 @@ func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete Push monitor", err.Error())
 		return
@@ -316,7 +316,7 @@ func (*MonitorPushResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -325,6 +325,6 @@ func (*MonitorPushResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

@@ -158,7 +158,7 @@ func (r *NotificationWebhookResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, webhook)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -168,7 +168,7 @@ func (r *NotificationWebhookResource) Create(
 
 	data.ID = types.Int64Value(id)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -176,7 +176,7 @@ func (r *NotificationWebhookResource) Create(
 func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationWebhookResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -186,7 +186,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -199,7 +199,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 
 	webhook := notification.Webhook{}
 	err = base.As(&webhook)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "webhook"`, err.Error())
 		return
@@ -232,7 +232,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 		data.WebhookAdditionalHeaders = types.MapNull(types.StringType)
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -276,7 +276,7 @@ func (r *NotificationWebhookResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, webhook)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
@@ -284,7 +284,7 @@ func (r *NotificationWebhookResource) Update(
 
 	tflog.Info(ctx, "Updated webhook notification", map[string]any{"id": data.ID.ValueInt64()})
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -296,7 +296,7 @@ func (r *NotificationWebhookResource) Delete(
 ) {
 	var data NotificationWebhookResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -304,7 +304,7 @@ func (r *NotificationWebhookResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
@@ -320,7 +320,7 @@ func (*NotificationWebhookResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -329,6 +329,6 @@ func (*NotificationWebhookResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

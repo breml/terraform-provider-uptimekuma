@@ -100,73 +100,51 @@ func (d *MonitorPostgresDataSource) Read(
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var postgresMonitor monitor.Postgres
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &postgresMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read PostgreSQL monitor", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(postgresMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.Postgres
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "postgres" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple monitors found",
-					fmt.Sprintf(
-						"Multiple PostgreSQL monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var postgresMon monitor.Postgres
-			err := mon.As(&postgresMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &postgresMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"PostgreSQL monitor not found",
-				fmt.Sprintf("No PostgreSQL monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorPostgresDataSource) readByID(
+	ctx context.Context,
+	data *MonitorPostgresDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var postgresMonitor monitor.Postgres
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &postgresMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read PostgreSQL monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(postgresMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorPostgresDataSource) readByName(
+	ctx context.Context,
+	data *MonitorPostgresDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "postgres", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var postgresMon monitor.Postgres
+	err := found.As(&postgresMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(postgresMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

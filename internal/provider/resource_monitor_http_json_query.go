@@ -57,7 +57,7 @@ func (*MonitorHTTPJSONQueryResource) Schema(
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
- // Define resource schema attributes and validation.
+	// Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The HTTP JSON Query monitor allows you to monitor an HTTP endpoint by querying its JSON response using a JSONPath expression. This monitor extracts a value from the JSON response at the specified path and compares it to an expected value using a configurable comparison operator.",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
@@ -114,14 +114,14 @@ func (r *MonitorHTTPJSONQueryResource) Configure(
 
 // Create creates a new resource.
 func (r *MonitorHTTPJSONQueryResource) Create(
-    // Extract and validate configuration.
+	// Extract and validate configuration.
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
 	var data MonitorHTTPJSONQueryResourceModel
 
- // Extract plan data.
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -207,9 +207,9 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 		httpJSONQueryMonitor.NotificationIDs = notificationIDs
 	}
 
- // Create monitor via API.
+	// Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, httpJSONQueryMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create HTTP JSON Query monitor", err.Error())
 		return
@@ -222,7 +222,7 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -234,7 +234,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 ) {
 	var data MonitorHTTPJSONQueryResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -242,9 +242,9 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	}
 
 	var httpJSONQueryMonitor monitor.HTTPJSONQuery
- // Fetch monitor from API.
+	// Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpJSONQueryMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read HTTP JSON Query monitor", err.Error())
 		return
@@ -328,7 +328,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -340,7 +340,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 ) {
 	var data MonitorHTTPJSONQueryResourceModel
 
- // Extract plan data.
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -348,7 +348,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 
 	var state MonitorHTTPJSONQueryResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -434,9 +434,9 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 		httpJSONQueryMonitor.NotificationIDs = notificationIDs
 	}
 
- // Update monitor via API.
+	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, httpJSONQueryMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP JSON Query monitor", err.Error())
 		return
@@ -447,7 +447,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -459,16 +459,16 @@ func (r *MonitorHTTPJSONQueryResource) Delete(
 ) {
 	var data MonitorHTTPJSONQueryResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
- // Delete monitor via API.
+	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete HTTP JSON Query monitor", err.Error())
 		return
@@ -477,13 +477,13 @@ func (r *MonitorHTTPJSONQueryResource) Delete(
 
 // ImportState imports an existing resource by ID.
 func (*MonitorHTTPJSONQueryResource) ImportState(
-    // Import monitor by ID.
+	// Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -492,6 +492,6 @@ func (*MonitorHTTPJSONQueryResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

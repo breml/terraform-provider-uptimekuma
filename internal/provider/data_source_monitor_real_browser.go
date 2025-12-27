@@ -100,73 +100,51 @@ func (d *MonitorRealBrowserDataSource) Read(
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var realBrowserMonitor monitor.RealBrowser
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(realBrowserMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.RealBrowser
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "real-browser" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple monitors found",
-					fmt.Sprintf(
-						"Multiple Real Browser monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var realBrowserMon monitor.RealBrowser
-			err := mon.As(&realBrowserMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &realBrowserMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Real Browser monitor not found",
-				fmt.Sprintf("No Real Browser monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorRealBrowserDataSource) readByID(
+	ctx context.Context,
+	data *MonitorRealBrowserDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var realBrowserMonitor monitor.RealBrowser
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(realBrowserMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorRealBrowserDataSource) readByName(
+	ctx context.Context,
+	data *MonitorRealBrowserDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "real-browser", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var realBrowserMon monitor.RealBrowser
+	err := found.As(&realBrowserMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(realBrowserMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

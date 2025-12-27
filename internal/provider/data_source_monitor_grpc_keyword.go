@@ -100,73 +100,51 @@ func (d *MonitorGrpcKeywordDataSource) Read(
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var grpcKeywordMonitor monitor.GrpcKeyword
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &grpcKeywordMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read gRPC Keyword monitor", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(grpcKeywordMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.GrpcKeyword
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "grpc-keyword" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple monitors found",
-					fmt.Sprintf(
-						"Multiple gRPC Keyword monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var grpcKeywordMon monitor.GrpcKeyword
-			err := mon.As(&grpcKeywordMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &grpcKeywordMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"gRPC Keyword monitor not found",
-				fmt.Sprintf("No gRPC Keyword monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorGrpcKeywordDataSource) readByID(
+	ctx context.Context,
+	data *MonitorGrpcKeywordDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var grpcKeywordMonitor monitor.GrpcKeyword
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &grpcKeywordMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read gRPC Keyword monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(grpcKeywordMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorGrpcKeywordDataSource) readByName(
+	ctx context.Context,
+	data *MonitorGrpcKeywordDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "grpc-keyword", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var grpcKeywordMon monitor.GrpcKeyword
+	err := found.As(&grpcKeywordMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(grpcKeywordMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

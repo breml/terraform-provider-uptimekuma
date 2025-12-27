@@ -65,7 +65,7 @@ func (*MonitorRealBrowserResource) Schema(
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
- // Define resource schema attributes and validation.
+	// Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Real Browser monitor resource",
 		Attributes:          withMonitorBaseAttributes(withRealBrowserMonitorAttributes(map[string]schema.Attribute{})),
@@ -160,14 +160,14 @@ func (r *MonitorRealBrowserResource) Configure(
 
 // Create creates a new Real Browser monitor resource.
 func (r *MonitorRealBrowserResource) Create(
-    // Extract and validate configuration.
+	// Extract and validate configuration.
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
 	var data MonitorRealBrowserResourceModel
 
- // Extract plan data.
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -235,9 +235,9 @@ func (r *MonitorRealBrowserResource) Create(
 		realBrowserMonitor.NotificationIDs = notificationIDs
 	}
 
- // Create monitor via API.
+	// Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, realBrowserMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Real Browser monitor", err.Error())
 		return
@@ -250,7 +250,7 @@ func (r *MonitorRealBrowserResource) Create(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -258,7 +258,7 @@ func (r *MonitorRealBrowserResource) Create(
 func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorRealBrowserResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -266,9 +266,9 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 	}
 
 	var realBrowserMonitor monitor.RealBrowser
- // Fetch monitor from API.
+	// Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 		return
@@ -337,7 +337,7 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -349,7 +349,7 @@ func (r *MonitorRealBrowserResource) Update(
 ) {
 	var data MonitorRealBrowserResourceModel
 
- // Extract plan data.
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -357,7 +357,7 @@ func (r *MonitorRealBrowserResource) Update(
 
 	var state MonitorRealBrowserResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -425,9 +425,9 @@ func (r *MonitorRealBrowserResource) Update(
 		realBrowserMonitor.NotificationIDs = notificationIDs
 	}
 
- // Update monitor via API.
+	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, realBrowserMonitor)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Real Browser monitor", err.Error())
 		return
@@ -438,7 +438,7 @@ func (r *MonitorRealBrowserResource) Update(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -450,16 +450,16 @@ func (r *MonitorRealBrowserResource) Delete(
 ) {
 	var data MonitorRealBrowserResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
- // Delete monitor via API.
+	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete Real Browser monitor", err.Error())
 		return
@@ -468,13 +468,13 @@ func (r *MonitorRealBrowserResource) Delete(
 
 // ImportState imports an existing resource by ID.
 func (*MonitorRealBrowserResource) ImportState(
-    // Import monitor by ID.
+	// Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -483,6 +483,6 @@ func (*MonitorRealBrowserResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

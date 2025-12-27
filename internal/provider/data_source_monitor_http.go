@@ -101,77 +101,53 @@ func (d *MonitorHTTPDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// If ID is provided, use it directly
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var httpMonitor monitor.HTTP
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(httpMonitor.Name)
-		data.URL = types.StringValue(httpMonitor.URL)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	// If name is provided, search for it
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.HTTP
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "http" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple monitors found",
-					fmt.Sprintf(
-						"Multiple HTTP monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var httpMon monitor.HTTP
-			err := mon.As(&httpMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &httpMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"HTTP monitor not found",
-				fmt.Sprintf("No HTTP monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		data.URL = types.StringValue(found.URL)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorHTTPDataSource) readByID(
+	ctx context.Context,
+	data *MonitorHTTPDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var httpMonitor monitor.HTTP
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(httpMonitor.Name)
+	data.URL = types.StringValue(httpMonitor.URL)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorHTTPDataSource) readByName(
+	ctx context.Context,
+	data *MonitorHTTPDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "http", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var httpMon monitor.HTTP
+	err := found.As(&httpMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(httpMon.ID)
+	data.URL = types.StringValue(httpMon.URL)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

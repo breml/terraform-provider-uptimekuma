@@ -110,77 +110,55 @@ func (d *MonitorTCPPortDataSource) Read(
 		return
 	}
 
- // Attempt to read by ID if provided.
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var tcpMonitor monitor.TCPPort
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &tcpMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read TCP Port monitor", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(tcpMonitor.Name)
-		data.Hostname = types.StringValue(tcpMonitor.Hostname)
-		data.Port = types.Int64Value(int64(tcpMonitor.Port))
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
- // Attempt to read by name if ID not provided.
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.TCPPort
-		for _, mon := range monitors {
-			if mon.Name != data.Name.ValueString() || mon.Type() != "port" {
-				continue
-			}
-
-   // Error if multiple matches found.
-			if found != nil {
-				resp.Diagnostics.AddError(
-					"Multiple monitors found",
-					fmt.Sprintf(
-						"Multiple TCP Port monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.",
-						data.Name.ValueString(),
-					),
-				)
-				return
-			}
-
-			var tcpMon monitor.TCPPort
-			err := mon.As(&tcpMon)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-				return
-			}
-
-			found = &tcpMon
-		}
-
-  // Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"TCP Port monitor not found",
-				fmt.Sprintf("No TCP Port monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		data.Hostname = types.StringValue(found.Hostname)
-		data.Port = types.Int64Value(int64(found.Port))
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *MonitorTCPPortDataSource) readByID(
+	ctx context.Context,
+	data *MonitorTCPPortDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var tcpMonitor monitor.TCPPort
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &tcpMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read TCP Port monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(tcpMonitor.Name)
+	data.Hostname = types.StringValue(tcpMonitor.Hostname)
+	data.Port = types.Int64Value(int64(tcpMonitor.Port))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MonitorTCPPortDataSource) readByName(
+	ctx context.Context,
+	data *MonitorTCPPortDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "port", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var tcpMon monitor.TCPPort
+	err := found.As(&tcpMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(tcpMon.ID)
+	data.Hostname = types.StringValue(tcpMon.Hostname)
+	data.Port = types.Int64Value(int64(tcpMon.Port))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

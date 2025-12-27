@@ -113,7 +113,7 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
- // Attempt to read by ID if provided.
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		statusPages, err := d.client.GetStatusPages(ctx)
 		if err != nil {
@@ -135,7 +135,7 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	resp.Diagnostics.AddError(
- // Error if neither ID nor name provided.
+		// Error if neither ID nor name provided.
 		"Missing query parameters",
 		"Either 'id' or 'slug' must be specified.",
 	)

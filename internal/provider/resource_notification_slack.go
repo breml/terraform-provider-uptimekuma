@@ -159,7 +159,7 @@ func (r *NotificationSlackResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, slack)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -169,7 +169,7 @@ func (r *NotificationSlackResource) Create(
 
 	data.ID = types.Int64Value(id)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -177,7 +177,7 @@ func (r *NotificationSlackResource) Create(
 func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationSlackResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -187,7 +187,7 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -200,7 +200,7 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 
 	slack := notification.Slack{}
 	err = base.As(&slack)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "slack"`, err.Error())
 		return
@@ -228,7 +228,7 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	data.RichMessage = types.BoolValue(slack.RichMessage)
 	data.ChannelNotify = types.BoolValue(slack.ChannelNotify)
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -265,13 +265,13 @@ func (r *NotificationSlackResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, slack)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -283,7 +283,7 @@ func (r *NotificationSlackResource) Delete(
 ) {
 	var data NotificationSlackResourceModel
 
- // Get resource from state.
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -291,7 +291,7 @@ func (r *NotificationSlackResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
@@ -305,7 +305,7 @@ func (*NotificationSlackResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
- // Handle error.
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -314,6 +314,6 @@ func (*NotificationSlackResource) ImportState(
 		return
 	}
 
- // Populate state.
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
