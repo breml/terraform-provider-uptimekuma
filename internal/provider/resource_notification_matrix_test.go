@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -85,6 +86,13 @@ func TestAccNotificationMatrixResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:            "uptimekuma_notification_matrix.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationMatrixImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"access_token"},
+			},
 		},
 	})
 }
@@ -101,4 +109,9 @@ resource "uptimekuma_notification_matrix" "test" {
   access_token       = %[4]q
 }
 `, name, homeserverURL, internalRoomID, accessToken)
+}
+
+func testAccNotificationMatrixImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_matrix.test"]
+	return rs.Primary.Attributes["id"], nil
 }

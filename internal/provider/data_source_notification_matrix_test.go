@@ -30,12 +30,17 @@ func TestAccNotificationMatrixDataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_matrix.test",
+						"data.uptimekuma_notification_matrix.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_matrix.test",
+						"data.uptimekuma_notification_matrix.by_name",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_matrix.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -57,8 +62,12 @@ resource "uptimekuma_notification_matrix" "test" {
   access_token       = %[4]q
 }
 
-data "uptimekuma_notification_matrix" "test" {
+data "uptimekuma_notification_matrix" "by_name" {
   name = uptimekuma_notification_matrix.test.name
+}
+
+data "uptimekuma_notification_matrix" "by_id" {
+  id = uptimekuma_notification_matrix.test.id
 }
 `, name, homeserverURL, internalRoomID, accessToken)
 }
