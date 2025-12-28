@@ -28,7 +28,7 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 				Config: testAccNotificationGoogleChatResourceConfig(
 					name,
 					webhookURL,
-					true,
+					false,
 					template,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -50,12 +50,7 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlechat.test",
 						tfjsonpath.New("use_template"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_googlechat.test",
-						tfjsonpath.New("template"),
-						knownvalue.StringExact(template),
+						knownvalue.Bool(false),
 					),
 				},
 			},
@@ -63,7 +58,7 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 				Config: testAccNotificationGoogleChatResourceConfig(
 					nameUpdated,
 					webhookURLUpdated,
-					false,
+					true,
 					templateUpdated,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -85,7 +80,7 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlechat.test",
 						tfjsonpath.New("use_template"),
-						knownvalue.Bool(false),
+						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlechat.test",
@@ -105,21 +100,25 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 	})
 }
 
+//nolint:revive // flag-parameter is fine for test helper function
 func testAccNotificationGoogleChatResourceConfig(
 	name string,
 	webhookURL string,
 	useTemplate bool,
 	template string,
 ) string {
+	templateField := ""
+	if useTemplate {
+		templateField = fmt.Sprintf("\n  template = %q", template)
+	}
+
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_googlechat" "test" {
-  name           = %[1]q
-  is_active      = true
-  webhook_url    = %[2]q
-  use_template   = %[3]t
-  template       = %[4]q
+  name         = %[1]q
+  webhook_url  = %[2]q
+  use_template = %[3]t%[4]s
 }
-`, name, webhookURL, useTemplate, template)
+`, name, webhookURL, useTemplate, templateField)
 }
 
 func testAccNotificationGoogleChatImportStateID(s *terraform.State) (string, error) {
