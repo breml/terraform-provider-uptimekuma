@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -74,11 +75,14 @@ func (*NotificationOpsgenieResource) Schema(
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
+					stringvalidator.OneOf("us", "eu"),
 				},
 			},
 			"priority": schema.Int64Attribute{
 				MarkdownDescription: "Alert priority level (1-5)",
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(3),
 				Validators: []validator.Int64{
 					int64validator.Between(1, 5),
 				},
