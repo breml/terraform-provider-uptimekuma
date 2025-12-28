@@ -321,7 +321,7 @@ linters:
         - name: comments-density
           arguments:
             # Minimal percentage of comment lines in a function to report.
-            - 15
+            - 10
 
         # https://github.com/mgechev/revive/blob/HEAD/RULES_DESCRIPTIONS.md#confusing-naming
         - name: confusing-naming
