@@ -206,14 +206,20 @@ func (r *NotificationPagerDutyResource) Read(
 	data.IntegrationURL = types.StringValue(pagerduty.IntegrationURL)
 	if pagerduty.IntegrationKey != "" {
 		data.IntegrationKey = types.StringValue(pagerduty.IntegrationKey)
+	} else {
+		data.IntegrationKey = types.StringNull()
 	}
 
 	if pagerduty.Priority != "" {
 		data.Priority = types.StringValue(pagerduty.Priority)
+	} else {
+		data.Priority = types.StringNull()
 	}
 
 	if pagerduty.AutoResolve != "" {
 		data.AutoResolve = types.StringValue(pagerduty.AutoResolve)
+	} else {
+		data.AutoResolve = types.StringNull()
 	}
 
 	// Populate state.
