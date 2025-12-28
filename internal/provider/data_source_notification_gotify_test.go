@@ -29,6 +29,20 @@ func TestAccNotificationGotifyDataSource(t *testing.T) {
 					),
 				),
 			},
+			{
+				Config: testAccNotificationGotifyDataSourceConfigByID(name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet(
+						"data.uptimekuma_notification_gotify.test",
+						"id",
+					),
+					resource.TestCheckResourceAttr(
+						"data.uptimekuma_notification_gotify.test",
+						"name",
+						name,
+					),
+				),
+			},
 		},
 	})
 }
@@ -45,6 +59,22 @@ resource "uptimekuma_notification_gotify" "test" {
 
 data "uptimekuma_notification_gotify" "test" {
   name = uptimekuma_notification_gotify.test.name
+}
+`, name)
+}
+
+func testAccNotificationGotifyDataSourceConfigByID(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_gotify" "test" {
+  name              = %[1]q
+  is_active         = true
+  server_url        = "https://gotify.example.com"
+  application_token = "AGe0Ks4WV5fEJkX"
+  priority          = 8
+}
+
+data "uptimekuma_notification_gotify" "test" {
+  id = uptimekuma_notification_gotify.test.id
 }
 `, name)
 }
