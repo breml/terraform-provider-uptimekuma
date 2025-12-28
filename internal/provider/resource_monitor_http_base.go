@@ -42,6 +42,7 @@ type MonitorHTTPBaseModel struct {
 	OAuthClientID       types.String `tfsdk:"oauth_client_id"`       // OAuth client ID.
 	OAuthClientSecret   types.String `tfsdk:"oauth_client_secret"`   // OAuth client secret.
 	OAuthScopes         types.String `tfsdk:"oauth_scopes"`          // OAuth scopes to request.
+	CacheBust           types.Bool   `tfsdk:"cache_bust"`            // Enable cache busting.
 }
 
 // withHTTPMonitorBaseAttributes adds HTTP-specific schema attributes to the provided attribute map.
@@ -71,6 +72,7 @@ func withHTTPMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string
 	attrs["oauth_client_id"] = httpOAuthClientIDAttribute()
 	attrs["oauth_client_secret"] = httpOAuthClientSecretAttribute()
 	attrs["oauth_scopes"] = httpOAuthScopesAttribute()
+	attrs["cache_bust"] = httpCacheBustAttribute()
 	return attrs
 }
 
@@ -277,5 +279,14 @@ func httpOAuthScopesAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "OAuth scopes",
 		Optional:            true,
+	}
+}
+
+func httpCacheBustAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Enable cache busting for HTTP requests",
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(false),
 	}
 }

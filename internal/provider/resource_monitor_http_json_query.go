@@ -186,6 +186,7 @@ func buildHTTPJSONQueryMonitor(
 			OAuthClientID:       data.OAuthClientID.ValueString(),
 			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
 			OAuthScopes:         data.OAuthScopes.ValueString(),
+			CacheBust:           data.CacheBust.ValueBool(),
 		},
 		HTTPJSONQueryDetails: monitor.HTTPJSONQueryDetails{
 			JSONPath:         data.JSONPath.ValueString(),
@@ -278,6 +279,7 @@ func populateHTTPBaseFieldsForJSONQuery(httpMonitor *monitor.HTTP, m *MonitorHTT
 	m.OAuthClientID = stringOrNullJSONQuery(httpMonitor.OAuthClientID)
 	m.OAuthClientSecret = stringOrNullJSONQuery(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNullJSONQuery(httpMonitor.OAuthScopes)
+	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
 }
 
 // populateOptionalFieldsForJSONQuery populates optional fields for HTTP JSON Query monitor.
