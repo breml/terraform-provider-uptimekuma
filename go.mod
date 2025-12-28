@@ -3,7 +3,7 @@ module github.com/breml/terraform-provider-uptimekuma
 go 1.25.2
 
 require (
-	github.com/breml/go-uptime-kuma-client v0.0.0-20251213164403-d6ed6f4263fa
+	github.com/breml/go-uptime-kuma-client v0.0.0-20251228221554-6fb7e7c0ea53
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-go v0.29.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
