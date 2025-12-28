@@ -95,9 +95,11 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_googlechat.test",
-				ImportState:       true,
-				ImportStateIdFunc: testAccNotificationGoogleChatImportStateID,
+				ResourceName:            "uptimekuma_notification_googlechat.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationGoogleChatImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"webhook_url"},
 			},
 		},
 	})

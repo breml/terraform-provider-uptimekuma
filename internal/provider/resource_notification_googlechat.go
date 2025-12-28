@@ -186,7 +186,7 @@ func (r *NotificationGoogleChatResource) Read(
 	err = base.As(&googleChat)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "googlechat"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "GoogleChat"`, err.Error())
 		return
 	}
 
@@ -201,6 +201,8 @@ func (r *NotificationGoogleChatResource) Read(
 
 	if googleChat.Template != "" {
 		data.Template = types.StringValue(googleChat.Template)
+	} else {
+		data.Template = types.StringNull()
 	}
 
 	// Populate state.
