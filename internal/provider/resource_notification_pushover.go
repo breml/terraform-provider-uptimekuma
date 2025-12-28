@@ -232,26 +232,38 @@ func (r *NotificationPushoverResource) Read(
 
 	if pushover.Sounds != "" {
 		data.Sounds = types.StringValue(pushover.Sounds)
+	} else {
+		data.Sounds = types.StringNull()
 	}
 
 	if pushover.SoundsUp != "" {
 		data.SoundsUp = types.StringValue(pushover.SoundsUp)
+	} else {
+		data.SoundsUp = types.StringNull()
 	}
 
 	if pushover.Priority != "" {
 		data.Priority = types.StringValue(pushover.Priority)
+	} else {
+		data.Priority = types.StringNull()
 	}
 
 	if pushover.Title != "" {
 		data.Title = types.StringValue(pushover.Title)
+	} else {
+		data.Title = types.StringNull()
 	}
 
 	if pushover.Device != "" {
 		data.Device = types.StringValue(pushover.Device)
+	} else {
+		data.Device = types.StringNull()
 	}
 
 	if pushover.TTL != "" {
 		data.TTL = types.StringValue(pushover.TTL)
+	} else {
+		data.TTL = types.StringNull()
 	}
 
 	// Populate state.
