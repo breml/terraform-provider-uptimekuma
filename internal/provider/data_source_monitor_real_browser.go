@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorRealBrowserDataSource{}
 
+// NewMonitorRealBrowserDataSource returns a new instance of the Real Browser monitor data source.
 func NewMonitorRealBrowserDataSource() datasource.DataSource {
 	return &MonitorRealBrowserDataSource{}
 }
 
+// MonitorRealBrowserDataSource manages Real Browser monitor data source operations.
 type MonitorRealBrowserDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorRealBrowserDataSourceModel describes the data model for Real Browser monitor data source.
 type MonitorRealBrowserDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorRealBrowserDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MonitorRealBrowserDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_real_browser"
 }
 
-func (d *MonitorRealBrowserDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MonitorRealBrowserDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Real Browser monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorRealBrowserDataSource) Schema(ctx context.Context, req datasourc
 	}
 }
 
-func (d *MonitorRealBrowserDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorRealBrowserDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorRealBrowserDataSource) Configure(ctx context.Context, req dataso
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,7 +87,12 @@ func (d *MonitorRealBrowserDataSource) Configure(ctx context.Context, req dataso
 	d.client = client
 }
 
-func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *MonitorRealBrowserDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data MonitorRealBrowserDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -74,60 +100,53 @@ func (d *MonitorRealBrowserDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var realBrowserMonitor monitor.RealBrowser
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
-			return
-		}
-		data.Name = types.StringValue(realBrowserMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.RealBrowser
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "real-browser" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple Real Browser monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var realBrowserMon monitor.RealBrowser
-				err := m.As(&realBrowserMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &realBrowserMon
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Real Browser monitor not found",
-				fmt.Sprintf("No Real Browser monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+// readByID fetches the Real Browser monitor data by its ID.
+func (d *MonitorRealBrowserDataSource) readByID(
+	ctx context.Context,
+	data *MonitorRealBrowserDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var realBrowserMonitor monitor.RealBrowser
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(realBrowserMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// readByName fetches the Real Browser monitor data by its name.
+func (d *MonitorRealBrowserDataSource) readByName(
+	ctx context.Context,
+	data *MonitorRealBrowserDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "real-browser", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var realBrowserMon monitor.RealBrowser
+	err := found.As(&realBrowserMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(realBrowserMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -13,14 +13,17 @@ import (
 
 var _ datasource.DataSource = &ProxyDataSource{}
 
+// NewProxyDataSource returns a new instance of the proxy data source.
 func NewProxyDataSource() datasource.DataSource {
 	return &ProxyDataSource{}
 }
 
+// ProxyDataSource manages proxy data source operations.
 type ProxyDataSource struct {
 	client *kuma.Client
 }
 
+// ProxyDataSourceModel describes the data model for proxy data source.
 type ProxyDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Host     types.String `tfsdk:"host"`
@@ -28,11 +31,17 @@ type ProxyDataSourceModel struct {
 	Protocol types.String `tfsdk:"protocol"`
 }
 
-func (d *ProxyDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*ProxyDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_proxy"
 }
 
-func (d *ProxyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*ProxyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get proxy information by ID",
 		Attributes: map[string]schema.Attribute{
@@ -56,7 +65,12 @@ func (d *ProxyDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 	}
 }
 
-func (d *ProxyDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *ProxyDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -65,7 +79,10 @@ func (d *ProxyDataSource) Configure(ctx context.Context, req datasource.Configur
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -73,6 +90,7 @@ func (d *ProxyDataSource) Configure(ctx context.Context, req datasource.Configur
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *ProxyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data ProxyDataSourceModel
 

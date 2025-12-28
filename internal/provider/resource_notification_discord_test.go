@@ -32,12 +32,36 @@ func TestAccNotificationDiscordResource(t *testing.T) {
 					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURL)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("username"), knownvalue.StringExact("Uptime Kuma")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("channel_type"), knownvalue.StringExact("text")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("disable_url"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURL),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("username"),
+						knownvalue.StringExact("Uptime Kuma"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("channel_type"),
+						knownvalue.StringExact("text"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("disable_url"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -51,14 +75,46 @@ func TestAccNotificationDiscordResource(t *testing.T) {
 					true,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("is_active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("webhook_url"), knownvalue.StringExact(webhookURLUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("username"), knownvalue.StringExact("Alert Bot")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("channel_type"), knownvalue.StringExact("forum")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("thread_id"), knownvalue.StringExact("thread-123")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("prefix_message"), knownvalue.StringExact("🚨 Critical Alert")),
-					statecheck.ExpectKnownValue("uptimekuma_notification_discord.test", tfjsonpath.New("disable_url"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURLUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("username"),
+						knownvalue.StringExact("Alert Bot"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("channel_type"),
+						knownvalue.StringExact("forum"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("thread_id"),
+						knownvalue.StringExact("thread-123"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("prefix_message"),
+						knownvalue.StringExact("🚨 Critical Alert"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_discord.test",
+						tfjsonpath.New("disable_url"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -66,7 +122,13 @@ func TestAccNotificationDiscordResource(t *testing.T) {
 }
 
 func testAccNotificationDiscordResourceConfig(
-	name, webhookURL, username, channelType, threadID, prefixMessage string, disableURL bool,
+	name string,
+	webhookURL string,
+	username string,
+	channelType string,
+	threadID string,
+	prefixMessage string,
+	disableURL bool,
 ) string {
 	// Build optional fields
 	threadIDField := ""

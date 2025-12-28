@@ -13,25 +13,34 @@ import (
 
 var _ datasource.DataSource = &TagDataSource{}
 
+// NewTagDataSource returns a new instance of the tag data source.
 func NewTagDataSource() datasource.DataSource {
 	return &TagDataSource{}
 }
 
+// TagDataSource manages tag data source operations.
 type TagDataSource struct {
 	client *kuma.Client
 }
 
+// TagDataSourceModel describes the data model for tag data source.
 type TagDataSourceModel struct {
 	ID    types.Int64  `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 	Color types.String `tfsdk:"color"`
 }
 
-func (d *TagDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*TagDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_tag"
 }
 
-func (d *TagDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*TagDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get tag information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -53,7 +62,12 @@ func (d *TagDataSource) Schema(ctx context.Context, req datasource.SchemaRequest
 	}
 }
 
-func (d *TagDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *TagDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -62,7 +76,10 @@ func (d *TagDataSource) Configure(ctx context.Context, req datasource.ConfigureR
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -70,6 +87,7 @@ func (d *TagDataSource) Configure(ctx context.Context, req datasource.ConfigureR
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *TagDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data TagDataSourceModel
 
@@ -112,10 +130,14 @@ func (d *TagDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 				if foundTag != nil {
 					resp.Diagnostics.AddError(
 						"Multiple tags found",
-						fmt.Sprintf("Multiple tags with name '%s' found. Please use 'id' to specify the tag uniquely.", data.Name.ValueString()),
+						fmt.Sprintf(
+							"Multiple tags with name '%s' found. Please use 'id' to specify the tag uniquely.",
+							data.Name.ValueString(),
+						),
 					)
 					return
 				}
+
 				foundTag = &struct {
 					ID    int64
 					Name  string

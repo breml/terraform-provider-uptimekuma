@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorRedisDataSource{}
 
+// NewMonitorRedisDataSource returns a new instance of the Redis monitor data source.
 func NewMonitorRedisDataSource() datasource.DataSource {
 	return &MonitorRedisDataSource{}
 }
 
+// MonitorRedisDataSource manages Redis monitor data source operations.
 type MonitorRedisDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorRedisDataSourceModel describes the data model for Redis monitor data source.
 type MonitorRedisDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorRedisDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MonitorRedisDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_redis"
 }
 
-func (d *MonitorRedisDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MonitorRedisDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Redis monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorRedisDataSource) Schema(ctx context.Context, req datasource.Sche
 	}
 }
 
-func (d *MonitorRedisDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorRedisDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorRedisDataSource) Configure(ctx context.Context, req datasource.C
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,6 +87,7 @@ func (d *MonitorRedisDataSource) Configure(ctx context.Context, req datasource.C
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorRedisDataSourceModel
 
@@ -74,60 +96,53 @@ func (d *MonitorRedisDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var redisMonitor monitor.Redis
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &redisMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read Redis monitor", err.Error())
-			return
-		}
-		data.Name = types.StringValue(redisMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.Redis
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "redis" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple Redis monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var redisMon monitor.Redis
-				err := m.As(&redisMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &redisMon
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Redis monitor not found",
-				fmt.Sprintf("No Redis monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+// readByID fetches the Redis monitor data by its ID.
+func (d *MonitorRedisDataSource) readByID(
+	ctx context.Context,
+	data *MonitorRedisDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var redisMonitor monitor.Redis
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &redisMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read Redis monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(redisMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// readByName fetches the Redis monitor data by its name.
+func (d *MonitorRedisDataSource) readByName(
+	ctx context.Context,
+	data *MonitorRedisDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "redis", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var redisMon monitor.Redis
+	err := found.As(&redisMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(redisMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -1,0 +1,69 @@
+---
+
+version: '3'
+
+tasks:
+  install:
+    desc: "Install tools"
+    cmds:
+      - go build -v -o bin/newline-after-block github.com/breml/newline-after-block/cmd/newline-after-block
+      - go build -v -o bin/lefthook github.com/evilmartians/lefthook/v2
+      - go build -v -o bin/task github.com/go-task/task/v3/cmd/task
+      - go build -v -o bin/golangci-lint github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+      - go build -v -o bin/gofumpt mvdan.cc/gofumpt
+      - go build -v -o bin/commit-msg-lint github.com/breml/githooks/cmd/commit-msg-lint
+      - go install -v ./...
+
+  install-githooks:
+    desc: "Install git hooks using lefthook"
+    cmds:
+      - bin/lefthook install
+
+  format:
+    desc: "Format code"
+    aliases: [ fmt ]
+    cmds:
+      - bin/gofumpt -l -w .
+      - bin/newline-after-block -fix ./...
+
+  lint:
+    desc: "Run linters"
+    cmds:
+      - markdownlint-cli2 --fix --files '**/*.md' '!.scratch/**' '!.beads/**' '!docs/**'
+      - bin/golangci-lint config verify
+      - bin/golangci-lint run --fix ./...
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - go test -v -shuffle=on -cover -timeout=120s -parallel=10 ./...
+
+  testacc:
+    desc: "Run acceptance tests"
+    env:
+      TF_ACC: "1"
+    cmds:
+      - go test -v -shuffle on -coverprofile coverage.out -timeout 480s ./...
+
+  testacc-cover-report:
+    desc: "Generate acceptance tests coverage report"
+    preconditions:
+      - test -f coverage.out
+    cmds:
+      - go tool cover -func=coverage.out | sort -k3 -rn
+
+  clean:
+    desc: "Clean build artifacts"
+    cmds:
+      - rm -f coverage.out
+
+  build:
+    desc: "Build all code"
+    cmds:
+      - go build -v ./...
+
+  generate-docs:
+    desc: "Generate documentation"
+    workdir: ./tools
+    cmds:
+      - go generate ./...

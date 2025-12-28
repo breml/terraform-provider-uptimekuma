@@ -23,14 +23,17 @@ var (
 	_ resource.ResourceWithImportState = &NotificationDingDingResource{}
 )
 
+// NewNotificationDingDingResource returns a new instance of the DingDing notification resource.
 func NewNotificationDingDingResource() resource.Resource {
 	return &NotificationDingDingResource{}
 }
 
+// NotificationDingDingResource defines the resource implementation.
 type NotificationDingDingResource struct {
 	client *kuma.Client
 }
 
+// NotificationDingDingResourceModel describes the resource data model.
 type NotificationDingDingResourceModel struct {
 	NotificationBaseModel
 
@@ -39,11 +42,21 @@ type NotificationDingDingResourceModel struct {
 	Mentioning types.String `tfsdk:"mentioning"`
 }
 
-func (r *NotificationDingDingResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*NotificationDingDingResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_dingding"
 }
 
-func (r *NotificationDingDingResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*NotificationDingDingResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "DingDing notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
@@ -68,7 +81,12 @@ func (r *NotificationDingDingResource) Schema(ctx context.Context, req resource.
 	}
 }
 
-func (r *NotificationDingDingResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the DingDing notification resource with the API client.
+func (r *NotificationDingDingResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -78,7 +96,10 @@ func (r *NotificationDingDingResource) Configure(ctx context.Context, req resour
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -87,7 +108,12 @@ func (r *NotificationDingDingResource) Configure(ctx context.Context, req resour
 	r.client = client
 }
 
-func (r *NotificationDingDingResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new DingDing notification resource.
+func (r *NotificationDingDingResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data NotificationDingDingResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -111,6 +137,7 @@ func (r *NotificationDingDingResource) Create(ctx context.Context, req resource.
 	}
 
 	id, err := r.client.CreateNotification(ctx, dingding)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -118,23 +145,31 @@ func (r *NotificationDingDingResource) Create(ctx context.Context, req resource.
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationDingDingResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read reads the current state of the DingDing notification resource.
+func (r *NotificationDingDingResource) Read(
+	ctx context.Context,
+	req resource.ReadRequest,
+	resp *resource.ReadResponse,
+) {
 	var data NotificationDingDingResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -147,12 +182,13 @@ func (r *NotificationDingDingResource) Read(ctx context.Context, req resource.Re
 
 	dingding := notification.DingDing{}
 	err = base.As(&dingding)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "DingDing"`, err.Error())
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(dingding.Name)
 	data.IsActive = types.BoolValue(dingding.IsActive)
 	data.IsDefault = types.BoolValue(dingding.IsDefault)
@@ -164,16 +200,23 @@ func (r *NotificationDingDingResource) Read(ctx context.Context, req resource.Re
 	} else {
 		data.SecretKey = types.StringNull()
 	}
+
 	if dingding.Mentioning != "" {
 		data.Mentioning = types.StringValue(dingding.Mentioning)
 	} else {
 		data.Mentioning = types.StringNull()
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationDingDingResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the DingDing notification resource.
+func (r *NotificationDingDingResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data NotificationDingDingResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -184,7 +227,7 @@ func (r *NotificationDingDingResource) Update(ctx context.Context, req resource.
 
 	dingding := notification.DingDing{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -198,32 +241,47 @@ func (r *NotificationDingDingResource) Update(ctx context.Context, req resource.
 	}
 
 	err := r.client.UpdateNotification(ctx, dingding)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationDingDingResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the DingDing notification resource.
+func (r *NotificationDingDingResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data NotificationDingDingResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
 }
 
-func (r *NotificationDingDingResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*NotificationDingDingResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -232,5 +290,6 @@ func (r *NotificationDingDingResource) ImportState(ctx context.Context, req reso
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

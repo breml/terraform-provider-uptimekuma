@@ -45,7 +45,14 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - run: make fmt
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install commit-msg-lint tool
+        run: task install
+      - run: task fmt
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
@@ -63,11 +70,34 @@ jobs:
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_wrapper: false
-      - run: make generate
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: task generate-docs
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'make generate' command and commit."; exit 1)
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - uses: DavidAnson/markdownlint-cli2-action@v22
+        with:
+          globs: |-
+            **/*.md
+            !docs/**
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
 
   unit-test:
     name: Unit Tests
@@ -80,9 +110,14 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: go mod download
       - name: Run unit tests
-        run: make test
+        run: task test
 
   # Run acceptance tests in a matrix with Terraform CLI versions
   test:
@@ -101,7 +136,43 @@ jobs:
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_wrapper: false
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: go mod download
       - name: Run acceptance tests
-        run: make testacc
+        run: task testacc
         timeout-minutes: 10
+
+  commit-lint:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Required to get full commit history
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+          cache: true
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install commit-msg-lint tool
+        run: task install
+
+      - name: Build commit-msg-lint
+        run: go build -v -o bin/commit-msg-lint github.com/breml/githooks/cmd/commit-msg-lint
+
+      - name: Validate commit messages
+        run: bin/commit-msg-lint --base-ref origin/${{ github.base_ref }} --head-ref HEAD

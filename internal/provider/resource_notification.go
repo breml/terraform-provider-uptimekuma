@@ -24,6 +24,7 @@ var (
 	_ resource.ResourceWithImportState = &NotificationResource{}
 )
 
+// NewNotificationResource returns a new instance of the notification resource.
 func NewNotificationResource() resource.Resource {
 	return &NotificationResource{}
 }
@@ -35,7 +36,7 @@ type NotificationResource struct {
 
 // NotificationResourceModel describes the resource data model.
 type NotificationResourceModel struct {
-	Id            types.Int64  `tfsdk:"id"`
+	ID            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
 	IsActive      types.Bool   `tfsdk:"is_active"`
 	IsDefault     types.Bool   `tfsdk:"is_default"`
@@ -44,11 +45,17 @@ type NotificationResourceModel struct {
 	Config        types.String `tfsdk:"config"`
 }
 
-func (r *NotificationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*NotificationResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification"
 }
 
-func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: map[string]schema.Attribute{
@@ -90,7 +97,12 @@ func (r *NotificationResource) Schema(ctx context.Context, req resource.SchemaRe
 	}
 }
 
-func (r *NotificationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the notification resource with the API client.
+func (r *NotificationResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -101,7 +113,10 @@ func (r *NotificationResource) Configure(ctx context.Context, req resource.Confi
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -110,6 +125,7 @@ func (r *NotificationResource) Configure(ctx context.Context, req resource.Confi
 	r.client = client
 }
 
+// Create creates a new notification resource.
 func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data NotificationResourceModel
 
@@ -143,11 +159,12 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the notification resource.
 func (r *NotificationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationResourceModel
 
@@ -158,7 +175,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -184,7 +201,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(genericNotification.Name)
 	data.IsActive = types.BoolValue(genericNotification.IsActive)
 	data.IsDefault = types.BoolValue(genericNotification.IsDefault)
@@ -196,6 +213,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the notification resource.
 func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data NotificationResourceModel
 
@@ -215,7 +233,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 
 	genericNotification := notification.Generic{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -235,6 +253,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the notification resource.
 func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data NotificationResourceModel
 
@@ -245,14 +264,19 @@ func (r *NotificationResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 }
 
-func (r *NotificationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*NotificationResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

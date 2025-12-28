@@ -14,24 +14,37 @@ import (
 
 var _ datasource.DataSource = &MonitorPushDataSource{}
 
+// NewMonitorPushDataSource returns a new instance of the Push monitor data source.
 func NewMonitorPushDataSource() datasource.DataSource {
 	return &MonitorPushDataSource{}
 }
 
+// MonitorPushDataSource manages Push monitor data source operations.
 type MonitorPushDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPushDataSourceModel describes the data model for Push monitor data source.
 type MonitorPushDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *MonitorPushDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MonitorPushDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_push"
 }
 
-func (d *MonitorPushDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MonitorPushDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Push monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -49,7 +62,12 @@ func (d *MonitorPushDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (d *MonitorPushDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorPushDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -58,7 +76,10 @@ func (d *MonitorPushDataSource) Configure(ctx context.Context, req datasource.Co
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -66,6 +87,7 @@ func (d *MonitorPushDataSource) Configure(ctx context.Context, req datasource.Co
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorPushDataSourceModel
 
@@ -74,60 +96,53 @@ func (d *MonitorPushDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var pushMonitor monitor.Push
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pushMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read Push monitor", err.Error())
-			return
-		}
-		data.Name = types.StringValue(pushMonitor.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.Push
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "push" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple Push monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var pushMon monitor.Push
-				err := m.As(&pushMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &pushMon
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Push monitor not found",
-				fmt.Sprintf("No Push monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+// readByID fetches the Push monitor data by its ID.
+func (d *MonitorPushDataSource) readByID(
+	ctx context.Context,
+	data *MonitorPushDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var pushMonitor monitor.Push
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pushMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read Push monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(pushMonitor.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// readByName fetches the Push monitor data by its name.
+func (d *MonitorPushDataSource) readByName(
+	ctx context.Context,
+	data *MonitorPushDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "push", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var pushMon monitor.Push
+	err := found.As(&pushMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(pushMon.ID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

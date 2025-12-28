@@ -18,6 +18,7 @@ import (
 
 var _ resource.Resource = &StatusPageIncidentResource{}
 
+// NewStatusPageIncidentResource returns a new instance of the status page incident resource.
 func NewStatusPageIncidentResource() resource.Resource {
 	return &StatusPageIncidentResource{}
 }
@@ -37,6 +38,7 @@ type StatusPageIncidentResource struct {
 	client *kuma.Client
 }
 
+// StatusPageIncidentResourceModel describes the resource data model.
 type StatusPageIncidentResourceModel struct {
 	ID             types.Int64  `tfsdk:"id"`
 	StatusPageSlug types.String `tfsdk:"status_page_slug"`
@@ -46,11 +48,21 @@ type StatusPageIncidentResourceModel struct {
 	Pin            types.Bool   `tfsdk:"pin"`
 }
 
-func (r *StatusPageIncidentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*StatusPageIncidentResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_status_page_incident"
 }
 
-func (r *StatusPageIncidentResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*StatusPageIncidentResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page incident resource",
 		Attributes: map[string]schema.Attribute{
@@ -90,7 +102,12 @@ func (r *StatusPageIncidentResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (r *StatusPageIncidentResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *StatusPageIncidentResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -100,7 +117,10 @@ func (r *StatusPageIncidentResource) Configure(ctx context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -109,7 +129,12 @@ func (r *StatusPageIncidentResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *StatusPageIncidentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new resource.
+func (r *StatusPageIncidentResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data StatusPageIncidentResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -136,7 +161,8 @@ func (r *StatusPageIncidentResource) Create(ctx context.Context, req resource.Cr
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// Read reads the current state of the resource.
+func (*StatusPageIncidentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageIncidentResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -148,7 +174,12 @@ func (r *StatusPageIncidentResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *StatusPageIncidentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the resource.
+func (r *StatusPageIncidentResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data StatusPageIncidentResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -173,7 +204,12 @@ func (r *StatusPageIncidentResource) Update(ctx context.Context, req resource.Up
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *StatusPageIncidentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the resource.
+func (r *StatusPageIncidentResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data StatusPageIncidentResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -26,6 +28,50 @@ var (
 	_ resource.ResourceWithImportState = &NotificationNtfyResource{}
 )
 
+func isValidURL(value string) bool {
+	u, err := url.Parse(value)
+	if err != nil {
+		return false
+	}
+
+	return u.Scheme == "http" || u.Scheme == "https"
+}
+
+type urlValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (urlValidator) Description(_ context.Context) string {
+	return "string must be a valid URL with http:// or https:// scheme"
+}
+
+// MarkdownDescription returns a markdown formatted description of the validator's behavior.
+func (urlValidator) MarkdownDescription(_ context.Context) string {
+	return "string must be a valid URL with `http://` or `https://` scheme"
+}
+
+// ValidateString checks that the provided string value is a valid URL.
+func (urlValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := req.ConfigValue.ValueString()
+	if !isValidURL(value) {
+		resp.Diagnostics.Append(
+			diag.NewAttributeErrorDiagnostic(
+				req.Path,
+				"Invalid URL",
+				fmt.Sprintf("Attribute must be a valid URL with http:// or https:// scheme, got: %s", value),
+			),
+		)
+	}
+}
+
+func validateURL() validator.String {
+	return urlValidator{}
+}
+
+// NewNotificationNtfyResource returns a new instance of the ntfy notification resource.
 func NewNotificationNtfyResource() resource.Resource {
 	return &NotificationNtfyResource{}
 }
@@ -49,11 +95,21 @@ type NotificationNtfyResourceModel struct {
 	Username             types.String `tfsdk:"username"`
 }
 
-func (r *NotificationNtfyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*NotificationNtfyResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_ntfy"
 }
 
-func (r *NotificationNtfyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*NotificationNtfyResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
@@ -90,7 +146,7 @@ func (r *NotificationNtfyResource) Schema(ctx context.Context, req resource.Sche
 				Default:  stringdefault.StaticString("https://ntfy.sh"),
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
-					// TODO: Validate valid URL
+					validateURL(),
 				},
 			},
 			"topic": schema.StringAttribute{
@@ -106,7 +162,12 @@ func (r *NotificationNtfyResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
-func (r *NotificationNtfyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the ntfy notification resource with the API client.
+func (r *NotificationNtfyResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -117,7 +178,10 @@ func (r *NotificationNtfyResource) Configure(ctx context.Context, req resource.C
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -126,7 +190,12 @@ func (r *NotificationNtfyResource) Configure(ctx context.Context, req resource.C
 	r.client = client
 }
 
-func (r *NotificationNtfyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new ntfy notification resource.
+func (r *NotificationNtfyResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data NotificationNtfyResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -158,11 +227,12 @@ func (r *NotificationNtfyResource) Create(ctx context.Context, req resource.Crea
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the ntfy notification resource.
 func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationNtfyResourceModel
 
@@ -173,7 +243,7 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
 	if err != nil {
@@ -194,7 +264,7 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	}
 
 	// Base properties
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(ntfy.Name)
 	data.IsActive = types.BoolValue(ntfy.IsActive)
 	data.IsDefault = types.BoolValue(ntfy.IsDefault)
@@ -209,7 +279,12 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationNtfyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the ntfy notification resource.
+func (r *NotificationNtfyResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data NotificationNtfyResourceModel
 
 	// Read Terraform plan data into the model
@@ -221,7 +296,7 @@ func (r *NotificationNtfyResource) Update(ctx context.Context, req resource.Upda
 
 	ntfy := notification.Ntfy{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -245,7 +320,12 @@ func (r *NotificationNtfyResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationNtfyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the ntfy notification resource.
+func (r *NotificationNtfyResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data NotificationNtfyResourceModel
 
 	// Read Terraform prior state data into the model
@@ -255,14 +335,19 @@ func (r *NotificationNtfyResource) Delete(ctx context.Context, req resource.Dele
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 }
 
-func (r *NotificationNtfyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*NotificationNtfyResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(

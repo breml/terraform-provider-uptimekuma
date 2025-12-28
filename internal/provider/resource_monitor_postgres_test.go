@@ -24,27 +24,63 @@ func TestAccMonitorPostgresResource(t *testing.T) {
 				Config:             testAccMonitorPostgresResourceConfig(name, connectionString, "SELECT 1"),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_query"), knownvalue.StringExact("SELECT 1")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_query"),
+						knownvalue.StringExact("SELECT 1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorPostgresResourceConfig(nameUpdated, connectionString, "SELECT version()"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_query"), knownvalue.StringExact("SELECT version()")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_query"),
+						knownvalue.StringExact("SELECT version()"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorPostgresResourceConfig(name, connectionString, query string) string {
+func testAccMonitorPostgresResourceConfig(name string, connectionString string, query string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_postgres" "test" {
   name                        = %[1]q
@@ -68,23 +104,67 @@ func TestAccMonitorPostgresResourceWithOptionalFields(t *testing.T) {
 			{
 				Config: testAccMonitorPostgresResourceConfigWithOptionalFields(name, description, connectionString),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_query"), knownvalue.StringExact("SELECT 1")),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("retry_interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("resend_interval"), knownvalue.Int64Exact(0)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("max_retries"), knownvalue.Int64Exact(3)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("upside_down"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_query"),
+						knownvalue.StringExact("SELECT 1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("resend_interval"),
+						knownvalue.Int64Exact(0),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("upside_down"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorPostgresResourceConfigWithOptionalFields(name, description, connectionString string) string {
+func testAccMonitorPostgresResourceConfigWithOptionalFields(
+	name string,
+	description string,
+	connectionString string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_postgres" "test" {
   name                       = %[1]q
@@ -112,17 +192,37 @@ func TestAccMonitorPostgresResourceWithParent(t *testing.T) {
 			{
 				Config: testAccMonitorPostgresResourceConfigWithParent(groupName, monitorName, connectionString),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_group.test", tfjsonpath.New("name"), knownvalue.StringExact(groupName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("name"), knownvalue.StringExact(monitorName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("parent"), knownvalue.NotNull()),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_postgres.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_group.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(groupName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(monitorName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("parent"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorPostgresResourceConfigWithParent(groupName, monitorName, connectionString string) string {
+func testAccMonitorPostgresResourceConfigWithParent(
+	groupName string,
+	monitorName string,
+	connectionString string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name = %[1]q

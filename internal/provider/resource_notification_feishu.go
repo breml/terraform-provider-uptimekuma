@@ -23,25 +23,38 @@ var (
 	_ resource.ResourceWithImportState = &NotificationFeishuResource{}
 )
 
+// NewNotificationFeishuResource returns a new instance of the Feishu notification resource.
 func NewNotificationFeishuResource() resource.Resource {
 	return &NotificationFeishuResource{}
 }
 
+// NotificationFeishuResource defines the resource implementation.
 type NotificationFeishuResource struct {
 	client *kuma.Client
 }
 
+// NotificationFeishuResourceModel describes the resource data model.
 type NotificationFeishuResourceModel struct {
 	NotificationBaseModel
 
 	WebHookURL types.String `tfsdk:"webhook_url"`
 }
 
-func (r *NotificationFeishuResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*NotificationFeishuResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_feishu"
 }
 
-func (r *NotificationFeishuResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*NotificationFeishuResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Feishu notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
@@ -57,7 +70,12 @@ func (r *NotificationFeishuResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (r *NotificationFeishuResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the Feishu notification resource with the API client.
+func (r *NotificationFeishuResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -67,7 +85,10 @@ func (r *NotificationFeishuResource) Configure(ctx context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -76,7 +97,12 @@ func (r *NotificationFeishuResource) Configure(ctx context.Context, req resource
 	r.client = client
 }
 
-func (r *NotificationFeishuResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new Feishu notification resource.
+func (r *NotificationFeishuResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data NotificationFeishuResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -98,6 +124,7 @@ func (r *NotificationFeishuResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	id, err := r.client.CreateNotification(ctx, feishu)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create notification", err.Error())
 		return
@@ -105,23 +132,27 @@ func (r *NotificationFeishuResource) Create(ctx context.Context, req resource.Cr
 
 	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the Feishu notification resource.
 func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data NotificationFeishuResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	id := data.Id.ValueInt64()
+	id := data.ID.ValueInt64()
 
 	base, err := r.client.GetNotification(ctx, id)
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -134,12 +165,13 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 
 	feishu := notification.Feishu{}
 	err = base.As(&feishu)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "Feishu"`, err.Error())
 		return
 	}
 
-	data.Id = types.Int64Value(id)
+	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(feishu.Name)
 	data.IsActive = types.BoolValue(feishu.IsActive)
 	data.IsDefault = types.BoolValue(feishu.IsDefault)
@@ -147,10 +179,16 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 
 	data.WebHookURL = types.StringValue(feishu.WebHookURL)
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationFeishuResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the Feishu notification resource.
+func (r *NotificationFeishuResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data NotificationFeishuResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -161,7 +199,7 @@ func (r *NotificationFeishuResource) Update(ctx context.Context, req resource.Up
 
 	feishu := notification.Feishu{
 		Base: notification.Base{
-			ID:            data.Id.ValueInt64(),
+			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      data.IsActive.ValueBool(),
@@ -173,32 +211,47 @@ func (r *NotificationFeishuResource) Update(ctx context.Context, req resource.Up
 	}
 
 	err := r.client.UpdateNotification(ctx, feishu)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update notification", err.Error())
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *NotificationFeishuResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the Feishu notification resource.
+func (r *NotificationFeishuResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data NotificationFeishuResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteNotification(ctx, data.Id.ValueInt64())
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
 }
 
-func (r *NotificationFeishuResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*NotificationFeishuResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -207,5 +260,6 @@ func (r *NotificationFeishuResource) ImportState(ctx context.Context, req resour
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

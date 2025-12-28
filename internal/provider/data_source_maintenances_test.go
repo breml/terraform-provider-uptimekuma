@@ -21,7 +21,11 @@ func TestAccMaintenancesDataSource(t *testing.T) {
 			{
 				Config: testAccMaintenancesDataSourceConfig(title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenances.test", tfjsonpath.New("maintenances"), knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenances.test",
+						tfjsonpath.New("maintenances"),
+						knownvalue.ListSizeExact(2),
+					),
 				},
 			},
 		},
@@ -65,7 +69,11 @@ func TestAccMaintenancesDataSource_Empty(t *testing.T) {
 			{
 				Config: testAccMaintenancesDataSourceConfigEmpty(),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenances.test", tfjsonpath.New("maintenances"), knownvalue.ListSizeExact(0)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenances.test",
+						tfjsonpath.New("maintenances"),
+						knownvalue.ListSizeExact(0),
+					),
 				},
 			},
 		},
@@ -89,7 +97,11 @@ func TestAccMaintenancesDataSource_MultipleStrategies(t *testing.T) {
 			{
 				Config: testAccMaintenancesDataSourceConfigMultipleStrategies(title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_maintenances.test", tfjsonpath.New("maintenances"), knownvalue.ListSizeExact(3)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_maintenances.test",
+						tfjsonpath.New("maintenances"),
+						knownvalue.ListSizeExact(3),
+					),
 				},
 			},
 		},

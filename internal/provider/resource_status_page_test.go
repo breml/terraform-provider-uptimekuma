@@ -26,26 +26,58 @@ func TestAccStatusPageResource(t *testing.T) {
 				Config:             testAccStatusPageResourceConfig(slug, title, description, true),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("slug"), knownvalue.StringExact(slug)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("published"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("published"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccStatusPageResourceConfig(slug, titleUpdated, descriptionUpdated, false),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("slug"), knownvalue.StringExact(slug)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("title"), knownvalue.StringExact(titleUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("description"), knownvalue.StringExact(descriptionUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("published"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(titleUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(descriptionUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("published"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccStatusPageResourceConfig(slug, title, description string, published bool) string {
+func testAccStatusPageResourceConfig(slug string, title string, description string, published bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug        = %[1]q
@@ -67,19 +99,43 @@ func TestAccStatusPageResourceMinimal(t *testing.T) {
 			{
 				Config: testAccStatusPageResourceConfigMinimal(slug, title),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("slug"), knownvalue.StringExact(slug)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("published"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("show_tags"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("show_powered_by"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("show_certificate_expiry"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("published"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("show_tags"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("show_powered_by"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("show_certificate_expiry"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccStatusPageResourceConfigMinimal(slug, title string) string {
+func testAccStatusPageResourceConfigMinimal(slug string, title string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug  = %[1]q
@@ -100,21 +156,53 @@ func TestAccStatusPageResourceWithAllOptions(t *testing.T) {
 			{
 				Config: testAccStatusPageResourceConfigWithAllOptions(slug, title, description),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("slug"), knownvalue.StringExact(slug)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("theme"), knownvalue.StringExact("light")),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("published"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("show_tags"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("show_powered_by"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("show_certificate_expiry"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("theme"),
+						knownvalue.StringExact("light"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("published"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("show_tags"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("show_powered_by"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("show_certificate_expiry"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccStatusPageResourceConfigWithAllOptions(slug, title, description string) string {
+func testAccStatusPageResourceConfigWithAllOptions(slug string, title string, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug                    = %[1]q
@@ -143,15 +231,23 @@ func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 			{
 				Config: testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("slug"), knownvalue.StringExact(slug)),
-					statecheck.ExpectKnownValue("uptimekuma_status_page.test", tfjsonpath.New("title"), knownvalue.StringExact(title)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName string) string {
+func testAccStatusPageResourceConfigWithMonitors(slug string, title string, monitorName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[3]q

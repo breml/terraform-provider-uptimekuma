@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -18,31 +19,47 @@ import (
 )
 
 var (
+	// Ensure MonitorHTTPJSONQueryResource satisfies various resource interfaces.
 	_ resource.Resource                = &MonitorHTTPJSONQueryResource{}
 	_ resource.ResourceWithImportState = &MonitorHTTPJSONQueryResource{}
 )
 
+// NewMonitorHTTPJSONQueryResource returns a new instance of the HTTP JSON Query monitor resource.
 func NewMonitorHTTPJSONQueryResource() resource.Resource {
 	return &MonitorHTTPJSONQueryResource{}
 }
 
+// MonitorHTTPJSONQueryResource defines the resource implementation.
 type MonitorHTTPJSONQueryResource struct {
 	client *kuma.Client
 }
 
+// MonitorHTTPJSONQueryResourceModel describes the resource data model for HTTP JSON Query monitors.
 type MonitorHTTPJSONQueryResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
+
 	JSONPath         types.String `tfsdk:"json_path"`
 	ExpectedValue    types.String `tfsdk:"expected_value"`
 	JSONPathOperator types.String `tfsdk:"json_path_operator"`
 }
 
-func (r *MonitorHTTPJSONQueryResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*MonitorHTTPJSONQueryResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_http_json_query"
 }
 
-func (r *MonitorHTTPJSONQueryResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*MonitorHTTPJSONQueryResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
+	// Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The HTTP JSON Query monitor allows you to monitor an HTTP endpoint by querying its JSON response using a JSONPath expression. This monitor extracts a value from the JSON response at the specified path and compares it to an expected value using a configurable comparison operator.",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
@@ -70,7 +87,12 @@ func (r *MonitorHTTPJSONQueryResource) Schema(ctx context.Context, req resource.
 	}
 }
 
-func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MonitorHTTPJSONQueryResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -80,7 +102,10 @@ func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resour
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -89,15 +114,44 @@ func (r *MonitorHTTPJSONQueryResource) Configure(ctx context.Context, req resour
 	r.client = client
 }
 
-func (r *MonitorHTTPJSONQueryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new resource.
+func (r *MonitorHTTPJSONQueryResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
-
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	httpJSONQueryMonitor := buildHTTPJSONQueryMonitor(ctx, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id, err := r.client.CreateMonitor(ctx, httpJSONQueryMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create HTTP JSON Query monitor", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// buildHTTPJSONQueryMonitor constructs a monitor.HTTPJSONQuery from the Terraform resource model.
+func buildHTTPJSONQueryMonitor(
+	ctx context.Context,
+	data *MonitorHTTPJSONQueryResourceModel,
+	diags *diag.Diagnostics,
+) monitor.HTTPJSONQuery {
 	httpJSONQueryMonitor := monitor.HTTPJSONQuery{
 		Base: monitor.Base{
 			Name:           data.Name.ValueString(),
@@ -157,47 +211,126 @@ func (r *MonitorHTTPJSONQueryResource) Create(ctx context.Context, req resource.
 
 	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
 		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
+		diags.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
+		if !diags.HasError() {
+			httpJSONQueryMonitor.AcceptedStatusCodes = statusCodes
 		}
-
-		httpJSONQueryMonitor.AcceptedStatusCodes = statusCodes
 	} else {
 		httpJSONQueryMonitor.AcceptedStatusCodes = []string{"200-299"}
 	}
 
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
-		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if resp.Diagnostics.HasError() {
-			return
+		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if !diags.HasError() {
+			httpJSONQueryMonitor.NotificationIDs = notificationIDs
 		}
-
-		httpJSONQueryMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, httpJSONQueryMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create HTTP JSON Query monitor", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(id)
-
-	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	return httpJSONQueryMonitor
 }
 
-func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+// stringOrNull returns a Terraform String type that is null if the input string is empty, otherwise returns the string value.
+func stringOrNullJSONQuery(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+
+	return types.StringValue(s)
+}
+
+// populateHTTPBaseFieldsForJSONQuery populates base fields for HTTP JSON Query monitor.
+// Extracts common HTTP fields from API response for JSON Query specific model.
+// Similar to HTTP monitor population but uses JSON Query specific types.
+func populateHTTPBaseFieldsForJSONQuery(httpMonitor *monitor.HTTP, m *MonitorHTTPJSONQueryResourceModel) {
+	m.Name = types.StringValue(httpMonitor.Name)
+	if httpMonitor.Description != nil {
+		m.Description = types.StringValue(*httpMonitor.Description)
+	} else {
+		m.Description = types.StringNull()
+	}
+
+	m.Interval = types.Int64Value(httpMonitor.Interval)
+	m.RetryInterval = types.Int64Value(httpMonitor.RetryInterval)
+	m.ResendInterval = types.Int64Value(httpMonitor.ResendInterval)
+	m.MaxRetries = types.Int64Value(httpMonitor.MaxRetries)
+	m.UpsideDown = types.BoolValue(httpMonitor.UpsideDown)
+	m.Active = types.BoolValue(httpMonitor.IsActive)
+	m.URL = types.StringValue(httpMonitor.URL)
+	m.Timeout = types.Int64Value(httpMonitor.Timeout)
+	m.Method = types.StringValue(httpMonitor.Method)
+	m.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
+	m.IgnoreTLS = types.BoolValue(httpMonitor.IgnoreTLS)
+	m.MaxRedirects = types.Int64Value(int64(httpMonitor.MaxRedirects))
+	m.HTTPBodyEncoding = types.StringValue(httpMonitor.HTTPBodyEncoding)
+	m.Body = stringOrNullJSONQuery(httpMonitor.Body)
+	m.Headers = stringOrNullJSONQuery(httpMonitor.Headers)
+	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
+	m.BasicAuthUser = stringOrNullJSONQuery(httpMonitor.BasicAuthUser)
+	m.BasicAuthPass = stringOrNullJSONQuery(httpMonitor.BasicAuthPass)
+	m.AuthDomain = stringOrNullJSONQuery(httpMonitor.AuthDomain)
+	m.AuthWorkstation = stringOrNullJSONQuery(httpMonitor.AuthWorkstation)
+	m.TLSCert = stringOrNullJSONQuery(httpMonitor.TLSCert)
+	m.TLSKey = stringOrNullJSONQuery(httpMonitor.TLSKey)
+	m.TLSCa = stringOrNullJSONQuery(httpMonitor.TLSCa)
+	m.OAuthAuthMethod = stringOrNullJSONQuery(httpMonitor.OAuthAuthMethod)
+	m.OAuthTokenURL = stringOrNullJSONQuery(httpMonitor.OAuthTokenURL)
+	m.OAuthClientID = stringOrNullJSONQuery(httpMonitor.OAuthClientID)
+	m.OAuthClientSecret = stringOrNullJSONQuery(httpMonitor.OAuthClientSecret)
+	m.OAuthScopes = stringOrNullJSONQuery(httpMonitor.OAuthScopes)
+}
+
+// populateOptionalFieldsForJSONQuery populates optional fields for HTTP JSON Query monitor.
+// Includes parent group, proxy, status codes, and notification configuration.
+// The parent field identifies the parent monitor group for organization purposes.
+// The proxy field specifies the proxy server to use for the monitor connection.
+// Status codes and notifications are converted to Terraform list types for state management.
+func populateOptionalFieldsForJSONQuery(
+	ctx context.Context,
+	httpMonitor *monitor.HTTP,
+	m *MonitorHTTPJSONQueryResourceModel,
+	diags *diag.Diagnostics,
+) {
+	// Set parent monitor group if configured in API response.
+	if httpMonitor.Parent != nil {
+		m.Parent = types.Int64Value(*httpMonitor.Parent)
+	} else {
+		m.Parent = types.Int64Null()
+	}
+
+	// Set proxy ID if the monitor uses a proxy.
+	if httpMonitor.ProxyID != nil {
+		m.ProxyID = types.Int64Value(*httpMonitor.ProxyID)
+	} else {
+		m.ProxyID = types.Int64Null()
+	}
+
+	// Convert accepted status codes list if present.
+	if len(httpMonitor.AcceptedStatusCodes) > 0 {
+		statusCodes, d := types.ListValueFrom(ctx, types.StringType, httpMonitor.AcceptedStatusCodes)
+		diags.Append(d...)
+		m.AcceptedStatusCodes = statusCodes
+	}
+
+	// Convert notification IDs list if present.
+	if len(httpMonitor.NotificationIDs) > 0 {
+		notificationIDs, d := types.ListValueFrom(ctx, types.Int64Type, httpMonitor.NotificationIDs)
+		diags.Append(d...)
+		m.NotificationIDs = notificationIDs
+	} else {
+		m.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+}
+
+// Read reads the current state of the resource.
+func (r *MonitorHTTPJSONQueryResource) Read(
+	ctx context.Context,
+	req resource.ReadRequest,
+	resp *resource.ReadResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -209,78 +342,15 @@ func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	data.Name = types.StringValue(httpJSONQueryMonitor.Name)
-	if httpJSONQueryMonitor.Description != nil {
-		data.Description = types.StringValue(*httpJSONQueryMonitor.Description)
-	} else {
-		data.Description = types.StringNull()
-	}
+	var httpMonitor monitor.HTTP
+	httpMonitor.Base = httpJSONQueryMonitor.Base
+	httpMonitor.HTTPDetails = httpJSONQueryMonitor.HTTPDetails
+	populateHTTPBaseFieldsForJSONQuery(&httpMonitor, &data)
+	populateOptionalFieldsForJSONQuery(ctx, &httpMonitor, &data, &resp.Diagnostics)
 
-	data.Interval = types.Int64Value(httpJSONQueryMonitor.Interval)
-	data.RetryInterval = types.Int64Value(httpJSONQueryMonitor.RetryInterval)
-	data.ResendInterval = types.Int64Value(httpJSONQueryMonitor.ResendInterval)
-	data.MaxRetries = types.Int64Value(httpJSONQueryMonitor.MaxRetries)
-	data.UpsideDown = types.BoolValue(httpJSONQueryMonitor.UpsideDown)
-	data.Active = types.BoolValue(httpJSONQueryMonitor.IsActive)
-	data.URL = types.StringValue(httpJSONQueryMonitor.URL)
-	data.Timeout = types.Int64Value(httpJSONQueryMonitor.Timeout)
-	data.Method = types.StringValue(httpJSONQueryMonitor.Method)
-	data.ExpiryNotification = types.BoolValue(httpJSONQueryMonitor.ExpiryNotification)
-	data.IgnoreTLS = types.BoolValue(httpJSONQueryMonitor.IgnoreTLS)
-	data.MaxRedirects = types.Int64Value(int64(httpJSONQueryMonitor.MaxRedirects))
-	data.HTTPBodyEncoding = types.StringValue(httpJSONQueryMonitor.HTTPBodyEncoding)
-	data.Body = stringOrNull(httpJSONQueryMonitor.Body)
-	data.Headers = stringOrNull(httpJSONQueryMonitor.Headers)
-	data.AuthMethod = types.StringValue(string(httpJSONQueryMonitor.AuthMethod))
-	data.BasicAuthUser = stringOrNull(httpJSONQueryMonitor.BasicAuthUser)
-	data.BasicAuthPass = stringOrNull(httpJSONQueryMonitor.BasicAuthPass)
-	data.AuthDomain = stringOrNull(httpJSONQueryMonitor.AuthDomain)
-	data.AuthWorkstation = stringOrNull(httpJSONQueryMonitor.AuthWorkstation)
-	data.TLSCert = stringOrNull(httpJSONQueryMonitor.TLSCert)
-	data.TLSKey = stringOrNull(httpJSONQueryMonitor.TLSKey)
-	data.TLSCa = stringOrNull(httpJSONQueryMonitor.TLSCa)
-	data.OAuthAuthMethod = stringOrNull(httpJSONQueryMonitor.OAuthAuthMethod)
-	data.OAuthTokenURL = stringOrNull(httpJSONQueryMonitor.OAuthTokenURL)
-	data.OAuthClientID = stringOrNull(httpJSONQueryMonitor.OAuthClientID)
-	data.OAuthClientSecret = stringOrNull(httpJSONQueryMonitor.OAuthClientSecret)
-	data.OAuthScopes = stringOrNull(httpJSONQueryMonitor.OAuthScopes)
 	data.JSONPath = types.StringValue(httpJSONQueryMonitor.JSONPath)
 	data.ExpectedValue = types.StringValue(httpJSONQueryMonitor.ExpectedValue)
 	data.JSONPathOperator = types.StringValue(httpJSONQueryMonitor.JSONPathOperator)
-
-	if httpJSONQueryMonitor.Parent != nil {
-		data.Parent = types.Int64Value(*httpJSONQueryMonitor.Parent)
-	} else {
-		data.Parent = types.Int64Null()
-	}
-
-	if httpJSONQueryMonitor.ProxyID != nil {
-		data.ProxyID = types.Int64Value(*httpJSONQueryMonitor.ProxyID)
-	} else {
-		data.ProxyID = types.Int64Null()
-	}
-
-	if len(httpJSONQueryMonitor.AcceptedStatusCodes) > 0 {
-		statusCodes, diags := types.ListValueFrom(ctx, types.StringType, httpJSONQueryMonitor.AcceptedStatusCodes)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		data.AcceptedStatusCodes = statusCodes
-	}
-
-	if len(httpJSONQueryMonitor.NotificationIDs) > 0 {
-		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, httpJSONQueryMonitor.NotificationIDs)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		data.NotificationIDs = notificationIDs
-	} else {
-		data.NotificationIDs = types.ListNull(types.Int64Type)
-	}
 
 	data.Tags = handleMonitorTagsRead(ctx, httpJSONQueryMonitor.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -290,100 +360,30 @@ func (r *MonitorHTTPJSONQueryResource) Read(ctx context.Context, req resource.Re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the resource.
+func (r *MonitorHTTPJSONQueryResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
-
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var state MonitorHTTPJSONQueryResourceModel
-
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	httpJSONQueryMonitor := monitor.HTTPJSONQuery{
-		Base: monitor.Base{
-			ID:             data.ID.ValueInt64(),
-			Name:           data.Name.ValueString(),
-			Interval:       data.Interval.ValueInt64(),
-			RetryInterval:  data.RetryInterval.ValueInt64(),
-			ResendInterval: data.ResendInterval.ValueInt64(),
-			MaxRetries:     data.MaxRetries.ValueInt64(),
-			UpsideDown:     data.UpsideDown.ValueBool(),
-			IsActive:       data.Active.ValueBool(),
-		},
-		HTTPDetails: monitor.HTTPDetails{
-			URL:                 data.URL.ValueString(),
-			Timeout:             data.Timeout.ValueInt64(),
-			Method:              data.Method.ValueString(),
-			ExpiryNotification:  data.ExpiryNotification.ValueBool(),
-			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
-			HTTPBodyEncoding:    data.HTTPBodyEncoding.ValueString(),
-			Body:                data.Body.ValueString(),
-			Headers:             data.Headers.ValueString(),
-			AuthMethod:          monitor.AuthMethod(data.AuthMethod.ValueString()),
-			BasicAuthUser:       data.BasicAuthUser.ValueString(),
-			BasicAuthPass:       data.BasicAuthPass.ValueString(),
-			AuthDomain:          data.AuthDomain.ValueString(),
-			AuthWorkstation:     data.AuthWorkstation.ValueString(),
-			TLSCert:             data.TLSCert.ValueString(),
-			TLSKey:              data.TLSKey.ValueString(),
-			TLSCa:               data.TLSCa.ValueString(),
-			OAuthAuthMethod:     data.OAuthAuthMethod.ValueString(),
-			OAuthTokenURL:       data.OAuthTokenURL.ValueString(),
-			OAuthClientID:       data.OAuthClientID.ValueString(),
-			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
-			OAuthScopes:         data.OAuthScopes.ValueString(),
-		},
-		HTTPJSONQueryDetails: monitor.HTTPJSONQueryDetails{
-			JSONPath:         data.JSONPath.ValueString(),
-			ExpectedValue:    data.ExpectedValue.ValueString(),
-			JSONPathOperator: data.JSONPathOperator.ValueString(),
-		},
+	httpJSONQueryMonitor := buildHTTPJSONQueryMonitor(ctx, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if !data.Description.IsNull() {
-		desc := data.Description.ValueString()
-		httpJSONQueryMonitor.Description = &desc
-	}
-
-	if !data.Parent.IsNull() {
-		parent := data.Parent.ValueInt64()
-		httpJSONQueryMonitor.Parent = &parent
-	}
-
-	if !data.ProxyID.IsNull() {
-		proxyID := data.ProxyID.ValueInt64()
-		httpJSONQueryMonitor.ProxyID = &proxyID
-	}
-
-	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
-		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		httpJSONQueryMonitor.AcceptedStatusCodes = statusCodes
-	} else {
-		httpJSONQueryMonitor.AcceptedStatusCodes = []string{"200-299"}
-	}
-
-	if !data.NotificationIDs.IsNull() {
-		var notificationIDs []int64
-		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		httpJSONQueryMonitor.NotificationIDs = notificationIDs
-	}
+	httpJSONQueryMonitor.ID = data.ID.ValueInt64()
 
 	err := r.client.UpdateMonitor(ctx, httpJSONQueryMonitor)
 	if err != nil {
@@ -399,24 +399,39 @@ func (r *MonitorHTTPJSONQueryResource) Update(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MonitorHTTPJSONQueryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the resource.
+func (r *MonitorHTTPJSONQueryResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MonitorHTTPJSONQueryResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete HTTP JSON Query monitor", err.Error())
 		return
 	}
 }
 
-func (r *MonitorHTTPJSONQueryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*MonitorHTTPJSONQueryResource) ImportState(
+	// Import monitor by ID.
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -425,5 +440,6 @@ func (r *MonitorHTTPJSONQueryResource) ImportState(ctx context.Context, req reso
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

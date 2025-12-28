@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &NotificationWebhookDataSource{}
 
+// NewNotificationWebhookDataSource returns a new instance of the Webhook notification data source.
 func NewNotificationWebhookDataSource() datasource.DataSource {
 	return &NotificationWebhookDataSource{}
 }
 
+// NotificationWebhookDataSource manages Webhook notification data source operations.
 type NotificationWebhookDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationWebhookDataSourceModel describes the data model for Webhook notification data source.
 type NotificationWebhookDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationWebhookDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*NotificationWebhookDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_webhook"
 }
 
-func (d *NotificationWebhookDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*NotificationWebhookDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Webhook notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +61,12 @@ func (d *NotificationWebhookDataSource) Schema(ctx context.Context, req datasour
 	}
 }
 
-func (d *NotificationWebhookDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationWebhookDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +75,10 @@ func (d *NotificationWebhookDataSource) Configure(ctx context.Context, req datas
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +86,12 @@ func (d *NotificationWebhookDataSource) Configure(ctx context.Context, req datas
 	d.client = client
 }
 
-func (d *NotificationWebhookDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *NotificationWebhookDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationWebhookDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -73,63 +99,50 @@ func (d *NotificationWebhookDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
+	if !validateNotificationDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read notification", err.Error())
-			return
-		}
-		if notification.Type() != "webhook" {
-			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Webhook notification")
-			return
-		}
-		data.Name = types.StringValue(notification.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		notifications := d.client.GetNotifications(ctx)
+	// Attempt to read by name if ID not provided.
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *struct {
-			ID   int64
-			Name string
-		}
-
-		for i := range notifications {
-			if notifications[i].Name == data.Name.ValueString() && notifications[i].Type() == "webhook" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple notifications found",
-						fmt.Sprintf("Multiple Webhook notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				found = &struct {
-					ID   int64
-					Name string
-				}{
-					ID:   notifications[i].GetID(),
-					Name: notifications[i].Name,
-				}
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Notification not found",
-				fmt.Sprintf("No Webhook notification with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *NotificationWebhookDataSource) readByID(
+	ctx context.Context,
+	data *NotificationWebhookDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	if notification.Type() != "webhook" {
+		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Webhook notification")
+		return
+	}
+
+	data.Name = types.StringValue(notification.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *NotificationWebhookDataSource) readByName(
+	ctx context.Context,
+	data *NotificationWebhookDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "webhook", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

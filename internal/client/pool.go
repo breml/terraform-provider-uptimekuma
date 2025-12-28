@@ -18,6 +18,7 @@ type Pool struct {
 	refs   int
 }
 
+//nolint:gochecknoglobals // Global pool is a singleton
 var (
 	globalPool     *Pool
 	globalPoolOnce sync.Once
@@ -67,20 +68,6 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	return client, nil
 }
 
-// configMatches checks if the provided config matches the pool's config.
-// Only connection-critical fields (endpoint, credentials) are compared.
-// LogLevel and EnableConnectionPool are intentionally excluded as they don't
-// affect the connection identity - the first connection's LogLevel is used.
-func (p *Pool) configMatches(config *Config) bool {
-	if p.config == nil {
-		return false
-	}
-
-	return p.config.Endpoint == config.Endpoint &&
-		p.config.Username == config.Username &&
-		p.config.Password == config.Password
-}
-
 // Release decrements the reference counter for the pooled connection.
 // This should be called when a client is no longer needed, but it does not
 // actually close the connection (connection remains pooled for reuse).
@@ -118,10 +105,26 @@ func (p *Pool) Close() error {
 		p.client = nil
 		p.config = nil
 		p.refs = 0
-		return err
+		if err != nil {
+			return fmt.Errorf("disconnect pooled client: %w", err)
+		}
 	}
 
 	return nil
+}
+
+// configMatches checks if the provided config matches the pool's config.
+// Only connection-critical fields (endpoint, credentials) are compared.
+// LogLevel and EnableConnectionPool are intentionally excluded as they don't
+// affect the connection identity - the first connection's LogLevel is used.
+func (p *Pool) configMatches(config *Config) bool {
+	if p.config == nil {
+		return false
+	}
+
+	return p.config.Endpoint == config.Endpoint &&
+		p.config.Username == config.Username &&
+		p.config.Password == config.Password
 }
 
 // CloseGlobalPool closes the global connection pool.

@@ -1,6 +1,8 @@
 # Uptime Kuma Provider
 
-The Uptime Kuma provider is used to interact with [Uptime Kuma](https://uptime.kuma.pet/) resources through Terraform. The provider allows you to manage monitors and notification channels for uptime monitoring.
+The Uptime Kuma provider is used to interact with [Uptime Kuma](https://uptime.kuma.pet/)
+resources through Terraform. The provider allows you to manage monitors and notification channels
+for uptime monitoring.
 
 ## Example Usage
 
@@ -31,7 +33,9 @@ resource "uptimekuma_monitor_http" "example" {
 
 ## Authentication
 
-The provider uses basic authentication to connect to your Uptime Kuma instance. This is verified to work with Uptime Kuma instances that support basic authentication via API. You need to provide:
+The provider uses basic authentication to connect to your Uptime Kuma instance. This is verified
+to work with Uptime Kuma instances that support basic authentication via API. You need to
+provide:
 
 - `endpoint` - The URL of your Uptime Kuma instance
 - `username` - Your Uptime Kuma username

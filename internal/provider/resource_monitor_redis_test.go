@@ -25,27 +25,63 @@ func TestAccMonitorRedisResource(t *testing.T) {
 				Config:             testAccMonitorRedisResourceConfig(name, connectionString, false),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("ignore_tls"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("ignore_tls"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorRedisResourceConfig(nameUpdated, connectionStringUpdated, true),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionStringUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("ignore_tls"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionStringUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("ignore_tls"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorRedisResourceConfig(name, connectionString string, ignoreTLS bool) string {
+func testAccMonitorRedisResourceConfig(name string, connectionString string, ignoreTLS bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_redis" "test" {
   name                        = %[1]q
@@ -69,23 +105,67 @@ func TestAccMonitorRedisResourceWithOptionalFields(t *testing.T) {
 			{
 				Config: testAccMonitorRedisResourceConfigWithOptionalFields(name, description, connectionString),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("ignore_tls"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("retry_interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("resend_interval"), knownvalue.Int64Exact(0)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("max_retries"), knownvalue.Int64Exact(3)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("upside_down"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("ignore_tls"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("resend_interval"),
+						knownvalue.Int64Exact(0),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("upside_down"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorRedisResourceConfigWithOptionalFields(name, description, connectionString string) string {
+func testAccMonitorRedisResourceConfigWithOptionalFields(
+	name string,
+	description string,
+	connectionString string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_redis" "test" {
   name                       = %[1]q
@@ -114,17 +194,33 @@ func TestAccMonitorRedisResourceWithParent(t *testing.T) {
 			{
 				Config: testAccMonitorRedisResourceConfigWithParent(groupName, monitorName, connectionString),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_group.test", tfjsonpath.New("name"), knownvalue.StringExact(groupName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("name"), knownvalue.StringExact(monitorName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("parent"), knownvalue.NotNull()),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_redis.test", tfjsonpath.New("database_connection_string"), knownvalue.StringExact(connectionString)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_group.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(groupName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(monitorName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("parent"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_redis.test",
+						tfjsonpath.New("database_connection_string"),
+						knownvalue.StringExact(connectionString),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorRedisResourceConfigWithParent(groupName, monitorName, connectionString string) string {
+func testAccMonitorRedisResourceConfigWithParent(groupName string, monitorName string, connectionString string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name = %[1]q

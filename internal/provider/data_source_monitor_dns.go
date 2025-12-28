@@ -14,25 +14,38 @@ import (
 
 var _ datasource.DataSource = &MonitorDNSDataSource{}
 
+// NewMonitorDNSDataSource returns a new instance of the DNS monitor data source.
 func NewMonitorDNSDataSource() datasource.DataSource {
 	return &MonitorDNSDataSource{}
 }
 
+// MonitorDNSDataSource manages DNS monitor data source operations.
 type MonitorDNSDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorDNSDataSourceModel describes the data model for DNS monitor data source.
 type MonitorDNSDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	Hostname types.String `tfsdk:"hostname"`
 }
 
-func (d *MonitorDNSDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MonitorDNSDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_dns"
 }
 
-func (d *MonitorDNSDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MonitorDNSDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get DNS monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -54,7 +67,12 @@ func (d *MonitorDNSDataSource) Schema(ctx context.Context, req datasource.Schema
 	}
 }
 
-func (d *MonitorDNSDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorDNSDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -63,7 +81,10 @@ func (d *MonitorDNSDataSource) Configure(ctx context.Context, req datasource.Con
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -71,6 +92,7 @@ func (d *MonitorDNSDataSource) Configure(ctx context.Context, req datasource.Con
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorDNSDataSourceModel
 
@@ -79,62 +101,55 @@ func (d *MonitorDNSDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var dnsMonitor monitor.DNS
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &dnsMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
-			return
-		}
-		data.Name = types.StringValue(dnsMonitor.Name)
-		data.Hostname = types.StringValue(dnsMonitor.Hostname)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.DNS
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "dns" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple DNS monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var dnsMon monitor.DNS
-				err := m.As(&dnsMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &dnsMon
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"DNS monitor not found",
-				fmt.Sprintf("No DNS monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		data.Hostname = types.StringValue(found.Hostname)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+// readByID fetches the DNS monitor data by its ID from the Uptime Kuma API.
+func (d *MonitorDNSDataSource) readByID(
+	ctx context.Context,
+	data *MonitorDNSDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var dnsMonitor monitor.DNS
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &dnsMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read DNS monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(dnsMonitor.Name)
+	data.Hostname = types.StringValue(dnsMonitor.Hostname)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// readByName fetches the DNS monitor data by its name from the Uptime Kuma API.
+func (d *MonitorDNSDataSource) readByName(
+	ctx context.Context,
+	data *MonitorDNSDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "dns", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var dnsMon monitor.DNS
+	err := found.As(&dnsMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(dnsMon.ID)
+	data.Hostname = types.StringValue(dnsMon.Hostname)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

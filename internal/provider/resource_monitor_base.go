@@ -19,26 +19,32 @@ import (
 	"github.com/breml/go-uptime-kuma-client/tag"
 )
 
+// MonitorTagModel describes the tag data model for monitors.
+// Tags are used to organize and categorize monitors in Uptime Kuma.
 type MonitorTagModel struct {
-	TagID types.Int64  `tfsdk:"tag_id"`
-	Value types.String `tfsdk:"value"`
+	TagID types.Int64  `tfsdk:"tag_id"` // Unique identifier of the tag.
+	Value types.String `tfsdk:"value"`  // Display value or name of the tag.
 }
 
+// MonitorBaseModel describes the base data model for all monitor types.
+// All monitor types inherit these common attributes for management and configuration.
 type MonitorBaseModel struct {
-	ID              types.Int64  `tfsdk:"id"`
-	Name            types.String `tfsdk:"name"`
-	Description     types.String `tfsdk:"description"`
-	Parent          types.Int64  `tfsdk:"parent"`
-	Interval        types.Int64  `tfsdk:"interval"`
-	RetryInterval   types.Int64  `tfsdk:"retry_interval"`
-	ResendInterval  types.Int64  `tfsdk:"resend_interval"`
-	MaxRetries      types.Int64  `tfsdk:"max_retries"`
-	UpsideDown      types.Bool   `tfsdk:"upside_down"`
-	Active          types.Bool   `tfsdk:"active"`
-	NotificationIDs types.List   `tfsdk:"notification_ids"`
-	Tags            types.List   `tfsdk:"tags"`
+	ID              types.Int64  `tfsdk:"id"`               // Unique monitor identifier.
+	Name            types.String `tfsdk:"name"`             // Display name for the monitor.
+	Description     types.String `tfsdk:"description"`      // Optional description of the monitor's purpose.
+	Parent          types.Int64  `tfsdk:"parent"`           // Parent monitor group ID.
+	Interval        types.Int64  `tfsdk:"interval"`         // Check interval in seconds.
+	RetryInterval   types.Int64  `tfsdk:"retry_interval"`   // Retry interval in seconds when failing.
+	ResendInterval  types.Int64  `tfsdk:"resend_interval"`  // Resend notification interval in seconds.
+	MaxRetries      types.Int64  `tfsdk:"max_retries"`      // Maximum number of retries before marking down.
+	UpsideDown      types.Bool   `tfsdk:"upside_down"`      // Invert status logic (down=up, up=down).
+	Active          types.Bool   `tfsdk:"active"`           // Whether the monitor is actively checking.
+	NotificationIDs types.List   `tfsdk:"notification_ids"` // List of notification channel IDs.
+	Tags            types.List   `tfsdk:"tags"`             // List of tags for organization.
 }
 
+// withMonitorBaseAttributes adds common monitor schema attributes to the provided attribute map.
+// These attributes are shared across all monitor types: id, name, description, parent, interval, retry, etc.
 func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
 	attrs["id"] = schema.Int64Attribute{
 		Computed:            true,
@@ -47,22 +53,18 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 			int64planmodifier.UseStateForUnknown(),
 		},
 	}
-
 	attrs["name"] = schema.StringAttribute{
 		MarkdownDescription: "Friendly name",
 		Required:            true,
 	}
-
 	attrs["description"] = schema.StringAttribute{
 		MarkdownDescription: "Description",
 		Optional:            true,
 	}
-
 	attrs["parent"] = schema.Int64Attribute{
 		MarkdownDescription: "Parent monitor ID for hierarchical organization",
 		Optional:            true,
 	}
-
 	attrs["interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Heartbeat interval in seconds",
 		Optional:            true,
@@ -72,7 +74,6 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 			int64validator.Between(20, 2073600),
 		},
 	}
-
 	attrs["retry_interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Retry interval in seconds",
 		Optional:            true,
@@ -82,14 +83,12 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 			int64validator.Between(20, 2073600),
 		},
 	}
-
 	attrs["resend_interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Resend interval in seconds",
 		Optional:            true,
 		Computed:            true,
 		Default:             int64default.StaticInt64(0),
 	}
-
 	attrs["max_retries"] = schema.Int64Attribute{
 		MarkdownDescription: "Maximum number of retries",
 		Optional:            true,
@@ -99,27 +98,23 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 			int64validator.Between(0, 10),
 		},
 	}
-
 	attrs["upside_down"] = schema.BoolAttribute{
 		MarkdownDescription: "Invert monitor status (treat DOWN as UP and vice versa)",
 		Optional:            true,
 		Computed:            true,
 		Default:             booldefault.StaticBool(false),
 	}
-
 	attrs["active"] = schema.BoolAttribute{
 		MarkdownDescription: "Monitor is active",
 		Optional:            true,
 		Computed:            true,
 		Default:             booldefault.StaticBool(true),
 	}
-
 	attrs["notification_ids"] = schema.ListAttribute{
 		MarkdownDescription: "List of notification IDs",
 		ElementType:         types.Int64Type,
 		Optional:            true,
 	}
-
 	attrs["tags"] = schema.ListNestedAttribute{
 		MarkdownDescription: "List of tags assigned to this monitor",
 		Optional:            true,
@@ -136,11 +131,16 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 			},
 		},
 	}
-
 	return attrs
 }
 
-func handleMonitorTagsCreate(ctx context.Context, client *kuma.Client, monitorID int64, tags types.List, diags *diag.Diagnostics) {
+func handleMonitorTagsCreate(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	tags types.List,
+	diags *diag.Diagnostics,
+) {
 	if tags.IsNull() || tags.IsUnknown() {
 		return
 	}
@@ -151,6 +151,7 @@ func handleMonitorTagsCreate(ctx context.Context, client *kuma.Client, monitorID
 		return
 	}
 
+	// Iterate over tags and add each to the monitor.
 	for _, monitorTag := range monitorTags {
 		tagID := monitorTag.TagID.ValueInt64()
 		value := ""
@@ -158,6 +159,7 @@ func handleMonitorTagsCreate(ctx context.Context, client *kuma.Client, monitorID
 			value = monitorTag.Value.ValueString()
 		}
 
+		// Call API to add tag to monitor.
 		_, err := client.AddMonitorTag(ctx, tagID, monitorID, value)
 		if err != nil {
 			diags.AddError(
@@ -179,6 +181,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		})
 	}
 
+	// Convert API tag models to Terraform models.
 	tagModels := make([]MonitorTagModel, len(monitorTags))
 	for i, monitorTag := range monitorTags {
 		var value types.String
@@ -187,6 +190,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		} else {
 			value = types.StringValue(monitorTag.Value)
 		}
+
 		tagModels[i] = MonitorTagModel{
 			TagID: types.Int64Value(monitorTag.TagID),
 			Value: value,
@@ -204,50 +208,75 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 	return tagsList
 }
 
-func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID int64, oldTags types.List, newTags types.List, diags *diag.Diagnostics) {
-	var oldMonitorTags []MonitorTagModel
-	var newMonitorTags []MonitorTagModel
-
-	if !oldTags.IsNull() && !oldTags.IsUnknown() {
-		diags.Append(oldTags.ElementsAs(ctx, &oldMonitorTags, false)...)
-		if diags.HasError() {
-			return
-		}
+func handleMonitorTagsUpdate(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTags types.List,
+	newTags types.List,
+	diags *diag.Diagnostics,
+) {
+	oldMonitorTags := deserializeMonitorTags(ctx, oldTags, diags)
+	if diags.HasError() {
+		return
 	}
 
-	if !newTags.IsNull() && !newTags.IsUnknown() {
-		diags.Append(newTags.ElementsAs(ctx, &newMonitorTags, false)...)
-		if diags.HasError() {
-			return
-		}
+	newMonitorTags := deserializeMonitorTags(ctx, newTags, diags)
+	if diags.HasError() {
+		return
 	}
 
-	oldTagMap := make(map[string]MonitorTagModel)
-	for _, tag := range oldMonitorTags {
+	oldTagMap := buildMonitorTagMap(oldMonitorTags)
+	newTagMap := buildMonitorTagMap(newMonitorTags)
+
+	handleDeletedMonitorTags(ctx, client, monitorID, oldTagMap, newTagMap, diags)
+	if diags.HasError() {
+		return
+	}
+
+	handleAddedMonitorTags(ctx, client, monitorID, oldTagMap, newTagMap, diags)
+}
+
+func deserializeMonitorTags(ctx context.Context, tags types.List, diags *diag.Diagnostics) []MonitorTagModel {
+	if tags.IsNull() || tags.IsUnknown() {
+		return []MonitorTagModel{}
+	}
+
+	var monitorTags []MonitorTagModel
+	diags.Append(tags.ElementsAs(ctx, &monitorTags, false)...)
+	return monitorTags
+}
+
+func buildMonitorTagMap(tags []MonitorTagModel) map[string]MonitorTagModel {
+	tagMap := map[string]MonitorTagModel{}
+	for _, monitorTag := range tags {
 		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
+		if !monitorTag.Value.IsNull() {
+			value = monitorTag.Value.ValueString()
 		}
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		oldTagMap[key] = tag
+
+		key := fmt.Sprintf("%d:%s", monitorTag.TagID.ValueInt64(), value)
+		tagMap[key] = monitorTag
 	}
 
-	newTagMap := make(map[string]MonitorTagModel)
-	for _, tag := range newMonitorTags {
-		value := ""
-		if !tag.Value.IsNull() {
-			value = tag.Value.ValueString()
-		}
-		key := fmt.Sprintf("%d:%s", tag.TagID.ValueInt64(), value)
-		newTagMap[key] = tag
-	}
+	return tagMap
+}
 
+func handleDeletedMonitorTags(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTagMap map[string]MonitorTagModel,
+	newTagMap map[string]MonitorTagModel,
+	diags *diag.Diagnostics,
+) {
 	for key, oldTag := range oldTagMap {
 		if _, exists := newTagMap[key]; !exists {
 			value := ""
 			if !oldTag.Value.IsNull() {
 				value = oldTag.Value.ValueString()
 			}
+
 			err := client.DeleteMonitorTagWithValue(ctx, oldTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(
@@ -258,13 +287,23 @@ func handleMonitorTagsUpdate(ctx context.Context, client *kuma.Client, monitorID
 			}
 		}
 	}
+}
 
+func handleAddedMonitorTags(
+	ctx context.Context,
+	client *kuma.Client,
+	monitorID int64,
+	oldTagMap map[string]MonitorTagModel,
+	newTagMap map[string]MonitorTagModel,
+	diags *diag.Diagnostics,
+) {
 	for key, newTag := range newTagMap {
 		if _, exists := oldTagMap[key]; !exists {
 			value := ""
 			if !newTag.Value.IsNull() {
 				value = newTag.Value.ValueString()
 			}
+
 			_, err := client.AddMonitorTag(ctx, newTag.TagID.ValueInt64(), monitorID, value)
 			if err != nil {
 				diags.AddError(

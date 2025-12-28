@@ -14,18 +14,22 @@ import (
 
 var _ datasource.DataSource = &MaintenancesDataSource{}
 
+// NewMaintenancesDataSource returns a new instance of the maintenances data source.
 func NewMaintenancesDataSource() datasource.DataSource {
 	return &MaintenancesDataSource{}
 }
 
+// MaintenancesDataSource manages maintenances data source operations.
 type MaintenancesDataSource struct {
 	client *kuma.Client
 }
 
+// MaintenancesDataSourceModel describes the data model for maintenances data source.
 type MaintenancesDataSourceModel struct {
 	Maintenances types.List `tfsdk:"maintenances"`
 }
 
+// MaintenanceDataModel describes the data model for maintenance data.
 type MaintenanceDataModel struct {
 	ID               types.Int64  `tfsdk:"id"`
 	Title            types.String `tfsdk:"title"`
@@ -37,11 +41,21 @@ type MaintenanceDataModel struct {
 	TimezoneOffset   types.String `tfsdk:"timezone_offset"`
 }
 
-func (d *MaintenancesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MaintenancesDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenances"
 }
 
-func (d *MaintenancesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MaintenancesDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List all maintenance windows",
 		Attributes: map[string]schema.Attribute{
@@ -89,7 +103,12 @@ func (d *MaintenancesDataSource) Schema(ctx context.Context, req datasource.Sche
 	}
 }
 
-func (d *MaintenancesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MaintenancesDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -99,7 +118,10 @@ func (d *MaintenancesDataSource) Configure(ctx context.Context, req datasource.C
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -108,6 +130,7 @@ func (d *MaintenancesDataSource) Configure(ctx context.Context, req datasource.C
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MaintenancesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MaintenancesDataSourceModel
 

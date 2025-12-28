@@ -13,25 +13,38 @@ import (
 
 var _ datasource.DataSource = &StatusPageDataSource{}
 
+// NewStatusPageDataSource returns a new instance of the status page data source.
 func NewStatusPageDataSource() datasource.DataSource {
 	return &StatusPageDataSource{}
 }
 
+// StatusPageDataSource manages status page data source operations.
 type StatusPageDataSource struct {
 	client *kuma.Client
 }
 
+// StatusPageDataSourceModel describes the data model for status page data source.
 type StatusPageDataSourceModel struct {
 	ID    types.Int64  `tfsdk:"id"`
 	Slug  types.String `tfsdk:"slug"`
 	Title types.String `tfsdk:"title"`
 }
 
-func (d *StatusPageDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*StatusPageDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_status_page"
 }
 
-func (d *StatusPageDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*StatusPageDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get status page information by ID or slug",
 		Attributes: map[string]schema.Attribute{
@@ -53,7 +66,12 @@ func (d *StatusPageDataSource) Schema(ctx context.Context, req datasource.Schema
 	}
 }
 
-func (d *StatusPageDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *StatusPageDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -62,7 +80,10 @@ func (d *StatusPageDataSource) Configure(ctx context.Context, req datasource.Con
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -70,6 +91,7 @@ func (d *StatusPageDataSource) Configure(ctx context.Context, req datasource.Con
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data StatusPageDataSourceModel
 
@@ -84,18 +106,21 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			resp.Diagnostics.AddError("failed to read status page", err.Error())
 			return
 		}
+
 		data.ID = types.Int64Value(statusPage.ID)
 		data.Title = types.StringValue(statusPage.Title)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		statusPages, err := d.client.GetStatusPages(ctx)
 		if err != nil {
 			resp.Diagnostics.AddError("failed to read status pages", err.Error())
 			return
 		}
+
 		for id, sp := range statusPages {
 			if id == data.ID.ValueInt64() {
 				data.Slug = types.StringValue(sp.Slug)
@@ -104,11 +129,13 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				return
 			}
 		}
+
 		resp.Diagnostics.AddError("failed to read status page", "Status page not found")
 		return
 	}
 
 	resp.Diagnostics.AddError(
+		// Error if neither ID nor name provided.
 		"Missing query parameters",
 		"Either 'id' or 'slug' must be specified.",
 	)

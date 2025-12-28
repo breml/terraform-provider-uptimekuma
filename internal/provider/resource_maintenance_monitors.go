@@ -21,24 +21,37 @@ var (
 	_ resource.ResourceWithImportState = &MaintenanceMonitorsResource{}
 )
 
+// NewMaintenanceMonitorsResource returns a new instance of the MaintenanceMonitors resource.
 func NewMaintenanceMonitorsResource() resource.Resource {
 	return &MaintenanceMonitorsResource{}
 }
 
+// MaintenanceMonitorsResource defines the resource implementation.
 type MaintenanceMonitorsResource struct {
 	client *kuma.Client
 }
 
+// MaintenanceMonitorsResourceModel describes the MaintenanceMonitors resource data model.
 type MaintenanceMonitorsResourceModel struct {
 	MaintenanceID types.Int64 `tfsdk:"maintenance_id"`
 	MonitorIDs    types.List  `tfsdk:"monitor_ids"`
 }
 
-func (r *MaintenanceMonitorsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*MaintenanceMonitorsResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance_monitors"
 }
 
-func (r *MaintenanceMonitorsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*MaintenanceMonitorsResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Associate monitors with a maintenance window",
 		Attributes: map[string]schema.Attribute{
@@ -58,7 +71,12 @@ func (r *MaintenanceMonitorsResource) Schema(ctx context.Context, req resource.S
 	}
 }
 
-func (r *MaintenanceMonitorsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MaintenanceMonitorsResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -68,7 +86,10 @@ func (r *MaintenanceMonitorsResource) Configure(ctx context.Context, req resourc
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -77,7 +98,12 @@ func (r *MaintenanceMonitorsResource) Configure(ctx context.Context, req resourc
 	r.client = client
 }
 
-func (r *MaintenanceMonitorsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+// Create creates a new resource.
+func (r *MaintenanceMonitorsResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
 	var data MaintenanceMonitorsResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -93,17 +119,21 @@ func (r *MaintenanceMonitorsResource) Create(ctx context.Context, req resource.C
 	}
 
 	err := r.client.SetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64(), monitorIDs)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to set monitor maintenance", err.Error())
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceMonitorsResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -111,11 +141,13 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	monitorIDs, err := r.client.GetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
+
 		resp.Diagnostics.AddError("failed to read monitor maintenance", err.Error())
 		return
 	}
@@ -124,10 +156,16 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(diags...)
 	data.MonitorIDs = listValue
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceMonitorsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+// Update updates the resource.
+func (r *MaintenanceMonitorsResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
 	var data MaintenanceMonitorsResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -143,17 +181,25 @@ func (r *MaintenanceMonitorsResource) Update(ctx context.Context, req resource.U
 	}
 
 	err := r.client.SetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64(), monitorIDs)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update monitor maintenance", err.Error())
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *MaintenanceMonitorsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete deletes the resource.
+func (r *MaintenanceMonitorsResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
 	var data MaintenanceMonitorsResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -161,14 +207,21 @@ func (r *MaintenanceMonitorsResource) Delete(ctx context.Context, req resource.D
 	}
 
 	err := r.client.SetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64(), []int64{})
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete monitor maintenance", err.Error())
 		return
 	}
 }
 
-func (r *MaintenanceMonitorsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*MaintenanceMonitorsResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -177,5 +230,6 @@ func (r *MaintenanceMonitorsResource) ImportState(ctx context.Context, req resou
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("maintenance_id"), id)...)
 }

@@ -25,8 +25,16 @@ func TestAccMonitorHTTPResourceWithTags(t *testing.T) {
 				// Create monitor with one tag
 				Config: testAccMonitorHTTPResourceConfigWithOneTag(monitorName, url, tagName1),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("name"), knownvalue.StringExact(monitorName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("url"), knownvalue.StringExact(url)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(monitorName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
 					// Verify tags list has 1 element
 					statecheck.ExpectKnownValue("uptimekuma_monitor_http.test", tfjsonpath.New("tags"),
 						knownvalue.ListSizeExact(1)),
@@ -98,7 +106,7 @@ func TestAccMonitorHTTPResourceWithTagsImport(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPResourceConfigWithOneTag(monitorName, url, tagName string) string {
+func testAccMonitorHTTPResourceConfigWithOneTag(monitorName string, url string, tagName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test1" {
   name  = %[3]q
@@ -118,7 +126,12 @@ resource "uptimekuma_monitor_http" "test" {
 `, monitorName, url, tagName)
 }
 
-func testAccMonitorHTTPResourceConfigWithTwoTags(monitorName, url, tagName1, tagName2 string) string {
+func testAccMonitorHTTPResourceConfigWithTwoTags(
+	monitorName string,
+	url string,
+	tagName1 string,
+	tagName2 string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test1" {
   name  = %[3]q
@@ -147,7 +160,7 @@ resource "uptimekuma_monitor_http" "test" {
 `, monitorName, url, tagName1, tagName2)
 }
 
-func testAccMonitorHTTPResourceConfigWithSecondTagOnly(monitorName, url, tagName2 string) string {
+func testAccMonitorHTTPResourceConfigWithSecondTagOnly(monitorName string, url string, tagName2 string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test2" {
   name  = %[3]q

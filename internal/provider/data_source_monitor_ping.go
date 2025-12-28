@@ -14,25 +14,38 @@ import (
 
 var _ datasource.DataSource = &MonitorPingDataSource{}
 
+// NewMonitorPingDataSource returns a new instance of the PING monitor data source.
 func NewMonitorPingDataSource() datasource.DataSource {
 	return &MonitorPingDataSource{}
 }
 
+// MonitorPingDataSource manages PING monitor data source operations.
 type MonitorPingDataSource struct {
 	client *kuma.Client
 }
 
+// MonitorPingDataSourceModel describes the data model for PING monitor data source.
 type MonitorPingDataSourceModel struct {
 	ID       types.Int64  `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	Hostname types.String `tfsdk:"hostname"`
 }
 
-func (d *MonitorPingDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*MonitorPingDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_ping"
 }
 
-func (d *MonitorPingDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*MonitorPingDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get PING monitor information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -54,7 +67,12 @@ func (d *MonitorPingDataSource) Schema(ctx context.Context, req datasource.Schem
 	}
 }
 
-func (d *MonitorPingDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *MonitorPingDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -63,7 +81,10 @@ func (d *MonitorPingDataSource) Configure(ctx context.Context, req datasource.Co
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -71,6 +92,7 @@ func (d *MonitorPingDataSource) Configure(ctx context.Context, req datasource.Co
 	d.client = client
 }
 
+// Read reads the current state of the data source.
 func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data MonitorPingDataSourceModel
 
@@ -79,62 +101,55 @@ func (d *MonitorPingDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	if !validateMonitorDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		var pingMonitor monitor.Ping
-		err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pingMonitor)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read PING monitor", err.Error())
-			return
-		}
-		data.Name = types.StringValue(pingMonitor.Name)
-		data.Hostname = types.StringValue(pingMonitor.Hostname)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		monitors, err := d.client.GetMonitors(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read monitors", err.Error())
-			return
-		}
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *monitor.Ping
-		for _, m := range monitors {
-			if m.Name == data.Name.ValueString() && m.Type() == "ping" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple monitors found",
-						fmt.Sprintf("Multiple PING monitors with name '%s' found. Please use 'id' to specify the monitor uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				var pingMon monitor.Ping
-				err := m.As(&pingMon)
-				if err != nil {
-					resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-					return
-				}
-				found = &pingMon
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"PING monitor not found",
-				fmt.Sprintf("No PING monitor with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		data.Hostname = types.StringValue(found.Hostname)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+// readByID fetches the Ping monitor data by its ID.
+func (d *MonitorPingDataSource) readByID(
+	ctx context.Context,
+	data *MonitorPingDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	var pingMonitor monitor.Ping
+	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pingMonitor)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read PING monitor", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	data.Name = types.StringValue(pingMonitor.Name)
+	data.Hostname = types.StringValue(pingMonitor.Hostname)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// readByName fetches the Ping monitor data by its name.
+func (d *MonitorPingDataSource) readByName(
+	ctx context.Context,
+	data *MonitorPingDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	found := findMonitorByName(ctx, d.client, data.Name.ValueString(), "ping", &resp.Diagnostics)
+	if found == nil {
+		return
+	}
+
+	var pingMon monitor.Ping
+	err := found.As(&pingMon)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(pingMon.ID)
+	data.Hostname = types.StringValue(pingMon.Hostname)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -22,20 +22,28 @@ func TestAccMonitorHTTPKeywordDataSource(t *testing.T) {
 			{
 				Config: testAccMonitorHTTPKeywordDataSourceConfig(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorHTTPKeywordDataSourceConfigByID(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("data.uptimekuma_monitor_http_keyword.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorHTTPKeywordDataSourceConfig(name, url string) string {
+func testAccMonitorHTTPKeywordDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name    = %[1]q
@@ -49,7 +57,7 @@ data "uptimekuma_monitor_http_keyword" "test" {
 `, name, url)
 }
 
-func testAccMonitorHTTPKeywordDataSourceConfigByID(name, url string) string {
+func testAccMonitorHTTPKeywordDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
   name    = %[1]q

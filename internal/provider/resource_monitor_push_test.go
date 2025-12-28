@@ -23,19 +23,51 @@ func TestAccMonitorPushResource(t *testing.T) {
 				Config:             testAccMonitorPushResourceConfig(name, 60),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("push_token"), knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("push_token"),
+						knownvalue.NotNull(),
+					),
 				},
 			},
 			{
 				Config: testAccMonitorPushResourceConfig(nameUpdated, 120),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(120)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("push_token"), knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("push_token"),
+						knownvalue.NotNull(),
+					),
 				},
 			},
 		},
@@ -63,22 +95,58 @@ func TestAccMonitorPushResourceWithOptionalFields(t *testing.T) {
 			{
 				Config: testAccMonitorPushResourceConfigWithOptionalFields(name, description),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("description"), knownvalue.StringExact(description)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("retry_interval"), knownvalue.Int64Exact(60)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("resend_interval"), knownvalue.Int64Exact(0)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("max_retries"), knownvalue.Int64Exact(0)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("upside_down"), knownvalue.Bool(false)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("active"), knownvalue.Bool(true)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("push_token"), knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("resend_interval"),
+						knownvalue.Int64Exact(0),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(0),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("upside_down"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("push_token"),
+						knownvalue.NotNull(),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorPushResourceConfigWithOptionalFields(name, description string) string {
+func testAccMonitorPushResourceConfigWithOptionalFields(name string, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_push" "test" {
   name            = %[1]q
@@ -104,17 +172,33 @@ func TestAccMonitorPushResourceWithParent(t *testing.T) {
 			{
 				Config: testAccMonitorPushResourceConfigWithParent(groupName, monitorName),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_monitor_group.test", tfjsonpath.New("name"), knownvalue.StringExact(groupName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("name"), knownvalue.StringExact(monitorName)),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("parent"), knownvalue.NotNull()),
-					statecheck.ExpectKnownValue("uptimekuma_monitor_push.test", tfjsonpath.New("push_token"), knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_group.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(groupName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(monitorName),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("parent"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_push.test",
+						tfjsonpath.New("push_token"),
+						knownvalue.NotNull(),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorPushResourceConfigWithParent(groupName, monitorName string) string {
+func testAccMonitorPushResourceConfigWithParent(groupName string, monitorName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
   name = %[1]q

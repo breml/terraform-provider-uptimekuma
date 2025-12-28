@@ -19,30 +19,44 @@ var (
 	_ resource.ResourceWithImportState = &MonitorGroupResource{}
 )
 
+// NewMonitorGroupResource returns a new instance of the group monitor resource.
 func NewMonitorGroupResource() resource.Resource {
 	return &MonitorGroupResource{}
 }
 
+// MonitorGroupResource defines the resource implementation.
 type MonitorGroupResource struct {
 	client *kuma.Client
 }
 
+// MonitorGroupResourceModel describes the resource data model.
 type MonitorGroupResourceModel struct {
 	MonitorBaseModel
 }
 
-func (r *MonitorGroupResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*MonitorGroupResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_monitor_group"
 }
 
-func (r *MonitorGroupResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+func (*MonitorGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Monitor group resource for organizing monitors",
 		Attributes:          withMonitorBaseAttributes(map[string]schema.Attribute{}),
 	}
 }
 
-func (r *MonitorGroupResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+// Configure configures the resource with the API client.
+func (r *MonitorGroupResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -52,7 +66,10 @@ func (r *MonitorGroupResource) Configure(ctx context.Context, req resource.Confi
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -61,6 +78,7 @@ func (r *MonitorGroupResource) Configure(ctx context.Context, req resource.Confi
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data MonitorGroupResourceModel
 
@@ -103,6 +121,7 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	id, err := r.client.CreateMonitor(ctx, groupMonitor)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create group monitor", err.Error())
 		return
@@ -115,12 +134,15 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorGroupResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -129,6 +151,7 @@ func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadReques
 
 	var groupMonitor monitor.Group
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &groupMonitor)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read group monitor", err.Error())
 		return
@@ -171,9 +194,11 @@ func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MonitorGroupResourceModel
 
@@ -184,6 +209,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 
 	var state MonitorGroupResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -223,6 +249,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	err := r.client.UpdateMonitor(ctx, groupMonitor)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update group monitor", err.Error())
 		return
@@ -233,12 +260,15 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *MonitorGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MonitorGroupResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -246,14 +276,21 @@ func (r *MonitorGroupResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete group monitor", err.Error())
 		return
 	}
 }
 
-func (r *MonitorGroupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+// ImportState imports an existing resource by ID.
+func (*MonitorGroupResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
@@ -262,5 +299,6 @@ func (r *MonitorGroupResource) ImportState(ctx context.Context, req resource.Imp
 		return
 	}
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

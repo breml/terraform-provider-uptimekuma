@@ -28,29 +28,35 @@ import (
 )
 
 var (
+	// Ensure MaintenanceResource satisfies various resource interfaces.
 	_ resource.Resource                = &MaintenanceResource{}
 	_ resource.ResourceWithImportState = &MaintenanceResource{}
 )
 
+// NewMaintenanceResource returns a new instance of the Maintenance resource.
 func NewMaintenanceResource() resource.Resource {
 	return &MaintenanceResource{}
 }
 
+// MaintenanceResource defines the resource implementation for maintenance windows.
 type MaintenanceResource struct {
 	client *kuma.Client
 }
 
+// TimeOfDayModel describes the time of day data model.
 type TimeOfDayModel struct {
 	Hours   types.Int64 `tfsdk:"hours"`
 	Minutes types.Int64 `tfsdk:"minutes"`
 	Seconds types.Int64 `tfsdk:"seconds"`
 }
 
+// TimeslotModel describes the timeslot data model with start and end date times for the maintenance window.
 type TimeslotModel struct {
 	StartDate types.String `tfsdk:"start_date"`
 	EndDate   types.String `tfsdk:"end_date"`
 }
 
+// MaintenanceResourceModel describes the Maintenance resource data model.
 type MaintenanceResourceModel struct {
 	ID               types.Int64  `tfsdk:"id"`
 	Title            types.String `tfsdk:"title"`
@@ -74,11 +80,19 @@ type MaintenanceResourceModel struct {
 	TimeslotList     types.List   `tfsdk:"timeslot_list"`
 }
 
-func (r *MaintenanceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+// Metadata returns the metadata for the resource.
+func (*MaintenanceResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_maintenance"
 }
 
-func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema returns the schema for the resource.
+//
+//revive:disable:function-length
+func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
 		Attributes: map[string]schema.Attribute{
@@ -103,7 +117,14 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
 				Required:            true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("single", "recurring-interval", "recurring-weekday", "recurring-day-of-month", "cron", "manual"),
+					stringvalidator.OneOf(
+						"single",
+						"recurring-interval",
+						"recurring-weekday",
+						"recurring-day-of-month",
+						"cron",
+						"manual",
+					),
 				},
 			},
 			"active": schema.BoolAttribute{
@@ -227,7 +248,14 @@ func (r *MaintenanceResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func (r *MaintenanceResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+//revive:enable:function-length
+
+// Configure configures the resource with the API client.
+func (r *MaintenanceResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -237,7 +265,10 @@ func (r *MaintenanceResource) Configure(ctx context.Context, req resource.Config
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 
 		return
@@ -246,9 +277,12 @@ func (r *MaintenanceResource) Configure(ctx context.Context, req resource.Config
 	r.client = client
 }
 
+// Create creates a new resource.
 func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	// Extract and validate configuration.
 	var data MaintenanceResourceModel
 
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -262,12 +296,15 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 		Active:      data.Active.ValueBool(),
 	}
 
-	if err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics); err != nil {
+	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+	// Handle error.
+	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
 
 	created, err := r.client.CreateMaintenance(ctx, m)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create maintenance", err.Error())
 		return
@@ -276,12 +313,15 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	data.ID = types.Int64Value(created.ID)
 	r.populateModelFromMaintenance(ctx, created, &data, &resp.Diagnostics)
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read reads the current state of the resource.
 func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -289,23 +329,28 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	m, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		if errors.Is(err, kuma.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
+
 		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
 		return
 	}
 
 	r.populateModelFromMaintenance(ctx, m, &data, &resp.Diagnostics)
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the resource.
 func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data MaintenanceResourceModel
 
+	// Extract plan data.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -320,18 +365,22 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		Active:      data.Active.ValueBool(),
 	}
 
-	if err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics); err != nil {
+	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+	// Handle error.
+	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
 
-	err := r.client.UpdateMaintenance(ctx, m)
+	err = r.client.UpdateMaintenance(ctx, m)
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update maintenance", err.Error())
 		return
 	}
 
 	updated, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read updated maintenance", err.Error())
 		return
@@ -339,12 +388,15 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 
 	r.populateModelFromMaintenance(ctx, updated, &data, &resp.Diagnostics)
 
+	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes the resource.
 func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MaintenanceResourceModel
 
+	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -352,115 +404,335 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMaintenance(ctx, data.ID.ValueInt64())
+	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete maintenance", err.Error())
 		return
 	}
 }
 
-func (r *MaintenanceResource) populateMaintenanceFromModel(ctx context.Context, data *MaintenanceResourceModel, m *maintenance.Maintenance, diags *diag.Diagnostics) error {
+// ValidateConfig validates the resource configuration.
+func (*MaintenanceResource) ValidateConfig(
+	ctx context.Context,
+	req resource.ValidateConfigRequest,
+	resp *resource.ValidateConfigResponse,
+) {
+	var data MaintenanceResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	strategy := data.Strategy.ValueString()
 
 	switch strategy {
 	case "single":
-		if !data.StartDate.IsNull() && !data.EndDate.IsNull() {
-			startDate, err := time.Parse(time.RFC3339, data.StartDate.ValueString())
-			if err != nil {
-				return fmt.Errorf("invalid start_date: %w", err)
-			}
-			endDate, err := time.Parse(time.RFC3339, data.EndDate.ValueString())
-			if err != nil {
-				return fmt.Errorf("invalid end_date: %w", err)
-			}
-			m.DateRange = []*time.Time{&startDate, &endDate}
-		}
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
+		validateMaintenanceSingleStrategy(&data, &resp.Diagnostics)
 
 	case "recurring-interval":
-		if !data.IntervalDay.IsNull() {
-			m.IntervalDay = int(data.IntervalDay.ValueInt64())
-		}
-		m.DateRange = []*time.Time{nil, nil}
-		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
-			return err
-		}
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
+		validateMaintenanceRecurringIntervalStrategy(&data, &resp.Diagnostics)
 
 	case "recurring-weekday":
-		if !data.Weekdays.IsNull() {
-			var weekdays []int64
-			diags.Append(data.Weekdays.ElementsAs(ctx, &weekdays, false)...)
-			if diags.HasError() {
-				return fmt.Errorf("invalid weekdays")
-			}
-			m.Weekdays = make([]int, len(weekdays))
-			for i, w := range weekdays {
-				m.Weekdays[i] = int(w)
-			}
-		}
-		m.DateRange = []*time.Time{nil, nil}
-		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
-			return err
-		}
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
+		validateMaintenanceRecurringWeekdayStrategy(&data, &resp.Diagnostics)
 
 	case "recurring-day-of-month":
-		if !data.DaysOfMonth.IsNull() {
-			var daysOfMonth []string
-			diags.Append(data.DaysOfMonth.ElementsAs(ctx, &daysOfMonth, false)...)
-			if diags.HasError() {
-				return fmt.Errorf("invalid days_of_month")
-			}
-			m.DaysOfMonth = make([]interface{}, len(daysOfMonth))
-			for i, d := range daysOfMonth {
-				m.DaysOfMonth[i] = d
-			}
-		}
-		m.DateRange = []*time.Time{nil, nil}
-		if err := r.populateTimeRange(ctx, data, m, diags); err != nil {
-			return err
-		}
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
+		validateMaintenanceRecurringDayOfMonthStrategy(&data, &resp.Diagnostics)
 
 	case "cron":
-		if !data.Cron.IsNull() {
-			m.Cron = data.Cron.ValueString()
-		}
-		if !data.DurationMinutes.IsNull() {
-			m.DurationMinutes = int(data.DurationMinutes.ValueInt64())
-		}
-		m.DateRange = []*time.Time{nil, nil}
-		if !data.Timezone.IsNull() {
-			m.TimezoneOption = data.Timezone.ValueString()
-		}
+		validateMaintenanceCronStrategy(&data, &resp.Diagnostics)
 
-	case "manual":
+	default:
+		// manual strategy has no validation
+	}
+}
+
+func validateMaintenanceSingleStrategy(data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+	if data.StartDate.IsNull() || data.EndDate.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"start_date and end_date are required for single strategy",
+		)
+	}
+}
+
+func validateMaintenanceRecurringIntervalStrategy(data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+	if data.IntervalDay.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"interval_day is required for recurring-interval strategy",
+		)
+	}
+
+	if data.StartTime.IsNull() || data.EndTime.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"start_time and end_time are required for recurring-interval strategy",
+		)
+	}
+}
+
+func validateMaintenanceRecurringWeekdayStrategy(data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+	if data.Weekdays.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"weekdays is required for recurring-weekday strategy",
+		)
+	}
+
+	if data.StartTime.IsNull() || data.EndTime.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"start_time and end_time are required for recurring-weekday strategy",
+		)
+	}
+}
+
+func validateMaintenanceRecurringDayOfMonthStrategy(data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+	if data.DaysOfMonth.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"days_of_month is required for recurring-day-of-month strategy",
+		)
+	}
+
+	if data.StartTime.IsNull() || data.EndTime.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"start_time and end_time are required for recurring-day-of-month strategy",
+		)
+	}
+}
+
+func validateMaintenanceCronStrategy(data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+	if data.Cron.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"cron is required for cron strategy",
+		)
+	}
+
+	if data.DurationMinutes.IsNull() {
+		diags.AddAttributeError(
+			path.Root("strategy"),
+			"Invalid Configuration",
+			"duration_minutes is required for cron strategy",
+		)
+	}
+}
+
+// ImportState imports an existing resource by ID.
+func (*MaintenanceResource) ImportState(
+	// Import monitor by ID.
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	// Populate state.
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModel(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	strategy := data.Strategy.ValueString()
+
+	switch strategy {
+	case "single":
+		return r.populateMaintenanceFromModelSingle(data, m)
+
+	case "recurring-interval":
+		return r.populateMaintenanceFromModelRecurringInterval(ctx, data, m, diags)
+
+	case "recurring-weekday":
+		return r.populateMaintenanceFromModelRecurringWeekday(ctx, data, m, diags)
+
+	case "recurring-day-of-month":
+		return r.populateMaintenanceFromModelRecurringDayOfMonth(ctx, data, m, diags)
+
+	case "cron":
+		return r.populateMaintenanceFromModelCron(data, m)
+
+	default:
 		m.DateRange = []*time.Time{nil, nil}
 	}
 
 	return nil
 }
 
-func (r *MaintenanceResource) populateTimeRange(ctx context.Context, data *MaintenanceResourceModel, m *maintenance.Maintenance, diags *diag.Diagnostics) error {
+func (*MaintenanceResource) populateMaintenanceFromModelSingle(
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+) error {
+	if !data.StartDate.IsNull() && !data.EndDate.IsNull() {
+		startDate, err := time.Parse(time.RFC3339, data.StartDate.ValueString())
+		if err != nil {
+			return fmt.Errorf("invalid start_date: %w", err)
+		}
+
+		endDate, err := time.Parse(time.RFC3339, data.EndDate.ValueString())
+		if err != nil {
+			return fmt.Errorf("invalid end_date: %w", err)
+		}
+
+		m.DateRange = []*time.Time{&startDate, &endDate}
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModelRecurringInterval(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	if !data.IntervalDay.IsNull() {
+		m.IntervalDay = int(data.IntervalDay.ValueInt64())
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	err := r.populateTimeRange(ctx, data, m, diags)
+	if err != nil {
+		return err
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModelRecurringWeekday(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	if !data.Weekdays.IsNull() {
+		var weekdays []int64
+		diags.Append(data.Weekdays.ElementsAs(ctx, &weekdays, false)...)
+		if diags.HasError() {
+			return errors.New("invalid weekdays")
+		}
+
+		m.Weekdays = make([]int, len(weekdays))
+		for i, w := range weekdays {
+			m.Weekdays[i] = int(w)
+		}
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	err := r.populateTimeRange(ctx, data, m, diags)
+	if err != nil {
+		return err
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (r *MaintenanceResource) populateMaintenanceFromModelRecurringDayOfMonth(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
+	if !data.DaysOfMonth.IsNull() {
+		var daysOfMonth []string
+		diags.Append(data.DaysOfMonth.ElementsAs(ctx, &daysOfMonth, false)...)
+		if diags.HasError() {
+			return errors.New("invalid days_of_month")
+		}
+
+		m.DaysOfMonth = make([]any, len(daysOfMonth))
+		for i, d := range daysOfMonth {
+			m.DaysOfMonth[i] = d
+		}
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	err := r.populateTimeRange(ctx, data, m, diags)
+	if err != nil {
+		return err
+	}
+
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (*MaintenanceResource) populateMaintenanceFromModelCron(
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+) error {
+	if !data.Cron.IsNull() {
+		m.Cron = data.Cron.ValueString()
+	}
+
+	if !data.DurationMinutes.IsNull() {
+		m.DurationMinutes = int(data.DurationMinutes.ValueInt64())
+	}
+
+	m.DateRange = []*time.Time{nil, nil}
+	if !data.Timezone.IsNull() {
+		m.TimezoneOption = data.Timezone.ValueString()
+	}
+
+	return nil
+}
+
+func (*MaintenanceResource) populateTimeRange(
+	ctx context.Context,
+	data *MaintenanceResourceModel,
+	m *maintenance.Maintenance,
+	diags *diag.Diagnostics,
+) error {
 	if !data.StartTime.IsNull() && !data.EndTime.IsNull() {
 		var startTime TimeOfDayModel
 		diags.Append(data.StartTime.As(ctx, &startTime, basetypes.ObjectAsOptions{})...)
+		// Check for configuration errors.
 		if diags.HasError() {
-			return fmt.Errorf("invalid start_time")
+			return errors.New("invalid start_time")
 		}
 
 		var endTime TimeOfDayModel
 		diags.Append(data.EndTime.As(ctx, &endTime, basetypes.ObjectAsOptions{})...)
+		// Check for configuration errors.
 		if diags.HasError() {
-			return fmt.Errorf("invalid end_time")
+			return errors.New("invalid end_time")
 		}
 
 		m.TimeRange = []maintenance.TimeOfDay{
@@ -476,10 +748,16 @@ func (r *MaintenanceResource) populateTimeRange(ctx context.Context, data *Maint
 			},
 		}
 	}
+
 	return nil
 }
 
-func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, m *maintenance.Maintenance, data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+func (r *MaintenanceResource) populateModelFromMaintenance(
+	ctx context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
 	data.Title = types.StringValue(m.Title)
 	data.Description = types.StringValue(m.Description)
 	data.Strategy = types.StringValue(m.Strategy)
@@ -515,47 +793,105 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 
 	switch m.Strategy {
 	case "single":
-		if len(m.DateRange) == 2 && m.DateRange[0] != nil && m.DateRange[1] != nil {
-			data.StartDate = types.StringValue(m.DateRange[0].Format(time.RFC3339))
-			data.EndDate = types.StringValue(m.DateRange[1].Format(time.RFC3339))
-		}
+		r.populateModelFromMaintenanceSingle(m, data)
 
 	case "recurring-interval":
-		if m.IntervalDay > 0 {
-			data.IntervalDay = types.Int64Value(int64(m.IntervalDay))
-		}
-		r.populateModelTimeRange(m, data, diags)
+		r.populateModelFromMaintenanceRecurringInterval(ctx, m, data, diags)
 
 	case "recurring-weekday":
-		if len(m.Weekdays) > 0 {
-			weekdays := make([]int64, len(m.Weekdays))
-			for i, w := range m.Weekdays {
-				weekdays[i] = int64(w)
-			}
-			listValue, d := types.ListValueFrom(ctx, types.Int64Type, weekdays)
-			diags.Append(d...)
-			data.Weekdays = listValue
-		}
-		r.populateModelTimeRange(m, data, diags)
+		r.populateModelFromMaintenanceRecurringWeekday(ctx, m, data, diags)
 
 	case "recurring-day-of-month":
-		if len(m.DaysOfMonth) > 0 {
-			daysOfMonth := make([]string, len(m.DaysOfMonth))
-			for i, d := range m.DaysOfMonth {
-				daysOfMonth[i] = fmt.Sprintf("%v", d)
-			}
-			listValue, d := types.ListValueFrom(ctx, types.StringType, daysOfMonth)
-			diags.Append(d...)
-			data.DaysOfMonth = listValue
-		}
-		r.populateModelTimeRange(m, data, diags)
+		r.populateModelFromMaintenanceRecurringDayOfMonth(ctx, m, data, diags)
 
 	case "cron":
-		if m.DurationMinutes > 0 {
-			data.DurationMinutes = types.Int64Value(int64(m.DurationMinutes))
-		}
+		r.populateModelFromMaintenanceCron(m, data)
+
+	default:
+		// manual strategy has no special handling
 	}
 
+	r.populateMaintenanceTimeslotList(ctx, m, data, diags)
+}
+
+func (*MaintenanceResource) populateModelFromMaintenanceSingle(
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+) {
+	if len(m.DateRange) == 2 && m.DateRange[0] != nil && m.DateRange[1] != nil {
+		data.StartDate = types.StringValue(m.DateRange[0].Format(time.RFC3339))
+		data.EndDate = types.StringValue(m.DateRange[1].Format(time.RFC3339))
+	}
+}
+
+func (r *MaintenanceResource) populateModelFromMaintenanceRecurringInterval(
+	_ context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if m.IntervalDay > 0 {
+		data.IntervalDay = types.Int64Value(int64(m.IntervalDay))
+	}
+
+	r.populateModelTimeRange(m, data, diags)
+}
+
+func (r *MaintenanceResource) populateModelFromMaintenanceRecurringWeekday(
+	ctx context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if len(m.Weekdays) > 0 {
+		weekdays := make([]int64, len(m.Weekdays))
+		for i, w := range m.Weekdays {
+			weekdays[i] = int64(w)
+		}
+
+		listValue, d := types.ListValueFrom(ctx, types.Int64Type, weekdays)
+		diags.Append(d...)
+		data.Weekdays = listValue
+	}
+
+	r.populateModelTimeRange(m, data, diags)
+}
+
+func (r *MaintenanceResource) populateModelFromMaintenanceRecurringDayOfMonth(
+	ctx context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if len(m.DaysOfMonth) > 0 {
+		daysOfMonth := make([]string, len(m.DaysOfMonth))
+		for i, d := range m.DaysOfMonth {
+			daysOfMonth[i] = fmt.Sprintf("%v", d)
+		}
+
+		listValue, d := types.ListValueFrom(ctx, types.StringType, daysOfMonth)
+		diags.Append(d...)
+		data.DaysOfMonth = listValue
+	}
+
+	r.populateModelTimeRange(m, data, diags)
+}
+
+func (*MaintenanceResource) populateModelFromMaintenanceCron(
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+) {
+	if m.DurationMinutes > 0 {
+		data.DurationMinutes = types.Int64Value(int64(m.DurationMinutes))
+	}
+}
+
+func (*MaintenanceResource) populateMaintenanceTimeslotList(
+	_ context.Context,
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
 	timeslotAttrTypes := map[string]attr.Type{
 		"start_date": types.StringType,
 		"end_date":   types.StringType,
@@ -584,14 +920,17 @@ func (r *MaintenanceResource) populateModelFromMaintenance(ctx context.Context, 
 		diags.Append(d...)
 		data.TimeslotList = listValue
 	} else {
-		// Always set timeslot_list even if empty
 		listValue, d := types.ListValue(types.ObjectType{AttrTypes: timeslotAttrTypes}, []attr.Value{})
 		diags.Append(d...)
 		data.TimeslotList = listValue
 	}
 }
 
-func (r *MaintenanceResource) populateModelTimeRange(m *maintenance.Maintenance, data *MaintenanceResourceModel, diags *diag.Diagnostics) {
+func (*MaintenanceResource) populateModelTimeRange(
+	m *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
 	if len(m.TimeRange) == 2 {
 		timeOfDayAttrTypes := map[string]attr.Type{
 			"hours":   types.Int64Type,
@@ -615,104 +954,4 @@ func (r *MaintenanceResource) populateModelTimeRange(m *maintenance.Maintenance,
 		diags.Append(d...)
 		data.EndTime = endTimeObj
 	}
-}
-
-func (r *MaintenanceResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data MaintenanceResourceModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	strategy := data.Strategy.ValueString()
-
-	switch strategy {
-	case "single":
-		if data.StartDate.IsNull() || data.EndDate.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_date and end_date are required for single strategy",
-			)
-		}
-
-	case "recurring-interval":
-		if data.IntervalDay.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"interval_day is required for recurring-interval strategy",
-			)
-		}
-		if data.StartTime.IsNull() || data.EndTime.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_time and end_time are required for recurring-interval strategy",
-			)
-		}
-
-	case "recurring-weekday":
-		if data.Weekdays.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"weekdays is required for recurring-weekday strategy",
-			)
-		}
-		if data.StartTime.IsNull() || data.EndTime.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_time and end_time are required for recurring-weekday strategy",
-			)
-		}
-
-	case "recurring-day-of-month":
-		if data.DaysOfMonth.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"days_of_month is required for recurring-day-of-month strategy",
-			)
-		}
-		if data.StartTime.IsNull() || data.EndTime.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"start_time and end_time are required for recurring-day-of-month strategy",
-			)
-		}
-
-	case "cron":
-		if data.Cron.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"cron is required for cron strategy",
-			)
-		}
-		if data.DurationMinutes.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("strategy"),
-				"Invalid Configuration",
-				"duration_minutes is required for cron strategy",
-			)
-		}
-	}
-}
-
-func (r *MaintenanceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	id, err := strconv.ParseInt(req.ID, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid Import ID",
-			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
-		)
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand/v2"
@@ -24,7 +25,7 @@ type Config struct {
 // Otherwise, it creates a new direct connection with retry logic.
 func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 	if config.Endpoint == "" {
-		return nil, fmt.Errorf("endpoint is required")
+		return nil, errors.New("endpoint is required")
 	}
 
 	if config.EnableConnectionPool {
@@ -60,12 +61,14 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 
 		// Exponential backoff with jitter
 		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
+		//nolint:gosec // Not for cryptographic use, only for jitter in backoff
 		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
 		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
 
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("connection cancelled: %w", ctx.Err())
+
 		case <-time.After(sleepDuration):
 			// Continue retry
 		}

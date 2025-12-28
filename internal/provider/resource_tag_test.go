@@ -25,23 +25,39 @@ func TestAccTagResource(t *testing.T) {
 				Config:             testAccTagResourceConfig(name, color),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_tag.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue("uptimekuma_tag.test", tfjsonpath.New("color"), knownvalue.StringExact(color)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_tag.test",
+						tfjsonpath.New("color"),
+						knownvalue.StringExact(color),
+					),
 				},
 			},
 			{
 				Config:             testAccTagResourceConfig(nameUpdated, colorUpdated),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_tag.test", tfjsonpath.New("name"), knownvalue.StringExact(nameUpdated)),
-					statecheck.ExpectKnownValue("uptimekuma_tag.test", tfjsonpath.New("color"), knownvalue.StringExact(colorUpdated)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_tag.test",
+						tfjsonpath.New("color"),
+						knownvalue.StringExact(colorUpdated),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccTagResourceConfig(name, color string) string {
+func testAccTagResourceConfig(name string, color string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_tag" "test" {
   name  = %[1]q
@@ -61,7 +77,11 @@ func TestAccTagResourceDelete(t *testing.T) {
 			{
 				Config: testAccTagResourceConfig(name, color),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("uptimekuma_tag.test", tfjsonpath.New("name"), knownvalue.StringExact(name)),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 			{

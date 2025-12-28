@@ -13,24 +13,37 @@ import (
 
 var _ datasource.DataSource = &NotificationDiscordDataSource{}
 
+// NewNotificationDiscordDataSource returns a new instance of the Discord notification data source.
 func NewNotificationDiscordDataSource() datasource.DataSource {
 	return &NotificationDiscordDataSource{}
 }
 
+// NotificationDiscordDataSource manages Discord notification data source operations.
 type NotificationDiscordDataSource struct {
 	client *kuma.Client
 }
 
+// NotificationDiscordDataSourceModel describes the data model for Discord notification data source.
 type NotificationDiscordDataSourceModel struct {
 	ID   types.Int64  `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-func (d *NotificationDiscordDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+// Metadata returns the metadata for the data source.
+func (*NotificationDiscordDataSource) Metadata(
+	_ context.Context,
+	req datasource.MetadataRequest,
+	resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_notification_discord"
 }
 
-func (d *NotificationDiscordDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema returns the schema for the data source.
+func (*NotificationDiscordDataSource) Schema(
+	_ context.Context,
+	_ datasource.SchemaRequest,
+	resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get Discord notification information by ID or name",
 		Attributes: map[string]schema.Attribute{
@@ -48,7 +61,12 @@ func (d *NotificationDiscordDataSource) Schema(ctx context.Context, req datasour
 	}
 }
 
-func (d *NotificationDiscordDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+// Configure configures the data source with the API client.
+func (d *NotificationDiscordDataSource) Configure(
+	_ context.Context,
+	req datasource.ConfigureRequest,
+	resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -57,7 +75,10 @@ func (d *NotificationDiscordDataSource) Configure(ctx context.Context, req datas
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *kuma.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf(
+				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
+				req.ProviderData,
+			),
 		)
 		return
 	}
@@ -65,7 +86,12 @@ func (d *NotificationDiscordDataSource) Configure(ctx context.Context, req datas
 	d.client = client
 }
 
-func (d *NotificationDiscordDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+// Read reads the current state of the data source.
+func (d *NotificationDiscordDataSource) Read(
+	ctx context.Context,
+	req datasource.ReadRequest,
+	resp *datasource.ReadResponse,
+) {
 	var data NotificationDiscordDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -73,63 +99,50 @@ func (d *NotificationDiscordDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
+	if !validateNotificationDataSourceInput(resp, data.ID, data.Name) {
+		return
+	}
+
+	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read notification", err.Error())
-			return
-		}
-		if notification.Type() != "discord" {
-			resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Discord notification")
-			return
-		}
-		data.Name = types.StringValue(notification.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		notifications := d.client.GetNotifications(ctx)
+	// Attempt to read by name if ID not provided.
+	d.readByName(ctx, &data, resp)
+}
 
-		var found *struct {
-			ID   int64
-			Name string
-		}
-
-		for i := range notifications {
-			if notifications[i].Name == data.Name.ValueString() && notifications[i].Type() == "discord" {
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple notifications found",
-						fmt.Sprintf("Multiple Discord notifications with name '%s' found. Please use 'id' to specify the notification uniquely.", data.Name.ValueString()),
-					)
-					return
-				}
-				found = &struct {
-					ID   int64
-					Name string
-				}{
-					ID:   notifications[i].GetID(),
-					Name: notifications[i].Name,
-				}
-			}
-		}
-
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Notification not found",
-				fmt.Sprintf("No Discord notification with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+func (d *NotificationDiscordDataSource) readByID(
+	ctx context.Context,
+	data *NotificationDiscordDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	resp.Diagnostics.AddError(
-		"Missing query parameters",
-		"Either 'id' or 'name' must be specified.",
-	)
+	if notification.Type() != "discord" {
+		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Discord notification")
+		return
+	}
+
+	data.Name = types.StringValue(notification.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *NotificationDiscordDataSource) readByName(
+	ctx context.Context,
+	data *NotificationDiscordDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "discord", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
