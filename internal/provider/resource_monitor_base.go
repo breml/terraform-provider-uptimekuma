@@ -46,54 +46,26 @@ type MonitorBaseModel struct {
 // withMonitorBaseAttributes adds common monitor schema attributes to the provided attribute map.
 // These attributes are shared across all monitor types: id, name, description, parent, interval, retry, etc.
 func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	attrs["id"] = monitorIDAttribute()
-	attrs["name"] = monitorNameAttribute()
-	attrs["description"] = monitorDescriptionAttribute()
-	attrs["parent"] = monitorParentAttribute()
-	attrs["interval"] = monitorIntervalAttribute()
-	attrs["retry_interval"] = monitorRetryIntervalAttribute()
-	attrs["resend_interval"] = monitorResendIntervalAttribute()
-	attrs["max_retries"] = monitorMaxRetriesAttribute()
-	attrs["upside_down"] = monitorUpsideDownAttribute()
-	attrs["active"] = monitorActiveAttribute()
-	attrs["notification_ids"] = monitorNotificationIDsAttribute()
-	attrs["tags"] = monitorTagsAttribute()
-	return attrs
-}
-
-func monitorIDAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
+	attrs["id"] = schema.Int64Attribute{
 		Computed:            true,
 		MarkdownDescription: "Monitor identifier",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.UseStateForUnknown(),
 		},
 	}
-}
-
-func monitorNameAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
+	attrs["name"] = schema.StringAttribute{
 		MarkdownDescription: "Friendly name",
 		Required:            true,
 	}
-}
-
-func monitorDescriptionAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
+	attrs["description"] = schema.StringAttribute{
 		MarkdownDescription: "Description",
 		Optional:            true,
 	}
-}
-
-func monitorParentAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
+	attrs["parent"] = schema.Int64Attribute{
 		MarkdownDescription: "Parent monitor ID for hierarchical organization",
 		Optional:            true,
 	}
-}
-
-func monitorIntervalAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
+	attrs["interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Heartbeat interval in seconds",
 		Optional:            true,
 		Computed:            true,
@@ -102,10 +74,7 @@ func monitorIntervalAttribute() schema.Int64Attribute {
 			int64validator.Between(20, 2073600),
 		},
 	}
-}
-
-func monitorRetryIntervalAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
+	attrs["retry_interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Retry interval in seconds",
 		Optional:            true,
 		Computed:            true,
@@ -114,19 +83,13 @@ func monitorRetryIntervalAttribute() schema.Int64Attribute {
 			int64validator.Between(20, 2073600),
 		},
 	}
-}
-
-func monitorResendIntervalAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
+	attrs["resend_interval"] = schema.Int64Attribute{
 		MarkdownDescription: "Resend interval in seconds",
 		Optional:            true,
 		Computed:            true,
 		Default:             int64default.StaticInt64(0),
 	}
-}
-
-func monitorMaxRetriesAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
+	attrs["max_retries"] = schema.Int64Attribute{
 		MarkdownDescription: "Maximum number of retries",
 		Optional:            true,
 		Computed:            true,
@@ -135,36 +98,24 @@ func monitorMaxRetriesAttribute() schema.Int64Attribute {
 			int64validator.Between(0, 10),
 		},
 	}
-}
-
-func monitorUpsideDownAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
+	attrs["upside_down"] = schema.BoolAttribute{
 		MarkdownDescription: "Invert monitor status (treat DOWN as UP and vice versa)",
 		Optional:            true,
 		Computed:            true,
 		Default:             booldefault.StaticBool(false),
 	}
-}
-
-func monitorActiveAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
+	attrs["active"] = schema.BoolAttribute{
 		MarkdownDescription: "Monitor is active",
 		Optional:            true,
 		Computed:            true,
 		Default:             booldefault.StaticBool(true),
 	}
-}
-
-func monitorNotificationIDsAttribute() schema.ListAttribute {
-	return schema.ListAttribute{
+	attrs["notification_ids"] = schema.ListAttribute{
 		MarkdownDescription: "List of notification IDs",
 		ElementType:         types.Int64Type,
 		Optional:            true,
 	}
-}
-
-func monitorTagsAttribute() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
+	attrs["tags"] = schema.ListNestedAttribute{
 		MarkdownDescription: "List of tags assigned to this monitor",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
@@ -180,6 +131,7 @@ func monitorTagsAttribute() schema.ListNestedAttribute {
 			},
 		},
 	}
+	return attrs
 }
 
 func handleMonitorTagsCreate(

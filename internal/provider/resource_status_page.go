@@ -72,210 +72,121 @@ func (*StatusPageResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
+//
+//nolint:revive // function length is acceptable for Terraform provider schema definitions
 func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Status page resource",
-		Attributes:          statusPageSchemaAttributes(),
-	}
-}
-
-// statusPageSchemaAttributes returns the attribute schema map for status page resource.
-// This map defines all available attributes including identification, display settings,
-// analytics configuration, and the public group list for monitor organization.
-func statusPageSchemaAttributes() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
-		"id":                      statusPageIDAttribute(),
-		"slug":                    statusPageSlugAttribute(),
-		"title":                   statusPageTitleAttribute(),
-		"description":             statusPageDescriptionAttribute(),
-		"icon":                    statusPageIconAttribute(),
-		"theme":                   statusPageThemeAttribute(),
-		"published":               statusPagePublishedAttribute(),
-		"show_tags":               statusPageShowTagsAttribute(),
-		"domain_name_list":        statusPageDomainNameListAttribute(),
-		"google_analytics_id":     statusPageGoogleAnalyticsIDAttribute(),
-		"custom_css":              statusPageCustomCSSAttribute(),
-		"footer_text":             statusPageFooterTextAttribute(),
-		"show_powered_by":         statusPageShowPoweredByAttribute(),
-		"show_certificate_expiry": statusPageShowCertificateExpiryAttribute(),
-		"public_group_list":       statusPagePublicGroupListAttribute(),
-	}
-}
-
-func statusPageIDAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Status page ID",
-		Computed:            true,
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.UseStateForUnknown(),
-		},
-	}
-}
-
-func statusPageSlugAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "URL-friendly slug for the status page",
-		Required:            true,
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.RequiresReplace(),
-		},
-	}
-}
-
-func statusPageTitleAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Display title",
-		Required:            true,
-	}
-}
-
-func statusPageDescriptionAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Status page description",
-		Optional:            true,
-	}
-}
-
-func statusPageIconAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Base64-encoded icon image",
-		Optional:            true,
-	}
-}
-
-func statusPageThemeAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Theme name for styling",
-		Optional:            true,
-	}
-}
-
-func statusPagePublishedAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
-		MarkdownDescription: "Whether page is publicly visible",
-		Optional:            true,
-		Computed:            true,
-		Default:             booldefault.StaticBool(false),
-	}
-}
-
-func statusPageShowTagsAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
-		MarkdownDescription: "Show monitor tags on status page",
-		Optional:            true,
-		Computed:            true,
-		Default:             booldefault.StaticBool(false),
-	}
-}
-
-func statusPageDomainNameListAttribute() schema.ListAttribute {
-	return schema.ListAttribute{
-		MarkdownDescription: "Custom domain names",
-		ElementType:         types.StringType,
-		Optional:            true,
-	}
-}
-
-func statusPageGoogleAnalyticsIDAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Google Analytics tracking ID",
-		Optional:            true,
-	}
-}
-
-func statusPageCustomCSSAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Custom CSS styling",
-		Optional:            true,
-	}
-}
-
-func statusPageFooterTextAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Footer content",
-		Optional:            true,
-	}
-}
-
-func statusPageShowPoweredByAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
-		MarkdownDescription: "Display 'Powered by Uptime Kuma'",
-		Optional:            true,
-		Computed:            true,
-		Default:             booldefault.StaticBool(true),
-	}
-}
-
-func statusPageShowCertificateExpiryAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
-		MarkdownDescription: "Show certificate expiry dates",
-		Optional:            true,
-		Computed:            true,
-		Default:             booldefault.StaticBool(false),
-	}
-}
-
-func statusPagePublicGroupListAttribute() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		MarkdownDescription: "Monitor grouping configuration",
-		Optional:            true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"id":           statusPageGroupIDAttribute(),
-				"name":         statusPageGroupNameAttribute(),
-				"weight":       statusPageGroupWeightAttribute(),
-				"monitor_list": statusPageGroupMonitorListAttribute(),
+		Attributes: map[string]schema.Attribute{
+			"id": schema.Int64Attribute{
+				MarkdownDescription: "Status page ID",
+				Computed:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
+			},
+			"slug": schema.StringAttribute{
+				MarkdownDescription: "URL-friendly slug for the status page",
+				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"title": schema.StringAttribute{
+				MarkdownDescription: "Display title",
+				Required:            true,
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Status page description",
+				Optional:            true,
+			},
+			"icon": schema.StringAttribute{
+				MarkdownDescription: "Base64-encoded icon image",
+				Optional:            true,
+			},
+			"theme": schema.StringAttribute{
+				MarkdownDescription: "Theme name for styling",
+				Optional:            true,
+			},
+			"published": schema.BoolAttribute{
+				MarkdownDescription: "Whether page is publicly visible",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
+			"show_tags": schema.BoolAttribute{
+				MarkdownDescription: "Show monitor tags on status page",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
+			"domain_name_list": schema.ListAttribute{
+				MarkdownDescription: "Custom domain names",
+				ElementType:         types.StringType,
+				Optional:            true,
+			},
+			"google_analytics_id": schema.StringAttribute{
+				MarkdownDescription: "Google Analytics tracking ID",
+				Optional:            true,
+			},
+			"custom_css": schema.StringAttribute{
+				MarkdownDescription: "Custom CSS styling",
+				Optional:            true,
+			},
+			"footer_text": schema.StringAttribute{
+				MarkdownDescription: "Footer content",
+				Optional:            true,
+			},
+			"show_powered_by": schema.BoolAttribute{
+				MarkdownDescription: "Display 'Powered by Uptime Kuma'",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+			"show_certificate_expiry": schema.BoolAttribute{
+				MarkdownDescription: "Show certificate expiry dates",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
+			"public_group_list": schema.ListNestedAttribute{
+				MarkdownDescription: "Monitor grouping configuration",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.Int64Attribute{
+							MarkdownDescription: "Public group ID",
+							Computed:            true,
+							Optional:            true,
+						},
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Group display name",
+							Required:            true,
+						},
+						"weight": schema.Int64Attribute{
+							MarkdownDescription: "Display order/weight",
+							Optional:            true,
+						},
+						"monitor_list": schema.ListNestedAttribute{
+							MarkdownDescription: "Monitors in group",
+							Optional:            true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"id": schema.Int64Attribute{
+										MarkdownDescription: "Monitor ID",
+										Required:            true,
+									},
+									"send_url": schema.BoolAttribute{
+										MarkdownDescription: "Include monitor URL in status page",
+										Optional:            true,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
-	}
-}
-
-func statusPageGroupIDAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Public group ID",
-		Computed:            true,
-		Optional:            true,
-	}
-}
-
-func statusPageGroupNameAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Group display name",
-		Required:            true,
-	}
-}
-
-func statusPageGroupWeightAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Display order/weight",
-		Optional:            true,
-	}
-}
-
-func statusPageGroupMonitorListAttribute() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		MarkdownDescription: "Monitors in group",
-		Optional:            true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"id":       statusPageMonitorIDAttribute(),
-				"send_url": statusPageMonitorSendURLAttribute(),
-			},
-		},
-	}
-}
-
-func statusPageMonitorIDAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Monitor ID",
-		Required:            true,
-	}
-}
-
-func statusPageMonitorSendURLAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
-		MarkdownDescription: "Include monitor URL in status page",
-		Optional:            true,
 	}
 }
 

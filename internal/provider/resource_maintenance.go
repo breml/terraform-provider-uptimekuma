@@ -90,261 +90,165 @@ func (*MaintenanceResource) Metadata(
 }
 
 // Schema returns the schema for the resource.
+//
+//revive:disable:function-length
 func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Maintenance window resource",
-		Attributes:          maintenanceSchemaAttributes(),
-	}
-}
-
-// maintenanceSchemaAttributes builds the schema for all maintenance window resource attributes.
-// Combines all attribute types including schedule, timezone, and status fields.
-func maintenanceSchemaAttributes() map[string]schema.Attribute {
-	attrs := map[string]schema.Attribute{
-		"id":                maintenanceIDAttribute(),
-		"title":             maintenanceTitleAttribute(),
-		"description":       maintenanceDescriptionAttribute(),
-		"strategy":          maintenanceStrategyAttribute(),
-		"active":            maintenanceActiveAttribute(),
-		"start_date":        maintenanceStartDateAttribute(),
-		"end_date":          maintenanceEndDateAttribute(),
-		"interval_day":      maintenanceIntervalDayAttribute(),
-		"weekdays":          maintenanceWeekdaysAttribute(),
-		"days_of_month":     maintenanceDaysOfMonthAttribute(),
-		"cron":              maintenanceCronAttribute(),
-		"duration_minutes":  maintenanceDurationMinutesAttribute(),
-		"start_time":        maintenanceStartTimeAttribute(),
-		"end_time":          maintenanceEndTimeAttribute(),
-		"timezone":          maintenanceTimezoneAttribute(),
-		"status":            maintenanceStatusAttribute(),
-		"timezone_resolved": maintenanceTimezoneResolvedAttribute(),
-		"timezone_offset":   maintenanceTimezoneOffsetAttribute(),
-		"duration":          maintenanceDurationAttribute(),
-		"timeslot_list":     maintenanceTimeslotListAttribute(),
-	}
-	return attrs
-}
-
-// maintenanceIDAttribute returns the schema for the maintenance ID.
-// This is computed by the server and used to track the resource.
-func maintenanceIDAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Maintenance window ID",
-		Computed:            true,
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.UseStateForUnknown(),
-		},
-	}
-}
-
-// maintenanceTitleAttribute returns the schema for maintenance title/name.
-// A required field that identifies the maintenance window.
-func maintenanceTitleAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Name of the maintenance window",
-		Required:            true,
-	}
-}
-
-// maintenanceDescriptionAttribute returns the schema for maintenance description.
-// Provides optional details about the maintenance window purpose or scope.
-func maintenanceDescriptionAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Additional details about the maintenance",
-		Optional:            true,
-		Computed:            true,
-		Default:             stringdefault.StaticString(""),
-	}
-}
-
-// maintenanceStrategyAttribute returns the schema for maintenance scheduling strategy.
-// Determines how the maintenance window recurs or is scheduled.
-func maintenanceStrategyAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
-		Required:            true,
-		Validators: []validator.String{
-			stringvalidator.OneOf(
-				"single",
-				"recurring-interval",
-				"recurring-weekday",
-				"recurring-day-of-month",
-				"cron",
-				"manual",
-			),
-		},
-	}
-}
-
-// maintenanceActiveAttribute returns the schema for the active flag.
-// Controls whether the maintenance window is enforced.
-func maintenanceActiveAttribute() schema.BoolAttribute {
-	return schema.BoolAttribute{
-		MarkdownDescription: "Whether the maintenance window is active",
-		Optional:            true,
-		Computed:            true,
-		Default:             booldefault.StaticBool(true),
-	}
-}
-
-func maintenanceStartDateAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Start date/time for single strategy (RFC3339 format)",
-		Optional:            true,
-	}
-}
-
-func maintenanceEndDateAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "End date/time for single strategy (RFC3339 format)",
-		Optional:            true,
-	}
-}
-
-func maintenanceIntervalDayAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Interval in days for recurring-interval strategy",
-		Optional:            true,
-	}
-}
-
-// maintenanceWeekdaysAttribute returns the schema for weekdays selection (recurring-weekday strategy).
-// Values: 1=Monday, 2=Tuesday, ..., 7=Sunday.
-func maintenanceWeekdaysAttribute() schema.ListAttribute {
-	return schema.ListAttribute{
-		MarkdownDescription: "Days of week for recurring-weekday (1=Monday...7=Sunday)",
-		Optional:            true,
-		ElementType:         types.Int64Type,
-	}
-}
-
-// maintenanceDaysOfMonthAttribute returns the schema for days of month selection (recurring-day-of-month strategy).
-// Accepts numeric days (1-31) or special values like lastDay1-lastDay4 for last occurrence.
-func maintenanceDaysOfMonthAttribute() schema.ListAttribute {
-	return schema.ListAttribute{
-		MarkdownDescription: "Days of month for recurring-day-of-month (1-31 or lastDay1-lastDay4)",
-		Optional:            true,
-		ElementType:         types.StringType,
-	}
-}
-
-// maintenanceCronAttribute returns the schema for cron expression (cron strategy).
-// Allows flexible scheduling using standard cron syntax.
-func maintenanceCronAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Cron expression for cron strategy",
-		Optional:            true,
-		Computed:            true,
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.UseStateForUnknown(),
-		},
-	}
-}
-
-// maintenanceDurationMinutesAttribute returns the schema for maintenance duration (cron strategy).
-// Specifies how long the maintenance window lasts.
-func maintenanceDurationMinutesAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Duration in minutes for cron strategy",
-		Optional:            true,
-	}
-}
-
-func maintenanceStartTimeAttribute() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		MarkdownDescription: "Start time for recurring strategies",
-		Optional:            true,
-		Attributes:          timeOfDaySchemaAttributes(),
-	}
-}
-
-// maintenanceEndTimeAttribute returns the schema for the end time.
-// Only used for recurring maintenance strategies.
-func maintenanceEndTimeAttribute() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		MarkdownDescription: "End time for recurring strategies",
-		Optional:            true,
-		Attributes:          timeOfDaySchemaAttributes(),
-	}
-}
-
-// maintenanceTimezoneAttribute returns the schema for timezone configuration.
-// Defaults to UTC but can use server's timezone or specific IANA timezone.
-func maintenanceTimezoneAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Timezone option: UTC, SAME_AS_SERVER, or IANA timezone (e.g., America/New_York)",
-		Optional:            true,
-		Computed:            true,
-		Default:             stringdefault.StaticString("UTC"),
-	}
-}
-
-func maintenanceStatusAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Current status: inactive, scheduled, under-maintenance, ended, unknown",
-		Computed:            true,
-	}
-}
-
-func maintenanceTimezoneResolvedAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Resolved IANA timezone",
-		Computed:            true,
-	}
-}
-
-func maintenanceTimezoneOffsetAttribute() schema.StringAttribute {
-	return schema.StringAttribute{
-		MarkdownDescription: "Timezone offset from UTC",
-		Computed:            true,
-	}
-}
-
-func maintenanceDurationAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Duration in seconds (computed)",
-		Computed:            true,
-	}
-}
-
-func maintenanceTimeslotListAttribute() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		MarkdownDescription: "Scheduled maintenance windows",
-		Computed:            true,
-		PlanModifiers: []planmodifier.List{
-			listplanmodifier.UseStateForUnknown(),
-		},
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"start_date": schema.StringAttribute{
-					MarkdownDescription: "RFC3339 timestamp",
-					Computed:            true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.Int64Attribute{
+				MarkdownDescription: "Maintenance window ID",
+				Computed:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
-				"end_date": schema.StringAttribute{
-					MarkdownDescription: "RFC3339 timestamp",
-					Computed:            true,
+			},
+			"title": schema.StringAttribute{
+				MarkdownDescription: "Name of the maintenance window",
+				Required:            true,
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Additional details about the maintenance",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
+			},
+			"strategy": schema.StringAttribute{
+				MarkdownDescription: "Scheduling pattern: single, recurring-interval, recurring-weekday, recurring-day-of-month, cron, manual",
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"single",
+						"recurring-interval",
+						"recurring-weekday",
+						"recurring-day-of-month",
+						"cron",
+						"manual",
+					),
+				},
+			},
+			"active": schema.BoolAttribute{
+				MarkdownDescription: "Whether the maintenance window is active",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+			"start_date": schema.StringAttribute{
+				MarkdownDescription: "Start date/time for single strategy (RFC3339 format)",
+				Optional:            true,
+			},
+			"end_date": schema.StringAttribute{
+				MarkdownDescription: "End date/time for single strategy (RFC3339 format)",
+				Optional:            true,
+			},
+			"interval_day": schema.Int64Attribute{
+				MarkdownDescription: "Interval in days for recurring-interval strategy",
+				Optional:            true,
+			},
+			"weekdays": schema.ListAttribute{
+				MarkdownDescription: "Days of week for recurring-weekday (1=Monday...7=Sunday)",
+				Optional:            true,
+				ElementType:         types.Int64Type,
+			},
+			"days_of_month": schema.ListAttribute{
+				MarkdownDescription: "Days of month for recurring-day-of-month (1-31 or lastDay1-lastDay4)",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"cron": schema.StringAttribute{
+				MarkdownDescription: "Cron expression for cron strategy",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"duration_minutes": schema.Int64Attribute{
+				MarkdownDescription: "Duration in minutes for cron strategy",
+				Optional:            true,
+			},
+			"start_time": schema.SingleNestedAttribute{
+				MarkdownDescription: "Start time for recurring strategies",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"hours": schema.Int64Attribute{
+						MarkdownDescription: "Hours (0-23)",
+						Required:            true,
+					},
+					"minutes": schema.Int64Attribute{
+						MarkdownDescription: "Minutes (0-59)",
+						Required:            true,
+					},
+					"seconds": schema.Int64Attribute{
+						MarkdownDescription: "Seconds (0-59)",
+						Required:            true,
+					},
+				},
+			},
+			"end_time": schema.SingleNestedAttribute{
+				MarkdownDescription: "End time for recurring strategies",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"hours": schema.Int64Attribute{
+						MarkdownDescription: "Hours (0-23)",
+						Required:            true,
+					},
+					"minutes": schema.Int64Attribute{
+						MarkdownDescription: "Minutes (0-59)",
+						Required:            true,
+					},
+					"seconds": schema.Int64Attribute{
+						MarkdownDescription: "Seconds (0-59)",
+						Required:            true,
+					},
+				},
+			},
+			"timezone": schema.StringAttribute{
+				MarkdownDescription: "Timezone option: UTC, SAME_AS_SERVER, or IANA timezone (e.g., America/New_York)",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("UTC"),
+			},
+			"status": schema.StringAttribute{
+				MarkdownDescription: "Current status: inactive, scheduled, under-maintenance, ended, unknown",
+				Computed:            true,
+			},
+			"timezone_resolved": schema.StringAttribute{
+				MarkdownDescription: "Resolved IANA timezone",
+				Computed:            true,
+			},
+			"timezone_offset": schema.StringAttribute{
+				MarkdownDescription: "Timezone offset from UTC",
+				Computed:            true,
+			},
+			"duration": schema.Int64Attribute{
+				MarkdownDescription: "Duration in seconds (computed)",
+				Computed:            true,
+			},
+			"timeslot_list": schema.ListNestedAttribute{
+				MarkdownDescription: "Scheduled maintenance windows",
+				Computed:            true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"start_date": schema.StringAttribute{
+							MarkdownDescription: "RFC3339 timestamp",
+							Computed:            true,
+						},
+						"end_date": schema.StringAttribute{
+							MarkdownDescription: "RFC3339 timestamp",
+							Computed:            true,
+						},
+					},
 				},
 			},
 		},
 	}
 }
 
-func timeOfDaySchemaAttributes() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
-		"hours": schema.Int64Attribute{
-			MarkdownDescription: "Hours (0-23)",
-			Required:            true,
-		},
-		"minutes": schema.Int64Attribute{
-			MarkdownDescription: "Minutes (0-59)",
-			Required:            true,
-		},
-		"seconds": schema.Int64Attribute{
-			MarkdownDescription: "Seconds (0-59)",
-			Required:            true,
-		},
-	}
-}
+//revive:enable:function-length
 
 // Configure configures the resource with the API client.
 func (r *MaintenanceResource) Configure(
