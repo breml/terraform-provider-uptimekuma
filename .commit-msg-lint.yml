@@ -76,6 +76,8 @@ settings:
   # Skip merge commits (default: true)
   skip_merge_commits: true
 
+  main_ref: master
+
   # Skip commits by specific authors (regex patterns)
   # skip_authors:
   #   - 'renovate\[bot\]'
