@@ -29,7 +29,6 @@ resource "uptimekuma_notification_opsgenie" "example" {
 
 - `api_key` (String, Sensitive) OpsGenie API key
 - `name` (String) Notification name
-- `priority` (Number) Alert priority level (1-5)
 - `region` (String) OpsGenie region (e.g., 'us', 'eu')
 
 ### Optional
@@ -37,6 +36,7 @@ resource "uptimekuma_notification_opsgenie" "example" {
 - `apply_existing` (Boolean)
 - `is_active` (Boolean)
 - `is_default` (Boolean)
+- `priority` (Number) Alert priority level (1-5)
 
 ### Read-Only
 
