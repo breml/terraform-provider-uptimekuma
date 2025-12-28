@@ -171,7 +171,7 @@ func (r *NotificationGrafanaOncallResource) Read(
 	err = base.As(&grafanaOncall)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "grafanaoncall"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "GrafanaOncall"`, err.Error())
 		return
 	}
 
