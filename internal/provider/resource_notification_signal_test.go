@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -91,8 +92,20 @@ func TestAccNotificationSignalResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:            "uptimekuma_notification_signal.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationSignalImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"url"},
+			},
 		},
 	})
+}
+
+func testAccNotificationSignalImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_signal.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationSignalResourceConfig(
