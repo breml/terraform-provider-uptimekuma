@@ -230,6 +230,98 @@ func buildHTTPJSONQueryMonitor(
 	return httpJSONQueryMonitor
 }
 
+// stringOrNull returns a Terraform String type that is null if the input string is empty, otherwise returns the string value.
+func stringOrNullJSONQuery(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+
+	return types.StringValue(s)
+}
+
+// populateHTTPBaseFieldsForJSONQuery populates base fields for HTTP JSON Query monitor.
+// Extracts common HTTP fields from API response for JSON Query specific model.
+// Similar to HTTP monitor population but uses JSON Query specific types.
+func populateHTTPBaseFieldsForJSONQuery(httpMonitor *monitor.HTTP, m *MonitorHTTPJSONQueryResourceModel) {
+	m.Name = types.StringValue(httpMonitor.Name)
+	if httpMonitor.Description != nil {
+		m.Description = types.StringValue(*httpMonitor.Description)
+	} else {
+		m.Description = types.StringNull()
+	}
+
+	m.Interval = types.Int64Value(httpMonitor.Interval)
+	m.RetryInterval = types.Int64Value(httpMonitor.RetryInterval)
+	m.ResendInterval = types.Int64Value(httpMonitor.ResendInterval)
+	m.MaxRetries = types.Int64Value(httpMonitor.MaxRetries)
+	m.UpsideDown = types.BoolValue(httpMonitor.UpsideDown)
+	m.Active = types.BoolValue(httpMonitor.IsActive)
+	m.URL = types.StringValue(httpMonitor.URL)
+	m.Timeout = types.Int64Value(httpMonitor.Timeout)
+	m.Method = types.StringValue(httpMonitor.Method)
+	m.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
+	m.IgnoreTLS = types.BoolValue(httpMonitor.IgnoreTLS)
+	m.MaxRedirects = types.Int64Value(int64(httpMonitor.MaxRedirects))
+	m.HTTPBodyEncoding = types.StringValue(httpMonitor.HTTPBodyEncoding)
+	m.Body = stringOrNullJSONQuery(httpMonitor.Body)
+	m.Headers = stringOrNullJSONQuery(httpMonitor.Headers)
+	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
+	m.BasicAuthUser = stringOrNullJSONQuery(httpMonitor.BasicAuthUser)
+	m.BasicAuthPass = stringOrNullJSONQuery(httpMonitor.BasicAuthPass)
+	m.AuthDomain = stringOrNullJSONQuery(httpMonitor.AuthDomain)
+	m.AuthWorkstation = stringOrNullJSONQuery(httpMonitor.AuthWorkstation)
+	m.TLSCert = stringOrNullJSONQuery(httpMonitor.TLSCert)
+	m.TLSKey = stringOrNullJSONQuery(httpMonitor.TLSKey)
+	m.TLSCa = stringOrNullJSONQuery(httpMonitor.TLSCa)
+	m.OAuthAuthMethod = stringOrNullJSONQuery(httpMonitor.OAuthAuthMethod)
+	m.OAuthTokenURL = stringOrNullJSONQuery(httpMonitor.OAuthTokenURL)
+	m.OAuthClientID = stringOrNullJSONQuery(httpMonitor.OAuthClientID)
+	m.OAuthClientSecret = stringOrNullJSONQuery(httpMonitor.OAuthClientSecret)
+	m.OAuthScopes = stringOrNullJSONQuery(httpMonitor.OAuthScopes)
+}
+
+// populateOptionalFieldsForJSONQuery populates optional fields for HTTP JSON Query monitor.
+// Includes parent group, proxy, status codes, and notification configuration.
+// The parent field identifies the parent monitor group for organization purposes.
+// The proxy field specifies the proxy server to use for the monitor connection.
+// Status codes and notifications are converted to Terraform list types for state management.
+func populateOptionalFieldsForJSONQuery(
+	ctx context.Context,
+	httpMonitor *monitor.HTTP,
+	m *MonitorHTTPJSONQueryResourceModel,
+	diags *diag.Diagnostics,
+) {
+	// Set parent monitor group if configured in API response.
+	if httpMonitor.Parent != nil {
+		m.Parent = types.Int64Value(*httpMonitor.Parent)
+	} else {
+		m.Parent = types.Int64Null()
+	}
+
+	// Set proxy ID if the monitor uses a proxy.
+	if httpMonitor.ProxyID != nil {
+		m.ProxyID = types.Int64Value(*httpMonitor.ProxyID)
+	} else {
+		m.ProxyID = types.Int64Null()
+	}
+
+	// Convert accepted status codes list if present.
+	if len(httpMonitor.AcceptedStatusCodes) > 0 {
+		statusCodes, d := types.ListValueFrom(ctx, types.StringType, httpMonitor.AcceptedStatusCodes)
+		diags.Append(d...)
+		m.AcceptedStatusCodes = statusCodes
+	}
+
+	// Convert notification IDs list if present.
+	if len(httpMonitor.NotificationIDs) > 0 {
+		notificationIDs, d := types.ListValueFrom(ctx, types.Int64Type, httpMonitor.NotificationIDs)
+		diags.Append(d...)
+		m.NotificationIDs = notificationIDs
+	} else {
+		m.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+}
+
 // Read reads the current state of the resource.
 func (r *MonitorHTTPJSONQueryResource) Read(
 	ctx context.Context,
@@ -253,8 +345,8 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	var httpMonitor monitor.HTTP
 	httpMonitor.Base = httpJSONQueryMonitor.Base
 	httpMonitor.HTTPDetails = httpJSONQueryMonitor.HTTPDetails
-	populateHTTPMonitorBaseFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
-	populateHTTPMonitorOptionalFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
+	populateHTTPBaseFieldsForJSONQuery(&httpMonitor, &data)
+	populateOptionalFieldsForJSONQuery(ctx, &httpMonitor, &data, &resp.Diagnostics)
 
 	data.JSONPath = types.StringValue(httpJSONQueryMonitor.JSONPath)
 	data.ExpectedValue = types.StringValue(httpJSONQueryMonitor.ExpectedValue)

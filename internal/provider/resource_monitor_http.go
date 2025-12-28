@@ -193,6 +193,87 @@ func stringOrNull(s string) types.String {
 	return types.StringValue(s)
 }
 
+// populateHTTPMonitorBaseFieldsForHTTP populates the base HTTP monitor fields from the API response.
+// Extracts HTTP-specific fields from the API response into the model.
+// Handles base monitor fields and all HTTP configuration options.
+func populateHTTPMonitorBaseFieldsForHTTP(httpMonitor *monitor.HTTP, m *MonitorHTTPResourceModel) {
+	m.Name = types.StringValue(httpMonitor.Name)
+	if httpMonitor.Description != nil {
+		m.Description = types.StringValue(*httpMonitor.Description)
+	} else {
+		m.Description = types.StringNull()
+	}
+
+	m.Interval = types.Int64Value(httpMonitor.Interval)
+	m.RetryInterval = types.Int64Value(httpMonitor.RetryInterval)
+	m.ResendInterval = types.Int64Value(httpMonitor.ResendInterval)
+	m.MaxRetries = types.Int64Value(httpMonitor.MaxRetries)
+	m.UpsideDown = types.BoolValue(httpMonitor.UpsideDown)
+	m.Active = types.BoolValue(httpMonitor.IsActive)
+	m.URL = types.StringValue(httpMonitor.URL)
+	m.Timeout = types.Int64Value(httpMonitor.Timeout)
+	m.Method = types.StringValue(httpMonitor.Method)
+	m.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
+	m.IgnoreTLS = types.BoolValue(httpMonitor.IgnoreTLS)
+	m.MaxRedirects = types.Int64Value(int64(httpMonitor.MaxRedirects))
+	m.HTTPBodyEncoding = types.StringValue(httpMonitor.HTTPBodyEncoding)
+	m.Body = stringOrNull(httpMonitor.Body)
+	m.Headers = stringOrNull(httpMonitor.Headers)
+	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
+	m.BasicAuthUser = stringOrNull(httpMonitor.BasicAuthUser)
+	m.BasicAuthPass = stringOrNull(httpMonitor.BasicAuthPass)
+	m.AuthDomain = stringOrNull(httpMonitor.AuthDomain)
+	m.AuthWorkstation = stringOrNull(httpMonitor.AuthWorkstation)
+	m.TLSCert = stringOrNull(httpMonitor.TLSCert)
+	m.TLSKey = stringOrNull(httpMonitor.TLSKey)
+	m.TLSCa = stringOrNull(httpMonitor.TLSCa)
+	m.OAuthAuthMethod = stringOrNull(httpMonitor.OAuthAuthMethod)
+	m.OAuthTokenURL = stringOrNull(httpMonitor.OAuthTokenURL)
+	m.OAuthClientID = stringOrNull(httpMonitor.OAuthClientID)
+	m.OAuthClientSecret = stringOrNull(httpMonitor.OAuthClientSecret)
+	m.OAuthScopes = stringOrNull(httpMonitor.OAuthScopes)
+}
+
+// populateOptionalFieldsForHTTP populates optional fields for HTTP monitor.
+// Handles proxy, parent group, accepted status codes, and notification IDs.
+// Converts null API values to Terraform null types appropriately.
+func populateOptionalFieldsForHTTP(
+	ctx context.Context,
+	httpMonitor *monitor.HTTP,
+	m *MonitorHTTPResourceModel,
+	diags *diag.Diagnostics,
+) {
+	// Set parent monitor group if present.
+	if httpMonitor.Parent != nil {
+		m.Parent = types.Int64Value(*httpMonitor.Parent)
+	} else {
+		m.Parent = types.Int64Null()
+	}
+
+	// Set proxy if configured.
+	if httpMonitor.ProxyID != nil {
+		m.ProxyID = types.Int64Value(*httpMonitor.ProxyID)
+	} else {
+		m.ProxyID = types.Int64Null()
+	}
+
+	// Convert accepted status codes list if non-empty.
+	if len(httpMonitor.AcceptedStatusCodes) > 0 {
+		statusCodes, d := types.ListValueFrom(ctx, types.StringType, httpMonitor.AcceptedStatusCodes)
+		diags.Append(d...)
+		m.AcceptedStatusCodes = statusCodes
+	}
+
+	// Convert notification IDs list if present.
+	if len(httpMonitor.NotificationIDs) > 0 {
+		notificationIDs, d := types.ListValueFrom(ctx, types.Int64Type, httpMonitor.NotificationIDs)
+		diags.Append(d...)
+		m.NotificationIDs = notificationIDs
+	} else {
+		m.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+}
+
 // Read reads the current state of the resource.
 func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPResourceModel
@@ -209,8 +290,8 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	populateHTTPMonitorBaseFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
-	populateHTTPMonitorOptionalFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
+	populateHTTPMonitorBaseFieldsForHTTP(&httpMonitor, &data)
+	populateOptionalFieldsForHTTP(ctx, &httpMonitor, &data, &resp.Diagnostics)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpMonitor.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

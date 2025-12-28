@@ -221,6 +221,97 @@ func buildHTTPKeywordMonitor(
 	return httpKeywordMonitor
 }
 
+// stringOrNull returns a Terraform String type that is null if the input string is empty, otherwise returns the string value.
+func stringOrNullKeyword(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+
+	return types.StringValue(s)
+}
+
+// populateHTTPBaseFieldsForKeyword populates base fields for HTTP Keyword monitor.
+// Extracts common HTTP fields from API response for Keyword specific model.
+func populateHTTPBaseFieldsForKeyword(httpMonitor *monitor.HTTP, m *MonitorHTTPKeywordResourceModel) {
+	m.Name = types.StringValue(httpMonitor.Name)
+	if httpMonitor.Description != nil {
+		m.Description = types.StringValue(*httpMonitor.Description)
+	} else {
+		m.Description = types.StringNull()
+	}
+
+	m.Interval = types.Int64Value(httpMonitor.Interval)
+	m.RetryInterval = types.Int64Value(httpMonitor.RetryInterval)
+	m.ResendInterval = types.Int64Value(httpMonitor.ResendInterval)
+	m.MaxRetries = types.Int64Value(httpMonitor.MaxRetries)
+	m.UpsideDown = types.BoolValue(httpMonitor.UpsideDown)
+	m.Active = types.BoolValue(httpMonitor.IsActive)
+	m.URL = types.StringValue(httpMonitor.URL)
+	m.Timeout = types.Int64Value(httpMonitor.Timeout)
+	m.Method = types.StringValue(httpMonitor.Method)
+	m.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
+	m.IgnoreTLS = types.BoolValue(httpMonitor.IgnoreTLS)
+	m.MaxRedirects = types.Int64Value(int64(httpMonitor.MaxRedirects))
+	m.HTTPBodyEncoding = types.StringValue(httpMonitor.HTTPBodyEncoding)
+	m.Body = stringOrNullKeyword(httpMonitor.Body)
+	m.Headers = stringOrNullKeyword(httpMonitor.Headers)
+	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
+	m.BasicAuthUser = stringOrNullKeyword(httpMonitor.BasicAuthUser)
+	m.BasicAuthPass = stringOrNullKeyword(httpMonitor.BasicAuthPass)
+	m.AuthDomain = stringOrNullKeyword(httpMonitor.AuthDomain)
+	m.AuthWorkstation = stringOrNullKeyword(httpMonitor.AuthWorkstation)
+	m.TLSCert = stringOrNullKeyword(httpMonitor.TLSCert)
+	m.TLSKey = stringOrNullKeyword(httpMonitor.TLSKey)
+	m.TLSCa = stringOrNullKeyword(httpMonitor.TLSCa)
+	m.OAuthAuthMethod = stringOrNullKeyword(httpMonitor.OAuthAuthMethod)
+	m.OAuthTokenURL = stringOrNullKeyword(httpMonitor.OAuthTokenURL)
+	m.OAuthClientID = stringOrNullKeyword(httpMonitor.OAuthClientID)
+	m.OAuthClientSecret = stringOrNullKeyword(httpMonitor.OAuthClientSecret)
+	m.OAuthScopes = stringOrNullKeyword(httpMonitor.OAuthScopes)
+}
+
+// populateOptionalFieldsForKeyword populates optional fields for HTTP Keyword monitor.
+// Handles parent group, proxy, status codes, and notification configuration.
+// This function follows the same pattern as JSON Query to ensure consistency.
+// Parent and proxy fields are optional and may be null in the API response.
+// Lists are properly converted to Terraform types for accurate state representation.
+func populateOptionalFieldsForKeyword(
+	ctx context.Context,
+	httpMonitor *monitor.HTTP,
+	m *MonitorHTTPKeywordResourceModel,
+	diags *diag.Diagnostics,
+) {
+	// Set parent monitor group if configured in API response.
+	if httpMonitor.Parent != nil {
+		m.Parent = types.Int64Value(*httpMonitor.Parent)
+	} else {
+		m.Parent = types.Int64Null()
+	}
+
+	// Set proxy ID if the monitor uses a proxy.
+	if httpMonitor.ProxyID != nil {
+		m.ProxyID = types.Int64Value(*httpMonitor.ProxyID)
+	} else {
+		m.ProxyID = types.Int64Null()
+	}
+
+	// Convert accepted status codes list if present.
+	if len(httpMonitor.AcceptedStatusCodes) > 0 {
+		statusCodes, d := types.ListValueFrom(ctx, types.StringType, httpMonitor.AcceptedStatusCodes)
+		diags.Append(d...)
+		m.AcceptedStatusCodes = statusCodes
+	}
+
+	// Convert notification IDs list if present.
+	if len(httpMonitor.NotificationIDs) > 0 {
+		notificationIDs, d := types.ListValueFrom(ctx, types.Int64Type, httpMonitor.NotificationIDs)
+		diags.Append(d...)
+		m.NotificationIDs = notificationIDs
+	} else {
+		m.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+}
+
 // Read reads the current state of the resource.
 func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorHTTPKeywordResourceModel
@@ -240,8 +331,8 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	var httpMonitor monitor.HTTP
 	httpMonitor.Base = httpKeywordMonitor.Base
 	httpMonitor.HTTPDetails = httpKeywordMonitor.HTTPDetails
-	populateHTTPMonitorBaseFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
-	populateHTTPMonitorOptionalFields(ctx, &httpMonitor, &data, &resp.Diagnostics)
+	populateHTTPBaseFieldsForKeyword(&httpMonitor, &data)
+	populateOptionalFieldsForKeyword(ctx, &httpMonitor, &data, &resp.Diagnostics)
 
 	data.Keyword = types.StringValue(httpKeywordMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(httpKeywordMonitor.InvertKeyword)
