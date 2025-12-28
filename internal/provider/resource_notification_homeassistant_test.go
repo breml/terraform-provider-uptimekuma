@@ -45,6 +45,11 @@ func TestAccNotificationHomeAssistantResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_homeassistant.test",
+						tfjsonpath.New("long_lived_access_token"),
+						knownvalue.StringExact(token),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_homeassistant.test",
 						tfjsonpath.New("notification_service"),
 						knownvalue.StringExact(service),
 					),
@@ -72,6 +77,11 @@ func TestAccNotificationHomeAssistantResource(t *testing.T) {
 						"uptimekuma_notification_homeassistant.test",
 						tfjsonpath.New("home_assistant_url"),
 						knownvalue.StringExact(urlUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_homeassistant.test",
+						tfjsonpath.New("long_lived_access_token"),
+						knownvalue.StringExact(tokenUpdated),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_homeassistant.test",

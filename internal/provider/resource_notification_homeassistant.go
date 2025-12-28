@@ -190,7 +190,7 @@ func (r *NotificationHomeAssistantResource) Read(
 	err = base.As(&homeAssistant)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "homeassistant"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "HomeAssistant"`, err.Error())
 		return
 	}
 
