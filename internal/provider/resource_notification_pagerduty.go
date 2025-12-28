@@ -203,7 +203,12 @@ func (r *NotificationPagerDutyResource) Read(
 	data.IsDefault = types.BoolValue(pagerduty.IsDefault)
 	data.ApplyExisting = types.BoolValue(pagerduty.ApplyExisting)
 
-	data.IntegrationURL = types.StringValue(pagerduty.IntegrationURL)
+	if pagerduty.IntegrationURL != "" {
+		data.IntegrationURL = types.StringValue(pagerduty.IntegrationURL)
+	} else {
+		data.IntegrationURL = types.StringNull()
+	}
+
 	if pagerduty.IntegrationKey != "" {
 		data.IntegrationKey = types.StringValue(pagerduty.IntegrationKey)
 	} else {

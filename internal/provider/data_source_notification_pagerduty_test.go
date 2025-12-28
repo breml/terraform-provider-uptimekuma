@@ -22,12 +22,17 @@ func TestAccNotificationPagerDutyDataSource(t *testing.T) {
 				Config: testAccNotificationPagerDutyDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_pagerduty.test",
+						"data.uptimekuma_notification_pagerduty.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_pagerduty.test",
+						"data.uptimekuma_notification_pagerduty.by_name",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_pagerduty.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -48,8 +53,12 @@ resource "uptimekuma_notification_pagerduty" "test" {
   auto_resolve      = "resolved"
 }
 
-data "uptimekuma_notification_pagerduty" "test" {
+data "uptimekuma_notification_pagerduty" "by_name" {
   name = uptimekuma_notification_pagerduty.test.name
+}
+
+data "uptimekuma_notification_pagerduty" "by_id" {
+  id = uptimekuma_notification_pagerduty.test.id
 }
 `, name)
 }
