@@ -191,8 +191,8 @@ resource "uptimekuma_notification_smtp" "test" {
   ignore_tls_error  = %[5]t
   from              = %[6]q
   to                = %[7]q
-  html_body         = %[10]t
-`, name, host, port, secure, ignoreTLSError, from, to, cc, bcc, htmlBody)
+  html_body         = %[11]t
+`, name, host, port, secure, ignoreTLSError, from, to, cc, bcc, customSubject, htmlBody)
 
 	if cc != "" {
 		config += fmt.Sprintf("  cc = %q\n", cc)

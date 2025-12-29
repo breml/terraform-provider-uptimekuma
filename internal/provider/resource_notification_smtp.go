@@ -300,7 +300,7 @@ func (r *NotificationSMTPResource) Read(
 		return
 	}
 
-	(*NotificationSMTPResource).populateSMTPModelFromAPI(nil, &data, id, &smtp)
+	populateSMTPModelFromAPI(&data, id, &smtp)
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -406,7 +406,7 @@ func (*NotificationSMTPResource) ImportState(
 }
 
 // populateSMTPModelFromAPI populates the model from API response data.
-func (*NotificationSMTPResource) populateSMTPModelFromAPI(
+func populateSMTPModelFromAPI(
 	data *NotificationSMTPResourceModel,
 	id int64,
 	smtp *notification.SMTP,
