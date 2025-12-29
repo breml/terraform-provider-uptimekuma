@@ -404,7 +404,7 @@ func TestAccMonitorHTTPJSONQueryResourceWithCacheBust(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_json_query.test",
-						tfjsonpath.New("cache_bust"),
+						tfjsonpath.New("cache_buster"),
 						knownvalue.Bool(true),
 					),
 				},
@@ -420,7 +420,7 @@ func TestAccMonitorHTTPJSONQueryResourceWithCacheBust(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_json_query.test",
-						tfjsonpath.New("cache_bust"),
+						tfjsonpath.New("cache_buster"),
 						knownvalue.Bool(false),
 					),
 				},
@@ -438,11 +438,11 @@ func testAccMonitorHTTPJSONQueryResourceConfigWithCacheBust(
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
-  name           = %[1]q
-  url            = %[2]q
-  json_path      = %[3]q
-  expected_value = %[4]q
-  cache_bust     = %[5]t
+  name             = %[1]q
+  url              = %[2]q
+  json_path        = %[3]q
+  expected_value   = %[4]q
+  cache_buster     = %[5]t
 }
 `, name, url, jsonPath, expectedValue, cacheBust)
 }
