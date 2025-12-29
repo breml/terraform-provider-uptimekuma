@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -116,8 +117,67 @@ func TestAccNotificationTwilioResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				Config: testAccNotificationTwilioResourceConfig(
+					nameUpdated,
+					accountSIDUpdated,
+					authTokenUpdated,
+					toNumberUpdated,
+					fromNumberUpdated,
+					"",
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("account_sid"),
+						knownvalue.StringExact(accountSIDUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("auth_token"),
+						knownvalue.StringExact(authTokenUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("to_number"),
+						knownvalue.StringExact(toNumberUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("from_number"),
+						knownvalue.StringExact(fromNumberUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("api_key"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_twilio.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			{
+				ResourceName:            "uptimekuma_notification_twilio.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationTwilioImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"account_sid", "auth_token", "api_key"},
+			},
 		},
 	})
+}
+
+func testAccNotificationTwilioImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_twilio.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationTwilioResourceConfig(
