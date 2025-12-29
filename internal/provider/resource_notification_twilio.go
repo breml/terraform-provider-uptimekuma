@@ -219,6 +219,8 @@ func (r *NotificationTwilioResource) Read(
 	data.AccountSID = types.StringValue(twilio.AccountSID)
 	if twilio.ApiKey != "" {
 		data.APIKey = types.StringValue(twilio.ApiKey)
+	} else {
+		data.APIKey = types.StringNull()
 	}
 
 	data.AuthToken = types.StringValue(twilio.AuthToken)
