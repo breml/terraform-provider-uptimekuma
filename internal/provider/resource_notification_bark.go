@@ -198,14 +198,20 @@ func (r *NotificationBarkResource) Read(ctx context.Context, req resource.ReadRe
 	data.Endpoint = types.StringValue(bark.Endpoint)
 	if bark.Group != "" {
 		data.Group = types.StringValue(bark.Group)
+	} else {
+		data.Group = types.StringNull()
 	}
 
 	if bark.Sound != "" {
 		data.Sound = types.StringValue(bark.Sound)
+	} else {
+		data.Sound = types.StringNull()
 	}
 
 	if bark.APIVersion != "" {
 		data.APIVersion = types.StringValue(bark.APIVersion)
+	} else {
+		data.APIVersion = types.StringNull()
 	}
 
 	// Populate state.
