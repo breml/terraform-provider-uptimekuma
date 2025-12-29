@@ -291,3 +291,67 @@ resource "uptimekuma_monitor_http_keyword" "test" {
 }
 `, name, url, keyword)
 }
+
+func TestAccMonitorHTTPKeywordResourceWithCacheBust(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPKeywordMonitorWithCacheBust")
+	url := "https://httpbin.org/html"
+	keyword := "Herman"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPKeywordResourceConfigWithCacheBust(name, url, keyword, true),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("keyword"),
+						knownvalue.StringExact(keyword),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("cache_bust"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPKeywordResourceConfigWithCacheBust(name, url, keyword, false),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("cache_bust"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPKeywordResourceConfigWithCacheBust(
+	name string,
+	url string,
+	keyword string,
+	cacheBust bool,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http_keyword" "test" {
+  name       = %[1]q
+  url        = %[2]q
+  keyword    = %[3]q
+  cache_bust = %[4]t
+}
+`, name, url, keyword, cacheBust)
+}
