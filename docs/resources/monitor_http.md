@@ -85,6 +85,7 @@ resource "uptimekuma_monitor_http" "with_json_query" {
 - `basic_auth_pass` (String, Sensitive) Basic authentication password
 - `basic_auth_user` (String) Basic authentication username
 - `body` (String) Request body
+- `cache_bust` (Boolean) Enable cache busting for HTTP requests
 - `description` (String) Description
 - `expiry_notification` (Boolean) Enable certificate expiry notification
 - `headers` (String) Request headers (JSON format)
