@@ -171,7 +171,7 @@ func (r *NotificationWeComResource) Read(
 	err = base.As(&wecom)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "wecom"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "WeCom"`, err.Error())
 		return
 	}
 
