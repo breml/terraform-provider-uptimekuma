@@ -40,12 +40,12 @@ resource "uptimekuma_notification_smtp" "with_dkim" {
   password = "smtp-password"
 
   # Optional: DKIM signing for authentication
-  dkim_domain           = "example.com"
-  dkim_key_selector     = "default"
-  dkim_private_key      = "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
-  dkim_hash_algo        = "sha256"
+  dkim_domain             = "example.com"
+  dkim_key_selector       = "default"
+  dkim_private_key        = "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+  dkim_hash_algo          = "sha256"
   dkim_header_field_names = "From:Subject:Date"
-  dkim_skip_fields      = "Bcc"
+  dkim_skip_fields        = "Bcc"
 
   is_active  = true
   is_default = false
