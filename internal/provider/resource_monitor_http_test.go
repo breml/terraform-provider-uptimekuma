@@ -233,7 +233,7 @@ func TestAccMonitorHTTPResourceWithCacheBust(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
-						tfjsonpath.New("cache_bust"),
+						tfjsonpath.New("cache_buster"),
 						knownvalue.Bool(true),
 					),
 				},
@@ -243,7 +243,7 @@ func TestAccMonitorHTTPResourceWithCacheBust(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
-						tfjsonpath.New("cache_bust"),
+						tfjsonpath.New("cache_buster"),
 						knownvalue.Bool(false),
 					),
 				},
@@ -255,9 +255,9 @@ func TestAccMonitorHTTPResourceWithCacheBust(t *testing.T) {
 func testAccMonitorHTTPResourceConfigWithCacheBust(name string, url string, cacheBust bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
-  name       = %[1]q
-  url        = %[2]q
-  cache_bust = %[3]t
+  name         = %[1]q
+  url          = %[2]q
+  cache_buster = %[3]t
 }
 `, name, url, cacheBust)
 }
