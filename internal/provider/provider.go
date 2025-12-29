@@ -134,6 +134,7 @@ func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resour
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotificationAppriseResource,
+		NewNotificationBarkResource,
 		NewNotificationDingDingResource,
 		NewNotificationDiscordResource,
 		NewNotificationFeishuResource,
@@ -187,6 +188,7 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewTagDataSource,
 		NewNotificationDataSource,
 		NewNotificationAppriseDataSource,
+		NewNotificationBarkDataSource,
 		NewNotificationDingDingDataSource,
 		NewNotificationDiscordDataSource,
 		NewNotificationFeishuDataSource,
