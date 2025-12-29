@@ -209,3 +209,55 @@ resource "uptimekuma_monitor_http" "test" {
 }
 `, name, url)
 }
+
+func TestAccMonitorHTTPResourceWithCacheBust(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorWithCacheBust")
+	url := "https://httpbin.org/status/200"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfigWithCacheBust(name, url, true),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("cache_bust"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfigWithCacheBust(name, url, false),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("cache_bust"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPResourceConfigWithCacheBust(name string, url string, cacheBust bool) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http" "test" {
+  name       = %[1]q
+  url        = %[2]q
+  cache_bust = %[3]t
+}
+`, name, url, cacheBust)
+}

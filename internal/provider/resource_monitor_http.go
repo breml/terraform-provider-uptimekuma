@@ -145,6 +145,7 @@ func buildHTTPMonitor(ctx context.Context, data *MonitorHTTPResourceModel, diags
 			OAuthClientID:       data.OAuthClientID.ValueString(),
 			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
 			OAuthScopes:         data.OAuthScopes.ValueString(),
+			CacheBust:           data.CacheBust.ValueBool(),
 		},
 	}
 
@@ -232,6 +233,7 @@ func populateHTTPMonitorBaseFieldsForHTTP(httpMonitor *monitor.HTTP, m *MonitorH
 	m.OAuthClientID = stringOrNull(httpMonitor.OAuthClientID)
 	m.OAuthClientSecret = stringOrNull(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNull(httpMonitor.OAuthScopes)
+	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
 }
 
 // populateOptionalFieldsForHTTP populates optional fields for HTTP monitor.

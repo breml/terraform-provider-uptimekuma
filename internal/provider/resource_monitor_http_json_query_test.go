@@ -362,3 +362,87 @@ resource "uptimekuma_monitor_http_json_query" "test" {
 }
 `, name, url, jsonPath, expectedValue)
 }
+
+func TestAccMonitorHTTPJSONQueryResourceWithCacheBust(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorWithCacheBust")
+	url := "https://httpbin.org/json"
+	jsonPath := "$.slideshow.author"
+	expectedValue := "Yours Truly"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPJSONQueryResourceConfigWithCacheBust(
+					name,
+					url,
+					jsonPath,
+					expectedValue,
+					true,
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("url"),
+						knownvalue.StringExact(url),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("json_path"),
+						knownvalue.StringExact(jsonPath),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("expected_value"),
+						knownvalue.StringExact(expectedValue),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("cache_bust"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPJSONQueryResourceConfigWithCacheBust(
+					name,
+					url,
+					jsonPath,
+					expectedValue,
+					false,
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("cache_bust"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPJSONQueryResourceConfigWithCacheBust(
+	name string,
+	url string,
+	jsonPath string,
+	expectedValue string,
+	cacheBust bool,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http_json_query" "test" {
+  name           = %[1]q
+  url            = %[2]q
+  json_path      = %[3]q
+  expected_value = %[4]q
+  cache_bust     = %[5]t
+}
+`, name, url, jsonPath, expectedValue, cacheBust)
+}

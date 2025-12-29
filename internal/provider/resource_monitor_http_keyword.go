@@ -178,6 +178,7 @@ func buildHTTPKeywordMonitor(
 			OAuthClientID:       data.OAuthClientID.ValueString(),
 			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
 			OAuthScopes:         data.OAuthScopes.ValueString(),
+			CacheBust:           data.CacheBust.ValueBool(),
 		},
 		HTTPKeywordDetails: monitor.HTTPKeywordDetails{
 			Keyword:       data.Keyword.ValueString(),
@@ -268,6 +269,7 @@ func populateHTTPBaseFieldsForKeyword(httpMonitor *monitor.HTTP, m *MonitorHTTPK
 	m.OAuthClientID = stringOrNullKeyword(httpMonitor.OAuthClientID)
 	m.OAuthClientSecret = stringOrNullKeyword(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNullKeyword(httpMonitor.OAuthScopes)
+	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
 }
 
 // populateOptionalFieldsForKeyword populates optional fields for HTTP Keyword monitor.
