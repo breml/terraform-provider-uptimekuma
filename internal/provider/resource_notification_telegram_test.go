@@ -31,8 +31,6 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 					false,
 					false,
 					"",
-					false,
-					"",
 					"HTML",
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -85,9 +83,7 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 					chatIDUpdated,
 					true,
 					true,
-					"",
-					false,
-					"",
+					"https://custom-telegram-api.example.com",
 					"Markdown",
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -118,10 +114,20 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_telegram.test",
+						tfjsonpath.New("server_url"),
+						knownvalue.StringExact("https://custom-telegram-api.example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telegram.test",
 						tfjsonpath.New("template_parse_mode"),
 						knownvalue.StringExact("Markdown"),
 					),
 				},
+			},
+			{
+				ResourceName:            "uptimekuma_notification_telegram.test",
+				ImportState:             true,
+				ImportStateVerifyIgnore: []string{"bot_token"},
 			},
 		},
 	})
@@ -134,8 +140,6 @@ func testAccNotificationTelegramResourceConfig(
 	sendSilently bool,
 	protectContent bool,
 	serverURL string,
-	_ bool,
-	_ string,
 	parseMode string,
 ) string {
 	baseConfig := fmt.Sprintf(`
@@ -146,9 +150,9 @@ resource "uptimekuma_notification_telegram" "test" {
   chat_id           = %[3]q
   send_silently     = %[4]t
   protect_content   = %[5]t
-  template_parse_mode = %[8]q
+  template_parse_mode = %[7]q
 }
-`, name, botToken, chatID, sendSilently, protectContent, serverURL, "", parseMode)
+`, name, botToken, chatID, sendSilently, protectContent, serverURL, parseMode)
 
 	if serverURL != "" {
 		baseConfig = fmt.Sprintf(`
@@ -160,9 +164,9 @@ resource "uptimekuma_notification_telegram" "test" {
   send_silently     = %[4]t
   protect_content   = %[5]t
   server_url        = %[6]q
-  template_parse_mode = %[8]q
+  template_parse_mode = %[7]q
 }
-`, name, botToken, chatID, sendSilently, protectContent, serverURL, "", parseMode)
+`, name, botToken, chatID, sendSilently, protectContent, serverURL, parseMode)
 	}
 
 	return providerConfig() + baseConfig

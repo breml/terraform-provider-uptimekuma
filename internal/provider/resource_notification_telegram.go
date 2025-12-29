@@ -118,6 +118,9 @@ func (*NotificationTelegramResource) Schema(
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("HTML"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("HTML", "Markdown", "MarkdownV2"),
+				},
 			},
 		}),
 	}
