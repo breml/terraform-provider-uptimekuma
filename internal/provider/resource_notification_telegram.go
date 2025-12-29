@@ -249,17 +249,23 @@ func (r *NotificationTelegramResource) Read(
 	data.ChatID = types.StringValue(telegram.ChatID)
 	if telegram.ServerURL != "" {
 		data.ServerURL = types.StringValue(telegram.ServerURL)
+	} else {
+		data.ServerURL = types.StringNull()
 	}
 
 	data.SendSilently = types.BoolValue(telegram.SendSilently)
 	data.ProtectContent = types.BoolValue(telegram.ProtectContent)
 	if telegram.MessageThreadID != "" {
 		data.MessageThreadID = types.StringValue(telegram.MessageThreadID)
+	} else {
+		data.MessageThreadID = types.StringNull()
 	}
 
 	data.UseTemplate = types.BoolValue(telegram.UseTemplate)
 	if telegram.Template != "" {
 		data.Template = types.StringValue(telegram.Template)
+	} else {
+		data.Template = types.StringNull()
 	}
 
 	data.TemplateParseMode = types.StringValue(telegram.TemplateParseMode)

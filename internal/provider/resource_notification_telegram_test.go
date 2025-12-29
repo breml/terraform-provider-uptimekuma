@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -127,10 +128,17 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 			{
 				ResourceName:            "uptimekuma_notification_telegram.test",
 				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationTelegramImportStateID,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"bot_token"},
 			},
 		},
 	})
+}
+
+func testAccNotificationTelegramImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_telegram.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationTelegramResourceConfig(
@@ -142,32 +150,20 @@ func testAccNotificationTelegramResourceConfig(
 	serverURL string,
 	parseMode string,
 ) string {
-	baseConfig := fmt.Sprintf(`
-resource "uptimekuma_notification_telegram" "test" {
-  name              = %[1]q
-  is_active         = true
-  bot_token         = %[2]q
-  chat_id           = %[3]q
-  send_silently     = %[4]t
-  protect_content   = %[5]t
-  template_parse_mode = %[7]q
-}
-`, name, botToken, chatID, sendSilently, protectContent, serverURL, parseMode)
-
+	serverURLConfig := ""
 	if serverURL != "" {
-		baseConfig = fmt.Sprintf(`
-resource "uptimekuma_notification_telegram" "test" {
-  name              = %[1]q
-  is_active         = true
-  bot_token         = %[2]q
-  chat_id           = %[3]q
-  send_silently     = %[4]t
-  protect_content   = %[5]t
-  server_url        = %[6]q
-  template_parse_mode = %[7]q
-}
-`, name, botToken, chatID, sendSilently, protectContent, serverURL, parseMode)
+		serverURLConfig = fmt.Sprintf("\n  server_url        = %q", serverURL)
 	}
 
-	return providerConfig() + baseConfig
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_telegram" "test" {
+  name                = %[1]q
+  is_active           = true
+  bot_token           = %[2]q
+  chat_id             = %[3]q
+  send_silently       = %[4]t
+  protect_content     = %[5]t%[6]s
+  template_parse_mode = %[7]q
+}
+`, name, botToken, chatID, sendSilently, protectContent, serverURLConfig, parseMode)
 }
