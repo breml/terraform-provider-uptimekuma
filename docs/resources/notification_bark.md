@@ -14,23 +14,12 @@ Bark notification resource
 
 ```terraform
 resource "uptimekuma_notification_bark" "example" {
-  name        = "Bark Notifications"
+  name        = "Bark Notification"
+  is_active   = true
   endpoint    = "https://api.bark.com"
   group       = "monitoring"
   sound       = "default"
   api_version = "v1"
-  is_active   = true
-  is_default  = false
-}
-
-resource "uptimekuma_notification_bark" "with_v2" {
-  name        = "Bark v2 Notifications"
-  endpoint    = "https://api.bark.com"
-  group       = "UptimeKuma"
-  sound       = "telegraph"
-  api_version = "v2"
-  is_active   = true
-  is_default  = false
 }
 ```
 
