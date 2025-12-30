@@ -35,6 +35,21 @@ func TestAccMonitorDockerDataSource(t *testing.T) {
 					),
 				},
 			},
+			{
+				Config: testAccMonitorDockerDataSourceConfigByID(name, container, dockerHost),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_docker.by_id",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_docker.by_id",
+						tfjsonpath.New("docker_container"),
+						knownvalue.StringExact(container),
+					),
+				},
+			},
 		},
 	})
 }
@@ -56,6 +71,27 @@ resource "uptimekuma_monitor_docker" "test" {
 
 data "uptimekuma_monitor_docker" "test" {
   name = uptimekuma_monitor_docker.test.name
+}
+`, name, container, dockerHost, acctest.RandomWithPrefix("TestDockerHost"))
+}
+
+func testAccMonitorDockerDataSourceConfigByID(name string, container string, dockerHost string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_docker_host" "test" {
+  name           = %[4]q
+  docker_daemon  = %[3]q
+  docker_type    = "socket"
+}
+
+resource "uptimekuma_monitor_docker" "test" {
+  name              = %[1]q
+  docker_host_id    = uptimekuma_docker_host.test.id
+  docker_container  = %[2]q
+  active            = true
+}
+
+data "uptimekuma_monitor_docker" "by_id" {
+  id = uptimekuma_monitor_docker.test.id
 }
 `, name, container, dockerHost, acctest.RandomWithPrefix("TestDockerHost"))
 }

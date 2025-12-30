@@ -141,7 +141,7 @@ func buildDockerMonitor(ctx context.Context, data *MonitorDockerResourceModel, d
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
 		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if !diags.HasError() {
+		if !diags.HasError() && len(notificationIDs) > 0 {
 			dockerMonitor.NotificationIDs = notificationIDs
 		}
 	}
@@ -280,7 +280,6 @@ func (r *MonitorDockerResource) Delete(ctx context.Context, req resource.DeleteR
 
 // ImportState imports an existing resource by ID.
 func (*MonitorDockerResource) ImportState(
-	// Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
