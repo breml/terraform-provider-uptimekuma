@@ -63,6 +63,6 @@ tasks:
 
   generate-docs:
     desc: "Generate documentation"
-    workdir: ./tools
+    dir: ./tools
     cmds:
       - go generate ./...

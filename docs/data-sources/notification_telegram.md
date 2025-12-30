@@ -13,21 +13,12 @@ Get Telegram notification information by ID or name
 ## Example Usage
 
 ```terraform
-# Look up an existing Telegram notification by name
-data "uptimekuma_notification_telegram" "alerts" {
-  name = "Telegram Alerts"
+data "uptimekuma_notification_telegram" "example_by_name" {
+  name = "My Telegram Notification"
 }
 
-# Look up by ID
-data "uptimekuma_notification_telegram" "by_id" {
+data "uptimekuma_notification_telegram" "example_by_id" {
   id = 1
-}
-
-# Use with a monitor resource
-resource "uptimekuma_monitor_http" "api" {
-  name             = "API Monitor"
-  url              = "https://api.example.com/health"
-  notification_ids = [data.uptimekuma_notification_telegram.alerts.id]
 }
 ```
 

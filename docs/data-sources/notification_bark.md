@@ -13,21 +13,8 @@ Get Bark notification information by ID or name
 ## Example Usage
 
 ```terraform
-# Look up an existing Bark notification by name
-data "uptimekuma_notification_bark" "monitoring" {
-  name = "Bark Notifications"
-}
-
-# Look up by ID
-data "uptimekuma_notification_bark" "by_id" {
-  id = 1
-}
-
-# Use with a monitor resource
-resource "uptimekuma_monitor_http" "api" {
-  name             = "API Monitor"
-  url              = "https://api.example.com/health"
-  notification_ids = [data.uptimekuma_notification_bark.monitoring.id]
+data "uptimekuma_notification_bark" "example" {
+  name = "Bark Notification"
 }
 ```
 
