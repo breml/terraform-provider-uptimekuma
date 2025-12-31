@@ -76,6 +76,60 @@ func TestAccMonitorMQTTResourceWithAuth(t *testing.T) {
 	})
 }
 
+func TestAccMonitorMQTTResourceWithJSONQuery(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMQTTMonitor")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with json-query check type
+			{
+				Config: testAccMonitorMQTTResourceConfigWithJSONQuery(
+					name,
+					"localhost",
+					1883,
+					"json/topic",
+					"$.status",
+					"active",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("uptimekuma_monitor_mqtt.test", "id"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "name", name),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "mqtt_check_type", "json-query"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "json_path", "$.status"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "expected_value", "active"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMonitorMQTTResourceWithWebSocket(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMQTTMonitor")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with WebSocket configuration
+			{
+				Config: testAccMonitorMQTTResourceConfigWithWebSocket(
+					name,
+					"localhost",
+					"ws/topic",
+					"/mqtt",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("uptimekuma_monitor_mqtt.test", "id"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "name", name),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "mqtt_websocket_path", "/mqtt"),
+				),
+			},
+		},
+	})
+}
+
 func testAccMonitorMQTTResourceConfig(
 	name string,
 	hostname string,
@@ -112,4 +166,42 @@ resource "uptimekuma_monitor_mqtt" "test" {
   mqtt_check_type  = "keyword"
 }
 `, name, hostname, port, topic, username, password)
+}
+
+func testAccMonitorMQTTResourceConfigWithJSONQuery(
+	name string,
+	hostname string,
+	port int64,
+	topic string,
+	jsonPath string,
+	expectedValue string,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mqtt" "test" {
+  name             = %[1]q
+  hostname         = %[2]q
+  port             = %[3]d
+  mqtt_topic       = %[4]q
+  mqtt_check_type  = "json-query"
+  json_path        = %[5]q
+  expected_value   = %[6]q
+}
+`, name, hostname, port, topic, jsonPath, expectedValue)
+}
+
+func testAccMonitorMQTTResourceConfigWithWebSocket(
+	name string,
+	hostname string,
+	topic string,
+	websocketPath string,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mqtt" "test" {
+  name                 = %[1]q
+  hostname             = %[2]q
+  mqtt_topic           = %[3]q
+  mqtt_websocket_path  = %[4]q
+  mqtt_check_type      = "keyword"
+}
+`, name, hostname, topic, websocketPath)
 }

@@ -9,8 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// MonitorMQTTBaseModel describes the base data model for MQTT monitor types.
-// MQTT monitors check connectivity to MQTT brokers and message publishing/subscription.
+// MonitorMQTTBaseModel describes the base data model for MQTT monitors.
+// While currently MQTT has only one monitor type, this model is kept for organizational
+// consistency with other monitor types and to allow for potential future MQTT variants.
 type MonitorMQTTBaseModel struct {
 	Hostname           types.String `tfsdk:"hostname"`             // MQTT broker hostname or IP.
 	Port               types.Int64  `tfsdk:"port"`                 // MQTT broker port.

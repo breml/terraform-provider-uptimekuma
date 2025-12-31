@@ -222,9 +222,14 @@ func stringPtrValue(s *string) string {
 }
 
 // populateOptionalFieldsForMQTT populates optional fields for MQTT monitor.
-// Handles parent group and port configuration.
+// Handles parent group, port, and notification IDs.
 // Converts null API values to Terraform null types appropriately.
-func populateOptionalFieldsForMQTT(mqttMonitor *monitor.MQTT, m *MonitorMQTTResourceModel) {
+func populateOptionalFieldsForMQTT(
+	ctx context.Context,
+	mqttMonitor *monitor.MQTT,
+	m *MonitorMQTTResourceModel,
+	diags *diag.Diagnostics,
+) {
 	// Set parent monitor group if present.
 	if mqttMonitor.Parent != nil {
 		m.Parent = types.Int64Value(*mqttMonitor.Parent)
@@ -237,6 +242,15 @@ func populateOptionalFieldsForMQTT(mqttMonitor *monitor.MQTT, m *MonitorMQTTReso
 		m.Port = types.Int64Value(*mqttMonitor.Port)
 	} else {
 		m.Port = types.Int64Null()
+	}
+
+	// Convert notification IDs list if present.
+	if len(mqttMonitor.NotificationIDs) > 0 {
+		notificationIDs, d := types.ListValueFrom(ctx, types.Int64Type, mqttMonitor.NotificationIDs)
+		diags.Append(d...)
+		m.NotificationIDs = notificationIDs
+	} else {
+		m.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 }
 
@@ -257,7 +271,7 @@ func (r *MonitorMQTTResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	populateMQTTMonitorBaseFieldsForMQTT(&mqttMonitor, &data)
-	populateOptionalFieldsForMQTT(&mqttMonitor, &data)
+	populateOptionalFieldsForMQTT(ctx, &mqttMonitor, &data, &resp.Diagnostics)
 
 	data.Tags = handleMonitorTagsRead(ctx, mqttMonitor.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
