@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -109,8 +110,21 @@ func TestAccNotificationSplunkResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:            "uptimekuma_notification_splunk.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationSplunkImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"rest_url", "integration_key"},
+			},
 		},
 	})
+}
+
+// testAccNotificationSplunkImportStateID extracts the resource ID for import testing.
+func testAccNotificationSplunkImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_splunk.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationSplunkResourceConfig(
