@@ -23,7 +23,6 @@ resource "uptimekuma_monitor_mqtt" "home_automation" {
   mqtt_topic      = "home/status"
   mqtt_check_type = "keyword"
   interval        = 60
-  timeout         = 30
 }
 
 # MQTT monitor with authentication.
@@ -67,7 +66,6 @@ resource "uptimekuma_monitor_mqtt" "json_monitor" {
   json_path       = "$.status"
   expected_value  = "active"
   interval        = 60
-  timeout         = 30
 }
 
 # MQTT monitor as part of a monitor group.
