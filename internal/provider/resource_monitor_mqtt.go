@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -34,7 +38,17 @@ type MonitorMQTTResource struct {
 // MonitorMQTTResourceModel describes the resource data model for MQTT monitors.
 type MonitorMQTTResourceModel struct {
 	MonitorBaseModel
-	MonitorMQTTBaseModel
+
+	Hostname           types.String `tfsdk:"hostname"`             // MQTT broker hostname or IP.
+	Port               types.Int64  `tfsdk:"port"`                 // MQTT broker port.
+	MQTTTopic          types.String `tfsdk:"mqtt_topic"`           // Topic to subscribe to.
+	MQTTUsername       types.String `tfsdk:"mqtt_username"`        // Optional username for MQTT authentication.
+	MQTTPassword       types.String `tfsdk:"mqtt_password"`        // Optional password for MQTT authentication.
+	MQTTWebsocketPath  types.String `tfsdk:"mqtt_websocket_path"`  // Optional WebSocket path for WebSocket connections.
+	MQTTCheckType      types.String `tfsdk:"mqtt_check_type"`      // Check type: keyword or json-query.
+	MQTTSuccessMessage types.String `tfsdk:"mqtt_success_message"` // Expected message for keyword check.
+	JSONPath           types.String `tfsdk:"json_path"`            // JSON path for json-query check.
+	ExpectedValue      types.String `tfsdk:"expected_value"`       // Expected value for json-query check.
 }
 
 // Metadata returns the metadata for the resource.
@@ -48,10 +62,58 @@ func (*MonitorMQTTResource) Metadata(
 
 // Schema returns the schema for the resource.
 func (*MonitorMQTTResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	// Define resource schema attributes and validation.
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "MQTT monitor resource",
-		Attributes:          withMonitorBaseAttributes(withMQTTMonitorBaseAttributes(map[string]schema.Attribute{})),
+		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
+			"hostname": schema.StringAttribute{
+				MarkdownDescription: "MQTT broker hostname or IP address",
+				Required:            true,
+			},
+			"port": schema.Int64Attribute{
+				MarkdownDescription: "MQTT broker port",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(1883),
+			},
+			"mqtt_topic": schema.StringAttribute{
+				MarkdownDescription: "Topic to subscribe to",
+				Required:            true,
+			},
+			"mqtt_username": schema.StringAttribute{
+				MarkdownDescription: "MQTT username for authentication",
+				Optional:            true,
+			},
+			"mqtt_password": schema.StringAttribute{
+				MarkdownDescription: "MQTT password for authentication",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"mqtt_websocket_path": schema.StringAttribute{
+				MarkdownDescription: "WebSocket path for WebSocket connections",
+				Optional:            true,
+			},
+			"mqtt_check_type": schema.StringAttribute{
+				MarkdownDescription: "Check type: keyword or json-query",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("keyword"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("keyword", "json-query"),
+				},
+			},
+			"mqtt_success_message": schema.StringAttribute{
+				MarkdownDescription: "Expected message for keyword check",
+				Optional:            true,
+			},
+			"json_path": schema.StringAttribute{
+				MarkdownDescription: "JSON path for json-query check",
+				Optional:            true,
+			},
+			"expected_value": schema.StringAttribute{
+				MarkdownDescription: "Expected value for json-query check",
+				Optional:            true,
+			},
+		}),
 	}
 }
 
