@@ -56,7 +56,7 @@ jobs:
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
-            (echo; echo "Code is not formatted. Run 'make fmt' and commit the changes."; exit 1)
+            (echo; echo "Code is not formatted. Run 'task fmt' and commit the changes."; exit 1)
 
   generate:
     runs-on: ubuntu-latest
@@ -79,7 +79,7 @@ jobs:
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
-            (echo; echo "Unexpected difference in directories after code generation. Run 'make generate' command and commit."; exit 1)
+            (echo; echo "Unexpected difference in directories after code generation. Run 'task generate-docs' command and commit."; exit 1)
 
   lint:
     name: Lint

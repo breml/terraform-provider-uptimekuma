@@ -1,0 +1,19 @@
+# Query MQTT monitor by ID.
+data "uptimekuma_monitor_mqtt" "example_by_id" {
+  id = 42
+}
+
+# Query MQTT monitor by name.
+# Returns the monitor ID and topic for use in other resources.
+data "uptimekuma_monitor_mqtt" "example_by_name" {
+  name = "Home Automation MQTT Broker"
+}
+
+# Use data source output to reference monitor in another resource.
+resource "uptimekuma_notification_slack" "mqtt_alerts" {
+  name        = "MQTT Alerts"
+  webhook_url = var.slack_webhook_url
+
+  # Reference the MQTT monitor queried via data source
+  # notification_ids could be set on monitor via resource if needed
+}
