@@ -133,6 +133,7 @@ func (*UptimeKumaProvider) Configure(
 func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
+		NewNotificationAlertaResource,
 		NewNotificationAppriseResource,
 		NewNotificationBarkResource,
 		NewNotificationBrevoResource,
@@ -193,6 +194,7 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewMaintenancesDataSource,
 		NewTagDataSource,
 		NewNotificationDataSource,
+		NewNotificationAlertaDataSource,
 		NewNotificationAppriseDataSource,
 		NewNotificationBarkDataSource,
 		NewNotificationBrevoDataSource,
