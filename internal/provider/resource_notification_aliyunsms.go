@@ -208,7 +208,7 @@ func (r *NotificationAliyunsmsResource) Read(
 	err = base.As(&aliyunsms)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "aliyunsms"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "AliyunSMS"`, err.Error())
 		return
 	}
 

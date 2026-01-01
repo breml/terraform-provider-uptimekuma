@@ -28,24 +28,13 @@ func TestAccNotificationAliyunsmsDataSource(t *testing.T) {
 					),
 				},
 			},
-		},
-	})
-}
-
-func TestAccNotificationAliyunsmsDataSourceByID(t *testing.T) {
-	name := acctest.RandomWithPrefix("NotificationAliyunsms")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationAliyunsmsDataSourceByIDConfig(name),
+				Config: testAccNotificationAliyunsmsDataSourceConfigByID(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_aliyunsms.test",
-						tfjsonpath.New("id"),
-						knownvalue.NotNull(),
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
 					),
 				},
 			},
@@ -71,7 +60,7 @@ data "uptimekuma_notification_aliyunsms" "test" {
 `, name)
 }
 
-func testAccNotificationAliyunsmsDataSourceByIDConfig(name string) string {
+func testAccNotificationAliyunsmsDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_aliyunsms" "test" {
   name               = %[1]q

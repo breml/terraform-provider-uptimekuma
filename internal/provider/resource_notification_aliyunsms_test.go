@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -123,8 +124,20 @@ func TestAccNotificationAliyunsmsResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:            "uptimekuma_notification_aliyunsms.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationAliyunsmsImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"access_key_id", "secret_access_key"},
+			},
 		},
 	})
+}
+
+func testAccNotificationAliyunsmsImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_aliyunsms.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationAliyunsmsResourceConfig(
