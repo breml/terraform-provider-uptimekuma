@@ -171,7 +171,7 @@ func (r *NotificationAlertNowResource) Read(
 	err = base.As(&alertNow)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "alertnow"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "AlertNow"`, err.Error())
 		return
 	}
 
