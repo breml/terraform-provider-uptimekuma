@@ -113,7 +113,7 @@ func TestAccNotificationClicksendSmsResource(t *testing.T) {
 				ResourceName:            "uptimekuma_notification_clicksendsms.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{},
+				ImportStateVerifyIgnore: []string{"login", "password"},
 			},
 		},
 	})
