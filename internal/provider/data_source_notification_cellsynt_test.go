@@ -51,7 +51,7 @@ resource "uptimekuma_notification_cellsynt" "test" {
   password        = "testpass123"
   destination     = "+46701234567"
   originator      = "TestSender"
-  originator_type = "Numeric"
+  originator_type = "Alphanumeric"
   allow_long_sms  = false
 }
 
@@ -70,7 +70,7 @@ resource "uptimekuma_notification_cellsynt" "test" {
   password        = "testpass123"
   destination     = "+46701234567"
   originator      = "TestSender"
-  originator_type = "Numeric"
+  originator_type = "Alphanumeric"
   allow_long_sms  = false
 }
 

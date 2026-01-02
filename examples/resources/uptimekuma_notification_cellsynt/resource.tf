@@ -5,6 +5,6 @@ resource "uptimekuma_notification_cellsynt" "example" {
   password        = "your_cellsynt_password"
   destination     = "+46701234567"
   originator      = "YourCompany"
-  originator_type = "Numeric"
+  originator_type = "Alphanumeric"
   allow_long_sms  = false
 }

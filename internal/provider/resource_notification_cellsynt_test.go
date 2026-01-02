@@ -34,7 +34,7 @@ func TestAccNotificationCellsyntResource(t *testing.T) {
 					password,
 					destination,
 					originator,
-					"Numeric",
+					"Alphanumeric",
 					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -66,7 +66,7 @@ func TestAccNotificationCellsyntResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_cellsynt.test",
 						tfjsonpath.New("originator_type"),
-						knownvalue.StringExact("Numeric"),
+						knownvalue.StringExact("Alphanumeric"),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_cellsynt.test",

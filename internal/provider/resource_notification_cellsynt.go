@@ -100,6 +100,9 @@ func (*NotificationCellsyntResource) Schema(
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("Numeric"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("Numeric", "Alphanumeric"),
+				},
 			},
 			"allow_long_sms": schema.BoolAttribute{
 				MarkdownDescription: "Allow sending SMS messages longer than 160 characters",
@@ -231,11 +234,7 @@ func (r *NotificationCellsyntResource) Read(
 	data.Password = types.StringValue(cellsynt.Password)
 	data.Destination = types.StringValue(cellsynt.Destination)
 	data.Originator = types.StringValue(cellsynt.Originator)
-
-	if cellsynt.OriginatorType != "" {
-		data.OriginatorType = types.StringValue(cellsynt.OriginatorType)
-	}
-
+	data.OriginatorType = types.StringValue(cellsynt.OriginatorType)
 	data.AllowLongSMS = types.BoolValue(cellsynt.AllowLongSMS)
 
 	// Populate state.
