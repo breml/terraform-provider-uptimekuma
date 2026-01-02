@@ -188,9 +188,7 @@ func (r *NotificationBitrix24Resource) Read(
 	data.ApplyExisting = types.BoolValue(bitrix24.ApplyExisting)
 
 	data.WebhookURL = types.StringValue(bitrix24.WebhookURL)
-	if bitrix24.NotificationUserID != "" {
-		data.NotificationUserID = types.StringValue(bitrix24.NotificationUserID)
-	}
+	data.NotificationUserID = types.StringValue(bitrix24.NotificationUserID)
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

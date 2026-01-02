@@ -82,6 +82,11 @@ func TestAccNotificationBitrix24Resource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:      "uptimekuma_notification_bitrix24.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
