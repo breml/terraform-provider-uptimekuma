@@ -73,6 +73,9 @@ func (*NotificationFlashDutyResource) Schema(
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("Critical"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("Info", "Warning", "Critical", "Ok"),
+				},
 			},
 		}),
 	}
@@ -191,9 +194,7 @@ func (r *NotificationFlashDutyResource) Read(
 	data.ApplyExisting = types.BoolValue(flashduty.ApplyExisting)
 
 	data.IntegrationKey = types.StringValue(flashduty.IntegrationKey)
-	if flashduty.Severity != "" {
-		data.Severity = types.StringValue(flashduty.Severity)
-	}
+	data.Severity = types.StringValue(flashduty.Severity)
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
