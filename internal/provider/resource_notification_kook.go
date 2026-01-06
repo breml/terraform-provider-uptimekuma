@@ -180,7 +180,7 @@ func (r *NotificationKookResource) Read(
 	err = base.As(&kook)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "kook"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "Kook"`, err.Error())
 		return
 	}
 
