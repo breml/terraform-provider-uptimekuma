@@ -55,6 +55,6 @@ The provider supports managing the following resources:
 
 ### Optional
 
-- `endpoint` (String) Uptime Kuma endpoint
-- `password` (String) Uptime Kuma password
-- `username` (String) Uptime Kuma username
+- `endpoint` (String) Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable.
+- `password` (String, Sensitive) Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable.
+- `username` (String) Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable.

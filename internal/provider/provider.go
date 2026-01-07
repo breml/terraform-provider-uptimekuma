@@ -51,16 +51,17 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma endpoint",
+				MarkdownDescription: "Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable.",
 				Optional:            true,
 			},
 			"username": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma username",
+				MarkdownDescription: "Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable.",
 				Optional:            true,
 			},
 			"password": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma password",
+				MarkdownDescription: "Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable.",
 				Optional:            true,
+				Sensitive:           true,
 			},
 		},
 	}
@@ -79,6 +80,10 @@ func (*UptimeKumaProvider) Configure(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Apply environment variable defaults where Terraform config is not provided.
+	// Precedence: Terraform config > environment variables > nothing
+	applyEnvironmentDefaults(&data)
 
 	// Validate configuration
 	// Endpoint is always required to connect to Uptime Kuma
@@ -127,6 +132,25 @@ func (*UptimeKumaProvider) Configure(
 
 	resp.DataSourceData = kumaClient
 	resp.ResourceData = kumaClient
+}
+
+// applyEnvironmentDefaults applies environment variable defaults to the provider model.
+// Terraform config values take precedence over environment variables.
+func applyEnvironmentDefaults(data *UptimeKumaProviderModel) {
+	envEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
+	if data.Endpoint.IsNull() && envEndpoint != "" {
+		data.Endpoint = types.StringValue(envEndpoint)
+	}
+
+	envUsername := os.Getenv("UPTIMEKUMA_USERNAME")
+	if data.Username.IsNull() && envUsername != "" {
+		data.Username = types.StringValue(envUsername)
+	}
+
+	envPassword := os.Getenv("UPTIMEKUMA_PASSWORD")
+	if data.Password.IsNull() && envPassword != "" {
+		data.Password = types.StringValue(envPassword)
+	}
 }
 
 // Resources returns the list of resources for the provider.
