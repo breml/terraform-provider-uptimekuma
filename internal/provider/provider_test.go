@@ -170,51 +170,70 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 	}
 }
 
-func TestConfigureWithEnvironmentVariables(t *testing.T) {
+func TestEnvironmentVariablePrecedence(t *testing.T) {
 	tests := []struct {
-		name        string
-		tfConfig    string
-		envEndpoint string
-		envUsername string
-		envPassword string
-		shouldError bool
-		errorMsg    string
+		name                   string
+		envEndpoint            string
+		envUsername            string
+		envPassword            string
+		configEndpoint         string
+		configUsername         string
+		configPassword         string
+		expectedEndpoint       string
+		expectedUsername       string
+		expectedPassword       string
+		expectConfigToOverride bool
 	}{
 		{
-			name:        "endpoint from env",
-			tfConfig:    `provider "uptimekuma" {}`,
-			envEndpoint: "http://localhost:3001",
-			shouldError: false,
+			name:             "env vars only, no config",
+			envEndpoint:      "http://env:3001",
+			envUsername:      "env-user",
+			envPassword:      "env-pass",
+			expectedEndpoint: "http://env:3001",
+			expectedUsername: "env-user",
+			expectedPassword: "env-pass",
 		},
 		{
-			name:        "all config from env",
-			tfConfig:    `provider "uptimekuma" {}`,
-			envEndpoint: "http://localhost:3001",
-			envUsername: "admin",
-			envPassword: "password",
-			shouldError: false,
+			name:                   "config overrides endpoint from env",
+			envEndpoint:            "http://env:3001",
+			envUsername:            "env-user",
+			envPassword:            "env-pass",
+			configEndpoint:         "http://config:3001",
+			expectedEndpoint:       "http://config:3001",
+			expectedUsername:       "env-user",
+			expectedPassword:       "env-pass",
+			expectConfigToOverride: true,
 		},
 		{
-			name:        "missing endpoint with env vars",
-			tfConfig:    `provider "uptimekuma" {}`,
-			envUsername: "admin",
-			envPassword: "password",
-			shouldError: true,
-			errorMsg:    "endpoint required",
+			name:                   "config overrides all env vars",
+			envEndpoint:            "http://env:3001",
+			envUsername:            "env-user",
+			envPassword:            "env-pass",
+			configEndpoint:         "http://config:3001",
+			configUsername:         "config-user",
+			configPassword:         "config-pass",
+			expectedEndpoint:       "http://config:3001",
+			expectedUsername:       "config-user",
+			expectedPassword:       "config-pass",
+			expectConfigToOverride: true,
 		},
 		{
-			name:        "partial credentials from env",
-			tfConfig:    `provider "uptimekuma" {}`,
-			envEndpoint: "http://localhost:3001",
-			envUsername: "admin",
-			shouldError: true,
-			errorMsg:    "password required",
+			name:             "only endpoint from env, no credentials",
+			envEndpoint:      "http://env:3001",
+			expectedEndpoint: "http://env:3001",
+			expectedUsername: "",
+			expectedPassword: "",
 		},
 		{
-			name:        "terraform config overrides env",
-			tfConfig:    `provider "uptimekuma" { endpoint = "http://override:3001" }`,
-			envEndpoint: "http://localhost:3001",
-			shouldError: false,
+			name:                   "config overrides username, keeps env password",
+			envEndpoint:            "http://env:3001",
+			envUsername:            "env-user",
+			envPassword:            "env-pass",
+			configUsername:         "config-user",
+			expectedEndpoint:       "http://env:3001",
+			expectedUsername:       "config-user",
+			expectedPassword:       "env-pass",
+			expectConfigToOverride: true,
 		},
 	}
 
@@ -223,34 +242,73 @@ func TestConfigureWithEnvironmentVariables(t *testing.T) {
 			// Set environment variables
 			if tc.envEndpoint != "" {
 				t.Setenv("UPTIMEKUMA_ENDPOINT", tc.envEndpoint)
+			} else {
+				t.Setenv("UPTIMEKUMA_ENDPOINT", "")
 			}
 
 			if tc.envUsername != "" {
 				t.Setenv("UPTIMEKUMA_USERNAME", tc.envUsername)
+			} else {
+				t.Setenv("UPTIMEKUMA_USERNAME", "")
 			}
 
 			if tc.envPassword != "" {
 				t.Setenv("UPTIMEKUMA_PASSWORD", tc.envPassword)
+			} else {
+				t.Setenv("UPTIMEKUMA_PASSWORD", "")
 			}
 
-			// Clear unset env vars to ensure clean test
-			if tc.envEndpoint == "" {
-				os.Unsetenv("UPTIMEKUMA_ENDPOINT")
+			// Create config model with values
+			model := UptimeKumaProviderModel{
+				Endpoint: types.StringNull(),
+				Username: types.StringNull(),
+				Password: types.StringNull(),
 			}
 
-			if tc.envUsername == "" {
-				os.Unsetenv("UPTIMEKUMA_USERNAME")
+			if tc.configEndpoint != "" {
+				model.Endpoint = types.StringValue(tc.configEndpoint)
 			}
 
-			if tc.envPassword == "" {
-				os.Unsetenv("UPTIMEKUMA_PASSWORD")
+			if tc.configUsername != "" {
+				model.Username = types.StringValue(tc.configUsername)
 			}
 
-			// Note: Full Configure() test would require full test infrastructure.
-			// This placeholder validates the logic flow.
-			// Acceptance tests below will cover end-to-end validation.
-			if tc.tfConfig == "" {
-				t.Error("tfConfig should not be empty")
+			if tc.configPassword != "" {
+				model.Password = types.StringValue(tc.configPassword)
+			}
+
+			// Apply environment defaults
+			applyEnvironmentDefaults(&model)
+
+			// Verify results
+			if tc.expectedEndpoint == "" {
+				if !model.Endpoint.IsNull() && model.Endpoint.ValueString() != "" {
+					t.Errorf("endpoint: expected empty, got %q", model.Endpoint.ValueString())
+				}
+			} else {
+				if model.Endpoint.ValueString() != tc.expectedEndpoint {
+					t.Errorf("endpoint: got %q, want %q", model.Endpoint.ValueString(), tc.expectedEndpoint)
+				}
+			}
+
+			if tc.expectedUsername == "" {
+				if !model.Username.IsNull() && model.Username.ValueString() != "" {
+					t.Errorf("username: expected empty, got %q", model.Username.ValueString())
+				}
+			} else {
+				if model.Username.ValueString() != tc.expectedUsername {
+					t.Errorf("username: got %q, want %q", model.Username.ValueString(), tc.expectedUsername)
+				}
+			}
+
+			if tc.expectedPassword == "" {
+				if !model.Password.IsNull() && model.Password.ValueString() != "" {
+					t.Errorf("password: expected empty, got %q", model.Password.ValueString())
+				}
+			} else {
+				if model.Password.ValueString() != tc.expectedPassword {
+					t.Errorf("password: got %q, want %q", model.Password.ValueString(), tc.expectedPassword)
+				}
 			}
 		})
 	}
