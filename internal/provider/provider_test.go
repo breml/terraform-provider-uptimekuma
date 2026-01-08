@@ -172,17 +172,16 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 
 func TestEnvironmentVariablePrecedence(t *testing.T) {
 	tests := []struct {
-		name                   string
-		envEndpoint            string
-		envUsername            string
-		envPassword            string
-		configEndpoint         string
-		configUsername         string
-		configPassword         string
-		expectedEndpoint       string
-		expectedUsername       string
-		expectedPassword       string
-		expectConfigToOverride bool
+		name             string
+		envEndpoint      string
+		envUsername      string
+		envPassword      string
+		configEndpoint   string
+		configUsername   string
+		configPassword   string
+		expectedEndpoint string
+		expectedUsername string
+		expectedPassword string
 	}{
 		{
 			name:             "env vars only, no config",
@@ -194,28 +193,26 @@ func TestEnvironmentVariablePrecedence(t *testing.T) {
 			expectedPassword: "env-pass",
 		},
 		{
-			name:                   "config overrides endpoint from env",
-			envEndpoint:            "http://env:3001",
-			envUsername:            "env-user",
-			envPassword:            "env-pass",
-			configEndpoint:         "http://config:3001",
-			expectedEndpoint:       "http://config:3001",
-			expectedUsername:       "env-user",
-			expectedPassword:       "env-pass",
-			expectConfigToOverride: true,
+			name:             "config overrides endpoint from env",
+			envEndpoint:      "http://env:3001",
+			envUsername:      "env-user",
+			envPassword:      "env-pass",
+			configEndpoint:   "http://config:3001",
+			expectedEndpoint: "http://config:3001",
+			expectedUsername: "env-user",
+			expectedPassword: "env-pass",
 		},
 		{
-			name:                   "config overrides all env vars",
-			envEndpoint:            "http://env:3001",
-			envUsername:            "env-user",
-			envPassword:            "env-pass",
-			configEndpoint:         "http://config:3001",
-			configUsername:         "config-user",
-			configPassword:         "config-pass",
-			expectedEndpoint:       "http://config:3001",
-			expectedUsername:       "config-user",
-			expectedPassword:       "config-pass",
-			expectConfigToOverride: true,
+			name:             "config overrides all env vars",
+			envEndpoint:      "http://env:3001",
+			envUsername:      "env-user",
+			envPassword:      "env-pass",
+			configEndpoint:   "http://config:3001",
+			configUsername:   "config-user",
+			configPassword:   "config-pass",
+			expectedEndpoint: "http://config:3001",
+			expectedUsername: "config-user",
+			expectedPassword: "config-pass",
 		},
 		{
 			name:             "only endpoint from env, no credentials",
@@ -225,37 +222,30 @@ func TestEnvironmentVariablePrecedence(t *testing.T) {
 			expectedPassword: "",
 		},
 		{
-			name:                   "config overrides username, keeps env password",
-			envEndpoint:            "http://env:3001",
-			envUsername:            "env-user",
-			envPassword:            "env-pass",
-			configUsername:         "config-user",
-			expectedEndpoint:       "http://env:3001",
-			expectedUsername:       "config-user",
-			expectedPassword:       "env-pass",
-			expectConfigToOverride: true,
+			name:             "config overrides username, keeps env password",
+			envEndpoint:      "http://env:3001",
+			envUsername:      "env-user",
+			envPassword:      "env-pass",
+			configUsername:   "config-user",
+			expectedEndpoint: "http://env:3001",
+			expectedUsername: "config-user",
+			expectedPassword: "env-pass",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Set environment variables
+			// Set environment variables using t.Setenv for consistent cleanup
 			if tc.envEndpoint != "" {
 				t.Setenv("UPTIMEKUMA_ENDPOINT", tc.envEndpoint)
-			} else {
-				t.Setenv("UPTIMEKUMA_ENDPOINT", "")
 			}
 
 			if tc.envUsername != "" {
 				t.Setenv("UPTIMEKUMA_USERNAME", tc.envUsername)
-			} else {
-				t.Setenv("UPTIMEKUMA_USERNAME", "")
 			}
 
 			if tc.envPassword != "" {
 				t.Setenv("UPTIMEKUMA_PASSWORD", tc.envPassword)
-			} else {
-				t.Setenv("UPTIMEKUMA_PASSWORD", "")
 			}
 
 			// Create config model with values
@@ -342,6 +332,10 @@ func TestAccProviderMixedConfiguration(t *testing.T) {
 
 	originalUsername := os.Getenv("UPTIMEKUMA_USERNAME")
 	originalPassword := os.Getenv("UPTIMEKUMA_PASSWORD")
+
+	if originalUsername == "" || originalPassword == "" {
+		t.Skip("UPTIMEKUMA_USERNAME and UPTIMEKUMA_PASSWORD must be set - skipping mixed configuration test")
+	}
 
 	t.Setenv("UPTIMEKUMA_USERNAME", "env-user")
 	t.Setenv("UPTIMEKUMA_PASSWORD", "env-pass")
