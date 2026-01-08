@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -77,12 +78,19 @@ func TestAccNotificationLinenotifyResourceImport(t *testing.T) {
 				Config: testAccNotificationLinenotifyResourceConfig(name, accessToken),
 			},
 			{
-				ResourceName:      "uptimekuma_notification_linenotify.test",
-				ImportState:       true,
-				ImportStateVerify: false,
+				ResourceName:            "uptimekuma_notification_linenotify.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationLinenotifyImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"access_token"},
 			},
 		},
 	})
+}
+
+func testAccNotificationLinenotifyImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_linenotify.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationLinenotifyResourceConfig(name string, accessToken string) string {
