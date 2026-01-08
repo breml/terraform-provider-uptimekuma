@@ -211,10 +211,16 @@ func buildPublicGroupListFromSaved(
 			groups[i].MonitorList = monList
 		} else {
 			// No monitors returned by server - set to empty list for clarity
-			emptyMonList, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}}, []PublicMonitorModel{})
+			emptyMonList, d := types.ListValueFrom(
+				ctx,
+				types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}},
+				[]PublicMonitorModel{},
+			)
 			diags.Append(d...)
 			if diags.HasError() {
-				return types.ListNull(types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}})
+				return types.ListNull(
+					types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.Int64Type, "send_url": types.BoolType}},
+				)
 			}
 
 			groups[i].MonitorList = emptyMonList
