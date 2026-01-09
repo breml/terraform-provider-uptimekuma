@@ -72,9 +72,10 @@ func TestAccNotificationFreemobileResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_freemobile.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_freemobile.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"pass"},
 			},
 		},
 	})
