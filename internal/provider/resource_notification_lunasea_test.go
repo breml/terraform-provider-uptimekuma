@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -169,4 +170,54 @@ resource "uptimekuma_notification_lunasea" "test" {
   device    = %[2]q
 }
 `, name, deviceID)
+}
+
+func TestAccNotificationLunaseaResourceValidation_MissingUserID(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationLunaseaValidation")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccNotificationLunaseaResourceConfigMissingUserID(name),
+				ExpectError: regexp.MustCompile("lunasea_user_id is required when target is 'user'"),
+			},
+		},
+	})
+}
+
+func TestAccNotificationLunaseaResourceValidation_MissingDevice(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationLunaseaValidation")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccNotificationLunaseaResourceConfigMissingDevice(name),
+				ExpectError: regexp.MustCompile("device is required when target is 'device'"),
+			},
+		},
+	})
+}
+
+func testAccNotificationLunaseaResourceConfigMissingUserID(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_lunasea" "test" {
+  name      = %[1]q
+  is_active = true
+  target    = "user"
+}
+`, name)
+}
+
+func testAccNotificationLunaseaResourceConfigMissingDevice(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_lunasea" "test" {
+  name      = %[1]q
+  is_active = true
+  target    = "device"
+}
+`, name)
 }

@@ -122,6 +122,24 @@ func (r *NotificationLunaseaResource) Create(
 		return
 	}
 
+	target := data.Target.ValueString()
+
+	if target == "user" && data.LunaSeaUserID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Missing Required Field",
+			"lunasea_user_id is required when target is 'user'",
+		)
+		return
+	}
+
+	if target == "device" && data.Device.IsNull() {
+		resp.Diagnostics.AddError(
+			"Missing Required Field",
+			"device is required when target is 'device'",
+		)
+		return
+	}
+
 	lunasea := notification.LunaSea{
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
@@ -130,7 +148,7 @@ func (r *NotificationLunaseaResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		LunaSeaDetails: notification.LunaSeaDetails{
-			Target:        data.Target.ValueString(),
+			Target:        target,
 			LunaSeaUserID: data.LunaSeaUserID.ValueString(),
 			Device:        data.Device.ValueString(),
 		},
@@ -193,10 +211,14 @@ func (r *NotificationLunaseaResource) Read(ctx context.Context, req resource.Rea
 	data.Target = types.StringValue(lunasea.Target)
 	if lunasea.LunaSeaUserID != "" {
 		data.LunaSeaUserID = types.StringValue(lunasea.LunaSeaUserID)
+	} else {
+		data.LunaSeaUserID = types.StringNull()
 	}
 
 	if lunasea.Device != "" {
 		data.Device = types.StringValue(lunasea.Device)
+	} else {
+		data.Device = types.StringNull()
 	}
 
 	// Populate state.
@@ -217,6 +239,24 @@ func (r *NotificationLunaseaResource) Update(
 		return
 	}
 
+	target := data.Target.ValueString()
+
+	if target == "user" && data.LunaSeaUserID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Missing Required Field",
+			"lunasea_user_id is required when target is 'user'",
+		)
+		return
+	}
+
+	if target == "device" && data.Device.IsNull() {
+		resp.Diagnostics.AddError(
+			"Missing Required Field",
+			"device is required when target is 'device'",
+		)
+		return
+	}
+
 	lunasea := notification.LunaSea{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
@@ -226,7 +266,7 @@ func (r *NotificationLunaseaResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		LunaSeaDetails: notification.LunaSeaDetails{
-			Target:        data.Target.ValueString(),
+			Target:        target,
 			LunaSeaUserID: data.LunaSeaUserID.ValueString(),
 			Device:        data.Device.ValueString(),
 		},
