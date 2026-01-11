@@ -71,7 +71,6 @@ func (*NotificationNostrResource) Schema(
 			"recipients": schema.StringAttribute{
 				MarkdownDescription: "Newline-delimited list of recipient public keys (npub encoded)",
 				Required:            true,
-				Sensitive:           true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},

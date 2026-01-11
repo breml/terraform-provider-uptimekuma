@@ -17,9 +17,11 @@ resource "uptimekuma_notification_nostr" "example" {
   name = "Nostr Notification"
 
   # Sender's private key in Nostr format (nsec encoded)
+  # This is a sensitive value and should be protected
   sender = "nsec1vl5dr5z69cydfy5kqsruqh84zkyv684jpu7v0unv2dl0aq2t5spe5nqq"
 
   # Newline-delimited list of recipient public keys (npub encoded)
+  # These are public keys and can be shared openly
   recipients = "npub1qypt4l5elx7qjxapqvzc3gw7nj5zxwq5r5rzc5yqgj5j5j5j5j5j5j5j5j5j"
 
   # Newline-delimited list of Nostr relay URLs
@@ -42,7 +44,7 @@ resource "uptimekuma_notification_nostr" "example" {
 ### Required
 
 - `name` (String) Notification name
-- `recipients` (String, Sensitive) Newline-delimited list of recipient public keys (npub encoded)
+- `recipients` (String) Newline-delimited list of recipient public keys (npub encoded)
 - `relays` (String) Newline-delimited list of Nostr relay URLs
 - `sender` (String, Sensitive) Sender private key in Nostr format (nsec encoded)
 

@@ -22,10 +22,20 @@ func TestAccNotificationNostrDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationNostrDataSourceConfig(name, sender, recipients, relays),
+				Config: testAccNotificationNostrDataSourceConfigByName(name, sender, recipients, relays),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_nostr.test",
+						"data.uptimekuma_notification_nostr.by_name",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
+			},
+			{
+				Config: testAccNotificationNostrDataSourceConfigByID(name, sender, recipients, relays),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_nostr.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -35,7 +45,7 @@ func TestAccNotificationNostrDataSource(t *testing.T) {
 	})
 }
 
-func testAccNotificationNostrDataSourceConfig(
+func testAccNotificationNostrDataSourceConfigByName(
 	name string, sender string, recipients string, relays string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
@@ -47,8 +57,26 @@ resource "uptimekuma_notification_nostr" "test" {
   relays     = %[4]q
 }
 
-data "uptimekuma_notification_nostr" "test" {
+data "uptimekuma_notification_nostr" "by_name" {
   name = uptimekuma_notification_nostr.test.name
+}
+`, name, sender, recipients, relays)
+}
+
+func testAccNotificationNostrDataSourceConfigByID(
+	name string, sender string, recipients string, relays string,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_nostr" "test" {
+  name       = %[1]q
+  is_active  = true
+  sender     = %[2]q
+  recipients = %[3]q
+  relays     = %[4]q
+}
+
+data "uptimekuma_notification_nostr" "by_id" {
+  id = uptimekuma_notification_nostr.test.id
 }
 `, name, sender, recipients, relays)
 }
