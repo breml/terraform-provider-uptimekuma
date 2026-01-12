@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -153,6 +154,91 @@ func (r *NotificationOctopushResource) Configure(
 	r.client = client
 }
 
+// ValidateConfig validates the configuration for the Octopush notification resource.
+func (*NotificationOctopushResource) ValidateConfig(
+	ctx context.Context,
+	req resource.ValidateConfigRequest,
+	resp *resource.ValidateConfigResponse,
+) {
+	var config NotificationOctopushResourceModel
+
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if config.Version.IsNull() || config.Version.IsUnknown() {
+		// If version is not known yet, defer validation.
+		return
+	}
+
+	version := config.Version.ValueString()
+
+	switch version {
+	case "2":
+		// When using Octopush V2, V1 (Direct Mail) fields must not be set.
+		validateFieldNotSet(resp, config.DMAPIKey, path.Root("dm_api_key"),
+			"When \"version\" is set to \"2\", the attribute \"dm_api_key\" must not be set. Use \"api_key\" instead.")
+		validateFieldNotSet(resp, config.DMLogin, path.Root("dm_login"),
+			"When \"version\" is set to \"2\", the attribute \"dm_login\" must not be set. Use \"login\" instead.")
+		validateFieldNotSet(
+			resp,
+			config.DMPhoneNumber,
+			path.Root("dm_phone_number"),
+			"When \"version\" is set to \"2\", the attribute \"dm_phone_number\" must not be set. Use \"phone_number\" instead.",
+		)
+		validateFieldNotSet(resp, config.DMSMSType, path.Root("dm_sms_type"),
+			"When \"version\" is set to \"2\", the attribute \"dm_sms_type\" must not be set. Use \"sms_type\" instead.")
+		validateFieldNotSet(
+			resp,
+			config.DMSenderName,
+			path.Root("dm_sender_name"),
+			"When \"version\" is set to \"2\", the attribute \"dm_sender_name\" must not be set. Use \"sender_name\" instead.",
+		)
+
+	case "1":
+		// When using Octopush V1 (Direct Mail), V2 fields must not be set.
+		validateFieldNotSet(resp, config.APIKey, path.Root("api_key"),
+			"When \"version\" is set to \"1\", the attribute \"api_key\" must not be set. Use \"dm_api_key\" instead.")
+		validateFieldNotSet(resp, config.Login, path.Root("login"),
+			"When \"version\" is set to \"1\", the attribute \"login\" must not be set. Use \"dm_login\" instead.")
+		validateFieldNotSet(
+			resp,
+			config.PhoneNumber,
+			path.Root("phone_number"),
+			"When \"version\" is set to \"1\", the attribute \"phone_number\" must not be set. Use \"dm_phone_number\" instead.",
+		)
+		validateFieldNotSet(resp, config.SMSType, path.Root("sms_type"),
+			"When \"version\" is set to \"1\", the attribute \"sms_type\" must not be set. Use \"dm_sms_type\" instead.")
+		validateFieldNotSet(
+			resp,
+			config.SenderName,
+			path.Root("sender_name"),
+			"When \"version\" is set to \"1\", the attribute \"sender_name\" must not be set. Use \"dm_sender_name\" instead.",
+		)
+
+	default:
+		// If version has an unexpected value, assume other validators will handle it.
+		return
+	}
+}
+
+func validateFieldNotSet(
+	resp *resource.ValidateConfigResponse,
+	field types.String,
+	fieldPath path.Path,
+	message string,
+) {
+	if !field.IsNull() && !field.IsUnknown() {
+		resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
+			fieldPath,
+			"Invalid Attribute for Octopush Version",
+			message,
+		))
+	}
+}
+
 // Create creates a new Octopush notification resource.
 func (r *NotificationOctopushResource) Create(
 	ctx context.Context,
@@ -247,49 +333,75 @@ func (r *NotificationOctopushResource) Read(
 	data.IsDefault = types.BoolValue(octopush.IsDefault)
 	data.ApplyExisting = types.BoolValue(octopush.ApplyExisting)
 
+	updateOctopushFields(&data, &octopush)
+
+	// Populate state.
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// updateOctopushFields updates all Octopush-specific fields from API response.
+func updateOctopushFields(data *NotificationOctopushResourceModel, octopush *notification.Octopush) {
 	data.Version = types.StringValue(octopush.Version)
+
 	if octopush.APIKey != "" {
 		data.APIKey = types.StringValue(octopush.APIKey)
+	} else {
+		data.APIKey = types.StringNull()
 	}
 
 	if octopush.Login != "" {
 		data.Login = types.StringValue(octopush.Login)
+	} else {
+		data.Login = types.StringNull()
 	}
 
 	if octopush.PhoneNumber != "" {
 		data.PhoneNumber = types.StringValue(octopush.PhoneNumber)
+	} else {
+		data.PhoneNumber = types.StringNull()
 	}
 
 	if octopush.SMSType != "" {
 		data.SMSType = types.StringValue(octopush.SMSType)
+	} else {
+		data.SMSType = types.StringNull()
 	}
 
 	if octopush.SenderName != "" {
 		data.SenderName = types.StringValue(octopush.SenderName)
+	} else {
+		data.SenderName = types.StringNull()
 	}
 
 	if octopush.DMLogin != "" {
 		data.DMLogin = types.StringValue(octopush.DMLogin)
+	} else {
+		data.DMLogin = types.StringNull()
 	}
 
 	if octopush.DMAPIKey != "" {
 		data.DMAPIKey = types.StringValue(octopush.DMAPIKey)
+	} else {
+		data.DMAPIKey = types.StringNull()
 	}
 
 	if octopush.DMPhoneNumber != "" {
 		data.DMPhoneNumber = types.StringValue(octopush.DMPhoneNumber)
+	} else {
+		data.DMPhoneNumber = types.StringNull()
 	}
 
 	if octopush.DMSMSType != "" {
 		data.DMSMSType = types.StringValue(octopush.DMSMSType)
+	} else {
+		data.DMSMSType = types.StringNull()
 	}
 
 	if octopush.DMSenderName != "" {
 		data.DMSenderName = types.StringValue(octopush.DMSenderName)
+	} else {
+		data.DMSenderName = types.StringNull()
 	}
-
-	// Populate state.
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // Update updates the Octopush notification resource.
