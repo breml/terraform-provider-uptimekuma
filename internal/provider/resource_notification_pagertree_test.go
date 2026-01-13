@@ -82,6 +82,11 @@ func TestAccNotificationPagerTreeResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_pagertree.test",
+						tfjsonpath.New("auto_resolve"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_pagertree.test",
 						tfjsonpath.New("is_active"),
 						knownvalue.Bool(true),
 					),

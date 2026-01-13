@@ -193,7 +193,11 @@ func (r *NotificationPagerTreeResource) Read(
 	data.IsDefault = types.BoolValue(pagertree.IsDefault)
 	data.ApplyExisting = types.BoolValue(pagertree.ApplyExisting)
 
-	data.IntegrationURL = types.StringValue(pagertree.IntegrationURL)
+	if pagertree.IntegrationURL != "" {
+		data.IntegrationURL = types.StringValue(pagertree.IntegrationURL)
+	} else {
+		data.IntegrationURL = types.StringNull()
+	}
 
 	if pagertree.Urgency != "" {
 		data.Urgency = types.StringValue(pagertree.Urgency)
