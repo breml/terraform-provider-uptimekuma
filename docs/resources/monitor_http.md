@@ -36,7 +36,7 @@ resource "uptimekuma_monitor_http" "example" {
   tls_key               = ""
   tls_ca                = ""
   max_redirects         = 10
-  accepted_status_codes = "200-299"
+  accepted_status_codes = ["200-299"]
   http_body_encoding    = "utf8"
   oauth_auth_method     = ""
   oauth_token_url       = ""
