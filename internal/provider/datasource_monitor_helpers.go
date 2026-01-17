@@ -30,7 +30,8 @@ func findMonitorByName(
 
 	// Search for the monitor matching the given name and type.
 	var found monitor.Monitor
-	for _, mon := range monitors {
+	for i := range monitors {
+		mon := &monitors[i]
 		// Skip monitors that don't match the name or type.
 		if mon.Name != name || mon.Type() != monitorType {
 			continue

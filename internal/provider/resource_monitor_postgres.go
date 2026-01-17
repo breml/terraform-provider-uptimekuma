@@ -148,7 +148,7 @@ func (r *MonitorPostgresResource) Create(
 		postgresMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, postgresMonitor)
+	id, err := r.client.CreateMonitor(ctx, &postgresMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create PostgreSQL monitor", err.Error())
@@ -286,7 +286,7 @@ func (r *MonitorPostgresResource) Update(
 		postgresMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, postgresMonitor)
+	err := r.client.UpdateMonitor(ctx, &postgresMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update PostgreSQL monitor", err.Error())

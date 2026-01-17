@@ -157,7 +157,7 @@ func (r *MonitorMQTTResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	id, err := r.client.CreateMonitor(ctx, mqttMonitor)
+	id, err := r.client.CreateMonitor(ctx, &mqttMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create MQTT monitor", err.Error())
 		return
@@ -365,7 +365,7 @@ func (r *MonitorMQTTResource) Update(ctx context.Context, req resource.UpdateReq
 
 	mqttMonitor.ID = data.ID.ValueInt64()
 
-	err := r.client.UpdateMonitor(ctx, mqttMonitor)
+	err := r.client.UpdateMonitor(ctx, &mqttMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update MQTT monitor", err.Error())
 		return

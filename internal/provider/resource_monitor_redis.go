@@ -140,7 +140,7 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 		redisMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, redisMonitor)
+	id, err := r.client.CreateMonitor(ctx, &redisMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Redis monitor", err.Error())
@@ -274,7 +274,7 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 		redisMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, redisMonitor)
+	err := r.client.UpdateMonitor(ctx, &redisMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Redis monitor", err.Error())

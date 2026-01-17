@@ -207,7 +207,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 	}
 
 	// Create monitor via API.
-	id, err := r.client.CreateMonitor(ctx, grpcKeywordMonitor)
+	id, err := r.client.CreateMonitor(ctx, &grpcKeywordMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create gRPC Keyword monitor", err.Error())
@@ -334,7 +334,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 	}
 
 	// Update monitor via API.
-	err := r.client.UpdateMonitor(ctx, grpcKeywordMonitor)
+	err := r.client.UpdateMonitor(ctx, &grpcKeywordMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update gRPC Keyword monitor", err.Error())

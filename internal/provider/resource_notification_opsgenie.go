@@ -140,7 +140,7 @@ func (r *NotificationOpsgenieResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		OpsgenieDetails: notification.OpsgenieDetails{
-			ApiKey:   data.APIKey.ValueString(),
+			APIKey:   data.APIKey.ValueString(),
 			Region:   data.Region.ValueString(),
 			Priority: int(data.Priority.ValueInt64()),
 		},
@@ -204,7 +204,7 @@ func (r *NotificationOpsgenieResource) Read(
 	data.IsDefault = types.BoolValue(opsgenie.IsDefault)
 	data.ApplyExisting = types.BoolValue(opsgenie.ApplyExisting)
 
-	data.APIKey = types.StringValue(opsgenie.ApiKey)
+	data.APIKey = types.StringValue(opsgenie.APIKey)
 	data.Region = types.StringValue(opsgenie.Region)
 	data.Priority = types.Int64Value(int64(opsgenie.Priority))
 
@@ -235,7 +235,7 @@ func (r *NotificationOpsgenieResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		OpsgenieDetails: notification.OpsgenieDetails{
-			ApiKey:   data.APIKey.ValueString(),
+			APIKey:   data.APIKey.ValueString(),
 			Region:   data.Region.ValueString(),
 			Priority: int(data.Priority.ValueInt64()),
 		},

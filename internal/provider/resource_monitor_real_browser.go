@@ -236,7 +236,7 @@ func (r *MonitorRealBrowserResource) Create(
 	}
 
 	// Create monitor via API.
-	id, err := r.client.CreateMonitor(ctx, realBrowserMonitor)
+	id, err := r.client.CreateMonitor(ctx, &realBrowserMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Real Browser monitor", err.Error())
@@ -426,7 +426,7 @@ func (r *MonitorRealBrowserResource) Update(
 	}
 
 	// Update monitor via API.
-	err := r.client.UpdateMonitor(ctx, realBrowserMonitor)
+	err := r.client.UpdateMonitor(ctx, &realBrowserMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Real Browser monitor", err.Error())

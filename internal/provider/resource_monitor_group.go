@@ -120,7 +120,7 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req resource.CreateRe
 		groupMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, groupMonitor)
+	id, err := r.client.CreateMonitor(ctx, &groupMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create group monitor", err.Error())
@@ -248,7 +248,7 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 		groupMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, groupMonitor)
+	err := r.client.UpdateMonitor(ctx, &groupMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update group monitor", err.Error())

@@ -153,7 +153,7 @@ func (r *MonitorTCPPortResource) Create(
 		tcpPortMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, tcpPortMonitor)
+	id, err := r.client.CreateMonitor(ctx, &tcpPortMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create TCP Port monitor", err.Error())
@@ -291,7 +291,7 @@ func (r *MonitorTCPPortResource) Update(
 		tcpPortMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, tcpPortMonitor)
+	err := r.client.UpdateMonitor(ctx, &tcpPortMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update TCP Port monitor", err.Error())

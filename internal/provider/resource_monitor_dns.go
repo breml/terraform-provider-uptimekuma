@@ -165,7 +165,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 		dnsMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, dnsMonitor)
+	id, err := r.client.CreateMonitor(ctx, &dnsMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create DNS monitor", err.Error())
@@ -303,7 +303,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 		dnsMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, dnsMonitor)
+	err := r.client.UpdateMonitor(ctx, &dnsMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update DNS monitor", err.Error())
