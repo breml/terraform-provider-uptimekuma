@@ -144,7 +144,7 @@ func (r *NotificationEvolutionResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		EvolutionDetails: notification.EvolutionDetails{
-			ApiUrl:       data.APIURL.ValueString(),
+			APIURL:       data.APIURL.ValueString(),
 			InstanceName: data.InstanceName.ValueString(),
 			AuthToken:    data.AuthToken.ValueString(),
 			Recipient:    data.Recipient.ValueString(),
@@ -209,7 +209,7 @@ func (r *NotificationEvolutionResource) Read(
 	data.IsDefault = types.BoolValue(evolution.IsDefault)
 	data.ApplyExisting = types.BoolValue(evolution.ApplyExisting)
 
-	data.APIURL = types.StringValue(evolution.ApiUrl)
+	data.APIURL = types.StringValue(evolution.APIURL)
 	data.InstanceName = types.StringValue(evolution.InstanceName)
 	data.AuthToken = types.StringValue(evolution.AuthToken)
 	data.Recipient = types.StringValue(evolution.Recipient)
@@ -241,7 +241,7 @@ func (r *NotificationEvolutionResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		EvolutionDetails: notification.EvolutionDetails{
-			ApiUrl:       data.APIURL.ValueString(),
+			APIURL:       data.APIURL.ValueString(),
 			InstanceName: data.InstanceName.ValueString(),
 			AuthToken:    data.AuthToken.ValueString(),
 			Recipient:    data.Recipient.ValueString(),

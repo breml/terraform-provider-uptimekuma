@@ -144,7 +144,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 		pingMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, pingMonitor)
+	id, err := r.client.CreateMonitor(ctx, &pingMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Ping monitor", err.Error())
@@ -278,7 +278,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 		pingMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, pingMonitor)
+	err := r.client.UpdateMonitor(ctx, &pingMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Ping monitor", err.Error())

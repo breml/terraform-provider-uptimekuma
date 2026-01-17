@@ -123,7 +123,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 		return
 	}
 
-	id, err := r.client.CreateMonitor(ctx, httpKeywordMonitor)
+	id, err := r.client.CreateMonitor(ctx, &httpKeywordMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create HTTP Keyword monitor", err.Error())
 		return
@@ -372,7 +372,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 
 	httpKeywordMonitor.ID = data.ID.ValueInt64()
 
-	err := r.client.UpdateMonitor(ctx, httpKeywordMonitor)
+	err := r.client.UpdateMonitor(ctx, &httpKeywordMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP Keyword monitor", err.Error())
 		return

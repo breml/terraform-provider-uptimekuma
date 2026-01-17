@@ -95,7 +95,7 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	id, err := r.client.CreateMonitor(ctx, httpMonitor)
+	id, err := r.client.CreateMonitor(ctx, &httpMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create HTTP monitor", err.Error())
 		return
@@ -325,7 +325,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 
 	httpMonitor.ID = data.ID.ValueInt64()
 
-	err := r.client.UpdateMonitor(ctx, httpMonitor)
+	err := r.client.UpdateMonitor(ctx, &httpMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP monitor", err.Error())
 		return

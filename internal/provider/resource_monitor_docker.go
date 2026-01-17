@@ -96,7 +96,7 @@ func (r *MonitorDockerResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	id, err := r.client.CreateMonitor(ctx, dockerMonitor)
+	id, err := r.client.CreateMonitor(ctx, &dockerMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Docker monitor", err.Error())
 		return
@@ -244,7 +244,7 @@ func (r *MonitorDockerResource) Update(ctx context.Context, req resource.UpdateR
 
 	dockerMonitor.ID = data.ID.ValueInt64()
 
-	err := r.client.UpdateMonitor(ctx, dockerMonitor)
+	err := r.client.UpdateMonitor(ctx, &dockerMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Docker monitor", err.Error())
 		return

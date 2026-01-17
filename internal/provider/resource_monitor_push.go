@@ -132,7 +132,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 		pushMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, pushMonitor)
+	id, err := r.client.CreateMonitor(ctx, &pushMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create Push monitor", err.Error())
@@ -274,7 +274,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 		pushMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, pushMonitor)
+	err := r.client.UpdateMonitor(ctx, &pushMonitor)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update Push monitor", err.Error())

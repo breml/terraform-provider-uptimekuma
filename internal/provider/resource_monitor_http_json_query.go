@@ -131,7 +131,7 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 		return
 	}
 
-	id, err := r.client.CreateMonitor(ctx, httpJSONQueryMonitor)
+	id, err := r.client.CreateMonitor(ctx, &httpJSONQueryMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create HTTP JSON Query monitor", err.Error())
 		return
@@ -387,7 +387,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 
 	httpJSONQueryMonitor.ID = data.ID.ValueInt64()
 
-	err := r.client.UpdateMonitor(ctx, httpJSONQueryMonitor)
+	err := r.client.UpdateMonitor(ctx, &httpJSONQueryMonitor)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update HTTP JSON Query monitor", err.Error())
 		return

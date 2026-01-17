@@ -142,8 +142,8 @@ func (r *NotificationAlertaResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		AlertaDetails: notification.AlertaDetails{
-			ApiEndpoint:  data.APIEndpoint.ValueString(),
-			ApiKey:       data.APIKey.ValueString(),
+			APIEndpoint:  data.APIEndpoint.ValueString(),
+			APIKey:       data.APIKey.ValueString(),
 			Environment:  data.Environment.ValueString(),
 			AlertState:   data.AlertState.ValueString(),
 			RecoverState: data.RecoverState.ValueString(),
@@ -208,8 +208,8 @@ func (r *NotificationAlertaResource) Read(
 	data.IsDefault = types.BoolValue(alerta.IsDefault)
 	data.ApplyExisting = types.BoolValue(alerta.ApplyExisting)
 
-	data.APIEndpoint = types.StringValue(alerta.ApiEndpoint)
-	data.APIKey = types.StringValue(alerta.ApiKey)
+	data.APIEndpoint = types.StringValue(alerta.APIEndpoint)
+	data.APIKey = types.StringValue(alerta.APIKey)
 	if alerta.Environment != "" {
 		data.Environment = types.StringValue(alerta.Environment)
 	}
@@ -249,8 +249,8 @@ func (r *NotificationAlertaResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		AlertaDetails: notification.AlertaDetails{
-			ApiEndpoint:  data.APIEndpoint.ValueString(),
-			ApiKey:       data.APIKey.ValueString(),
+			APIEndpoint:  data.APIEndpoint.ValueString(),
+			APIKey:       data.APIKey.ValueString(),
 			Environment:  data.Environment.ValueString(),
 			AlertState:   data.AlertState.ValueString(),
 			RecoverState: data.RecoverState.ValueString(),

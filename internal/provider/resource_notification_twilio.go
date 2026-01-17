@@ -151,7 +151,7 @@ func (r *NotificationTwilioResource) Create(
 		},
 		TwilioDetails: notification.TwilioDetails{
 			AccountSID: data.AccountSID.ValueString(),
-			ApiKey:     data.APIKey.ValueString(),
+			APIKey:     data.APIKey.ValueString(),
 			AuthToken:  data.AuthToken.ValueString(),
 			ToNumber:   data.ToNumber.ValueString(),
 			FromNumber: data.FromNumber.ValueString(),
@@ -217,8 +217,8 @@ func (r *NotificationTwilioResource) Read(
 	data.ApplyExisting = types.BoolValue(twilio.ApplyExisting)
 
 	data.AccountSID = types.StringValue(twilio.AccountSID)
-	if twilio.ApiKey != "" {
-		data.APIKey = types.StringValue(twilio.ApiKey)
+	if twilio.APIKey != "" {
+		data.APIKey = types.StringValue(twilio.APIKey)
 	} else {
 		data.APIKey = types.StringNull()
 	}
@@ -255,7 +255,7 @@ func (r *NotificationTwilioResource) Update(
 		},
 		TwilioDetails: notification.TwilioDetails{
 			AccountSID: data.AccountSID.ValueString(),
-			ApiKey:     data.APIKey.ValueString(),
+			APIKey:     data.APIKey.ValueString(),
 			AuthToken:  data.AuthToken.ValueString(),
 			ToNumber:   data.ToNumber.ValueString(),
 			FromNumber: data.FromNumber.ValueString(),
