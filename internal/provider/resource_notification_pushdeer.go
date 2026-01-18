@@ -190,9 +190,7 @@ func (r *NotificationPushDeerResource) Read(
 	data.ApplyExisting = types.BoolValue(pushDeer.ApplyExisting)
 
 	data.Key = types.StringValue(pushDeer.Key)
-	if pushDeer.Server != "" {
-		data.Server = types.StringValue(pushDeer.Server)
-	}
+	data.Server = types.StringValue(pushDeer.Server)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
