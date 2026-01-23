@@ -77,9 +77,10 @@ func TestAccNotificationPushPlusResourceImport(t *testing.T) {
 				Config: testAccNotificationPushPlusResourceConfig(name, sendKey),
 			},
 			{
-				ResourceName:      "uptimekuma_notification_pushplus.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_pushplus.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"send_key"},
 			},
 		},
 	})

@@ -29,6 +29,16 @@ func TestAccNotificationPushPlusDataSource(t *testing.T) {
 					),
 				},
 			},
+			{
+				Config: testAccNotificationPushPlusDataSourceConfigByID(name, sendKey),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_pushplus.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
+			},
 		},
 	})
 }
@@ -43,6 +53,20 @@ resource "uptimekuma_notification_pushplus" "test" {
 
 data "uptimekuma_notification_pushplus" "test" {
   name = uptimekuma_notification_pushplus.test.name
+}
+`, name, sendKey)
+}
+
+func testAccNotificationPushPlusDataSourceConfigByID(name string, sendKey string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_pushplus" "test" {
+  name     = %[1]q
+  is_active = true
+  send_key = %[2]q
+}
+
+data "uptimekuma_notification_pushplus" "test" {
+  id = uptimekuma_notification_pushplus.test.id
 }
 `, name, sendKey)
 }
