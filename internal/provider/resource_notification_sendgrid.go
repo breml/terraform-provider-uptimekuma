@@ -227,10 +227,14 @@ func (r *NotificationSendgridResource) Read(
 
 	if sendgrid.CcEmail != "" {
 		data.CcEmail = types.StringValue(sendgrid.CcEmail)
+	} else {
+		data.CcEmail = types.StringNull()
 	}
 
 	if sendgrid.BccEmail != "" {
 		data.BccEmail = types.StringValue(sendgrid.BccEmail)
+	} else {
+		data.BccEmail = types.StringNull()
 	}
 
 	// Populate state.
