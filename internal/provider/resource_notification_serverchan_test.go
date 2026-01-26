@@ -64,10 +64,11 @@ func TestAccNotificationServerChanResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_serverchan.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: testAccNotificationServerChanImportStateID,
+				ResourceName:            "uptimekuma_notification_serverchan.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"send_key"},
+				ImportStateIdFunc:       testAccNotificationServerChanImportStateID,
 			},
 		},
 	})
