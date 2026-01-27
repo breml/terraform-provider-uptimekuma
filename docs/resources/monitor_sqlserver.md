@@ -19,7 +19,8 @@ resource "uptimekuma_monitor_sqlserver" "example" {
   interval = 60
 
   # SQL Server connection string with authentication
-  database_connection_string = "Server=mssql.example.com;User=sa;Password=YourPassword123;TrustServerCertificate=true"
+  # Important: Ensure proper TLS certificate validation in production
+  database_connection_string = "Server=mssql.example.com;User=sa;Password=YourPassword123"
 
   # Optional SQL query for custom health check (default: SELECT 1)
   database_query = "SELECT 1"
@@ -31,7 +32,8 @@ resource "uptimekuma_monitor_sqlserver" "with_group" {
   interval = 60
   parent   = uptimekuma_monitor_group.databases.id
 
-  database_connection_string = "Server=mssql.example.com;User=sa;Password=YourPassword123;TrustServerCertificate=true"
+  # For development/testing with self-signed certificates, add TrustServerCertificate=true
+  database_connection_string = "Server=mssql.example.com;User=sa;Password=YourPassword123"
   database_query             = "SELECT COUNT(*) FROM sys.databases"
 }
 
