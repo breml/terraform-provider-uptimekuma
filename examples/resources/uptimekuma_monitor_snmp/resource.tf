@@ -24,7 +24,7 @@ resource "uptimekuma_monitor_snmp" "full" {
   active             = true
   upside_down        = false
   json_path          = "$.value"
-  json_path_operator = "equals"
+  json_path_operator = "=="
   expected_value     = "1"
 
   notification_ids = [1, 2]
