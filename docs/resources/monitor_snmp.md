@@ -52,7 +52,7 @@ resource "uptimekuma_monitor_snmp" "full" {
   ]
 }
 
-# SNMP monitor using SNMPv3 with security context
+# SNMP monitor using basic SNMPv3 configuration
 resource "uptimekuma_monitor_snmp" "snmpv3" {
   name           = "SNMPv3 Device Monitor"
   hostname       = "192.168.1.2"
@@ -95,7 +95,7 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 - `expected_value` (String) Expected value to match
 - `interval` (Number) Heartbeat interval in seconds
 - `json_path` (String) JSON path for extracting value from SNMP response
-- `json_path_operator` (String) JSON path operator
+- `json_path_operator` (String) Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization

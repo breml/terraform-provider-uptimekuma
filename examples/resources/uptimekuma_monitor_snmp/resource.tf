@@ -37,7 +37,7 @@ resource "uptimekuma_monitor_snmp" "full" {
   ]
 }
 
-# SNMP monitor using SNMPv3 with security context
+# SNMP monitor using basic SNMPv3 configuration
 resource "uptimekuma_monitor_snmp" "snmpv3" {
   name           = "SNMPv3 Device Monitor"
   hostname       = "192.168.1.2"

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -72,7 +73,7 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Computed:            true,
 				Default:             int64default.StaticInt64(161),
 				Validators: []validator.Int64{
-					int64validator.Between(1, 65535),
+					int64validator.Between(0, 65535),
 				},
 			},
 			"snmp_version": schema.StringAttribute{
@@ -93,8 +94,11 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Optional:            true,
 			},
 			"json_path_operator": schema.StringAttribute{
-				MarkdownDescription: "JSON path operator",
+				MarkdownDescription: "Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(">", ">=", "<", "<=", "!=", "==", "contains"),
+				},
 			},
 			"expected_value": schema.StringAttribute{
 				MarkdownDescription: "Expected value to match",
@@ -160,6 +164,7 @@ func (r *MonitorSNMPResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags *diag.Diagnostics) monitor.SNMP {
+	port := data.Port.ValueInt64()
 	snmpMonitor := monitor.SNMP{
 		Base: monitor.Base{
 			Name:           data.Name.ValueString(),
@@ -172,7 +177,7 @@ func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags
 		},
 		SNMPDetails: monitor.SNMPDetails{
 			Hostname:      data.Hostname.ValueString(),
-			Port:          int64Ptr(data.Port.ValueInt64()),
+			Port:          &port,
 			SNMPVersion:   data.SNMPVersion.ValueString(),
 			SNMPOID:       data.SNMPOID.ValueString(),
 			SNMPCommunity: data.SNMPCommunity.ValueString(),
@@ -215,14 +220,7 @@ func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags
 	return snmpMonitor
 }
 
-// int64Ptr returns a pointer to an int64 value.
-func int64Ptr(v int64) *int64 {
-	return &v
-}
-
-// populateSNMPMonitorBaseFields populates the base and SNMP-specific fields from the API response.
-// Extracts SNMP-specific fields from the API response into the model.
-// Handles base monitor fields and all SNMP configuration options.
+// populateSNMPMonitorBaseFields populates the resource model with data from the SNMP monitor API response.
 func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPResourceModel) {
 	m.Name = types.StringValue(snmpMonitor.Name)
 	if snmpMonitor.Description != nil {
@@ -262,9 +260,7 @@ func stringOrNullPtr(s *string) types.String {
 	return types.StringValue(*s)
 }
 
-// populateOptionalFieldsForSNMP populates optional fields for SNMP monitor.
-// Handles parent group and notification IDs.
-// Converts null API values to Terraform null types appropriately.
+// populateOptionalFieldsForSNMP populates optional parent and notification fields from the SNMP monitor API response.
 func populateOptionalFieldsForSNMP(
 	ctx context.Context,
 	snmpMonitor *monitor.SNMP,
@@ -373,7 +369,6 @@ func (r *MonitorSNMPResource) Delete(ctx context.Context, req resource.DeleteReq
 
 // ImportState imports an existing resource by ID.
 func (*MonitorSNMPResource) ImportState(
-	// Import monitor by ID.
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
