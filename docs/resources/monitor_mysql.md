@@ -38,6 +38,14 @@ resource "uptimekuma_monitor_mysql" "example_advanced" {
 }
 
 # MySQL monitor with tags
+resource "uptimekuma_tag" "mysql_environment" {
+  name = "environment"
+}
+
+resource "uptimekuma_tag" "mysql_service" {
+  name = "service"
+}
+
 resource "uptimekuma_monitor_mysql" "example_with_tags" {
   name                       = "MySQL with Tags"
   database_connection_string = "user:pass@tcp(localhost:3306)/db"
@@ -45,10 +53,16 @@ resource "uptimekuma_monitor_mysql" "example_with_tags" {
   interval                   = 60
   active                     = true
 
-  tags = {
-    environment = "production"
-    service     = "database"
-  }
+  tags = [
+    {
+      tag_id = uptimekuma_tag.mysql_environment.id
+      value  = "production"
+    },
+    {
+      tag_id = uptimekuma_tag.mysql_service.id
+      value  = "database"
+    },
+  ]
 }
 
 # MySQL monitor in a group

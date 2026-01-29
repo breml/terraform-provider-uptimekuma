@@ -203,7 +203,8 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 	if mysqlMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*mysqlMonitor.DatabaseQuery)
 	} else {
-		data.DatabaseQuery = types.StringNull()
+		// Normalize a missing database query to the schema default ("SELECT 1")
+		data.DatabaseQuery = types.StringValue("SELECT 1")
 	}
 
 	if mysqlMonitor.Parent != nil {
