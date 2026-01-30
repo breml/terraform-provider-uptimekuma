@@ -215,7 +215,12 @@ func (r *MonitorMongoDBResource) Read(
 	data.UpsideDown = types.BoolValue(mongoDBMonitor.UpsideDown)
 	data.Active = types.BoolValue(mongoDBMonitor.IsActive)
 	data.DatabaseConnectionString = types.StringValue(mongoDBMonitor.DatabaseConnectionString)
-	data.DatabaseQuery = ptrToTypes(mongoDBMonitor.DatabaseQuery)
+	if mongoDBMonitor.DatabaseQuery == nil {
+		data.DatabaseQuery = types.StringValue(`{"ping": 1}`)
+	} else {
+		data.DatabaseQuery = ptrToTypes(mongoDBMonitor.DatabaseQuery)
+	}
+
 	data.JSONPath = ptrToTypes(mongoDBMonitor.JSONPath)
 	data.ExpectedValue = ptrToTypes(mongoDBMonitor.ExpectedValue)
 
@@ -363,24 +368,4 @@ func (*MonitorMongoDBResource) ImportState(
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
-}
-
-// strToPtr converts a Terraform string type to a pointer to string.
-// Returns nil if the value is null or unknown.
-func strToPtr(v types.String) *string {
-	if v.IsNull() || v.IsUnknown() {
-		return nil
-	}
-
-	return v.ValueStringPointer()
-}
-
-// ptrToTypes converts a pointer to string to a Terraform string type.
-// Returns StringNull() if the pointer is nil.
-func ptrToTypes(v *string) types.String {
-	if v == nil {
-		return types.StringNull()
-	}
-
-	return types.StringValue(*v)
 }

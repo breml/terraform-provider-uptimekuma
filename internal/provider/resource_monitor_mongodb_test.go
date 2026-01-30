@@ -283,3 +283,30 @@ resource "uptimekuma_monitor_mongodb" "test" {
 }
 `, name, connectionString)
 }
+
+func TestAccMonitorMongoDBResourceImport(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMongoDBMonitorImport")
+	connectionString := "mongodb://user:password@localhost:27017/testdb"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorMongoDBResourceConfig(name, connectionString, `{"ping": 1}`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mongodb.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_mongodb.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
