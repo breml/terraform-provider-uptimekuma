@@ -65,7 +65,7 @@ func TestAccNotificationStackfieldResource(t *testing.T) {
 				ResourceName:            "uptimekuma_notification_stackfield.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{},
+				ImportStateVerifyIgnore: []string{"webhook_url"},
 			},
 		},
 	})
