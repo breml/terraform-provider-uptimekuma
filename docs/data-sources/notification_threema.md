@@ -26,9 +26,9 @@ data "uptimekuma_notification_threema" "by_name" {
   name = "Threema Email Recipient"
 }
 
-# Use with a resource
-data "uptimekuma_notification_threema" "example" {
-  name = uptimekuma_notification_threema.example_email.name
+# Use the data source output
+output "threema_notification_name" {
+  value = data.uptimekuma_notification_threema.by_name.name
 }
 ```
 

@@ -88,6 +88,7 @@ func (*NotificationThreemaResource) Schema(
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
+					stringvalidator.OneOf("identity", "phone", "email"),
 				},
 			},
 		}),
