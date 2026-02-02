@@ -64,6 +64,7 @@ func (*NotificationWAHAResource) Schema(
 			"api_url": schema.StringAttribute{
 				MarkdownDescription: "WAHA API endpoint URL",
 				Required:            true,
+				Sensitive:           true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},

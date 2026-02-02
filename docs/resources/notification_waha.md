@@ -40,7 +40,7 @@ resource "uptimekuma_notification_waha" "example_without_key" {
 
 ### Required
 
-- `api_url` (String) WAHA API endpoint URL
+- `api_url` (String, Sensitive) WAHA API endpoint URL
 - `chat_id` (String) Recipient chat ID (typically a phone number)
 - `name` (String) Notification name
 - `session` (String) WAHA session name
