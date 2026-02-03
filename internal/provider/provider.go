@@ -157,6 +157,7 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel) {
 func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
+		NewNotification46ElksResource,
 		NewNotificationAlertaResource,
 		NewNotificationAlertNowResource,
 		NewNotificationAliyunsmsResource,
@@ -245,6 +246,7 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewMaintenancesDataSource,
 		NewTagDataSource,
 		NewNotificationDataSource,
+		NewNotification46ElksDataSource,
 		NewNotificationAlertaDataSource,
 		NewNotificationAlertNowDataSource,
 		NewNotificationAliyunsmsDataSource,
