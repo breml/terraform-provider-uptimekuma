@@ -158,6 +158,9 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							MarkdownDescription: "Public group ID",
 							Computed:            true,
 							Optional:            true,
+							PlanModifiers: []planmodifier.Int64{
+								int64planmodifier.UseStateForUnknown(),
+							},
 						},
 						"name": schema.StringAttribute{
 							MarkdownDescription: "Group display name",
