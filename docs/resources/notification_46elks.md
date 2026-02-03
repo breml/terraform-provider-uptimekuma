@@ -29,9 +29,9 @@ resource "uptimekuma_notification_46elks" "example" {
 ### Required
 
 - `auth_token` (String, Sensitive) 46elks authentication token
-- `from_number` (String, Sensitive) 46elks phone number to send from
+- `from_number` (String) 46elks phone number to send from
 - `name` (String) Notification name
-- `to_number` (String, Sensitive) 46elks phone number to send to
+- `to_number` (String) 46elks phone number to send to
 - `username` (String, Sensitive) 46elks username
 
 ### Optional

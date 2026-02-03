@@ -80,7 +80,6 @@ func (*Notification46ElksResource) Schema(
 			"from_number": schema.StringAttribute{
 				MarkdownDescription: "46elks phone number to send from",
 				Required:            true,
-				Sensitive:           true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
@@ -88,7 +87,6 @@ func (*Notification46ElksResource) Schema(
 			"to_number": schema.StringAttribute{
 				MarkdownDescription: "46elks phone number to send to",
 				Required:            true,
-				Sensitive:           true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
