@@ -4,9 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Terraform provider for Uptime Kuma, built using the Terraform Plugin Framework (not
-the older Plugin SDK). The provider allows managing Uptime Kuma monitors and notifications via
-Terraform.
+This is a Terraform provider for Uptime Kuma, built using the Terraform Plugin Framework (not the older
+Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform infrastructure-as-code.
+
+**Key Features**:
+
+- 85+ resource types (monitors, notifications, status pages, maintenance windows, etc.)
+- 81+ corresponding data sources for querying existing resources
+- Built-in retry logic and connection pooling for reliability
+- Comprehensive testing with Docker-based acceptance tests
+- Strict code quality standards with 80+ linters enabled
 
 ## Essential Commands
 
@@ -21,235 +28,152 @@ Terraform.
 - **Generate docs**: `task generate-docs` - generates Terraform provider documentation
 - **Clean**: `task clean` - removes coverage files and build artifacts
 
-## Architecture
+## Quick Start
 
-### Client Dependency
+### Running Tests Locally
 
-- Uses `github.com/breml/go-uptime-kuma-client` as the API client
-- go.mod has a replace directive pointing to `../go-uptime-kuma-client` (local development)
-- Check `@.scratch/go-uptime-kuma-client` for the client source code
+1. Install dependencies: `task install`
+2. Install git hooks: `task install-githooks`
+3. Run unit tests: `task test`
+4. Run acceptance tests: `TF_ACC=1 task testacc` (requires Docker)
 
-### Provider Structure
+### Making Changes
 
-- **Main entry**: `main.go` - standard Terraform provider entrypoint
-- **Provider core**: `internal/provider/provider.go` - defines UptimeKumaProvider with endpoint/username/password config
-- **Provider type name**: `uptimekuma` (all resources prefixed with `uptimekuma_`)
+1. Write code following patterns in [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md)
+2. Format: `task fmt` (auto-fixes formatting issues)
+3. Lint: `task lint` (auto-fixes many linting issues)
+4. Test: `task test` (ensure tests pass)
+5. Commit (pre-commit hook runs automatically)
+6. Push (pre-push hook runs tests automatically)
 
-### Resource Organization
+## Architecture Overview
 
-Resources follow a pattern-based architecture:
+### Project Structure
 
-1. **Notification resources** - manage notification endpoints
-   - Base: `resource_notification_base.go` defines `NotificationBaseModel` and `withNotificationBaseAttributes()` helper
-   - Generic: `resource_notification.go` - generic notification resource
-   - Specific types: `resource_notification_ntfy.go`, `resource_notification_slack.go`, `resource_notification_teams.go`
-   - Each notification type extends the base with type-specific fields
-
-2. **Monitor resources** - manage uptime monitors
-   - `resource_monitor_http.go` - HTTP/HTTPS monitoring
-   - `resource_monitor_group.go` - monitor groups for organization
-   - Monitors support hierarchical organization via the `parent` field (can reference a monitor group)
-
-### Client Usage Pattern
-
-- Provider creates a single `*kuma.Client` instance in `Configure()` using
-  `context.Background()` (not Terraform's context, which cancels too early)
-- Client is passed to resources via `req.ProviderData` in resource `Configure()` methods
-- Resources use client methods like `CreateMonitor()`, `GetMonitorAs()`, `UpdateMonitor()`, `DeleteMonitor()`
-
-### Testing
-
-- Tests use `terraform-plugin-testing` framework
-- Acceptance tests (`*_test.go`) create real resources via Docker containers
-- Tests require Uptime Kuma instance running (typically via testcontainers)
-- Note: Authentication may need to be disabled to avoid rate limits in acceptance tests
-
-## Code Style & Linting
-
-### Go Version & Basic Style
-
-- **Go version**: 1.25.2
-- **Import grouping**: stdlib, then third-party, then local (enforced by goimports/gci)
-- **Local import prefix**: `github.com/breml/terraform-provider-uptimekuma`
-- **Client alias**: Use `kuma` for `github.com/breml/go-uptime-kuma-client`
-- **Terraform types**: Use `types.String`, `types.Int64`, `types.Bool`, `types.List` from terraform-plugin-framework
-- **Schema patterns**: Use plan modifiers like `int64planmodifier.UseStateForUnknown()` for computed IDs
-- **Defaults**: Use schema defaults like `int64default.StaticInt64()`, `booldefault.StaticBool()`, `stringdefault.StaticString()`
-- **Error handling**: Add errors to `resp.Diagnostics`, not direct returns
-- **Self-documenting code**: Avoid inline comments unless necessary
-
-### Strict Linting Configuration
-
-This project uses a comprehensive `.golangci.yml` configuration with 80+ linters enabled. Key requirements:
-
-#### Code Formatting
-
-- **Formatters**: gofumpt (stricter than gofmt), goimports, golines, newline-after-block
-- **Max line length**: 120 characters (enforced by golines)
-- **Auto-fix**: `task fmt` and `task lint` both auto-fix issues when possible
-
-#### Function Complexity Limits
-
-- **Arguments**: Max 6 parameters per function (revive:argument-limit)
-- **Return values**: Max 3 return values (revive:function-result-limit)
-- **Function length**: Max 50 statements OR 100 lines (revive:function-length)
-- **Cognitive complexity**: Max 20 (revive:cognitive-complexity)
-- **Cyclomatic complexity**: Max 30 (revive:cyclomatic)
-- **Control nesting**: Max 5 levels (revive:max-control-nesting)
-- **Naked returns**: Not allowed in any function (nakedret)
-
-#### Naming Conventions
-
-- **Variables/functions**: Use camelCase, no underscores except in test names
-- **Errors**: Prefix sentinel errors with `Err`, suffix error types with `Error`
-- **Import aliases**: Lowercase, no version numbers (e.g., use `kuma` not `kuma2`)
-- **Repeated arg types**: Always use full type for each parameter (revive:enforce-repeated-arg-type-style: "full")
-  - Good: `func foo(a int, b int, c int)`
-  - Bad: `func foo(a, b, c int)`
-- **Exported naming**: Must document all exported symbols, avoid stuttering package names
-  - Good: `monitor.HTTP` not `monitor.HTTPMonitor` in package `monitor`
-
-#### Code Quality Requirements
-
-- **No global variables**: gochecknoglobals enforces no package-level mutable state
-- **No init functions**: gochecknoinits prevents init() functions
-- **Error wrapping**: All errors from external packages must be wrapped (wrapcheck)
-- **Error checking**: All errors must be checked, including type assertions (errcheck)
-- **Comments density**: Min 15% comment lines in functions (revive:comments-density)
-- **Comments style**: Comments must end with a period (godot)
-- **Test separation**: Tests must use separate `_test` package (testpackage)
-  - Exception: internal/provider tests can be in same package
-
-#### Logging (slog)
-
-- **No global loggers**: Must not use global slog logger (sloglint:no-global)
-- **Context required**: Use context-aware methods when context is in scope (sloglint:context)
-- **Attributes only**: Use slog.Attr(), not key-value pairs (sloglint:attr-only)
-- **Static messages**: Log messages must be string literals (sloglint:static-msg)
-- **Key naming**: Use snake_case for log attribute keys (sloglint:key-naming-case)
-
-#### Security & Best Practices
-
-- **gosec**: Security vulnerability scanning enabled
-- **No shadowing**: Variable shadowing not allowed, strict mode (govet:shadow)
-- **Exhaustive switches**: All enum cases must be handled (exhaustive, gochecksumtype)
-- **Resource cleanup**: HTTP response bodies, SQL rows/statements must be closed
-- **No deprecated**: Use math/rand/v2 not math/rand, use modern stdlib features
-
-#### Test-Specific Rules
-
-Tests (`*_test.go`) have relaxed rules for:
-
-- Code duplication (dupl)
-- Function complexity (cognitive-complexity, cyclomatic, function-length)
-- Security checks (gosec, noctx)
-- Error wrapping (wrapcheck)
-- Deep exit calls (os.Exit in main_test.go)
-
-### Git Hooks
-
-The project uses lefthook for git hooks:
-
-#### Pre-commit
-
-Automatically runs on every commit:
-
-- Verifies golangci-lint config
-- Runs gofumpt, newline-after-block, and golangci-lint --fix
-- Lints markdown files
-
-#### Pre-push
-
-Automatically runs before pushing:
-
-- Checks `go mod tidy` is up to date
-- Checks `go generate` is up to date
-- Runs all tests
-
-**Setup**: Run `task install-githooks` once to enable these hooks.
-
-### Common Linting Issues & Solutions
-
-#### Function too complex
-
-If you hit complexity limits, consider:
-
-- Extracting helper functions to break down logic
-- Using early returns to reduce nesting
-- Splitting large functions into smaller, focused ones
-- For provider CRUD operations, extract common patterns into shared helpers
-
-#### Too many function parameters
-
-If a function needs more than 6 parameters:
-
-- Group related parameters into a config struct
-- Use functional options pattern
-- Consider if the function is doing too much
-
-#### Error wrapping
-
-All errors from external packages must be wrapped:
-
-```go
-// Bad
-return err
-
-// Good
-return fmt.Errorf("failed to create monitor: %w", err)
+```text
+terraform-provider-uptimekuma/
+├── main.go                      # Provider entry point
+├── CLAUDE.md                    # 📖 Documentation navigation hub
+├── CODE_STYLE.md                # 📖 Code style & linting guide
+├── internal/
+│   ├── client/                  # Client abstraction with pooling
+│   │   └── CLAUDE.md           # 📖 Client documentation
+│   └── provider/                # Provider implementation (339 files)
+│       └── CLAUDE.md           # 📖 Provider documentation
+├── docs/                        # Generated Terraform documentation
+├── examples/                    # Terraform examples
+└── tools/                       # Documentation generation
 ```
 
-#### Repeated argument types
+### Key Components
 
-Must specify type for each parameter:
+- **[main.go](main.go)**: Standard Terraform provider entrypoint
+- **[CODE_STYLE.md](CODE_STYLE.md)**: Code quality standards and linting guide
+- **[internal/client](internal/client/)**: Client creation with retry logic and connection pooling
+- **[internal/provider](internal/provider/)**: All resources, data sources, and provider configuration
+- **[docs/](docs/)**: Generated Terraform provider documentation
 
-```go
-// Bad
-func foo(a, b, c string) {}
+### Resource Categories
 
-// Good
-func foo(a string, b string, c string) {}
-```
+The provider manages 85+ resource types across multiple categories:
 
-#### Variable shadowing
+**Monitors** (18 types): HTTP, ping, DNS, TCP, databases (PostgreSQL, MySQL, MongoDB, Redis, SQL Server),
+MQTT, Docker, real browser, SNMP, push, gRPC, Steam, and monitor groups.
 
-Avoid shadowing variables, especially `err` and `ctx`:
+**Notifications** (51 types): Webhook, Slack, Teams, Discord, email (SMTP), push services (Pushover, Telegram,
+Signal, etc.), SMS services, enterprise alerting (PagerDuty, Opsgenie, Splunk), regional platforms (Feishu,
+DingTalk), and many more.
 
-```go
-// Bad
-if err := doSomething(); err != nil {
-    if err := doOther(); err != nil { // shadows outer err
-        return err
-    }
-}
+**Status Pages**: Public status pages with monitor groups and incidents.
 
-// Good
-if err := doSomething(); err != nil {
-    return fmt.Errorf("do something: %w", err)
-}
+**Maintenance**: Scheduled maintenance windows linked to monitors and status pages.
 
-if err := doOther(); err != nil {
-    return fmt.Errorf("do other: %w", err)
-}
-```
+**Infrastructure**: Tags, proxies, and Docker host integration.
 
-#### Test package separation
+**Data Sources**: Each resource has a corresponding data source (81 total) for querying existing resources by ID or name.
 
-Unit tests should use `_test` package suffix:
+### Design Patterns
 
-```go
-// File: internal/utils/helper_test.go
+- **Base models**: Common fields (MonitorBaseModel, NotificationBaseModel) embedded in specific types
+- **Helper functions**: Schema builders like `withMonitorBaseAttributes()` reduce duplication
+- **Composition**: Embedded structs with helper functions, not inheritance hierarchies
+- **Context management**: `context.Background()` in provider, Terraform context in resources
+- **Error handling**: `resp.Diagnostics` pattern with early returns, never direct returns
+- **Connection pooling**: Singleton pattern for acceptance tests to prevent rate limiting
 
-// Bad
-package utils
+See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed implementation patterns.
 
-// Good
-package utils_test
+## Documentation Index
 
-import "github.com/breml/terraform-provider-uptimekuma/internal/utils"
-```
+### Module Documentation
 
-Exception: `internal/provider/*_test.go` can use same package for testing private methods.
+- **[internal/client/CLAUDE.md](internal/client/CLAUDE.md)** - Client package documentation
+  - Client creation patterns (direct connection vs. pooled)
+  - Exponential backoff retry logic
+  - Connection pooling for acceptance tests
+  - Integration with provider
+  - Testing considerations
+
+- **[internal/provider/CLAUDE.md](internal/provider/CLAUDE.md)** - Provider implementation
+  - Provider structure and configuration
+  - Complete resource catalog (85+ resources, 81+ data sources)
+  - Base models and helper functions
+  - CRUD implementation patterns
+  - State management
+  - Testing infrastructure
+  - Recent changes (v0.1.6 status page perpetual diff fix)
+
+- **[CODE_STYLE.md](CODE_STYLE.md)** - Code quality standards
+  - Go version and basic style
+  - 80+ linter configuration details
+  - Function complexity limits
+  - Naming conventions
+  - Error handling requirements
+  - Git hooks (pre-commit, pre-push)
+  - Common linting issues and solutions
+
+### Quick Reference
+
+- **Base Models**: See [internal/provider/CLAUDE.md § Base Models]
+  (internal/provider/CLAUDE.md#base-models-and-patterns)
+- **Helper Functions**: See [internal/provider/CLAUDE.md § Helper Functions]
+  (internal/provider/CLAUDE.md#helper-functions)
+- **Testing Patterns**: See [internal/provider/CLAUDE.md § Testing Infrastructure]
+  (internal/provider/CLAUDE.md#testing-infrastructure)
+- **Client Creation**: See [internal/client/CLAUDE.md § Client Creation Patterns]
+  (internal/client/CLAUDE.md#client-creation-patterns)
+- **Linting Issues**: See [CODE_STYLE.md § Common Issues]
+  (CODE_STYLE.md#common-linting-issues--solutions)
+
+## Dependencies
+
+### Runtime Dependencies
+
+- `github.com/breml/go-uptime-kuma-client` - Uptime Kuma API client (Socket.IO-based)
+- `github.com/hashicorp/terraform-plugin-framework` - Terraform Plugin Framework (v6)
+- `github.com/hashicorp/terraform-plugin-log/tflog` - Structured logging
+
+**Note**: go.mod has a replace directive pointing to `../go-uptime-kuma-client` for local development.
+Check `@.scratch/go-uptime-kuma-client` for the client source code.
+
+### Development Dependencies
+
+- `github.com/hashicorp/terraform-plugin-testing` - Acceptance testing framework
+- `github.com/ory/dockertest/v3` - Docker container management for tests
+- 80+ linters via golangci-lint (see [CODE_STYLE.md](CODE_STYLE.md))
+
+## Code Quality Standards
+
+This project maintains strict code quality standards:
+
+- **Function complexity**: Max 50 statements OR 100 lines per function
+- **Function parameters**: Max 6 parameters (use structs for more)
+- **Error handling**: All errors checked and wrapped with context
+- **No global state**: No global variables or init functions (except tests)
+- **Test separation**: Unit tests use `_test` package (except internal/provider)
+- **Documentation**: All exported symbols documented
+
+See [CODE_STYLE.md](CODE_STYLE.md) for complete guidelines.
 
 ## Special Directories
 
