@@ -54,9 +54,9 @@ type Pool struct {
 
 ## Client Creation Patterns
 
-### Direct Connection (Production Use)
+### Pooled Connection (Provider Use)
 
-Used by the provider in normal operation:
+Used by the provider in both production and testing:
 
 ```go
 config := &Config{
@@ -64,14 +64,14 @@ config := &Config{
     Username: "admin",
     Password: "password",
     LogLevel: 0,
-    EnableConnectionPool: false,
+    EnableConnectionPool: true,  // Always enabled by provider
 }
 
 client, err := client.New(ctx, config)
 if err != nil {
     // Handle error
 }
-defer client.Disconnect()
+// Pool manages lifecycle - no manual Disconnect()
 ```
 
 **Retry Logic:**
@@ -91,23 +91,23 @@ defer client.Disconnect()
 - Attempt 5: ~30s (capped)
 - Attempt 6: ~30s (capped)
 
-### Pooled Connection (Acceptance Tests)
+### Acceptance Tests
 
-Used during acceptance tests to share a single connection:
+During acceptance tests, the same pooled configuration is used:
 
 ```go
 config := &Config{
     Endpoint: "http://localhost:3001",
     Username: "admin",
-    Password: "password123",
-    EnableConnectionPool: true,  // Key difference
+    Password: "admin",  // Same as main_test.go
+    EnableConnectionPool: true,
 }
 
 client, err := client.New(ctx, config)
 if err != nil {
     // Handle error
 }
-// No defer client.Disconnect() - pool manages lifecycle
+// Pool manages lifecycle - connection shared across all tests
 ```
 
 **Pool Behavior:**
@@ -206,17 +206,17 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
     // ... read config from req.Config
 
     // Use context.Background() not ctx (Terraform's context cancels too early)
-    kumaCtx := context.Background()
-
-    kumaClient, err := client.New(kumaCtx, &client.Config{
-        Endpoint:             endpoint,
-        Username:             username,
-        Password:             password,
-        LogLevel:             logLevel,
-        EnableConnectionPool: enableConnectionPool,
+    kumaClient, err := client.New(context.Background(), &client.Config{
+        Endpoint:             data.Endpoint.ValueString(),
+        Username:             data.Username.ValueString(),
+        Password:             data.Password.ValueString(),
+        EnableConnectionPool: true,  // Always enabled
+        LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
     })
 
-    // ... pass kumaClient to resources via resp.ResourceData
+    // Make client available to both data sources and resources
+    resp.DataSourceData = kumaClient
+    resp.ResourceData = kumaClient
 }
 ```
 

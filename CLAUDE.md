@@ -153,7 +153,7 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
 - `github.com/hashicorp/terraform-plugin-framework` - Terraform Plugin Framework (v1.x)
 - `github.com/hashicorp/terraform-plugin-log/tflog` - Structured logging
 
-**Note**: Check `.scratch/` directory for local development reference code.
+**Note**: The `.scratch/` directory may contain reference code. It's not in git and is optional for contributors.
 
 ### Development Dependencies
 
@@ -176,8 +176,7 @@ See [CODE_STYLE.md](CODE_STYLE.md) for complete guidelines.
 
 ## Special Directories
 
-- **.scratch/**: Temporary code for testing ideas - not linted, not tested, not in git
-- **.scratch/uptime-kuma/**: Copy of Uptime Kuma source code for reference
+- **.scratch/**: Optional local-only directory for temporary code (not in git, not linted, not tested)
 - **examples/**: Terraform examples for documentation generation
 - **tools/**: Contains `tools.go` for documentation generation dependencies
 

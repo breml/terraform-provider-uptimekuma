@@ -111,7 +111,7 @@ func foo(a string, b string, c string) {}
 
 #### Comments
 
-- **Comments density**: Minimum 15% comment lines in functions (revive:comments-density)
+- **Comments density**: Minimum 10% comment lines in functions (revive:comments-density, see [.golangci.yml](.golangci.yml))
 - **Comments style**: Comments must end with a period (godot)
 - **Exported symbols**: All exported functions, types, constants must have doc comments
 

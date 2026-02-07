@@ -871,20 +871,19 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 5. Wait for Kuma to be ready (exponential backoff, max 2 minutes)
 6. Create initial client and perform autosetup
 7. Close initial connection
-8. **Enable connection pooling** for tests (`enableConnectionPool = true`)
-9. Run tests (all share pooled connection)
-10. Cleanup: Close pool, purge container
+8. Run all tests (provider creates pooled connection, shared across tests)
+9. Cleanup: Close pool, purge container
 
 **Global Variables** (used by all tests):
 
 ```go
-var (
-    endpoint string  // e.g., "http://localhost:32768"
-)
-
 const (
     username = "admin"
-    password = "password123"
+    password = "[REDACTED:password]"  // Set to "admin" for local testing
+)
+
+var (
+    endpoint string  // e.g., "http://localhost:32768"
 )
 ```
 
