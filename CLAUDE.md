@@ -150,11 +150,10 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
 ### Runtime Dependencies
 
 - `github.com/breml/go-uptime-kuma-client` - Uptime Kuma API client (Socket.IO-based)
-- `github.com/hashicorp/terraform-plugin-framework` - Terraform Plugin Framework (v6)
+- `github.com/hashicorp/terraform-plugin-framework` - Terraform Plugin Framework (v1.x)
 - `github.com/hashicorp/terraform-plugin-log/tflog` - Structured logging
 
-**Note**: go.mod has a replace directive pointing to `../go-uptime-kuma-client` for local development.
-Check `@.scratch/go-uptime-kuma-client` for the client source code.
+**Note**: Check `.scratch/` directory for local development reference code.
 
 ### Development Dependencies
 

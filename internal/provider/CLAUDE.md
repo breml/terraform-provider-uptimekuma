@@ -45,7 +45,7 @@ type UptimeKumaProviderModel struct {
 - Credentials: Both or neither (if username provided, password required; if password provided, username required)
 - Precedence: Terraform config > environment variables
 
-### Provider Configuration ([provider.go:70-143](provider.go))
+### Provider Configuration ([provider.go](provider.go))
 
 The `Configure()` method:
 
@@ -860,7 +860,7 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 
 ## Testing Infrastructure
 
-### Test Setup ([main_test.go:15-100](main_test.go))
+### Test Setup ([main_test.go](main_test.go))
 
 **TestMain Lifecycle**:
 
@@ -879,10 +879,12 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 
 ```go
 var (
-    endpoint             string  // e.g., "http://localhost:32768"
-    username             string  // "admin"
-    password             string  // "password123"
-    enableConnectionPool bool    // true during tests
+    endpoint string  // e.g., "http://localhost:32768"
+)
+
+const (
+    username = "admin"
+    password = "password123"
 )
 ```
 

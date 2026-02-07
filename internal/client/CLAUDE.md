@@ -37,7 +37,7 @@ type Config struct {
 
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
-- `EnableConnectionPool` should only be enabled during acceptance tests to prevent "login: Too frequently" errors
+- `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
 
 ### Pool
 
@@ -159,8 +159,10 @@ Decrements reference count (for debugging):
 pool.Release()
 ```
 
-**Note:** Currently not used by consumers. Pool is closed via `CloseGlobalPool()` at test cleanup. Maintained for future
-use cases where automatic cleanup at refs=0 might be desired.
+**Note:** Used by the provider during shutdown (via `client.GetGlobalPool().Release()`) to decrement the global pool's
+reference count before `CloseGlobalPool()` is called. `Release` itself does not perform automatic cleanup at `refs=0`;
+global pool teardown is handled explicitly by `CloseGlobalPool()`, which is expected to run after all matching
+`Acquire`/`Release` calls for a test sequence.
 
 #### Close
 
@@ -197,7 +199,7 @@ ResetGlobalPool()
 
 ### Provider Configure Method
 
-In [../provider/provider.go:186-230](../provider/provider.go), the provider creates a client:
+In [../provider/provider.go](../provider/provider.go), the provider creates a client:
 
 ```go
 func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
@@ -252,7 +254,7 @@ func (r *MonitorHTTPResource) Configure(ctx context.Context, req resource.Config
 
 ### Acceptance Test Setup
 
-In [../provider/main_test.go:42-48](../provider/main_test.go):
+In [../provider/main_test.go](../provider/main_test.go):
 
 ```go
 func TestMain(m *testing.M) {
@@ -274,6 +276,19 @@ func TestMain(m *testing.M) {
     CloseGlobalPool()
     pool.Purge(resource)
 }
+```
+
+**Global Variables** (used by all tests):
+
+```go
+var (
+    endpoint string  // e.g., "http://localhost:32768"
+)
+
+const (
+    username = "admin"
+    password = "password123"
+)
 ```
 
 **Why Pooling?**

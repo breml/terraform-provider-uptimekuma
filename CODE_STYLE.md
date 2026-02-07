@@ -17,7 +17,7 @@ terraform-provider-uptimekuma codebase.
 
 ## Strict Linting Configuration
 
-This project uses a comprehensive [.golangci.yml](../.golangci.yml) configuration with 80+ linters enabled. Key requirements:
+This project uses a comprehensive [.golangci.yml](.golangci.yml) configuration with 80+ linters enabled. Key requirements:
 
 ### Code Formatting
 
@@ -131,7 +131,7 @@ func foo(a string, b string, c string) {}
   import "github.com/breml/terraform-provider-uptimekuma/internal/utils"
   ```
 
-- **Exception**: [internal/provider/*_test.go](../internal/provider/) tests can use same package for testing private methods
+- **Exception**: [internal/provider/*_test.go](internal/provider/) tests can use same package for testing private methods
 
 ### Logging (slog)
 
@@ -241,7 +241,7 @@ Tests (`*_test.go`) have relaxed rules for:
 
 ## Git Hooks
 
-The project uses [lefthook](https://github.com/evilmartians/lefthook) for git hooks. Configuration in [lefthook.yml](../lefthook.yml).
+The project uses [lefthook](https://github.com/evilmartians/lefthook) for git hooks. Configuration in [lefthook.yml](lefthook.yml).
 
 ### Pre-commit Hook
 
@@ -589,7 +589,7 @@ problematicCode()
 - `testpackage` - Test package separation
 - `tparallel` - Parallel test detection
 
-See [.golangci.yml](../.golangci.yml) for complete list and configuration.
+See [.golangci.yml](.golangci.yml) for complete list and configuration.
 
 ## Related Documentation
 
