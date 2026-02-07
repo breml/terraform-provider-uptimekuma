@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -71,8 +72,20 @@ func TestAccNotificationGoAlertResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:            "uptimekuma_notification_goalert.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccNotificationGoAlertImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"token"},
+			},
 		},
 	})
+}
+
+func testAccNotificationGoAlertImportStateID(s *terraform.State) (string, error) {
+	rs := s.RootModule().Resources["uptimekuma_notification_goalert.test"]
+	return rs.Primary.Attributes["id"], nil
 }
 
 func testAccNotificationGoAlertResourceConfig(

@@ -39,6 +39,25 @@ func TestAccNotificationGoAlertDataSource(t *testing.T) {
 					),
 				},
 			},
+			{
+				Config: testAccNotificationGoAlertDataSourceConfigByID(
+					name,
+					baseURL,
+					token,
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_goalert.test_by_id",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_goalert.test_by_id",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
+			},
 		},
 	})
 }
@@ -56,6 +75,23 @@ resource "uptimekuma_notification_goalert" "test" {
 
 data "uptimekuma_notification_goalert" "test" {
   name = uptimekuma_notification_goalert.test.name
+}
+`, name, baseURL, token)
+}
+
+func testAccNotificationGoAlertDataSourceConfigByID(
+	name string, baseURL string, token string,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_goalert" "test" {
+  name     = %[1]q
+  is_active = true
+  base_url = %[2]q
+  token    = %[3]q
+}
+
+data "uptimekuma_notification_goalert" "test_by_id" {
+  id = uptimekuma_notification_goalert.test.id
 }
 `, name, baseURL, token)
 }
