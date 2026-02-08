@@ -31,7 +31,7 @@ func TestAccNotificationGorushResource(t *testing.T) {
 					"ios",
 					"Test Title",
 					"high",
-					"3",
+					3,
 					"test-topic",
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -80,7 +80,7 @@ func TestAccNotificationGorushResource(t *testing.T) {
 					"android",
 					"Updated Title",
 					"low",
-					"1",
+					1,
 					"updated-topic",
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -121,6 +121,11 @@ func TestAccNotificationGorushResource(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:      "uptimekuma_notification_gorush.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -132,7 +137,7 @@ func testAccNotificationGorushResourceConfig(
 	platform string,
 	title string,
 	priority string,
-	retry string,
+	retry int64,
 	topic string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
@@ -144,7 +149,7 @@ resource "uptimekuma_notification_gorush" "test" {
   platform       = %[4]q
   title          = %[5]q
   priority       = %[6]q
-  retry          = %[7]s
+  retry          = %[7]d
   topic          = %[8]q
 }
 `, name, serverURL, deviceToken, platform, title, priority, retry, topic)

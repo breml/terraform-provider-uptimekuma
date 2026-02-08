@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -86,6 +87,7 @@ func (*NotificationGorushResource) Schema(
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
+					stringvalidator.OneOf("ios", "android", "huawei", "web"),
 				},
 			},
 			"title": schema.StringAttribute{
@@ -102,6 +104,7 @@ func (*NotificationGorushResource) Schema(
 				MarkdownDescription: "Number of retries",
 				Optional:            true,
 				Computed:            true,
+				Default:             int64default.StaticInt64(0),
 			},
 			"topic": schema.StringAttribute{
 				MarkdownDescription: "Notification topic",
@@ -235,9 +238,7 @@ func (r *NotificationGorushResource) Read(ctx context.Context, req resource.Read
 		data.Priority = types.StringValue(gorush.Priority)
 	}
 
-	if gorush.Retry > 0 {
-		data.Retry = types.Int64Value(int64(gorush.Retry))
-	}
+	data.Retry = types.Int64Value(int64(gorush.Retry))
 
 	if gorush.Topic != "" {
 		data.Topic = types.StringValue(gorush.Topic)
