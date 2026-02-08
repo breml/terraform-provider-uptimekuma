@@ -230,6 +230,7 @@ func (r *NotificationGorushResource) Read(ctx context.Context, req resource.Read
 	data.ServerURL = types.StringValue(gorush.ServerURL)
 	data.DeviceToken = types.StringValue(gorush.DeviceToken)
 	data.Platform = types.StringValue(gorush.Platform)
+
 	if gorush.Title != "" {
 		data.Title = types.StringValue(gorush.Title)
 	}

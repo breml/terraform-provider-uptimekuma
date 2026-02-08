@@ -67,6 +67,16 @@ func TestAccNotificationGorushResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_gorush.test",
+						tfjsonpath.New("retry"),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_gorush.test",
+						tfjsonpath.New("topic"),
+						knownvalue.StringExact("test-topic"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_gorush.test",
 						tfjsonpath.New("is_active"),
 						knownvalue.Bool(true),
 					),
@@ -113,6 +123,16 @@ func TestAccNotificationGorushResource(t *testing.T) {
 						"uptimekuma_notification_gorush.test",
 						tfjsonpath.New("priority"),
 						knownvalue.StringExact("low"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_gorush.test",
+						tfjsonpath.New("retry"),
+						knownvalue.Int64Exact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_gorush.test",
+						tfjsonpath.New("topic"),
+						knownvalue.StringExact("updated-topic"),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_gorush.test",
