@@ -233,6 +233,8 @@ func (r *NotificationGorushResource) Read(ctx context.Context, req resource.Read
 
 	if gorush.Title != "" {
 		data.Title = types.StringValue(gorush.Title)
+	} else {
+		data.Title = types.StringNull()
 	}
 
 	if gorush.Priority != "" {
