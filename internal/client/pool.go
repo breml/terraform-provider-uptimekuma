@@ -47,8 +47,13 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	if p.client != nil {
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
-				"pool config mismatch: existing endpoint=%q username=%q, requested endpoint=%q username=%q",
-				p.config.Endpoint, p.config.Username, config.Endpoint, config.Username,
+				"pool config mismatch: existing endpoint=%q username=%q timeout=%s, requested endpoint=%q username=%q timeout=%s",
+				p.config.Endpoint,
+				p.config.Username,
+				p.config.ConnectTimeout,
+				config.Endpoint,
+				config.Username,
+				config.ConnectTimeout,
 			)
 		}
 
@@ -114,7 +119,7 @@ func (p *Pool) Close() error {
 }
 
 // configMatches checks if the provided config matches the pool's config.
-// Only connection-critical fields (endpoint, credentials) are compared.
+// Only connection-critical fields (endpoint, credentials, timeout) are compared.
 // LogLevel and EnableConnectionPool are intentionally excluded as they don't
 // affect the connection identity - the first connection's LogLevel is used.
 func (p *Pool) configMatches(config *Config) bool {
@@ -124,7 +129,8 @@ func (p *Pool) configMatches(config *Config) bool {
 
 	return p.config.Endpoint == config.Endpoint &&
 		p.config.Username == config.Username &&
-		p.config.Password == config.Password
+		p.config.Password == config.Password &&
+		p.config.ConnectTimeout == config.ConnectTimeout
 }
 
 // CloseGlobalPool closes the global connection pool.

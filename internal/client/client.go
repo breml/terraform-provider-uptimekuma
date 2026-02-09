@@ -18,6 +18,7 @@ type Config struct {
 	Password             string
 	LogLevel             int
 	EnableConnectionPool bool
+	ConnectTimeout       time.Duration
 }
 
 // New creates a new Uptime Kuma client with optional connection pooling.
@@ -43,13 +44,21 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 	var kumaClient *kuma.Client
 	var err error
 
+	opts := []kuma.Option{
+		kuma.WithLogLevel(config.LogLevel),
+	}
+
+	if config.ConnectTimeout != 0 {
+		opts = append(opts, kuma.WithConnectTimeout(config.ConnectTimeout))
+	}
+
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		kumaClient, err = kuma.New(
 			ctx,
 			config.Endpoint,
 			config.Username,
 			config.Password,
-			kuma.WithLogLevel(config.LogLevel),
+			opts...,
 		)
 		if err == nil {
 			return kumaClient, nil

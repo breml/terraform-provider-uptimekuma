@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -31,9 +32,11 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 		envEndpoint      string
 		envUsername      string
 		envPassword      string
+		envTimeout       string
 		expectedEndpoint string
 		expectedUsername string
 		expectedPassword string
+		expectedTimeout  string
 	}{
 		{
 			name: "no env vars set, config null",
@@ -41,10 +44,12 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 				Endpoint: types.StringNull(),
 				Username: types.StringNull(),
 				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
 			},
 			expectedEndpoint: "",
 			expectedUsername: "",
 			expectedPassword: "",
+			expectedTimeout:  "",
 		},
 		{
 			name: "env vars set, config null",
@@ -52,13 +57,16 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 				Endpoint: types.StringNull(),
 				Username: types.StringNull(),
 				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
 			},
 			envEndpoint:      "http://localhost:3001",
 			envUsername:      "admin",
 			envPassword:      "password",
+			envTimeout:       "30s",
 			expectedEndpoint: "http://localhost:3001",
 			expectedUsername: "admin",
 			expectedPassword: "password",
+			expectedTimeout:  "30s",
 		},
 		{
 			name: "env vars set, config has endpoint",
@@ -66,6 +74,7 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 				Endpoint: types.StringValue("http://override:3001"),
 				Username: types.StringNull(),
 				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
 			},
 			envEndpoint:      "http://localhost:3001",
 			envUsername:      "admin",
@@ -73,6 +82,7 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			expectedEndpoint: "http://override:3001",
 			expectedUsername: "admin",
 			expectedPassword: "password",
+			expectedTimeout:  "",
 		},
 		{
 			name: "env vars set, config has all values",
@@ -80,13 +90,16 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 				Endpoint: types.StringValue("http://override:3001"),
 				Username: types.StringValue("override"),
 				Password: types.StringValue("override"),
+				Timeout:  types.StringValue("1m"),
 			},
 			envEndpoint:      "http://localhost:3001",
 			envUsername:      "admin",
 			envPassword:      "password",
+			envTimeout:       "30s",
 			expectedEndpoint: "http://override:3001",
 			expectedUsername: "override",
 			expectedPassword: "override",
+			expectedTimeout:  "1m",
 		},
 		{
 			name: "only env endpoint set",
@@ -94,11 +107,13 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 				Endpoint: types.StringNull(),
 				Username: types.StringNull(),
 				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
 			},
 			envEndpoint:      "http://localhost:3001",
 			expectedEndpoint: "http://localhost:3001",
 			expectedUsername: "",
 			expectedPassword: "",
+			expectedTimeout:  "",
 		},
 		{
 			name: "partial config with env vars",
@@ -106,6 +121,7 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 				Endpoint: types.StringValue("http://override:3001"),
 				Username: types.StringNull(),
 				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
 			},
 			envEndpoint:      "http://localhost:3001",
 			envUsername:      "admin",
@@ -113,6 +129,35 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			expectedEndpoint: "http://override:3001",
 			expectedUsername: "admin",
 			expectedPassword: "password",
+			expectedTimeout:  "",
+		},
+		{
+			name: "timeout from env var only",
+			initial: UptimeKumaProviderModel{
+				Endpoint: types.StringNull(),
+				Username: types.StringNull(),
+				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
+			},
+			envTimeout:       "2m",
+			expectedEndpoint: "",
+			expectedUsername: "",
+			expectedPassword: "",
+			expectedTimeout:  "2m",
+		},
+		{
+			name: "config timeout overrides env var",
+			initial: UptimeKumaProviderModel{
+				Endpoint: types.StringNull(),
+				Username: types.StringNull(),
+				Password: types.StringNull(),
+				Timeout:  types.StringValue("45s"),
+			},
+			envTimeout:       "2m",
+			expectedEndpoint: "",
+			expectedUsername: "",
+			expectedPassword: "",
+			expectedTimeout:  "45s",
 		},
 	}
 
@@ -129,6 +174,10 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 
 			if tc.envPassword != "" {
 				t.Setenv("UPTIMEKUMA_PASSWORD", tc.envPassword)
+			}
+
+			if tc.envTimeout != "" {
+				t.Setenv("UPTIMEKUMA_TIMEOUT", tc.envTimeout)
 			}
 
 			// Apply defaults
@@ -164,6 +213,17 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			} else {
 				if tc.initial.Password.ValueString() != tc.expectedPassword {
 					t.Errorf("password mismatch: got %q, want %q", tc.initial.Password.ValueString(), tc.expectedPassword)
+				}
+			}
+
+			// Verify timeout
+			if tc.expectedTimeout == "" {
+				if !tc.initial.Timeout.IsNull() && tc.initial.Timeout.ValueString() != "" {
+					t.Errorf("expected timeout to be null or empty, got %q", tc.initial.Timeout.ValueString())
+				}
+			} else {
+				if tc.initial.Timeout.ValueString() != tc.expectedTimeout {
+					t.Errorf("timeout mismatch: got %q, want %q", tc.initial.Timeout.ValueString(), tc.expectedTimeout)
 				}
 			}
 		})
@@ -253,6 +313,7 @@ func TestEnvironmentVariablePrecedence(t *testing.T) {
 				Endpoint: types.StringNull(),
 				Username: types.StringNull(),
 				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
 			}
 
 			if tc.configEndpoint != "" {
@@ -356,6 +417,53 @@ provider "uptimekuma" {
 
 data "uptimekuma_tag" "test" {}
 `, configEndpoint, originalUsername, originalPassword),
+			},
+		},
+	})
+}
+
+func TestAccProviderInvalidTimeout(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "uptimekuma" {
+  endpoint = "http://localhost:3001"
+  timeout  = "notaduration"
+}
+
+data "uptimekuma_tag" "test" {}
+`,
+				ExpectError: regexp.MustCompile(`failed to parse timeout`),
+			},
+		},
+	})
+}
+
+func TestAccProviderEmptyTimeout(t *testing.T) {
+	configEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
+	if configEndpoint == "" {
+		t.Skip("UPTIMEKUMA_ENDPOINT not set - skipping empty timeout provider test")
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+provider "uptimekuma" {
+  endpoint = %[1]q
+  username = %[2]q
+  password = %[3]q
+  timeout  = ""
+}
+
+data "uptimekuma_tag" "test" {}
+`, configEndpoint, username, password),
 			},
 		},
 	})
