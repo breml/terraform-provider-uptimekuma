@@ -3,7 +3,9 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -34,6 +36,7 @@ type UptimeKumaProviderModel struct {
 	Endpoint types.String `tfsdk:"endpoint"`
 	Username types.String `tfsdk:"username"`
 	Password types.String `tfsdk:"password"`
+	Timeout  types.String `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the provider.
@@ -62,6 +65,11 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 				MarkdownDescription: "Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable.",
 				Optional:            true,
 				Sensitive:           true,
+			},
+			"timeout": schema.StringAttribute{
+				MarkdownDescription: "Connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
+					"Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.",
+				Optional: true,
 			},
 		},
 	}
@@ -109,15 +117,29 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
-	// Uptime Kuma client configuration for data sources and resources
-	// We can not use the context from Terraform, since it gets cancelled too early.
-	// ValueString() returns "" for null values, which client library handles gracefully
+	var connectTimeout time.Duration
+
+	if !data.Timeout.IsNull() {
+		var parseErr error
+
+		connectTimeout, parseErr = time.ParseDuration(data.Timeout.ValueString())
+		if parseErr != nil {
+			resp.Diagnostics.AddError(
+				"invalid timeout",
+				fmt.Sprintf("failed to parse timeout %q: %s", data.Timeout.ValueString(), parseErr.Error()),
+			)
+
+			return
+		}
+	}
+
 	kumaClient, err := client.New(context.Background(), &client.Config{
 		Endpoint:             data.Endpoint.ValueString(),
 		Username:             data.Username.ValueString(),
 		Password:             data.Password.ValueString(),
 		EnableConnectionPool: true,
 		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+		ConnectTimeout:       connectTimeout,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create client", err.Error())
@@ -150,6 +172,11 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel) {
 	envPassword := os.Getenv("UPTIMEKUMA_PASSWORD")
 	if data.Password.IsNull() && envPassword != "" {
 		data.Password = types.StringValue(envPassword)
+	}
+
+	envTimeout := os.Getenv("UPTIMEKUMA_TIMEOUT")
+	if data.Timeout.IsNull() && envTimeout != "" {
+		data.Timeout = types.StringValue(envTimeout)
 	}
 }
 

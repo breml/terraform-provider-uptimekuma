@@ -114,7 +114,7 @@ func (p *Pool) Close() error {
 }
 
 // configMatches checks if the provided config matches the pool's config.
-// Only connection-critical fields (endpoint, credentials) are compared.
+// Only connection-critical fields (endpoint, credentials, timeout) are compared.
 // LogLevel and EnableConnectionPool are intentionally excluded as they don't
 // affect the connection identity - the first connection's LogLevel is used.
 func (p *Pool) configMatches(config *Config) bool {
@@ -124,7 +124,8 @@ func (p *Pool) configMatches(config *Config) bool {
 
 	return p.config.Endpoint == config.Endpoint &&
 		p.config.Username == config.Username &&
-		p.config.Password == config.Password
+		p.config.Password == config.Password &&
+		p.config.ConnectTimeout == config.ConnectTimeout
 }
 
 // CloseGlobalPool closes the global connection pool.
