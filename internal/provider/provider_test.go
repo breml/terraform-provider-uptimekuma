@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -416,6 +417,53 @@ provider "uptimekuma" {
 
 data "uptimekuma_tag" "test" {}
 `, configEndpoint, originalUsername, originalPassword),
+			},
+		},
+	})
+}
+
+func TestAccProviderInvalidTimeout(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "uptimekuma" {
+  endpoint = "http://localhost:3001"
+  timeout  = "notaduration"
+}
+
+data "uptimekuma_tag" "test" {}
+`,
+				ExpectError: regexp.MustCompile(`failed to parse timeout`),
+			},
+		},
+	})
+}
+
+func TestAccProviderEmptyTimeout(t *testing.T) {
+	configEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
+	if configEndpoint == "" {
+		t.Skip("UPTIMEKUMA_ENDPOINT not set - skipping empty timeout provider test")
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+provider "uptimekuma" {
+  endpoint = %[1]q
+  username = %[2]q
+  password = %[3]q
+  timeout  = ""
+}
+
+data "uptimekuma_tag" "test" {}
+`, configEndpoint, username, password),
 			},
 		},
 	})

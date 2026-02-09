@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -119,10 +120,11 @@ func (*UptimeKumaProvider) Configure(
 
 	var connectTimeout time.Duration
 
-	if !data.Timeout.IsNull() {
+	timeoutStr := strings.TrimSpace(data.Timeout.ValueString())
+	if !data.Timeout.IsNull() && timeoutStr != "" {
 		var parseErr error
 
-		connectTimeout, parseErr = time.ParseDuration(data.Timeout.ValueString())
+		connectTimeout, parseErr = time.ParseDuration(timeoutStr)
 		if parseErr != nil {
 			resp.Diagnostics.AddError(
 				"invalid timeout",

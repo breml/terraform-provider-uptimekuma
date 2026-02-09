@@ -47,8 +47,13 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	if p.client != nil {
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
-				"pool config mismatch: existing endpoint=%q username=%q, requested endpoint=%q username=%q",
-				p.config.Endpoint, p.config.Username, config.Endpoint, config.Username,
+				"pool config mismatch: existing endpoint=%q username=%q timeout=%s, requested endpoint=%q username=%q timeout=%s",
+				p.config.Endpoint,
+				p.config.Username,
+				p.config.ConnectTimeout,
+				config.Endpoint,
+				config.Username,
+				config.ConnectTimeout,
 			)
 		}
 
