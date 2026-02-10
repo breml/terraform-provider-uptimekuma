@@ -86,10 +86,9 @@ func TestAccNotificationGTXMessagingResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:            "uptimekuma_notification_gtxmessaging.test",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{},
+				ResourceName:      "uptimekuma_notification_gtxmessaging.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
