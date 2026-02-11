@@ -126,7 +126,7 @@ func (d *NotificationHeiiOnCallDataSource) readByID(
 		return
 	}
 
-	if notification.Type() != "heiioncall" {
+	if notification.Type() != "HeiiOnCall" {
 		resp.Diagnostics.AddError(
 			"Incorrect notification type",
 			"Notification is not a Heii On-Call notification",
@@ -147,7 +147,7 @@ func (d *NotificationHeiiOnCallDataSource) readByName(
 		ctx,
 		d.client,
 		data.Name.ValueString(),
-		"heiioncall",
+		"HeiiOnCall",
 		&resp.Diagnostics,
 	)
 	if !ok {
