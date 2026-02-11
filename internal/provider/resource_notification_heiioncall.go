@@ -194,7 +194,11 @@ func (r *NotificationHeiiOnCallResource) Read(
 	data.IsDefault = types.BoolValue(heiiOnCall.IsDefault)
 	data.ApplyExisting = types.BoolValue(heiiOnCall.ApplyExisting)
 
-	data.APIKey = types.StringValue(heiiOnCall.APIKey)
+	// Preserve existing APIKey from state if the API does not return a usable value.
+	if heiiOnCall.APIKey != "" {
+		data.APIKey = types.StringValue(heiiOnCall.APIKey)
+	}
+
 	data.TriggerID = types.StringValue(heiiOnCall.TriggerID)
 
 	// Populate state.

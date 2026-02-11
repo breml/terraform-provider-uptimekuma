@@ -84,8 +84,6 @@ func TestAccNotificationHeiiOnCallResource(t *testing.T) {
 				ResourceName:      "uptimekuma_notification_heiioncall.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// API key is sensitive and won't be returned from read
-				ImportStateVerifyIgnore: []string{"api_key"},
 			},
 		},
 	})
