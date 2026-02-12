@@ -248,6 +248,26 @@ import "github.com/breml/terraform-provider-uptimekuma/internal/utils"
 
 Exception: `internal/provider/*_test.go` can use same package for testing private methods.
 
+## Known Pitfalls
+
+### Status Page `public_group_list` State Management
+
+The `public_group_list` in `uptimekuma_status_page` requires special handling because:
+
+1. **`GetStatusPage` does not return `public_group_list`** — the API endpoint omits it.
+   The `Read()` function preserves whatever is in state without modification.
+2. **`SaveStatusPage` response is lossy** — the Uptime Kuma server omits optional
+   fields (e.g. `sendUrl` when `false`) in the response. If state is rebuilt from
+   the server response, values like `send_url = false` become `null` in state,
+   causing a perpetual diff.
+3. **Solution**: After `SaveStatusPage`, use `mergeGroupIDsIntoPlan()` to preserve
+   all plan values and only inject computed group IDs from the server response.
+   Never replace the entire `public_group_list` with data from the server response.
+
+**Pattern**: For nested computed+optional attributes where the API response may
+omit default/falsy values, always treat the Terraform plan as the source of truth
+and only merge in server-assigned computed values (like IDs).
+
 ## Definition of Done
 
 The following criteria must be met before a task is considered done:
