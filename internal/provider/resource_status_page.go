@@ -284,18 +284,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 
 	data.ID = types.Int64Value(retrievedSP.ID)
 
-	planPublic := data.PublicGroupList
-
-	data.PublicGroupList = buildPublicGroupListFromSaved(ctx, savedGroups, &resp.Diagnostics)
+	updateStatusPageDataAfterSave(ctx, &data, savedGroups, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	if len(savedGroups) == 0 && !planPublic.IsNull() {
-		data.PublicGroupList = convertUnknownIDsToNull(ctx, planPublic, &resp.Diagnostics)
-		if resp.Diagnostics.HasError() {
-			return
-		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -489,11 +480,11 @@ func updateStatusPageDataAfterSave(
 	savedGroups []statuspage.PublicGroup,
 	diags *diag.Diagnostics,
 ) {
-	if len(savedGroups) > 0 {
-		data.PublicGroupList = buildPublicGroupListFromSaved(ctx, savedGroups, diags)
-	} else if !data.PublicGroupList.IsNull() {
-		data.PublicGroupList = convertUnknownIDsToNull(ctx, data.PublicGroupList, diags)
+	if data.PublicGroupList.IsNull() {
+		return
 	}
+
+	data.PublicGroupList = mergeGroupIDsIntoPlan(ctx, data.PublicGroupList, savedGroups, diags)
 }
 
 // Delete deletes the resource.
