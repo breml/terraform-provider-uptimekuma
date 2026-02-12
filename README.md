@@ -128,40 +128,40 @@ Full documentation including all resource attributes and examples is available o
 ### Building
 
 ```bash
-make build
+task build
 ```
 
 ### Running Tests
 
 ```bash
 # Unit tests
-make test
+task test
 
 # Acceptance tests (requires Uptime Kuma instance)
-make testacc
+task testacc
 ```
 
 ### Generating Documentation
 
 ```bash
-make generate
+task generate-docs
 ```
 
 ### Code Quality
 
 ```bash
-make fmt      # Format code
-make lint     # Run linters
+task format      # Format code
+task lint     # Run linters
 ```
 
 ## Contributing
 
 Contributions are welcome! Please ensure:
 
-- Code is formatted with `make fmt`
-- Code passes linting with `make lint`
-- Tests pass with `make test` and `make testacc`
-- Documentation is updated with `make generate`
+- Code is formatted with `task format`
+- Code passes linting with `task lint`
+- Tests pass with `task test` and `task testacc`
+- Documentation is updated with `task generate-docs`
 
 ## License
 
