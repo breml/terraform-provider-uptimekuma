@@ -29,7 +29,7 @@ func mergeGroupIDsIntoPlan(
 	}
 
 	for i := range planModels {
-		if planModels[i].ID.IsUnknown() {
+		if planModels[i].ID.IsUnknown() || planModels[i].ID.IsNull() {
 			if i < len(savedGroups) {
 				planModels[i].ID = types.Int64Value(savedGroups[i].ID)
 			} else {
