@@ -219,6 +219,92 @@ resource "uptimekuma_status_page" "test" {
 `, slug, title, description)
 }
 
+func TestAccStatusPageResourceWithIcon(t *testing.T) {
+	slug := acctest.RandomWithPrefix("test-icon")
+	title := "Status Page with Icon"
+	titleUpdated := "Updated Status Page with Icon"
+
+	// 1x1 pixel transparent PNG as data URI.
+	icon := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIHWNgAAIABAABAN4TIQAAAABJRU5ErkJggg=="
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             testAccStatusPageResourceConfigWithIcon(slug, title, icon),
+				ExpectNonEmptyPlan: false,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("icon"),
+						knownvalue.StringExact(icon),
+					),
+				},
+			},
+			{
+				Config:             testAccStatusPageResourceConfigWithIcon(slug, titleUpdated, icon),
+				ExpectNonEmptyPlan: false,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(titleUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("icon"),
+						knownvalue.StringExact(icon),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccStatusPageResourceConfigWithIcon(slug string, title string, icon string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_status_page" "test" {
+  slug  = %[1]q
+  title = %[2]q
+  icon  = %[3]q
+}
+`, slug, title, icon)
+}
+
+func TestAccStatusPageResourceWithIconPath(t *testing.T) {
+	slug := acctest.RandomWithPrefix("test-icon-path")
+	title := "Status Page with Icon Path"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             testAccStatusPageResourceConfigWithIcon(slug, title, "/icon.svg"),
+				ExpectNonEmptyPlan: false,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("icon"),
+						knownvalue.StringExact("/icon.svg"),
+					),
+				},
+			},
+		},
+	})
+}
+
 func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-monitors")
 	title := "Status Page with Monitors"

@@ -57,7 +57,7 @@ resource "uptimekuma_status_page" "example" {
 - `domain_name_list` (List of String) Custom domain names
 - `footer_text` (String) Footer content
 - `google_analytics_id` (String) Google Analytics tracking ID
-- `icon` (String) Base64-encoded icon image
+- `icon` (String) Icon for the status page. Accepts a PNG data URI (`data:image/png;base64,...`) or a URL/path (max 255 characters). When a data URI is provided, Uptime Kuma converts it to a file on disk.
 - `public_group_list` (Attributes List) Monitor grouping configuration (see [below for nested schema](#nestedatt--public_group_list))
 - `published` (Boolean) Whether page is publicly visible
 - `show_certificate_expiry` (Boolean) Show certificate expiry dates

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -18,6 +20,65 @@ import (
 )
 
 var _ resource.Resource = &StatusPageResource{}
+
+// statusPageIconValidator validates the icon field format.
+type statusPageIconValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (statusPageIconValidator) Description(_ context.Context) string {
+	return "string must be a data:image/png;base64,... data URI or a URL/path (max 255 characters)"
+}
+
+// MarkdownDescription returns a markdown formatted description of the validator's behavior.
+func (statusPageIconValidator) MarkdownDescription(_ context.Context) string {
+	return "string must be a `data:image/png;base64,...` data URI or a URL/path (max 255 characters)"
+}
+
+// ValidateString checks that the provided string value is a valid status page icon.
+func (statusPageIconValidator) ValidateString(
+	_ context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := req.ConfigValue.ValueString()
+	if strings.HasPrefix(value, "data:") {
+		if !strings.HasPrefix(value, "data:image/png;base64,") {
+			resp.Diagnostics.Append(
+				diag.NewAttributeErrorDiagnostic(
+					req.Path,
+					"Invalid icon data URI",
+					"Icon data URI must use PNG format: data:image/png;base64,...",
+				),
+			)
+		}
+
+		return
+	}
+
+	const maxIconPathLength = 255
+	if len(value) > maxIconPathLength {
+		resp.Diagnostics.Append(
+			diag.NewAttributeErrorDiagnostic(
+				req.Path,
+				"Icon URL/path too long",
+				fmt.Sprintf(
+					"Icon URL/path must be at most %d characters, got %d."+
+						" Use a data:image/png;base64,... data URI for inline images.",
+					maxIconPathLength,
+					len(value),
+				),
+			),
+		)
+	}
+}
+
+func validateStatusPageIcon() validator.String {
+	return statusPageIconValidator{}
+}
 
 // NewStatusPageResource returns a new instance of the status page resource.
 func NewStatusPageResource() resource.Resource {
@@ -101,8 +162,11 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 			},
 			"icon": schema.StringAttribute{
-				MarkdownDescription: "Base64-encoded icon image",
-				Optional:            true,
+				MarkdownDescription: "Icon for the status page. Accepts a PNG data URI (`data:image/png;base64,...`)" +
+					" or a URL/path (max 255 characters). When a data URI is provided," +
+					" Uptime Kuma converts it to a file on disk.",
+				Optional:   true,
+				Validators: []validator.String{validateStatusPageIcon()},
 			},
 			"theme": schema.StringAttribute{
 				MarkdownDescription: "Theme name for styling",
@@ -312,7 +376,7 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 	data.Title = types.StringValue(sp.Title)
 	data.Description = stringOrNull(sp.Description)
 
-	if !data.Icon.IsNull() {
+	if !data.Icon.IsNull() && !strings.HasPrefix(data.Icon.ValueString(), "data:") {
 		data.Icon = stringOrNull(sp.Icon)
 	}
 
