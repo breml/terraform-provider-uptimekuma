@@ -3,7 +3,9 @@ package client
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
@@ -81,5 +83,57 @@ func TestNew_PoolDisabled(t *testing.T) {
 	pool := GetGlobalPool()
 	if pool.client != nil {
 		t.Error("expected pool client to be nil when pooling disabled")
+	}
+}
+
+func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
+	// Connect to an endpoint that will never respond (RFC 5737 TEST-NET).
+	// Without the overall deadline, the retry loop would run for minutes.
+	config := &Config{
+		Endpoint:       "http://192.0.2.1:3001",
+		Username:       "admin",
+		Password:       "secret",
+		ConnectTimeout: 2 * time.Second,
+		LogLevel:       kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+	}
+
+	start := time.Now()
+
+	_, err := newClientDirect(t.Context(), config)
+
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected error for unreachable endpoint, got nil")
+	}
+
+	// The entire call must finish within a generous upper bound.
+	// With a 2s timeout the context deadline should stop everything well
+	// before the old retry loop's first backoff delay of ~5s.
+	if elapsed > 3*time.Second {
+		t.Errorf("expected connection to fail within ~2s, took %s", elapsed)
+	}
+
+	if !strings.Contains(err.Error(), "cancelled") && !strings.Contains(err.Error(), "deadline") {
+		t.Errorf("expected context deadline/cancelled error, got: %s", err)
+	}
+}
+
+func TestNewClientDirect_NoTimeoutRetriesNormally(t *testing.T) {
+	// Without ConnectTimeout, a cancelled parent context should still
+	// be respected by the retry loop's select.
+	config := &Config{
+		Endpoint: "http://192.0.2.1:3001",
+		Username: "admin",
+		Password: "secret",
+		LogLevel: kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := newClientDirect(ctx, config)
+	if err == nil {
+		t.Fatal("expected error for cancelled context, got nil")
 	}
 }
