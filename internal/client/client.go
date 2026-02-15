@@ -37,20 +37,38 @@ func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 }
 
 // newClientDirect creates a new direct connection with retry logic.
+// When ConnectTimeout is configured, it applies as an overall deadline
+// for the entire connection process (including retries), so that the
+// provider does not hang indefinitely.
 func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) {
-	maxRetries := 5
-	baseDelay := 5 * time.Second
-
-	var kumaClient *kuma.Client
-	var err error
-
 	opts := []kuma.Option{
 		kuma.WithLogLevel(config.LogLevel),
 	}
 
 	if config.ConnectTimeout != 0 {
 		opts = append(opts, kuma.WithConnectTimeout(config.ConnectTimeout))
+
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, config.ConnectTimeout)
+		defer cancel()
 	}
+
+	return newClientDirectWithRetry(ctx, config, opts)
+}
+
+// newClientDirectWithRetry attempts to connect to Uptime Kuma with
+// exponential backoff retry logic. The provided context controls
+// the overall deadline for all attempts.
+func newClientDirectWithRetry(
+	ctx context.Context,
+	config *Config,
+	opts []kuma.Option,
+) (*kuma.Client, error) {
+	maxRetries := 5
+	baseDelay := 5 * time.Second
+
+	var kumaClient *kuma.Client
+	var err error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		kumaClient, err = kuma.New(
@@ -68,9 +86,9 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 			break
 		}
 
-		// Exponential backoff with jitter
+		// Exponential backoff with jitter.
 		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
-		//nolint:gosec // Not for cryptographic use, only for jitter in backoff
+		//nolint:gosec // Not for cryptographic use, only for jitter in backoff.
 		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
 		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
 
@@ -79,7 +97,7 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 			return nil, fmt.Errorf("connection cancelled: %w", ctx.Err())
 
 		case <-time.After(sleepDuration):
-			// Continue retry
+			// Continue retry.
 		}
 	}
 
