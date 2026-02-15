@@ -110,7 +110,7 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// The entire call must finish within a generous upper bound.
 	// With a 2s timeout the context deadline should stop everything well
 	// before the old retry loop's first backoff delay of ~5s.
-	if elapsed > 5*time.Second {
+	if elapsed > 3*time.Second {
 		t.Errorf("expected connection to fail within ~2s, took %s", elapsed)
 	}
 
