@@ -1,13 +1,11 @@
 resource "uptimekuma_monitor_group" "example" {
   name   = "Production Services"
-  status = "up"
   active = true
 }
 
 resource "uptimekuma_monitor_group" "nested" {
   name   = "Production - Web Services"
   parent = uptimekuma_monitor_group.example.id
-  status = "up"
   active = true
 }
 
