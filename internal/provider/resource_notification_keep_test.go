@@ -82,9 +82,10 @@ func TestAccNotificationKeepResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_keep.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_keep.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"webhook_url", "api_key"},
 			},
 		},
 	})
