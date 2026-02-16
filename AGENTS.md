@@ -43,7 +43,6 @@ Resources follow a pattern-based architecture:
 ### Client Dependency
 
 - Uses `github.com/breml/go-uptime-kuma-client` as the API client
-- go.mod has a replace directive pointing to `../go-uptime-kuma-client` (local development)
 - Check `.scratch/go-uptime-kuma-client` for the client source code
 - Provider creates a single `*kuma.Client` instance in `Configure()` using `context.Background()` (not Terraform's context)
 - Resources use client methods like `CreateMonitor()`, `GetMonitorAs()`, `UpdateMonitor()`, `DeleteMonitor()`
