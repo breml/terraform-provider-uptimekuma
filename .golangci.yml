@@ -743,3 +743,10 @@ linters:
         linters:
           - revive
         text: '(deep-exit):'
+
+      # Workaround for gosec false positives, exclude rules does not work due to
+      # golangci-lint jsonschema not being up to date.
+      - linters:
+          - gosec
+        # G704 currently broken, see https://github.com/securego/gosec/issues/1497 and https://github.com/securego/gosec/issues/1500
+        text: '^(G704|G117):'
