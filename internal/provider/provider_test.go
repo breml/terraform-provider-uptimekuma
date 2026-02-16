@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -181,7 +182,7 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			}
 
 			// Apply defaults
-			applyEnvironmentDefaults(&tc.initial)
+			applyEnvironmentDefaults(&tc.initial, &provider.ConfigureResponse{})
 
 			// Verify endpoint
 			if tc.expectedEndpoint == "" {
@@ -329,7 +330,7 @@ func TestEnvironmentVariablePrecedence(t *testing.T) {
 			}
 
 			// Apply environment defaults
-			applyEnvironmentDefaults(&model)
+			applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
 
 			// Verify results
 			if tc.expectedEndpoint == "" {
