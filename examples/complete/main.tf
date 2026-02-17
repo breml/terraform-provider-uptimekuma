@@ -16,13 +16,11 @@ provider "uptimekuma" {
 # Monitor Groups
 resource "uptimekuma_monitor_group" "production" {
   name   = "Production"
-  status = "up"
   active = true
 }
 
 resource "uptimekuma_monitor_group" "staging" {
   name   = "Staging"
-  status = "up"
   active = true
 }
 
