@@ -170,8 +170,8 @@ github.com/breml/errchkjson v0.4.1 h1:keFSS8D7A2T0haP9kzZTi7o26r7kE3vymjZNeNDRDw
 github.com/breml/errchkjson v0.4.1/go.mod h1:a23OvR6Qvcl7DG/Z4o0el6BRAjKnaReoPQFciAl9U3s=
 github.com/breml/githooks v0.0.0-20260215200132-6ea4e262bcae h1:HjhoLC3+FVreZnCL5Z4mX3POXkODbzGr5uRmmRemFis=
 github.com/breml/githooks v0.0.0-20260215200132-6ea4e262bcae/go.mod h1:qrfA/8Ln7bWgCz+jfR21B70MYSEamFqVoyitRAVvQ/U=
-github.com/breml/go-uptime-kuma-client v0.1.0 h1:7GlZDnmSEiiq9Dv4+af8w+KAwpVWSQ7QoViIW46kjLI=
-github.com/breml/go-uptime-kuma-client v0.1.0/go.mod h1:7BPptDPJT6LzETri/5/AXg29Mphp19TaG2e9HRJU8zo=
+github.com/breml/go-uptime-kuma-client v0.1.2 h1:VsMxhtPBx2UHMN4KtQERfvxbnNt4Ofw2GTeSyJO1aew=
+github.com/breml/go-uptime-kuma-client v0.1.2/go.mod h1:Rt2j/jLDuGgHzdMLnAryYBTRjorVJ6s0zqsMEsljqKk=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 h1:ilIWXePccxYq7HvA/max1ZqS0kTkIB/sKzBPDneECts=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7/go.mod h1:zM/p1tEc+HETWeCNzspi+2C5H0D8I7dDClAtmt/fWBA=
 github.com/briandowns/spinner v1.23.2 h1:Zc6ecUnI+YzLmJniCfDNaMbW0Wid1d5+qcTq4L2FW8w=
