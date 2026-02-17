@@ -81,6 +81,7 @@ func runTests(m *testing.M) (exitcode int) {
 				password,
 				kuma.WithAutosetup(),
 				kuma.WithLogLevel(kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL"))),
+				kuma.WithConnectTimeout(10*time.Second),
 			)
 			if err != nil {
 				return err

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,10 +35,11 @@ type UptimeKumaProvider struct {
 
 // UptimeKumaProviderModel describes the provider data model.
 type UptimeKumaProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
-	Username types.String `tfsdk:"username"`
-	Password types.String `tfsdk:"password"`
-	Timeout  types.String `tfsdk:"timeout"`
+	Endpoint   types.String `tfsdk:"endpoint"`
+	Username   types.String `tfsdk:"username"`
+	Password   types.String `tfsdk:"password"`
+	Timeout    types.String `tfsdk:"timeout"`
+	MaxRetries types.Int64  `tfsdk:"max_retries"`
 }
 
 // Metadata returns the metadata for the provider.
@@ -72,6 +74,11 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 					"Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.",
 				Optional: true,
 			},
+			"max_retries": schema.Int64Attribute{
+				MarkdownDescription: "Maximum number of connection retry attempts (default: `5`). " +
+					"Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.",
+				Optional: true,
+			},
 		},
 	}
 }
@@ -92,7 +99,7 @@ func (*UptimeKumaProvider) Configure(
 
 	// Apply environment variable defaults where Terraform config is not provided.
 	// Precedence: Terraform config > environment variables > nothing
-	applyEnvironmentDefaults(&data)
+	applyEnvironmentDefaults(&data, resp)
 
 	// Validate configuration
 	// Endpoint is always required to connect to Uptime Kuma
@@ -135,6 +142,21 @@ func (*UptimeKumaProvider) Configure(
 		}
 	}
 
+	maxRetries := 5
+
+	if !data.MaxRetries.IsNull() {
+		maxRetries = int(data.MaxRetries.ValueInt64())
+	}
+
+	if maxRetries < 0 {
+		resp.Diagnostics.AddError(
+			"invalid max_retries",
+			fmt.Sprintf("max_retries must be non-negative, got %d", maxRetries),
+		)
+
+		return
+	}
+
 	kumaClient, err := client.New(context.Background(), &client.Config{
 		Endpoint:             data.Endpoint.ValueString(),
 		Username:             data.Username.ValueString(),
@@ -142,6 +164,7 @@ func (*UptimeKumaProvider) Configure(
 		EnableConnectionPool: true,
 		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 		ConnectTimeout:       connectTimeout,
+		MaxRetries:           maxRetries,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create client", err.Error())
@@ -160,7 +183,7 @@ func (*UptimeKumaProvider) Configure(
 
 // applyEnvironmentDefaults applies environment variable defaults to the provider model.
 // Terraform config values take precedence over environment variables.
-func applyEnvironmentDefaults(data *UptimeKumaProviderModel) {
+func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.ConfigureResponse) {
 	envEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
 	if data.Endpoint.IsNull() && envEndpoint != "" {
 		data.Endpoint = types.StringValue(envEndpoint)
@@ -179,6 +202,19 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel) {
 	envTimeout := os.Getenv("UPTIMEKUMA_TIMEOUT")
 	if data.Timeout.IsNull() && envTimeout != "" {
 		data.Timeout = types.StringValue(envTimeout)
+	}
+
+	envMaxRetries := os.Getenv("UPTIMEKUMA_MAX_RETRIES")
+	if data.MaxRetries.IsNull() && envMaxRetries != "" {
+		val, err := strconv.ParseInt(envMaxRetries, 10, 64)
+		if err == nil {
+			data.MaxRetries = types.Int64Value(val)
+		} else {
+			resp.Diagnostics.AddWarning(
+				"invalid UPTIMEKUMA_MAX_RETRIES",
+				fmt.Sprintf("invalid UPTIMEKUMA_MAX_RETRIES value %q; ignore value from environment variable", envMaxRetries),
+			)
+		}
 	}
 }
 

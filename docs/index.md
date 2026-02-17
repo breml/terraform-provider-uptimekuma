@@ -56,6 +56,7 @@ The provider supports managing the following resources:
 ### Optional
 
 - `endpoint` (String) Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable.
+- `max_retries` (Number) Maximum number of connection retry attempts (default: `5`). Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.
 - `password` (String, Sensitive) Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable.
 - `timeout` (String) Connection timeout as a Go duration string (e.g. `30s`, `2m`). Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.
 - `username` (String) Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable.

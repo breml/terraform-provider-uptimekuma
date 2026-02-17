@@ -92,6 +92,16 @@ func TestPool_ConfigMatches(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "different max retries",
+			config: &Config{
+				Endpoint:   "http://localhost:3001",
+				Username:   "admin",
+				Password:   "secret",
+				MaxRetries: 10,
+			},
+			expected: false,
+		},
 	}
 
 	for _, tc := range tests {

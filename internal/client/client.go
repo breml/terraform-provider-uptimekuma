@@ -19,6 +19,7 @@ type Config struct {
 	LogLevel             int
 	EnableConnectionPool bool
 	ConnectTimeout       time.Duration
+	MaxRetries           int
 }
 
 // New creates a new Uptime Kuma client with optional connection pooling.
@@ -47,10 +48,6 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 
 	if config.ConnectTimeout != 0 {
 		opts = append(opts, kuma.WithConnectTimeout(config.ConnectTimeout))
-
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, config.ConnectTimeout)
-		defer cancel()
 	}
 
 	return newClientDirectWithRetry(ctx, config, opts)
@@ -64,8 +61,12 @@ func newClientDirectWithRetry(
 	config *Config,
 	opts []kuma.Option,
 ) (*kuma.Client, error) {
-	maxRetries := 5
-	baseDelay := 5 * time.Second
+	maxRetries := config.MaxRetries
+	if maxRetries == 0 {
+		maxRetries = 5
+	}
+
+	baseDelay := 500 * time.Millisecond
 
 	var kumaClient *kuma.Client
 	var err error

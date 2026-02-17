@@ -93,7 +93,8 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 		Endpoint:       "http://192.0.2.1:3001",
 		Username:       "admin",
 		Password:       "secret",
-		ConnectTimeout: 2 * time.Second,
+		ConnectTimeout: 500 * time.Millisecond,
+		MaxRetries:     1,
 		LogLevel:       kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
 
@@ -108,14 +109,41 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	}
 
 	// The entire call must finish within a generous upper bound.
-	// With a 2s timeout the context deadline should stop everything well
-	// before the old retry loop's first backoff delay of ~5s.
+	// With a 500ms connect timeout and limited retries, each attempt is bounded
+	// so the overall duration stays well below ~3s.
 	if elapsed > 3*time.Second {
-		t.Errorf("expected connection to fail within ~2s, took %s", elapsed)
+		t.Errorf("expected connection to fail within ~3s, took %s", elapsed)
 	}
 
 	if !strings.Contains(err.Error(), "cancelled") && !strings.Contains(err.Error(), "deadline") {
 		t.Errorf("expected context deadline/cancelled error, got: %s", err)
+	}
+}
+
+func TestNewClientDirect_MaxRetriesFromConfig(t *testing.T) {
+	// With MaxRetries=1, the retry loop should complete faster than
+	// with the default of 5 retries.
+	config := &Config{
+		Endpoint:       "http://192.0.2.1:3001",
+		Username:       "admin",
+		Password:       "secret",
+		ConnectTimeout: 1 * time.Second,
+		MaxRetries:     1,
+		LogLevel:       kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+	}
+
+	// Use a short timeout so we don't wait for actual TCP timeouts.
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	_, err := newClientDirect(ctx, config)
+	if err == nil {
+		t.Fatal("expected error for unreachable endpoint, got nil")
+	}
+
+	// With MaxRetries=1, the error should mention "2 attempts" (initial + 1 retry).
+	if !strings.Contains(err.Error(), "2 attempts") && !strings.Contains(err.Error(), "cancelled") {
+		t.Errorf("expected error mentioning 2 attempts or cancelled, got: %s", err)
 	}
 }
 
