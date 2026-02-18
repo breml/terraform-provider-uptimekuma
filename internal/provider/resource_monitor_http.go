@@ -194,6 +194,19 @@ func stringOrNull(s string) types.String {
 	return types.StringValue(s)
 }
 
+// stringOrNullPreserveEmpty returns a Terraform String that preserves an
+// explicit empty string set in the configuration. When the API returns an
+// empty string and the current state already holds a non-null value (the
+// user wrote e.g. `description = ""`), the empty string is kept. When the
+// state is null (the user omitted the attribute), null is preserved.
+func stringOrNullPreserveEmpty(apiValue string, stateValue types.String) types.String {
+	if apiValue == "" && stateValue.IsNull() {
+		return types.StringNull()
+	}
+
+	return types.StringValue(apiValue)
+}
+
 // populateHTTPMonitorBaseFieldsForHTTP populates the base HTTP monitor fields from the API response.
 // Extracts HTTP-specific fields from the API response into the model.
 // Handles base monitor fields and all HTTP configuration options.

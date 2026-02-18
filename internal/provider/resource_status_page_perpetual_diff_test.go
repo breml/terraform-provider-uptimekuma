@@ -71,6 +71,63 @@ func TestAccStatusPageNoPerpetualDiff(t *testing.T) {
 	})
 }
 
+// TestAccStatusPageNoPerpetualDiffEmptyDescription verifies that setting
+// `description = ""` does not produce a perpetual diff. The API returns an
+// empty string which was previously converted to null by stringOrNull,
+// causing Terraform to detect a diff on every plan. See #223.
+func TestAccStatusPageNoPerpetualDiffEmptyDescription(t *testing.T) {
+	slug := acctest.RandomWithPrefix("test-emptydesc")
+	title := "Empty Description Test"
+
+	config := testAccStatusPageEmptyDescriptionConfig(slug, title)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             config,
+				ExpectNonEmptyPlan: false,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("slug"),
+						knownvalue.StringExact(slug),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(""),
+					),
+				},
+			},
+			{
+				Config:             config,
+				ExpectNonEmptyPlan: false,
+			},
+			{
+				Config:             config,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccStatusPageEmptyDescriptionConfig(slug string, title string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_status_page" "test" {
+  slug        = %[1]q
+  title       = %[2]q
+  description = ""
+}
+`, slug, title)
+}
+
 func testAccStatusPageNoPerpetualDiffConfig(
 	slug string,
 	title string,

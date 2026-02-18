@@ -374,13 +374,13 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	data.ID = types.Int64Value(sp.ID)
 	data.Title = types.StringValue(sp.Title)
-	data.Description = stringOrNull(sp.Description)
+	data.Description = stringOrNullPreserveEmpty(sp.Description, data.Description)
 
 	if !data.Icon.IsNull() && !strings.HasPrefix(data.Icon.ValueString(), "data:") {
-		data.Icon = stringOrNull(sp.Icon)
+		data.Icon = stringOrNullPreserveEmpty(sp.Icon, data.Icon)
 	}
 
-	data.Theme = stringOrNull(sp.Theme)
+	data.Theme = stringOrNullPreserveEmpty(sp.Theme, data.Theme)
 
 	// Note: The Uptime Kuma API's saveStatusPage endpoint does not actually update
 	// the published, show_tags, show_powered_by, and show_certificate_expiry fields
@@ -388,9 +388,9 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 	// Therefore, we don't update these fields from the API response to avoid drift.
 	// We keep whatever values are in the Terraform config/state.
 
-	data.GoogleAnalyticsID = stringOrNull(sp.GoogleAnalyticsID)
-	data.CustomCSS = stringOrNull(sp.CustomCSS)
-	data.FooterText = stringOrNull(sp.FooterText)
+	data.GoogleAnalyticsID = stringOrNullPreserveEmpty(sp.GoogleAnalyticsID, data.GoogleAnalyticsID)
+	data.CustomCSS = stringOrNullPreserveEmpty(sp.CustomCSS, data.CustomCSS)
+	data.FooterText = stringOrNullPreserveEmpty(sp.FooterText, data.FooterText)
 
 	if len(sp.DomainNameList) > 0 {
 		domainNames, diags := types.ListValueFrom(ctx, types.StringType, sp.DomainNameList)
