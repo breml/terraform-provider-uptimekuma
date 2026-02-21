@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -153,6 +154,11 @@ func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadReques
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &groupMonitor)
 	// Handle error.
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read group monitor", err.Error())
 		return
 	}

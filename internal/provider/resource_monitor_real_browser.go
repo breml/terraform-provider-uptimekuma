@@ -2,11 +2,13 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -254,6 +256,69 @@ func (r *MonitorRealBrowserResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// populateRealBrowserMonitorBaseFields populates base fields for Real Browser monitor.
+func populateRealBrowserMonitorBaseFields(m *monitor.RealBrowser, data *MonitorRealBrowserResourceModel) {
+	data.Name = types.StringValue(m.Name)
+	if m.Description != nil {
+		data.Description = types.StringValue(*m.Description)
+	} else {
+		data.Description = types.StringNull()
+	}
+
+	data.Interval = types.Int64Value(m.Interval)
+	data.RetryInterval = types.Int64Value(m.RetryInterval)
+	data.ResendInterval = types.Int64Value(m.ResendInterval)
+	data.MaxRetries = types.Int64Value(m.MaxRetries)
+	data.UpsideDown = types.BoolValue(m.UpsideDown)
+	data.Active = types.BoolValue(m.IsActive)
+	data.URL = types.StringValue(m.URL)
+	data.Timeout = types.Int64Value(m.Timeout)
+	data.IgnoreTLS = types.BoolValue(m.IgnoreTLS)
+	data.MaxRedirects = types.Int64Value(int64(m.MaxRedirects))
+}
+
+// populateOptionalFieldsForRealBrowser populates optional fields for Real Browser monitor.
+// Handles parent group, proxy, remote browser, accepted status codes, and notification IDs.
+// Converts null API values to Terraform null types appropriately.
+func populateOptionalFieldsForRealBrowser(
+	ctx context.Context,
+	m *monitor.RealBrowser,
+	data *MonitorRealBrowserResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if m.Parent != nil {
+		data.Parent = types.Int64Value(*m.Parent)
+	} else {
+		data.Parent = types.Int64Null()
+	}
+
+	if m.ProxyID != nil {
+		data.ProxyID = types.Int64Value(*m.ProxyID)
+	} else {
+		data.ProxyID = types.Int64Null()
+	}
+
+	if m.RemoteBrowser != nil {
+		data.RemoteBrowser = types.Int64Value(*m.RemoteBrowser)
+	} else {
+		data.RemoteBrowser = types.Int64Null()
+	}
+
+	if len(m.AcceptedStatusCodes) > 0 {
+		statusCodes, d := types.ListValueFrom(ctx, types.StringType, m.AcceptedStatusCodes)
+		diags.Append(d...)
+		data.AcceptedStatusCodes = statusCodes
+	}
+
+	if len(m.NotificationIDs) > 0 {
+		notificationIDs, d := types.ListValueFrom(ctx, types.Int64Type, m.NotificationIDs)
+		diags.Append(d...)
+		data.NotificationIDs = notificationIDs
+	} else {
+		data.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+}
+
 // Read reads the current state of the Real Browser monitor resource.
 func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MonitorRealBrowserResourceModel
@@ -270,67 +335,17 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
 	// Handle error.
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 		return
 	}
 
-	data.Name = types.StringValue(realBrowserMonitor.Name)
-	if realBrowserMonitor.Description != nil {
-		data.Description = types.StringValue(*realBrowserMonitor.Description)
-	} else {
-		data.Description = types.StringNull()
-	}
-
-	data.Interval = types.Int64Value(realBrowserMonitor.Interval)
-	data.RetryInterval = types.Int64Value(realBrowserMonitor.RetryInterval)
-	data.ResendInterval = types.Int64Value(realBrowserMonitor.ResendInterval)
-	data.MaxRetries = types.Int64Value(realBrowserMonitor.MaxRetries)
-	data.UpsideDown = types.BoolValue(realBrowserMonitor.UpsideDown)
-	data.Active = types.BoolValue(realBrowserMonitor.IsActive)
-	data.URL = types.StringValue(realBrowserMonitor.URL)
-	data.Timeout = types.Int64Value(realBrowserMonitor.Timeout)
-	data.IgnoreTLS = types.BoolValue(realBrowserMonitor.IgnoreTLS)
-	data.MaxRedirects = types.Int64Value(int64(realBrowserMonitor.MaxRedirects))
-
-	if realBrowserMonitor.Parent != nil {
-		data.Parent = types.Int64Value(*realBrowserMonitor.Parent)
-	} else {
-		data.Parent = types.Int64Null()
-	}
-
-	if realBrowserMonitor.ProxyID != nil {
-		data.ProxyID = types.Int64Value(*realBrowserMonitor.ProxyID)
-	} else {
-		data.ProxyID = types.Int64Null()
-	}
-
-	if realBrowserMonitor.RemoteBrowser != nil {
-		data.RemoteBrowser = types.Int64Value(*realBrowserMonitor.RemoteBrowser)
-	} else {
-		data.RemoteBrowser = types.Int64Null()
-	}
-
-	if len(realBrowserMonitor.AcceptedStatusCodes) > 0 {
-		statusCodes, diags := types.ListValueFrom(ctx, types.StringType, realBrowserMonitor.AcceptedStatusCodes)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		data.AcceptedStatusCodes = statusCodes
-	}
-
-	if len(realBrowserMonitor.NotificationIDs) > 0 {
-		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, realBrowserMonitor.NotificationIDs)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		data.NotificationIDs = notificationIDs
-	} else {
-		data.NotificationIDs = types.ListNull(types.Int64Type)
-	}
+	populateRealBrowserMonitorBaseFields(&realBrowserMonitor, &data)
+	populateOptionalFieldsForRealBrowser(ctx, &realBrowserMonitor, &data, &resp.Diagnostics)
 
 	data.Tags = handleMonitorTagsRead(ctx, realBrowserMonitor.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -326,6 +327,11 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	var httpKeywordMonitor monitor.HTTPKeyword
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpKeywordMonitor)
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read HTTP Keyword monitor", err.Error())
 		return
 	}

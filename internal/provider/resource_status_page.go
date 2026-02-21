@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -368,6 +369,11 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	sp, err := r.client.GetStatusPage(ctx, data.Slug.ValueString())
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read status page", err.Error())
 		return
 	}

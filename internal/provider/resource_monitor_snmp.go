@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -296,6 +297,11 @@ func (r *MonitorSNMPResource) Read(ctx context.Context, req resource.ReadRequest
 	var snmpMonitor monitor.SNMP
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &snmpMonitor)
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read SNMP monitor", err.Error())
 		return
 	}
