@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -178,7 +177,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pingMonitor)
 	// Handle error.
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

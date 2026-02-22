@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -341,7 +340,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	var httpJSONQueryMonitor monitor.HTTPJSONQuery
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpJSONQueryMonitor)
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

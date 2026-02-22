@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -197,7 +196,7 @@ func (r *MonitorMongoDBResource) Read(
 	var mongoDBMonitor monitor.MongoDB
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &mongoDBMonitor)
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -302,7 +301,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	var httpMonitor monitor.HTTP
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpMonitor)
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

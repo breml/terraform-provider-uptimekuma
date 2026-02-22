@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -187,7 +186,7 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &tcpPortMonitor)
 	// Handle error.
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

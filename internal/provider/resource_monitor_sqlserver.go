@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -186,7 +185,7 @@ func (r *MonitorSQLServerResource) Read(
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &sqlserverMonitor)
 	// Handle error.
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

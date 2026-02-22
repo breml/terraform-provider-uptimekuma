@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -182,7 +181,7 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 	var mysqlMonitor monitor.MySQL
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &mysqlMonitor)
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
