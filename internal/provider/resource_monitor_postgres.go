@@ -181,6 +181,11 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &postgresMonitor)
 	// Handle error.
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read PostgreSQL monitor", err.Error())
 		return
 	}

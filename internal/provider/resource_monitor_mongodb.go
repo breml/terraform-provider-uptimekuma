@@ -195,8 +195,12 @@ func (r *MonitorMongoDBResource) Read(
 
 	var mongoDBMonitor monitor.MongoDB
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &mongoDBMonitor)
-	// Handle error.
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read MongoDB monitor", err.Error())
 		return
 	}

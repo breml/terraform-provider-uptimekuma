@@ -175,6 +175,11 @@ func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pushMonitor)
 	// Handle error.
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read Push monitor", err.Error())
 		return
 	}

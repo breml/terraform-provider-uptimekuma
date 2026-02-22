@@ -340,6 +340,11 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	var httpJSONQueryMonitor monitor.HTTPJSONQuery
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &httpJSONQueryMonitor)
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read HTTP JSON Query monitor", err.Error())
 		return
 	}

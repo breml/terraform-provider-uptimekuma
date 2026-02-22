@@ -186,6 +186,11 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &tcpPortMonitor)
 	// Handle error.
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read TCP Port monitor", err.Error())
 		return
 	}

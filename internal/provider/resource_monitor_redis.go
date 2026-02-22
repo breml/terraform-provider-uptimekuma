@@ -173,6 +173,11 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &redisMonitor)
 	// Handle error.
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read Redis monitor", err.Error())
 		return
 	}

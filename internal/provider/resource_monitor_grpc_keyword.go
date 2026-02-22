@@ -255,6 +255,11 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &grpcKeywordMonitor)
 	// Handle error.
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read gRPC Keyword monitor", err.Error())
 		return
 	}
