@@ -169,25 +169,7 @@ func (r *NotificationNtfyResource) Configure(
 	resp *resource.ConfigureResponse,
 ) {
 	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*kuma.Client)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf(
-				"Expected *kuma.Client, got: %T. Please report this issue to the provider developers.",
-				req.ProviderData,
-			),
-		)
-
-		return
-	}
-
-	r.client = client
+	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
 // Create creates a new ntfy notification resource.

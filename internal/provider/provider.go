@@ -177,8 +177,13 @@ func (*UptimeKumaProvider) Configure(
 		client.GetGlobalPool().Release()
 	}()
 
-	resp.DataSourceData = kumaClient
-	resp.ResourceData = kumaClient
+	pd := &providerData{
+		client:   kumaClient,
+		password: data.Password.ValueString(),
+	}
+
+	resp.DataSourceData = pd
+	resp.ResourceData = pd
 }
 
 // applyEnvironmentDefaults applies environment variable defaults to the provider model.
@@ -305,6 +310,7 @@ func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resour
 		NewMaintenanceResource,
 		NewMaintenanceMonitorsResource,
 		NewMaintenanceStatusPagesResource,
+		NewSettingsResource,
 		NewStatusPageResource,
 		NewStatusPageIncidentResource,
 	}
@@ -398,6 +404,7 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewMaintenanceDataSource,
 		NewMaintenanceMonitorsDataSource,
 		NewMaintenanceStatusPagesDataSource,
+		NewSettingsDataSource,
 		NewStatusPageDataSource,
 	}
 }
