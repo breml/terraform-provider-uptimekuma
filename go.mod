@@ -3,7 +3,7 @@ module github.com/breml/terraform-provider-uptimekuma
 go 1.25.2
 
 require (
-	github.com/breml/go-uptime-kuma-client v0.1.2
+	github.com/breml/go-uptime-kuma-client v0.2.0
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-go v0.30.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
@@ -398,7 +398,7 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect

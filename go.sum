@@ -170,8 +170,8 @@ github.com/breml/errchkjson v0.4.1 h1:keFSS8D7A2T0haP9kzZTi7o26r7kE3vymjZNeNDRDw
 github.com/breml/errchkjson v0.4.1/go.mod h1:a23OvR6Qvcl7DG/Z4o0el6BRAjKnaReoPQFciAl9U3s=
 github.com/breml/githooks v0.0.0-20260215200132-6ea4e262bcae h1:HjhoLC3+FVreZnCL5Z4mX3POXkODbzGr5uRmmRemFis=
 github.com/breml/githooks v0.0.0-20260215200132-6ea4e262bcae/go.mod h1:qrfA/8Ln7bWgCz+jfR21B70MYSEamFqVoyitRAVvQ/U=
-github.com/breml/go-uptime-kuma-client v0.1.2 h1:VsMxhtPBx2UHMN4KtQERfvxbnNt4Ofw2GTeSyJO1aew=
-github.com/breml/go-uptime-kuma-client v0.1.2/go.mod h1:Rt2j/jLDuGgHzdMLnAryYBTRjorVJ6s0zqsMEsljqKk=
+github.com/breml/go-uptime-kuma-client v0.2.0 h1:z4CRD2WGIM2KknsWM9f0W0Ey1a1zaZytvaLcxC3PY3w=
+github.com/breml/go-uptime-kuma-client v0.2.0/go.mod h1:Rt2j/jLDuGgHzdMLnAryYBTRjorVJ6s0zqsMEsljqKk=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 h1:ilIWXePccxYq7HvA/max1ZqS0kTkIB/sKzBPDneECts=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7/go.mod h1:zM/p1tEc+HETWeCNzspi+2C5H0D8I7dDClAtmt/fWBA=
 github.com/briandowns/spinner v1.23.2 h1:Zc6ecUnI+YzLmJniCfDNaMbW0Wid1d5+qcTq4L2FW8w=
@@ -911,8 +911,8 @@ golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f/go.mod h1:9nx3DQGgdP8bBQD5qx
 golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20220722155237-a158d28d115b/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
 golang.org/x/net v0.6.0/go.mod h1:2Tu9+aMcznHK/AK1HMvgo6xiTLG5rD5rZLDS+rp2Bjs=
-golang.org/x/net v0.50.0 h1:ucWh9eiCGyDR3vtzso0WMQinm2Dnt8cFMuQa9K33J60=
-golang.org/x/net v0.50.0/go.mod h1:UgoSli3F/pBgdJBHCTc+tp3gmrU4XswgGRgtnwWTfyM=
+golang.org/x/net v0.51.0 h1:94R/GTO7mt3/4wIKpcR5gkGmRLOuE/2hNGeWq/GBIFo=
+golang.org/x/net v0.51.0/go.mod h1:aamm+2QF5ogm02fjy5Bb7CQ0WMt1/WVM7FtyaTLlA9Y=
 golang.org/x/oauth2 v0.34.0 h1:hqK/t4AKgbqWkdkcAeI8XLmbK+4m4G5YeQRrmiotGlw=
 golang.org/x/oauth2 v0.34.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
