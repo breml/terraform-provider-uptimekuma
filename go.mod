@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/breml/go-uptime-kuma-client v0.2.0
-	github.com/hashicorp/terraform-plugin-framework v1.17.0
+	github.com/hashicorp/terraform-plugin-framework v1.18.0
 	github.com/hashicorp/terraform-plugin-go v0.30.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/ory/dockertest/v3 v3.12.0
