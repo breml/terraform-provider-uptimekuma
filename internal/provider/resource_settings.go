@@ -169,9 +169,18 @@ func (r *SettingsResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	r.applySettings(ctx, &data, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
+	// If no attributes are explicitly set, adopt existing server settings
+	// without performing a write (import-like behavior).
+	if hasExplicitlySetFields(&data) {
+		r.applySettings(ctx, &data, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else {
+		r.readSettings(ctx, &data, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	data.ID = types.StringValue("settings")
@@ -237,6 +246,22 @@ func (*SettingsResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), "settings")...)
 }
 
+// hasExplicitlySetFields reports whether any user-configurable attribute
+// in the plan is explicitly set (non-null and non-unknown).
+func hasExplicitlySetFields(data *SettingsResourceModel) bool {
+	return (!data.ServerTimezone.IsNull() && !data.ServerTimezone.IsUnknown()) ||
+		(!data.KeepDataPeriodDays.IsNull() && !data.KeepDataPeriodDays.IsUnknown()) ||
+		(!data.CheckUpdate.IsNull() && !data.CheckUpdate.IsUnknown()) ||
+		(!data.SearchEngineIndex.IsNull() && !data.SearchEngineIndex.IsUnknown()) ||
+		(!data.EntryPage.IsNull() && !data.EntryPage.IsUnknown()) ||
+		(!data.NSCD.IsNull() && !data.NSCD.IsUnknown()) ||
+		(!data.TLSExpiryNotifyDays.IsNull() && !data.TLSExpiryNotifyDays.IsUnknown()) ||
+		(!data.TrustProxy.IsNull() && !data.TrustProxy.IsUnknown()) ||
+		(!data.PrimaryBaseURL.IsNull() && !data.PrimaryBaseURL.IsUnknown()) ||
+		(!data.SteamAPIKey.IsNull() && !data.SteamAPIKey.IsUnknown()) ||
+		(!data.ChromeExecutable.IsNull() && !data.ChromeExecutable.IsUnknown())
+}
+
 // applySettings reads current settings from the server, merges
 // user-specified values from the plan, and writes them back.
 func (r *SettingsResource) applySettings(
@@ -244,6 +269,16 @@ func (r *SettingsResource) applySettings(
 	data *SettingsResourceModel,
 	diags *diag.Diagnostics,
 ) {
+	if r.password == "" {
+		diags.AddError(
+			"password required",
+			"The provider password must be configured to update settings. "+
+				"Set the password in the provider configuration or via the UPTIMEKUMA_PASSWORD environment variable.",
+		)
+
+		return
+	}
+
 	// Read current settings to preserve values the user did not specify.
 	current, err := r.client.GetSettings(ctx)
 	if err != nil {
@@ -258,7 +293,7 @@ func (r *SettingsResource) applySettings(
 
 	err = r.client.SetSettings(ctx, merged, r.password)
 	if err != nil {
-		diags.AddError("failed to update settings", err.Error())
+		diags.AddError("failed to update settings", fmt.Sprintf("failed to update settings: %s", err.Error()))
 		return
 	}
 
@@ -366,8 +401,17 @@ func mergeNumericAndListFields(
 	}
 
 	if !data.TLSExpiryNotifyDays.IsNull() && !data.TLSExpiryNotifyDays.IsUnknown() {
-		var days []int
-		diags.Append(data.TLSExpiryNotifyDays.ElementsAs(ctx, &days, false)...)
+		var days64 []int64
+		diags.Append(data.TLSExpiryNotifyDays.ElementsAs(ctx, &days64, false)...)
+		if diags.HasError() {
+			return
+		}
+
+		days := make([]int, len(days64))
+		for i, d := range days64 {
+			days[i] = int(d)
+		}
+
 		merged.TLSExpiryNotifyDays = days
 	}
 }

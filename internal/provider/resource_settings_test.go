@@ -57,6 +57,10 @@ func TestAccSettingsResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Reset to defaults so subsequent tests see a clean baseline.
+			{
+				Config: testAccSettingsResourceConfigDefaults(),
+			},
 		},
 	})
 }
@@ -125,8 +129,30 @@ func TestAccSettingsResourceAllFields(t *testing.T) {
 					),
 				},
 			},
+			// Reset to defaults so subsequent tests see a clean baseline.
+			{
+				Config: testAccSettingsResourceConfigDefaults(),
+			},
 		},
 	})
+}
+
+func testAccSettingsResourceConfigDefaults() string {
+	return providerConfig() + `
+resource "uptimekuma_settings" "test" {
+  server_timezone        = "UTC"
+  keep_data_period_days  = 180
+  check_update           = true
+  search_engine_index    = true
+  entry_page             = "dashboard"
+  nscd                   = false
+  tls_expiry_notify_days = [7, 14, 21]
+  trust_proxy            = false
+  primary_base_url       = ""
+  steam_api_key          = ""
+  chrome_executable      = ""
+}
+`
 }
 
 func testAccSettingsResourceConfigAllFields() string {
