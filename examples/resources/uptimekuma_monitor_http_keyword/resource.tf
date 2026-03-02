@@ -10,5 +10,5 @@ resource "uptimekuma_monitor_http_keyword" "example" {
   active              = true
   ignore_tls          = false
   max_redirects       = 10
-  expiry_notification = true
+  expiry_notification = false
 }
