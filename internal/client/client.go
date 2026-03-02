@@ -38,9 +38,11 @@ func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 }
 
 // newClientDirect creates a new direct connection with retry logic.
-// When ConnectTimeout is configured, it applies as an overall deadline
-// for the entire connection process (including retries), so that the
-// provider does not hang indefinitely.
+// When ConnectTimeout is configured, it bounds both each individual
+// connection attempt (via kuma.WithConnectTimeout) and the overall
+// retry process (via an independent timer). The timer is kept separate
+// from the context passed to kuma.New, because the socket.io client
+// stores that context for the lifetime of the connection.
 func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) {
 	opts := []kuma.Option{
 		kuma.WithLogLevel(config.LogLevel),
@@ -54,8 +56,12 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 }
 
 // newClientDirectWithRetry attempts to connect to Uptime Kuma with
-// exponential backoff retry logic. The provided context controls
-// the overall deadline for all attempts.
+// exponential backoff retry logic. When ConnectTimeout is configured,
+// the retry loop is bounded by a separate timer so the provider does
+// not hang indefinitely. The timer is intentionally not derived from
+// ctx, because ctx is passed into the socket.io client and controls
+// the connection lifetime — adding a deadline to it would kill the
+// connection after the timeout expires.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,
@@ -66,12 +72,32 @@ func newClientDirectWithRetry(
 		maxRetries = 5
 	}
 
+	// Use a separate timer to bound the overall retry process.
+	// A nil channel blocks forever in select, which is the correct
+	// behaviour when no timeout is configured.
+	var deadline <-chan time.Time
+
+	if config.ConnectTimeout != 0 {
+		timer := time.NewTimer(config.ConnectTimeout)
+		defer timer.Stop()
+
+		deadline = timer.C
+	}
+
 	baseDelay := 500 * time.Millisecond
 
 	var kumaClient *kuma.Client
 	var err error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
+		// Check overall deadline before each attempt.
+		select {
+		case <-deadline:
+			return nil, newTimeoutError(attempt, err)
+
+		default:
+		}
+
 		kumaClient, err = kuma.New(
 			ctx,
 			config.Endpoint,
@@ -97,10 +123,23 @@ func newClientDirectWithRetry(
 		case <-ctx.Done():
 			return nil, fmt.Errorf("connection cancelled: %w", ctx.Err())
 
+		case <-deadline:
+			return nil, newTimeoutError(attempt+1, err)
+
 		case <-time.After(sleepDuration):
 			// Continue retry.
 		}
 	}
 
 	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries+1, err)
+}
+
+// newTimeoutError creates a timeout error message that includes the
+// number of attempts made and the last error encountered.
+func newTimeoutError(attempts int, lastErr error) error {
+	if lastErr != nil {
+		return fmt.Errorf("connection timed out after %d attempt(s): %w", attempts, lastErr)
+	}
+
+	return errors.New("connection timed out")
 }
