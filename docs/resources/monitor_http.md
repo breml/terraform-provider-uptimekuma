@@ -46,7 +46,7 @@ resource "uptimekuma_monitor_http" "example" {
   oauth_password        = ""
   oauth_scope           = ""
   oauth_token_url_body  = ""
-  expiry_notification   = true
+  expiry_notification   = false
 }
 
 resource "uptimekuma_monitor_http" "with_keyword" {
