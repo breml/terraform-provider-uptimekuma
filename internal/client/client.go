@@ -134,8 +134,8 @@ func newClientDirectWithRetry(
 	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries+1, err)
 }
 
-// newTimeoutError creates a timeout error message that includes the
-// number of attempts made and the last error encountered.
+// newTimeoutError creates a timeout error message. If lastErr is not nil,
+// the error includes the number of attempts made and the last error encountered.
 func newTimeoutError(attempts int, lastErr error) error {
 	if lastErr != nil {
 		return fmt.Errorf("connection timed out after %d attempt(s): %w", attempts, lastErr)
