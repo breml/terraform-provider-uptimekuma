@@ -179,10 +179,14 @@ func (r *NotificationNotiferyResource) Read(
 
 	if notifery.Title != "" {
 		data.Title = types.StringValue(notifery.Title)
+	} else {
+		data.Title = types.StringNull()
 	}
 
 	if notifery.Group != "" {
 		data.Group = types.StringValue(notifery.Group)
+	} else {
+		data.Group = types.StringNull()
 	}
 
 	// Populate state.
