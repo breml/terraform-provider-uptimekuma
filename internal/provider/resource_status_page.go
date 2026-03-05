@@ -101,7 +101,9 @@ type StatusPageResourceModel struct {
 	Published             types.Bool   `tfsdk:"published"`
 	ShowTags              types.Bool   `tfsdk:"show_tags"`
 	DomainNameList        types.List   `tfsdk:"domain_name_list"`
-	GoogleAnalyticsID     types.String `tfsdk:"google_analytics_id"`
+	AnalyticsType         types.String `tfsdk:"analytics_type"`
+	AnalyticsID           types.String `tfsdk:"analytics_id"`
+	AnalyticsScriptURL    types.String `tfsdk:"analytics_script_url"`
 	CustomCSS             types.String `tfsdk:"custom_css"`
 	FooterText            types.String `tfsdk:"footer_text"`
 	ShowPoweredBy         types.Bool   `tfsdk:"show_powered_by"`
@@ -189,8 +191,16 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				ElementType:         types.StringType,
 				Optional:            true,
 			},
-			"google_analytics_id": schema.StringAttribute{
-				MarkdownDescription: "Google Analytics tracking ID",
+			"analytics_type": schema.StringAttribute{
+				MarkdownDescription: "Analytics provider type (e.g. google, matomo, plausible, umami)",
+				Optional:            true,
+			},
+			"analytics_id": schema.StringAttribute{
+				MarkdownDescription: "Analytics tracking ID",
+				Optional:            true,
+			},
+			"analytics_script_url": schema.StringAttribute{
+				MarkdownDescription: "Analytics script URL (used by matomo, plausible, umami)",
 				Optional:            true,
 			},
 			"custom_css": schema.StringAttribute{
@@ -293,7 +303,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		Theme:                 data.Theme.ValueString(),
 		Published:             data.Published.ValueBool(),
 		ShowTags:              data.ShowTags.ValueBool(),
-		GoogleAnalyticsID:     data.GoogleAnalyticsID.ValueString(),
+		AnalyticsType:         strToPtr(data.AnalyticsType),
+		AnalyticsID:           data.AnalyticsID.ValueString(),
+		AnalyticsScriptURL:    data.AnalyticsScriptURL.ValueString(),
 		CustomCSS:             data.CustomCSS.ValueString(),
 		FooterText:            data.FooterText.ValueString(),
 		ShowPoweredBy:         data.ShowPoweredBy.ValueBool(),
@@ -375,7 +387,9 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 	// Therefore, we don't update these fields from the API response to avoid drift.
 	// We keep whatever values are in the Terraform config/state.
 
-	data.GoogleAnalyticsID = stringOrNullPreserveEmpty(sp.GoogleAnalyticsID, data.GoogleAnalyticsID)
+	data.AnalyticsType = ptrToTypes(sp.AnalyticsType)
+	data.AnalyticsID = stringOrNullPreserveEmpty(sp.AnalyticsID, data.AnalyticsID)
+	data.AnalyticsScriptURL = stringOrNullPreserveEmpty(sp.AnalyticsScriptURL, data.AnalyticsScriptURL)
 	data.CustomCSS = stringOrNullPreserveEmpty(sp.CustomCSS, data.CustomCSS)
 	data.FooterText = stringOrNullPreserveEmpty(sp.FooterText, data.FooterText)
 
@@ -444,7 +458,9 @@ func buildStatusPageFromModel(
 		Theme:                 data.Theme.ValueString(),
 		Published:             data.Published.ValueBool(),
 		ShowTags:              data.ShowTags.ValueBool(),
-		GoogleAnalyticsID:     data.GoogleAnalyticsID.ValueString(),
+		AnalyticsType:         strToPtr(data.AnalyticsType),
+		AnalyticsID:           data.AnalyticsID.ValueString(),
+		AnalyticsScriptURL:    data.AnalyticsScriptURL.ValueString(),
 		CustomCSS:             data.CustomCSS.ValueString(),
 		FooterText:            data.FooterText.ValueString(),
 		ShowPoweredBy:         data.ShowPoweredBy.ValueBool(),
