@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -102,6 +104,9 @@ type StatusPageResourceModel struct {
 	ShowTags              types.Bool   `tfsdk:"show_tags"`
 	DomainNameList        types.List   `tfsdk:"domain_name_list"`
 	GoogleAnalyticsID     types.String `tfsdk:"google_analytics_id"`
+	AnalyticsType         types.String `tfsdk:"analytics_type"`
+	AnalyticsID           types.String `tfsdk:"analytics_id"`
+	AnalyticsScriptURL    types.String `tfsdk:"analytics_script_url"`
 	CustomCSS             types.String `tfsdk:"custom_css"`
 	FooterText            types.String `tfsdk:"footer_text"`
 	ShowPoweredBy         types.Bool   `tfsdk:"show_powered_by"`
@@ -191,6 +196,26 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"google_analytics_id": schema.StringAttribute{
 				MarkdownDescription: "Google Analytics tracking ID",
+				Optional:            true,
+				DeprecationMessage: "Use `analytics_type` and `analytics_id` instead." +
+					" This attribute will be removed in the next major version.",
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("analytics_type")),
+				},
+			},
+			"analytics_type": schema.StringAttribute{
+				MarkdownDescription: "Analytics provider type (e.g. google, matomo, plausible, umami)",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("google_analytics_id")),
+				},
+			},
+			"analytics_id": schema.StringAttribute{
+				MarkdownDescription: "Analytics tracking ID",
+				Optional:            true,
+			},
+			"analytics_script_url": schema.StringAttribute{
+				MarkdownDescription: "Analytics script URL (used by matomo, plausible, umami)",
 				Optional:            true,
 			},
 			"custom_css": schema.StringAttribute{
@@ -284,6 +309,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	// Resolve analytics fields, handling the deprecated google_analytics_id.
+	analyticsType, analyticsID := resolveAnalyticsFields(&data)
+
 	// Build the status page object with all configuration.
 	sp := &statuspage.StatusPage{
 		Slug:                  data.Slug.ValueString(),
@@ -293,7 +321,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		Theme:                 data.Theme.ValueString(),
 		Published:             data.Published.ValueBool(),
 		ShowTags:              data.ShowTags.ValueBool(),
-		GoogleAnalyticsID:     data.GoogleAnalyticsID.ValueString(),
+		AnalyticsType:         analyticsType,
+		AnalyticsID:           analyticsID,
+		AnalyticsScriptURL:    data.AnalyticsScriptURL.ValueString(),
 		CustomCSS:             data.CustomCSS.ValueString(),
 		FooterText:            data.FooterText.ValueString(),
 		ShowPoweredBy:         data.ShowPoweredBy.ValueBool(),
@@ -375,7 +405,16 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 	// Therefore, we don't update these fields from the API response to avoid drift.
 	// We keep whatever values are in the Terraform config/state.
 
-	data.GoogleAnalyticsID = stringOrNullPreserveEmpty(sp.GoogleAnalyticsID, data.GoogleAnalyticsID)
+	// When the deprecated google_analytics_id is in use, only update that field
+	// and leave the new analytics fields as null to avoid perpetual diffs.
+	if !data.GoogleAnalyticsID.IsNull() {
+		data.GoogleAnalyticsID = stringOrNullPreserveEmpty(sp.AnalyticsID, data.GoogleAnalyticsID)
+	} else {
+		data.AnalyticsType = ptrToTypes(sp.AnalyticsType)
+		data.AnalyticsID = stringOrNullPreserveEmpty(sp.AnalyticsID, data.AnalyticsID)
+		data.AnalyticsScriptURL = stringOrNullPreserveEmpty(sp.AnalyticsScriptURL, data.AnalyticsScriptURL)
+	}
+
 	data.CustomCSS = stringOrNullPreserveEmpty(sp.CustomCSS, data.CustomCSS)
 	data.FooterText = stringOrNullPreserveEmpty(sp.FooterText, data.FooterText)
 
@@ -436,6 +475,8 @@ func buildStatusPageFromModel(
 	data *StatusPageResourceModel,
 	diags *diag.Diagnostics,
 ) *statuspage.StatusPage {
+	analyticsType, analyticsID := resolveAnalyticsFields(data)
+
 	sp := &statuspage.StatusPage{
 		Slug:                  data.Slug.ValueString(),
 		Title:                 data.Title.ValueString(),
@@ -444,7 +485,9 @@ func buildStatusPageFromModel(
 		Theme:                 data.Theme.ValueString(),
 		Published:             data.Published.ValueBool(),
 		ShowTags:              data.ShowTags.ValueBool(),
-		GoogleAnalyticsID:     data.GoogleAnalyticsID.ValueString(),
+		AnalyticsType:         analyticsType,
+		AnalyticsID:           analyticsID,
+		AnalyticsScriptURL:    data.AnalyticsScriptURL.ValueString(),
 		CustomCSS:             data.CustomCSS.ValueString(),
 		FooterText:            data.FooterText.ValueString(),
 		ShowPoweredBy:         data.ShowPoweredBy.ValueBool(),
@@ -627,4 +670,15 @@ func (*StatusPageResource) populatePublicGroup(
 			}
 		}
 	}
+}
+
+// resolveAnalyticsFields returns the analytics type and ID from the model,
+// mapping the deprecated google_analytics_id to the new fields if set.
+func resolveAnalyticsFields(data *StatusPageResourceModel) (analyticsType *string, analyticsID string) {
+	if !data.GoogleAnalyticsID.IsNull() && !data.GoogleAnalyticsID.IsUnknown() {
+		googleType := statuspage.AnalyticsTypeGoogle()
+		return &googleType, data.GoogleAnalyticsID.ValueString()
+	}
+
+	return strToPtr(data.AnalyticsType), data.AnalyticsID.ValueString()
 }

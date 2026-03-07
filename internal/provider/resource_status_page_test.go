@@ -219,6 +219,76 @@ resource "uptimekuma_status_page" "test" {
 `, slug, title, description)
 }
 
+func TestAccStatusPageResourceWithAnalytics(t *testing.T) {
+	slug := acctest.RandomWithPrefix("test-analytics")
+	title := "Analytics Status Page"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccStatusPageResourceConfigWithAnalytics(slug, title),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_type"),
+						knownvalue.StringExact("google"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_id"),
+						knownvalue.StringExact("G-TEST12345"),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccStatusPageResourceConfigWithAnalytics(slug string, title string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_status_page" "test" {
+  slug           = %[1]q
+  title          = %[2]q
+  analytics_type = "google"
+  analytics_id   = "G-TEST12345"
+}
+`, slug, title)
+}
+
+func TestAccStatusPageResourceWithDeprecatedGoogleAnalyticsID(t *testing.T) {
+	slug := acctest.RandomWithPrefix("test-ga-compat")
+	title := "GA Compat Status Page"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccStatusPageResourceConfigWithDeprecatedGA(slug, title),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("google_analytics_id"),
+						knownvalue.StringExact("UA-123456-1"),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccStatusPageResourceConfigWithDeprecatedGA(slug string, title string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_status_page" "test" {
+  slug                = %[1]q
+  title               = %[2]q
+  google_analytics_id = "UA-123456-1"
+}
+`, slug, title)
+}
+
 func TestAccStatusPageResourceWithIcon(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-icon")
 	title := "Status Page with Icon"
