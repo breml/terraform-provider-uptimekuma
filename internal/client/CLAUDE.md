@@ -17,6 +17,19 @@ pooling support.
 - [client_test.go](client_test.go) - Client tests
 - [pool_test.go](pool_test.go) - Pool tests
 
+## Key Constants
+
+### DefaultConnectTimeout
+
+```go
+const DefaultConnectTimeout = 30 * time.Second
+```
+
+Applied automatically when no explicit `ConnectTimeout` is configured. This prevents the provider from hanging
+indefinitely when Uptime Kuma is unreachable. The `effectiveTimeout` helper resolves the configured value or falls back
+to `DefaultConnectTimeout`. The resolved timeout is used for both per-attempt timeouts (via `kuma.WithConnectTimeout`)
+and the overall retry deadline timer.
+
 ## Key Types
 
 ### Config
@@ -25,11 +38,13 @@ Configuration for Uptime Kuma client creation.
 
 ```go
 type Config struct {
-    Endpoint             string  // Required: Uptime Kuma server URL
-    Username             string  // Optional: Login username
-    Password             string  // Optional: Login password
-    LogLevel             int     // Optional: Socket.IO logging level
-    EnableConnectionPool bool    // For acceptance tests, enables pooling
+    Endpoint             string         // Required: Uptime Kuma server URL
+    Username             string         // Optional: Login username
+    Password             string         // Optional: Login password
+    LogLevel             int            // Optional: Socket.IO logging level
+    EnableConnectionPool bool           // For acceptance tests, enables pooling
+    ConnectTimeout       time.Duration  // Per-attempt + overall timeout (default: 30s)
+    MaxRetries           int            // Max retry attempts (default: 5)
 }
 ```
 
@@ -38,6 +53,7 @@ type Config struct {
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
+- `ConnectTimeout` defaults to `DefaultConnectTimeout` (30s) when zero; used for both per-attempt and overall deadline
 
 ### Pool
 

@@ -11,6 +11,19 @@ import (
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
+// DefaultConnectTimeout is applied when no explicit ConnectTimeout is configured.
+// This prevents the provider from hanging indefinitely when Uptime Kuma is unreachable.
+const DefaultConnectTimeout = 30 * time.Second
+
+// effectiveTimeout returns the configured timeout, or DefaultConnectTimeout if zero.
+func effectiveTimeout(configured time.Duration) time.Duration {
+	if configured != 0 {
+		return configured
+	}
+
+	return DefaultConnectTimeout
+}
+
 // Config holds the configuration for the Uptime Kuma client.
 type Config struct {
 	Endpoint             string
@@ -38,21 +51,25 @@ func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 }
 
 // newClientDirect creates a new direct connection with retry logic.
-// When ConnectTimeout is configured, it bounds both each individual
-// connection attempt (via kuma.WithConnectTimeout) and the overall
-// retry process (via an independent timer). The timer is kept separate
-// from the context passed to kuma.New, because the socket.io client
-// stores that context for the lifetime of the connection.
+// It resolves the effective timeout (using DefaultConnectTimeout when
+// none is configured) and bounds both each individual connection attempt
+// (via kuma.WithConnectTimeout) and the overall retry process (via an
+// independent timer). The timer is kept separate from the context passed
+// to kuma.New, because the socket.io client stores that context for the
+// lifetime of the connection.
 func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) {
+	timeout := effectiveTimeout(config.ConnectTimeout)
+
+	// Shallow copy so we don't mutate the caller's config (important for pool config matching).
+	resolved := *config
+	resolved.ConnectTimeout = timeout
+
 	opts := []kuma.Option{
 		kuma.WithLogLevel(config.LogLevel),
+		kuma.WithConnectTimeout(timeout),
 	}
 
-	if config.ConnectTimeout != 0 {
-		opts = append(opts, kuma.WithConnectTimeout(config.ConnectTimeout))
-	}
-
-	return newClientDirectWithRetry(ctx, config, opts)
+	return newClientDirectWithRetry(ctx, &resolved, opts)
 }
 
 // newClientDirectWithRetry attempts to connect to Uptime Kuma with
