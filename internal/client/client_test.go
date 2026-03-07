@@ -45,6 +45,22 @@ func startDeadEndListener(t *testing.T) string {
 	return fmt.Sprintf("http://%s", ln.Addr().String())
 }
 
+func TestEffectiveTimeout_Default(t *testing.T) {
+	got := effectiveTimeout(0)
+	if got != DefaultConnectTimeout {
+		t.Errorf("expected %s, got %s", DefaultConnectTimeout, got)
+	}
+}
+
+func TestEffectiveTimeout_Explicit(t *testing.T) {
+	explicit := 10 * time.Second
+
+	got := effectiveTimeout(explicit)
+	if got != explicit {
+		t.Errorf("expected %s, got %s", explicit, got)
+	}
+}
+
 func TestNew_EmptyEndpoint(t *testing.T) {
 	config := &Config{
 		Endpoint: "",
