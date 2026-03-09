@@ -11,17 +11,31 @@ import (
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
-// DefaultConnectTimeout is applied when no explicit ConnectTimeout is configured.
+// defaultConnectTimeout is applied when no explicit ConnectTimeout is configured.
 // This prevents the provider from hanging indefinitely when Uptime Kuma is unreachable.
-const DefaultConnectTimeout = 30 * time.Second
+const defaultConnectTimeout = 30 * time.Second
 
-// effectiveTimeout returns the configured timeout, or DefaultConnectTimeout if zero.
+// defaultMaxRetries is applied when no explicit MaxRetries is configured.
+const defaultMaxRetries = 5
+
+// effectiveTimeout returns the configured timeout, or defaultConnectTimeout if
+// the configured value is zero or negative.
 func effectiveTimeout(configured time.Duration) time.Duration {
-	if configured != 0 {
+	if configured > 0 {
 		return configured
 	}
 
-	return DefaultConnectTimeout
+	return defaultConnectTimeout
+}
+
+// effectiveMaxRetries returns the configured max retries, or defaultMaxRetries if
+// the configured value is zero or negative.
+func effectiveMaxRetries(configured int) int {
+	if configured > 0 {
+		return configured
+	}
+
+	return defaultMaxRetries
 }
 
 // Config holds the configuration for the Uptime Kuma client.
@@ -51,12 +65,13 @@ func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 }
 
 // newClientDirect creates a new direct connection with retry logic.
-// It resolves the effective timeout (using DefaultConnectTimeout when
-// none is configured) and bounds both each individual connection attempt
-// (via kuma.WithConnectTimeout) and the overall retry process (via an
-// independent timer). The timer is kept separate from the context passed
-// to kuma.New, because the socket.io client stores that context for the
-// lifetime of the connection.
+// It resolves the effective timeout (using defaultConnectTimeout when
+// none is configured) and bounds each individual connection attempt
+// via kuma.WithConnectTimeout. The overall retry process is bounded
+// by a separate timer set to ConnectTimeout * (MaxRetries + 1).
+// The timer is kept separate from the context passed to kuma.New,
+// because the socket.io client stores that context for the lifetime
+// of the connection.
 func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) {
 	timeout := effectiveTimeout(config.ConnectTimeout)
 
@@ -73,33 +88,27 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 }
 
 // newClientDirectWithRetry attempts to connect to Uptime Kuma with
-// exponential backoff retry logic. When ConnectTimeout is configured,
-// the retry loop is bounded by a separate timer so the provider does
-// not hang indefinitely. The timer is intentionally not derived from
-// ctx, because ctx is passed into the socket.io client and controls
-// the connection lifetime — adding a deadline to it would kill the
+// exponential backoff retry logic. The retry loop is bounded by a
+// separate timer set to ConnectTimeout * (MaxRetries + 1), giving
+// each attempt a full ConnectTimeout window before the overall
+// deadline fires. The timer is intentionally not derived from ctx,
+// because ctx is passed into the socket.io client and controls the
+// connection lifetime — adding a deadline to it would kill the
 // connection after the timeout expires.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,
 	opts []kuma.Option,
 ) (*kuma.Client, error) {
-	maxRetries := config.MaxRetries
-	if maxRetries == 0 {
-		maxRetries = 5
-	}
+	maxRetries := effectiveMaxRetries(config.MaxRetries)
 
-	// Use a separate timer to bound the overall retry process.
-	// A nil channel blocks forever in select, which is the correct
-	// behaviour when no timeout is configured.
-	var deadline <-chan time.Time
+	// Overall deadline = ConnectTimeout * (MaxRetries + 1), so each
+	// attempt gets a full ConnectTimeout window before the deadline fires.
+	overallDeadline := config.ConnectTimeout * time.Duration(maxRetries+1)
+	timer := time.NewTimer(overallDeadline)
+	defer timer.Stop()
 
-	if config.ConnectTimeout != 0 {
-		timer := time.NewTimer(config.ConnectTimeout)
-		defer timer.Stop()
-
-		deadline = timer.C
-	}
+	deadline := timer.C
 
 	baseDelay := 500 * time.Millisecond
 

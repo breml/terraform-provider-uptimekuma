@@ -442,6 +442,25 @@ data "uptimekuma_tag" "test" {}
 	})
 }
 
+func TestAccProviderNegativeTimeout(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "uptimekuma" {
+  endpoint = "http://localhost:3001"
+  timeout  = "-5s"
+}
+
+data "uptimekuma_tag" "test" {}
+`,
+				ExpectError: regexp.MustCompile(`timeout must be non-negative`),
+			},
+		},
+	})
+}
+
 func TestAccProviderEmptyTimeout(t *testing.T) {
 	configEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
 	if configEndpoint == "" {

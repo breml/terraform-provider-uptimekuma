@@ -141,6 +141,15 @@ func (*UptimeKumaProvider) Configure(
 
 			return
 		}
+
+		if connectTimeout < 0 {
+			resp.Diagnostics.AddError(
+				"invalid timeout",
+				fmt.Sprintf("timeout must be non-negative, got %s", connectTimeout),
+			)
+
+			return
+		}
 	}
 
 	maxRetries := 5

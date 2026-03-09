@@ -51,12 +51,12 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 					" requested endpoint=%q username=%q timeout=%s max_retries=%d",
 				p.config.Endpoint,
 				p.config.Username,
-				p.config.ConnectTimeout,
-				p.config.MaxRetries,
+				effectiveTimeout(p.config.ConnectTimeout),
+				effectiveMaxRetries(p.config.MaxRetries),
 				config.Endpoint,
 				config.Username,
-				config.ConnectTimeout,
-				config.MaxRetries,
+				effectiveTimeout(config.ConnectTimeout),
+				effectiveMaxRetries(config.MaxRetries),
 			)
 		}
 
@@ -133,8 +133,8 @@ func (p *Pool) configMatches(config *Config) bool {
 	return p.config.Endpoint == config.Endpoint &&
 		p.config.Username == config.Username &&
 		p.config.Password == config.Password &&
-		p.config.ConnectTimeout == config.ConnectTimeout &&
-		p.config.MaxRetries == config.MaxRetries
+		effectiveTimeout(p.config.ConnectTimeout) == effectiveTimeout(config.ConnectTimeout) &&
+		effectiveMaxRetries(p.config.MaxRetries) == effectiveMaxRetries(config.MaxRetries)
 }
 
 // CloseGlobalPool closes the global connection pool.

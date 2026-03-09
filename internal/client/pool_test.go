@@ -4,6 +4,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
@@ -113,6 +114,52 @@ func TestPool_ConfigMatches(t *testing.T) {
 				t.Errorf("expected configMatches to return %v, got %v", tc.expected, result)
 			}
 		})
+	}
+}
+
+func TestPool_ConfigMatches_EffectiveTimeout(t *testing.T) {
+	pool := &Pool{
+		config: &Config{
+			Endpoint:       "http://localhost:3001",
+			Username:       "admin",
+			Password:       "secret",
+			ConnectTimeout: 0, // resolves to defaultConnectTimeout (30s)
+		},
+	}
+
+	// Explicitly passing 30s should match zero (both resolve to 30s).
+	config := &Config{
+		Endpoint:       "http://localhost:3001",
+		Username:       "admin",
+		Password:       "secret",
+		ConnectTimeout: 30 * time.Second,
+	}
+
+	if !pool.configMatches(config) {
+		t.Error("expected configMatches to return true for ConnectTimeout=0 vs 30s")
+	}
+}
+
+func TestPool_ConfigMatches_EffectiveMaxRetries(t *testing.T) {
+	pool := &Pool{
+		config: &Config{
+			Endpoint:   "http://localhost:3001",
+			Username:   "admin",
+			Password:   "secret",
+			MaxRetries: 0, // resolves to defaultMaxRetries (5)
+		},
+	}
+
+	// Explicitly passing 5 should match zero (both resolve to 5).
+	config := &Config{
+		Endpoint:   "http://localhost:3001",
+		Username:   "admin",
+		Password:   "secret",
+		MaxRetries: 5,
+	}
+
+	if !pool.configMatches(config) {
+		t.Error("expected configMatches to return true for MaxRetries=0 vs 5")
 	}
 }
 

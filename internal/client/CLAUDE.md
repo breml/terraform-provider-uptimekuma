@@ -19,16 +19,17 @@ pooling support.
 
 ## Key Constants
 
-### DefaultConnectTimeout
+### defaultConnectTimeout
 
 ```go
-const DefaultConnectTimeout = 30 * time.Second
+const defaultConnectTimeout = 30 * time.Second
 ```
 
-Applied automatically when no explicit `ConnectTimeout` is configured. This prevents the provider from hanging
-indefinitely when Uptime Kuma is unreachable. The `effectiveTimeout` helper resolves the configured value or falls back
-to `DefaultConnectTimeout`. The resolved timeout is used for both per-attempt timeouts (via `kuma.WithConnectTimeout`)
-and the overall retry deadline timer.
+Applied automatically when no explicit `ConnectTimeout` is configured (or when a negative value is provided). This
+prevents the provider from hanging indefinitely when Uptime Kuma is unreachable. The `effectiveTimeout` helper resolves
+the configured value or falls back to `defaultConnectTimeout`. The resolved timeout is used for per-attempt timeouts
+(via `kuma.WithConnectTimeout`), and the overall retry deadline is computed as
+`ConnectTimeout * (MaxRetries + 1)` — giving each attempt a full timeout window.
 
 ## Key Types
 
@@ -53,7 +54,7 @@ type Config struct {
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
-- `ConnectTimeout` defaults to `DefaultConnectTimeout` (30s) when zero; used for both per-attempt and overall deadline
+- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; per-attempt timeout uses this value, overall deadline is `ConnectTimeout * (MaxRetries + 1)`
 
 ### Pool
 
