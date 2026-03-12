@@ -71,6 +71,7 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 			},
 			"timeout": schema.StringAttribute{
 				MarkdownDescription: "Connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
+					"Defaults to `30s` if not specified. " +
 					"Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.",
 				Optional: true,
 			},
@@ -125,35 +126,8 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
-	var connectTimeout time.Duration
-
-	timeoutStr := strings.TrimSpace(data.Timeout.ValueString())
-	if !data.Timeout.IsNull() && timeoutStr != "" {
-		var parseErr error
-
-		connectTimeout, parseErr = time.ParseDuration(timeoutStr)
-		if parseErr != nil {
-			resp.Diagnostics.AddError(
-				"invalid timeout",
-				fmt.Sprintf("failed to parse timeout %q: %s", data.Timeout.ValueString(), parseErr.Error()),
-			)
-
-			return
-		}
-	}
-
-	maxRetries := 5
-
-	if !data.MaxRetries.IsNull() {
-		maxRetries = int(data.MaxRetries.ValueInt64())
-	}
-
-	if maxRetries < 0 {
-		resp.Diagnostics.AddError(
-			"invalid max_retries",
-			fmt.Sprintf("max_retries must be non-negative, got %d", maxRetries),
-		)
-
+	connectTimeout, maxRetries := parseClientOptions(&data, resp)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -184,6 +158,53 @@ func (*UptimeKumaProvider) Configure(
 
 	resp.DataSourceData = pd
 	resp.ResourceData = pd
+}
+
+// parseClientOptions extracts and validates timeout and max_retries from the provider model.
+func parseClientOptions(
+	data *UptimeKumaProviderModel,
+	resp *provider.ConfigureResponse,
+) (connectTimeout time.Duration, maxRetries int) {
+	timeoutStr := strings.TrimSpace(data.Timeout.ValueString())
+	if !data.Timeout.IsNull() && timeoutStr != "" {
+		var parseErr error
+
+		connectTimeout, parseErr = time.ParseDuration(timeoutStr)
+		if parseErr != nil {
+			resp.Diagnostics.AddError(
+				"invalid timeout",
+				fmt.Sprintf("failed to parse timeout %q: %s", data.Timeout.ValueString(), parseErr.Error()),
+			)
+
+			return 0, 0
+		}
+
+		if connectTimeout < 0 {
+			resp.Diagnostics.AddError(
+				"invalid timeout",
+				fmt.Sprintf("timeout must be non-negative, got %s", connectTimeout),
+			)
+
+			return 0, 0
+		}
+	}
+
+	maxRetries = 5
+
+	if !data.MaxRetries.IsNull() {
+		maxRetries = int(data.MaxRetries.ValueInt64())
+	}
+
+	if maxRetries < 0 {
+		resp.Diagnostics.AddError(
+			"invalid max_retries",
+			fmt.Sprintf("max_retries must be non-negative, got %d", maxRetries),
+		)
+
+		return 0, 0
+	}
+
+	return connectTimeout, maxRetries
 }
 
 // applyEnvironmentDefaults applies environment variable defaults to the provider model.

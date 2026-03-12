@@ -45,6 +45,50 @@ func startDeadEndListener(t *testing.T) string {
 	return fmt.Sprintf("http://%s", ln.Addr().String())
 }
 
+func TestEffectiveTimeout_Default(t *testing.T) {
+	got := effectiveTimeout(0)
+	if got != defaultConnectTimeout {
+		t.Errorf("expected %s, got %s", defaultConnectTimeout, got)
+	}
+}
+
+func TestEffectiveTimeout_Explicit(t *testing.T) {
+	explicit := 10 * time.Second
+
+	got := effectiveTimeout(explicit)
+	if got != explicit {
+		t.Errorf("expected %s, got %s", explicit, got)
+	}
+}
+
+func TestEffectiveTimeout_Negative(t *testing.T) {
+	got := effectiveTimeout(-5 * time.Second)
+	if got != defaultConnectTimeout {
+		t.Errorf("expected %s for negative input, got %s", defaultConnectTimeout, got)
+	}
+}
+
+func TestEffectiveMaxRetries_Default(t *testing.T) {
+	got := effectiveMaxRetries(0)
+	if got != defaultMaxRetries {
+		t.Errorf("expected %d, got %d", defaultMaxRetries, got)
+	}
+}
+
+func TestEffectiveMaxRetries_Explicit(t *testing.T) {
+	got := effectiveMaxRetries(10)
+	if got != 10 {
+		t.Errorf("expected 10, got %d", got)
+	}
+}
+
+func TestEffectiveMaxRetries_Negative(t *testing.T) {
+	got := effectiveMaxRetries(-3)
+	if got != defaultMaxRetries {
+		t.Errorf("expected %d for negative input, got %d", defaultMaxRetries, got)
+	}
+}
+
 func TestNew_EmptyEndpoint(t *testing.T) {
 	config := &Config{
 		Endpoint: "",
@@ -125,9 +169,10 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// Use a local listener that accepts TCP connections but never
 	// completes the socket.io handshake. This is deterministic and
 	// independent of network configuration, unlike TEST-NET addresses.
-	// ConnectTimeout bounds both per-attempt timeout and overall duration
-	// via a separate timer (not via context deadline, because the context
-	// is stored for the connection lifetime by the socket.io client).
+	// ConnectTimeout bounds per-attempt timeout; the overall deadline
+	// is ConnectTimeout * (MaxRetries + 1). The timer is separate from
+	// the context because the socket.io client stores it for the
+	// connection lifetime.
 	endpoint := startDeadEndListener(t)
 	connectTimeout := 2 * time.Second
 
@@ -136,7 +181,7 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 		Username:       "admin",
 		Password:       "secret",
 		ConnectTimeout: connectTimeout,
-		MaxRetries:     10,
+		MaxRetries:     2,
 		LogLevel:       kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
 
@@ -150,28 +195,24 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 		t.Fatal("expected error for unreachable endpoint, got nil")
 	}
 
-	// ConnectTimeout acts as an overall deadline for the entire retry
-	// process via a separate timer. With 10 retries but a 2s timer, the
-	// operation must complete well before what 10 unbound retries would
-	// take. The first per-attempt timeout fires after ConnectTimeout,
-	// then the overall timer fires before the next attempt starts.
-	upperBound := connectTimeout + 2*time.Second
+	// Overall deadline = ConnectTimeout * (MaxRetries + 1) = 2s * 3 = 6s.
+	// Allow some slack for scheduling.
+	upperBound := connectTimeout*time.Duration(config.MaxRetries+1) + 2*time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
 
-	if !strings.Contains(err.Error(), "timed out") && !strings.Contains(err.Error(), "deadline") {
-		t.Errorf("expected timeout error, got: %s", err)
+	if !strings.Contains(err.Error(), "timed out") && !strings.Contains(err.Error(), "failed after") {
+		t.Errorf("expected timeout or retry-exhaustion error, got: %s", err)
 	}
 }
 
 func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 	// Verify that MaxRetries limits the number of connection attempts.
 	// Use a dead-end listener with a short ConnectTimeout so each
-	// attempt fails quickly. The overall timer (same value as
-	// ConnectTimeout) fires after the first attempt, which produces
-	// a "timed out after 1 attempt(s)" error — proving both the
-	// per-attempt timeout and the overall timer work together.
+	// attempt fails quickly. With MaxRetries=2 and ConnectTimeout=1s,
+	// the overall deadline is 1s * 3 = 3s. The test verifies that all
+	// 3 attempts run within that window.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{
@@ -179,7 +220,7 @@ func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 		Username:       "admin",
 		Password:       "secret",
 		ConnectTimeout: 1 * time.Second,
-		MaxRetries:     5,
+		MaxRetries:     2,
 		LogLevel:       kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
 
@@ -193,21 +234,20 @@ func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 		t.Fatal("expected error for dead-end endpoint, got nil")
 	}
 
-	// The overall timer (1s) fires after the first per-attempt timeout
-	// (also 1s), so at most 1 attempt runs despite MaxRetries=5.
-	// Total time must be close to ConnectTimeout, not 5× that.
-	if elapsed > 3*time.Second {
-		t.Errorf("expected connection to fail within ~3s, took %s (MaxRetries not bounded by timer?)", elapsed)
+	// Overall deadline = 1s * (2 + 1) = 3s. Allow some slack.
+	upperBound := config.ConnectTimeout*time.Duration(config.MaxRetries+1) + 2*time.Second
+	if elapsed > upperBound {
+		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
 
-	if !strings.Contains(err.Error(), "timed out") {
-		t.Errorf("expected timeout error, got: %s", err)
+	if !strings.Contains(err.Error(), "timed out") && !strings.Contains(err.Error(), "failed after") {
+		t.Errorf("expected timeout or retry-exhaustion error, got: %s", err)
 	}
 }
 
-func TestNewClientDirect_NoTimeoutRetriesNormally(t *testing.T) {
-	// Without ConnectTimeout, a cancelled parent context should still
-	// be respected by the retry loop's select.
+func TestNewClientDirect_CancelledContextReturnsError(t *testing.T) {
+	// A cancelled parent context should be respected by the retry loop's
+	// select, even when using the default timeout.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{

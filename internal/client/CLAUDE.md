@@ -17,6 +17,20 @@ pooling support.
 - [client_test.go](client_test.go) - Client tests
 - [pool_test.go](pool_test.go) - Pool tests
 
+## Key Constants
+
+### defaultConnectTimeout
+
+```go
+const defaultConnectTimeout = 30 * time.Second
+```
+
+Applied automatically when no explicit `ConnectTimeout` is configured (or when a negative value is provided). This
+prevents the provider from hanging indefinitely when Uptime Kuma is unreachable. The `effectiveTimeout` helper resolves
+the configured value or falls back to `defaultConnectTimeout`. The resolved timeout is used for per-attempt timeouts
+(via `kuma.WithConnectTimeout`), and the overall retry deadline is computed as
+`ConnectTimeout * (MaxRetries + 1)` — giving each attempt a full timeout window.
+
 ## Key Types
 
 ### Config
@@ -25,11 +39,13 @@ Configuration for Uptime Kuma client creation.
 
 ```go
 type Config struct {
-    Endpoint             string  // Required: Uptime Kuma server URL
-    Username             string  // Optional: Login username
-    Password             string  // Optional: Login password
-    LogLevel             int     // Optional: Socket.IO logging level
-    EnableConnectionPool bool    // For acceptance tests, enables pooling
+    Endpoint             string         // Required: Uptime Kuma server URL
+    Username             string         // Optional: Login username
+    Password             string         // Optional: Login password
+    LogLevel             int            // Optional: Socket.IO logging level
+    EnableConnectionPool bool           // For acceptance tests, enables pooling
+    ConnectTimeout       time.Duration  // Per-attempt + overall timeout (default: 30s)
+    MaxRetries           int            // Max retry attempts (default: 5)
 }
 ```
 
@@ -38,6 +54,8 @@ type Config struct {
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
+- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; per-attempt timeout uses this value,
+  overall deadline is `ConnectTimeout * (MaxRetries + 1)`
 
 ### Pool
 
