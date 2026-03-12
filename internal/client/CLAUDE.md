@@ -54,7 +54,8 @@ type Config struct {
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
-- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; per-attempt timeout uses this value, overall deadline is `ConnectTimeout * (MaxRetries + 1)`
+- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; per-attempt timeout uses this value,
+  overall deadline is `ConnectTimeout * (MaxRetries + 1)`
 
 ### Pool
 
