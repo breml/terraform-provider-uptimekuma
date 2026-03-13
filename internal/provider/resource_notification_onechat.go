@@ -177,6 +177,7 @@ func (r *NotificationOneChatResource) Read(ctx context.Context, req resource.Rea
 	data.IsDefault = types.BoolValue(onechat.IsDefault)
 	data.ApplyExisting = types.BoolValue(onechat.ApplyExisting)
 
+	data.AccessToken = types.StringValue(onechat.AccessToken)
 	data.ReceiverID = types.StringValue(onechat.ReceiverID)
 	data.BotID = types.StringValue(onechat.BotID)
 
