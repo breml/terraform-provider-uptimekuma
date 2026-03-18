@@ -1,8 +1,10 @@
 package provider
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -180,6 +182,16 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 			},
 		})
 	}
+
+	// Sort tags by TagID (and Value as tiebreaker) to ensure deterministic order,
+	// since the Uptime Kuma API returns tags in non-deterministic order.
+	slices.SortFunc(monitorTags, func(a tag.MonitorTag, b tag.MonitorTag) int {
+		if c := cmp.Compare(a.TagID, b.TagID); c != 0 {
+			return c
+		}
+
+		return cmp.Compare(a.Value, b.Value)
+	})
 
 	// Convert API tag models to Terraform models.
 	tagModels := make([]MonitorTagModel, len(monitorTags))
