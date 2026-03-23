@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -10,6 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
+
+// pushTokenRegex matches a 32-character alphanumeric push token.
+var pushTokenRegex = regexp.MustCompile(`^[A-Za-z0-9]{32}$`)
 
 func TestAccMonitorPushResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPushMonitor")
@@ -41,7 +45,7 @@ func TestAccMonitorPushResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_push.test",
 						tfjsonpath.New("push_token"),
-						knownvalue.NotNull(),
+						knownvalue.StringRegexp(pushTokenRegex),
 					),
 				},
 			},
@@ -66,7 +70,7 @@ func TestAccMonitorPushResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_push.test",
 						tfjsonpath.New("push_token"),
-						knownvalue.NotNull(),
+						knownvalue.StringRegexp(pushTokenRegex),
 					),
 				},
 			},
@@ -138,7 +142,7 @@ func TestAccMonitorPushResourceWithOptionalFields(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_push.test",
 						tfjsonpath.New("push_token"),
-						knownvalue.NotNull(),
+						knownvalue.StringRegexp(pushTokenRegex),
 					),
 				},
 			},
@@ -190,7 +194,7 @@ func TestAccMonitorPushResourceWithParent(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_push.test",
 						tfjsonpath.New("push_token"),
-						knownvalue.NotNull(),
+						knownvalue.StringRegexp(pushTokenRegex),
 					),
 				},
 			},
