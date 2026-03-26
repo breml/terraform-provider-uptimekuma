@@ -169,10 +169,9 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// Use a local listener that accepts TCP connections but never
 	// completes the socket.io handshake. This is deterministic and
 	// independent of network configuration, unlike TEST-NET addresses.
-	// ConnectTimeout bounds per-attempt timeout; the overall deadline
-	// is ConnectTimeout * (MaxRetries + 1). The timer is separate from
-	// the context because the socket.io client stores it for the
-	// connection lifetime.
+	// ConnectTimeout is the total connection budget — all retries must
+	// complete within this window. Each attempt's per-attempt timeout
+	// is capped to the remaining budget.
 	endpoint := startDeadEndListener(t)
 	connectTimeout := 2 * time.Second
 
@@ -195,9 +194,8 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 		t.Fatal("expected error for unreachable endpoint, got nil")
 	}
 
-	// Overall deadline = ConnectTimeout * (MaxRetries + 1) = 2s * 3 = 6s.
-	// Allow some slack for scheduling.
-	upperBound := connectTimeout*time.Duration(config.MaxRetries+1) + 2*time.Second
+	// Overall deadline = ConnectTimeout = 2s. Allow some slack for scheduling.
+	upperBound := connectTimeout + 2*time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
@@ -209,10 +207,10 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 
 func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 	// Verify that MaxRetries limits the number of connection attempts.
-	// Use a dead-end listener with a short ConnectTimeout so each
-	// attempt fails quickly. With MaxRetries=2 and ConnectTimeout=1s,
-	// the overall deadline is 1s * 3 = 3s. The test verifies that all
-	// 3 attempts run within that window.
+	// Use a dead-end listener with a short ConnectTimeout. The total
+	// connection budget is ConnectTimeout = 1s. Since the dead-end
+	// listener hangs, the first attempt consumes the entire budget
+	// and the connection times out within the configured window.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{
@@ -234,8 +232,8 @@ func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 		t.Fatal("expected error for dead-end endpoint, got nil")
 	}
 
-	// Overall deadline = 1s * (2 + 1) = 3s. Allow some slack.
-	upperBound := config.ConnectTimeout*time.Duration(config.MaxRetries+1) + 2*time.Second
+	// Overall deadline = ConnectTimeout = 1s. Allow some slack.
+	upperBound := config.ConnectTimeout + 2*time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
@@ -246,8 +244,8 @@ func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 }
 
 func TestNewClientDirect_CancelledContextReturnsError(t *testing.T) {
-	// A cancelled parent context should be respected by the retry loop's
-	// select, even when using the default timeout.
+	// A cancelled parent context should cause the connection to fail
+	// immediately, even when using the default timeout.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{

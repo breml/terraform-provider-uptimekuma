@@ -66,12 +66,10 @@ func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 
 // newClientDirect creates a new direct connection with retry logic.
 // It resolves the effective timeout (using defaultConnectTimeout when
-// none is configured) and bounds each individual connection attempt
-// via kuma.WithConnectTimeout. The overall retry process is bounded
-// by a separate timer set to ConnectTimeout * (MaxRetries + 1).
-// The timer is kept separate from the context passed to kuma.New,
-// because the socket.io client stores that context for the lifetime
-// of the connection.
+// none is configured) and uses it as the total connection budget.
+// Retries happen within this budget, with each attempt's per-attempt
+// timeout capped to the remaining time. This ensures the overall
+// connection process never exceeds the configured timeout.
 func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) {
 	timeout := effectiveTimeout(config.ConnectTimeout)
 
@@ -79,36 +77,24 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 	resolved := *config
 	resolved.ConnectTimeout = timeout
 
-	opts := []kuma.Option{
-		kuma.WithLogLevel(config.LogLevel),
-		kuma.WithConnectTimeout(timeout),
-	}
-
-	return newClientDirectWithRetry(ctx, &resolved, opts)
+	return newClientDirectWithRetry(ctx, &resolved)
 }
 
 // newClientDirectWithRetry attempts to connect to Uptime Kuma with
-// exponential backoff retry logic. The retry loop is bounded by a
-// separate timer set to ConnectTimeout * (MaxRetries + 1), giving
-// each attempt a full ConnectTimeout window before the overall
-// deadline fires. The timer is intentionally not derived from ctx,
-// because ctx is passed into the socket.io client and controls the
-// connection lifetime — adding a deadline to it would kill the
-// connection after the timeout expires.
+// exponential backoff retry logic. The total connection budget is
+// ConnectTimeout — retries happen within this window. Each attempt's
+// per-attempt timeout is capped to the remaining budget, so the
+// overall process never exceeds the configured timeout.
+// The deadline is intentionally not derived from ctx, because ctx is
+// passed into the socket.io client and controls the connection
+// lifetime — adding a deadline to it would kill the connection after
+// the timeout expires.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,
-	opts []kuma.Option,
 ) (*kuma.Client, error) {
 	maxRetries := effectiveMaxRetries(config.MaxRetries)
-
-	// Overall deadline = ConnectTimeout * (MaxRetries + 1), so each
-	// attempt gets a full ConnectTimeout window before the deadline fires.
-	overallDeadline := config.ConnectTimeout * time.Duration(maxRetries+1)
-	timer := time.NewTimer(overallDeadline)
-	defer timer.Stop()
-
-	deadline := timer.C
+	deadline := time.Now().Add(config.ConnectTimeout)
 
 	baseDelay := 500 * time.Millisecond
 
@@ -116,12 +102,15 @@ func newClientDirectWithRetry(
 	var err error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		// Check overall deadline before each attempt.
-		select {
-		case <-deadline:
+		// Cap per-attempt timeout to remaining budget.
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
 			return nil, newTimeoutError(attempt, err)
+		}
 
-		default:
+		opts := []kuma.Option{
+			kuma.WithLogLevel(config.LogLevel),
+			kuma.WithConnectTimeout(remaining),
 		}
 
 		kumaClient, err = kuma.New(
@@ -139,18 +128,20 @@ func newClientDirectWithRetry(
 			break
 		}
 
-		// Exponential backoff with jitter.
+		// Exponential backoff with jitter, capped to remaining budget.
 		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
 		//nolint:gosec // Not for cryptographic use, only for jitter in backoff.
 		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
 		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
+		sleepDuration = min(sleepDuration, time.Until(deadline))
+
+		if sleepDuration <= 0 {
+			return nil, newTimeoutError(attempt+1, err)
+		}
 
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("connection cancelled: %w", ctx.Err())
-
-		case <-deadline:
-			return nil, newTimeoutError(attempt+1, err)
 
 		case <-time.After(sleepDuration):
 			// Continue retry.

@@ -70,7 +70,8 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 				Sensitive:           true,
 			},
 			"timeout": schema.StringAttribute{
-				MarkdownDescription: "Connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
+				MarkdownDescription: "Maximum total time allowed to establish the initial provider connection, " +
+					"including retries, as a Go duration string (e.g. `30s`, `2m`). " +
 					"Defaults to `30s` if not specified. " +
 					"Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.",
 				Optional: true,
