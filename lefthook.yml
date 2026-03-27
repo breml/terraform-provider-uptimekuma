@@ -27,6 +27,7 @@ pre-push:
   jobs:
     - name: Check go mod tidy
       run: go mod tidy && git diff --exit-code go.mod go.sum
+      stage_fixed: true
     - name: Check go generate docs
       run: cd ./tools && go generate ./... && git diff --exit-code -- '**/*_gen.go' '**/*_gen_test.go'
       stage_fixed: true
