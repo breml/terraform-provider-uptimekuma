@@ -188,11 +188,21 @@ func (r *NotificationSerwersmsResource) Read(
 	data.IsDefault = types.BoolValue(serwersms.IsDefault)
 	data.ApplyExisting = types.BoolValue(serwersms.ApplyExisting)
 
-	data.Username = types.StringValue(serwersms.Username)
-	data.Password = types.StringValue(serwersms.Password)
+	// Preserve username from state if API does not return it.
+	if serwersms.Username != "" {
+		data.Username = types.StringValue(serwersms.Username)
+	}
+
+	// Preserve password from state if API does not return it.
+	if serwersms.Password != "" {
+		data.Password = types.StringValue(serwersms.Password)
+	}
+
 	data.PhoneNumber = types.StringValue(serwersms.PhoneNumber)
 
-	if serwersms.SenderName != "" {
+	if serwersms.SenderName == "" {
+		data.SenderName = types.StringNull()
+	} else {
 		data.SenderName = types.StringValue(serwersms.SenderName)
 	}
 
