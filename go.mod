@@ -86,7 +86,7 @@ require (
 	github.com/bombsimon/wsl/v5 v5.6.0 // indirect
 	github.com/breml/bidichk v0.3.3 // indirect
 	github.com/breml/errchkjson v0.4.1 // indirect
-	github.com/breml/githooks v0.0.0-20260215200132-6ea4e262bcae // indirect
+	github.com/breml/githooks v0.0.0-20260328191633-541253a9d3bd // indirect
 	github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 // indirect
 	github.com/briandowns/spinner v1.23.2 // indirect
 	github.com/butuzov/ireturn v0.4.0 // indirect
@@ -137,8 +137,8 @@ require (
 	github.com/ghostiam/protogetter v0.3.20 // indirect
 	github.com/go-critic/go-critic v0.14.3 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-git/go-billy/v5 v5.6.2 // indirect
-	github.com/go-git/go-git/v5 v5.16.5 // indirect
+	github.com/go-git/go-billy/v5 v5.8.0 // indirect
+	github.com/go-git/go-git/v5 v5.17.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
