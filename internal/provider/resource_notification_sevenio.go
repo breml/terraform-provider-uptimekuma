@@ -181,7 +181,10 @@ func (r *NotificationSevenioResource) Read(
 	data.IsDefault = types.BoolValue(sevenio.IsDefault)
 	data.ApplyExisting = types.BoolValue(sevenio.ApplyExisting)
 
-	data.APIKey = types.StringValue(sevenio.APIKey)
+	if sevenio.APIKey != "" {
+		data.APIKey = types.StringValue(sevenio.APIKey)
+	}
+
 	data.Sender = types.StringValue(sevenio.Sender)
 	data.To = types.StringValue(sevenio.To)
 
