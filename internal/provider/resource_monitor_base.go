@@ -1,10 +1,8 @@
 package provider
 
 import (
-	"cmp"
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -42,7 +40,7 @@ type MonitorBaseModel struct {
 	UpsideDown      types.Bool   `tfsdk:"upside_down"`      // Invert status logic (down=up, up=down).
 	Active          types.Bool   `tfsdk:"active"`           // Whether the monitor is actively checking.
 	NotificationIDs types.List   `tfsdk:"notification_ids"` // List of notification channel IDs.
-	Tags            types.List   `tfsdk:"tags"`             // List of tags for organization.
+	Tags            types.Set    `tfsdk:"tags"`             // Set of tags for organization.
 }
 
 // withMonitorBaseAttributes adds common monitor schema attributes to the provided attribute map.
@@ -117,8 +115,8 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		ElementType:         types.Int64Type,
 		Optional:            true,
 	}
-	attrs["tags"] = schema.ListNestedAttribute{
-		MarkdownDescription: "List of tags assigned to this monitor",
+	attrs["tags"] = schema.SetNestedAttribute{
+		MarkdownDescription: "Set of tags assigned to this monitor",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
@@ -140,7 +138,7 @@ func handleMonitorTagsCreate(
 	ctx context.Context,
 	client *kuma.Client,
 	monitorID int64,
-	tags types.List,
+	tags types.Set,
 	diags *diag.Diagnostics,
 ) {
 	if tags.IsNull() || tags.IsUnknown() {
@@ -173,25 +171,15 @@ func handleMonitorTagsCreate(
 	}
 }
 
-func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, diags *diag.Diagnostics) types.List {
+func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, diags *diag.Diagnostics) types.Set {
 	if len(monitorTags) == 0 {
-		return types.ListNull(types.ObjectType{
+		return types.SetNull(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"tag_id": types.Int64Type,
 				"value":  types.StringType,
 			},
 		})
 	}
-
-	// Sort tags by TagID (and Value as tiebreaker) to ensure deterministic order,
-	// since the Uptime Kuma API returns tags in non-deterministic order.
-	slices.SortFunc(monitorTags, func(a tag.MonitorTag, b tag.MonitorTag) int {
-		if c := cmp.Compare(a.TagID, b.TagID); c != 0 {
-			return c
-		}
-
-		return cmp.Compare(a.Value, b.Value)
-	})
 
 	// Convert API tag models to Terraform models.
 	tagModels := make([]MonitorTagModel, len(monitorTags))
@@ -209,7 +197,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		}
 	}
 
-	tagsList, diagsLocal := types.ListValueFrom(ctx, types.ObjectType{
+	tagsSet, diagsLocal := types.SetValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"tag_id": types.Int64Type,
 			"value":  types.StringType,
@@ -217,15 +205,15 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 	}, tagModels)
 
 	diags.Append(diagsLocal...)
-	return tagsList
+	return tagsSet
 }
 
 func handleMonitorTagsUpdate(
 	ctx context.Context,
 	client *kuma.Client,
 	monitorID int64,
-	oldTags types.List,
-	newTags types.List,
+	oldTags types.Set,
+	newTags types.Set,
 	diags *diag.Diagnostics,
 ) {
 	oldMonitorTags := deserializeMonitorTags(ctx, oldTags, diags)
@@ -249,7 +237,7 @@ func handleMonitorTagsUpdate(
 	handleAddedMonitorTags(ctx, client, monitorID, oldTagMap, newTagMap, diags)
 }
 
-func deserializeMonitorTags(ctx context.Context, tags types.List, diags *diag.Diagnostics) []MonitorTagModel {
+func deserializeMonitorTags(ctx context.Context, tags types.Set, diags *diag.Diagnostics) []MonitorTagModel {
 	if tags.IsNull() || tags.IsUnknown() {
 		return []MonitorTagModel{}
 	}
