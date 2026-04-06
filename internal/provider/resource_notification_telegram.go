@@ -86,6 +86,8 @@ func (*NotificationTelegramResource) Schema(
 			"server_url": schema.StringAttribute{
 				MarkdownDescription: "Telegram server URL (optional, defaults to official Telegram API)",
 				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("https://api.telegram.org"),
 			},
 			"send_silently": schema.BoolAttribute{
 				MarkdownDescription: "Send message silently",
@@ -232,7 +234,7 @@ func (r *NotificationTelegramResource) Read(
 	if telegram.ServerURL != "" {
 		data.ServerURL = types.StringValue(telegram.ServerURL)
 	} else {
-		data.ServerURL = types.StringNull()
+		data.ServerURL = types.StringValue("https://api.telegram.org")
 	}
 
 	data.SendSilently = types.BoolValue(telegram.SendSilently)

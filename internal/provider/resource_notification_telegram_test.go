@@ -75,6 +75,11 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 						tfjsonpath.New("template_parse_mode"),
 						knownvalue.StringExact("HTML"),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telegram.test",
+						tfjsonpath.New("server_url"),
+						knownvalue.StringExact("https://api.telegram.org"),
+					),
 				},
 			},
 			{
