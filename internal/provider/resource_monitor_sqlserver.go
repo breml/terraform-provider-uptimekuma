@@ -214,7 +214,7 @@ func (r *MonitorSQLServerResource) Read(
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
-	data.Tags = handleMonitorTagsRead(ctx, sqlserverMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, sqlserverMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

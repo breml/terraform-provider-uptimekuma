@@ -225,7 +225,7 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
-	data.Tags = handleMonitorTagsRead(ctx, dnsMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, dnsMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

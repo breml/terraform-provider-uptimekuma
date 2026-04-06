@@ -443,7 +443,7 @@ func (*MonitorGrpcKeywordResource) populateModelFromMonitor(
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
-	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, diags)
+	data.Tags = handleMonitorTagsRead(ctx, grpcKeywordMonitor.Tags, data.Tags, diags)
 	// Check for configuration errors.
 	if diags.HasError() {
 		return

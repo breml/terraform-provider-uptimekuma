@@ -202,7 +202,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
-	data.Tags = handleMonitorTagsRead(ctx, pingMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, pingMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -206,7 +206,7 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
-	data.Tags = handleMonitorTagsRead(ctx, postgresMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, postgresMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

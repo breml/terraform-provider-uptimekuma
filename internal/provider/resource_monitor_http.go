@@ -295,7 +295,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 	populateHTTPMonitorBaseFieldsForHTTP(&httpMonitor, &data)
 	populateOptionalFieldsForHTTP(ctx, &httpMonitor, &data, &resp.Diagnostics)
 
-	data.Tags = handleMonitorTagsRead(ctx, httpMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, httpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

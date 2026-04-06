@@ -201,7 +201,7 @@ func (r *MonitorDockerResource) Read(ctx context.Context, req resource.ReadReque
 	populateDockerMonitorBaseFields(&dockerMonitor, &data)
 	populateOptionalFieldsForDocker(ctx, &dockerMonitor, &data, &resp.Diagnostics)
 
-	data.Tags = handleMonitorTagsRead(ctx, dockerMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, dockerMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

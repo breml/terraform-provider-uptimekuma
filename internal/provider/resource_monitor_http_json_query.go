@@ -341,7 +341,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	data.ExpectedValue = types.StringValue(httpJSONQueryMonitor.ExpectedValue)
 	data.JSONPathOperator = types.StringValue(httpJSONQueryMonitor.JSONPathOperator)
 
-	data.Tags = handleMonitorTagsRead(ctx, httpJSONQueryMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, httpJSONQueryMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

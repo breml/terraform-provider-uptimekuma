@@ -171,14 +171,24 @@ func handleMonitorTagsCreate(
 	}
 }
 
-func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, diags *diag.Diagnostics) types.Set {
+func handleMonitorTagsRead(
+	ctx context.Context,
+	monitorTags []tag.MonitorTag,
+	stateTags types.Set,
+	diags *diag.Diagnostics,
+) types.Set {
+	tagObjType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"tag_id": types.Int64Type,
+			"value":  types.StringType,
+		},
+	}
+
+	// When the API returns no tags, preserve the prior state value so that
+	// an explicit `tags = []` round-trips as an empty set while an omitted
+	// tags attribute stays null.
 	if len(monitorTags) == 0 {
-		return types.SetNull(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"tag_id": types.Int64Type,
-				"value":  types.StringType,
-			},
-		})
+		return stateTags
 	}
 
 	// Convert API tag models to Terraform models.
@@ -197,12 +207,7 @@ func handleMonitorTagsRead(ctx context.Context, monitorTags []tag.MonitorTag, di
 		}
 	}
 
-	tagsSet, diagsLocal := types.SetValueFrom(ctx, types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"tag_id": types.Int64Type,
-			"value":  types.StringType,
-		},
-	}, tagModels)
+	tagsSet, diagsLocal := types.SetValueFrom(ctx, tagObjType, tagModels)
 
 	diags.Append(diagsLocal...)
 	return tagsSet

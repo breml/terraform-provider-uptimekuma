@@ -290,7 +290,7 @@ func (r *MonitorSNMPResource) Read(ctx context.Context, req resource.ReadRequest
 	populateSNMPMonitorBaseFields(&snmpMonitor, &data)
 	populateOptionalFieldsForSNMP(ctx, &snmpMonitor, &data, &resp.Diagnostics)
 
-	data.Tags = handleMonitorTagsRead(ctx, snmpMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, snmpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

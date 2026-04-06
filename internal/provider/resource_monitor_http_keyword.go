@@ -326,7 +326,7 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 	data.Keyword = types.StringValue(httpKeywordMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(httpKeywordMonitor.InvertKeyword)
 
-	data.Tags = handleMonitorTagsRead(ctx, httpKeywordMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, httpKeywordMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
