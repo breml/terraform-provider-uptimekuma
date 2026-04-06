@@ -71,7 +71,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `proxy_id` (Number) Proxy ID
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
-- `tags` (Attributes List) List of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
+- `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `timeout` (Number) Request timeout in seconds
 - `tls_ca` (String) TLS CA certificate
 - `tls_cert` (String, Sensitive) TLS client certificate

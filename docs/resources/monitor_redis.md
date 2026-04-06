@@ -47,7 +47,7 @@ resource "uptimekuma_monitor_redis" "example" {
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
-- `tags` (Attributes List) List of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
+- `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only
