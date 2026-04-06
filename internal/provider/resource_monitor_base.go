@@ -184,11 +184,18 @@ func handleMonitorTagsRead(
 		},
 	}
 
-	// When the API returns no tags, preserve the prior state value so that
-	// an explicit `tags = []` round-trips as an empty set while an omitted
-	// tags attribute stays null.
+	// When the API returns no tags, preserve only null/unknown semantics.
+	// If state already has a known value, return an explicit empty set so
+	// out-of-band tag removals are reflected in Terraform state.
 	if len(monitorTags) == 0 {
-		return stateTags
+		if stateTags.IsNull() || stateTags.IsUnknown() {
+			return stateTags
+		}
+
+		emptyTagsSet, diagsLocal := types.SetValue(tagObjType, []attr.Value{})
+		diags.Append(diagsLocal...)
+
+		return emptyTagsSet
 	}
 
 	// Convert API tag models to Terraform models.
