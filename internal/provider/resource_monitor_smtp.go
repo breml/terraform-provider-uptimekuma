@@ -248,7 +248,7 @@ func (r *MonitorSMTPResource) Read(ctx context.Context, req resource.ReadRequest
 	populateSMTPMonitorFields(&smtpMonitor, &data)
 	populateSMTPOptionalFields(ctx, &smtpMonitor, &data, &resp.Diagnostics)
 
-	data.Tags = handleMonitorTagsRead(ctx, smtpMonitor.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, smtpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
