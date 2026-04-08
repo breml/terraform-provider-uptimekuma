@@ -82,7 +82,7 @@ resource "uptimekuma_monitor_group" "mail_monitors" {
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
 - `smtp_security` (String) SMTP security mode (None, STARTTLS, or TLS)
-- `tags` (Attributes List) List of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
+- `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only
