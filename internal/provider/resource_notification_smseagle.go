@@ -276,7 +276,7 @@ func (r *NotificationSMSEagleResource) Read(
 	err = base.As(&smseagle)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "smseagle"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "SMSEagle"`, err.Error())
 		return
 	}
 
