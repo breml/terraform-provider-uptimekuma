@@ -246,6 +246,43 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.Conf
 
 // Resources returns the list of resources for the provider.
 func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
+	resources := notificationResources()
+
+	resources = append(resources,
+		NewMonitorHTTPResource,
+		NewMonitorHTTPKeywordResource,
+		NewMonitorGrpcKeywordResource,
+		NewMonitorHTTPJSONQueryResource,
+		NewMonitorGroupResource,
+		NewMonitorPingResource,
+		NewMonitorDNSResource,
+		NewMonitorSNMPResource,
+		NewMonitorPushResource,
+		NewMonitorRealBrowserResource,
+		NewMonitorPostgresResource,
+		NewMonitorMySQLResource,
+		NewMonitorMongoDBResource,
+		NewMonitorRedisResource,
+		NewMonitorSQLServerResource,
+		NewMonitorTCPPortResource,
+		NewMonitorDockerResource,
+		NewMonitorMQTTResource,
+		NewMonitorSMTPResource,
+		NewProxyResource,
+		NewTagResource,
+		NewDockerHostResource,
+		NewMaintenanceResource,
+		NewMaintenanceMonitorsResource,
+		NewMaintenanceStatusPagesResource,
+		NewSettingsResource,
+		NewStatusPageResource,
+		NewStatusPageIncidentResource,
+	)
+
+	return resources
+}
+
+func notificationResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotification46ElksResource,
@@ -307,6 +344,7 @@ func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resour
 		NewNotificationSignalResource,
 		NewNotificationSlackResource,
 		NewNotificationSMSCResource,
+		NewNotificationSMSEagleResource,
 		NewNotificationStackfieldResource,
 		NewNotificationThreemaResource,
 		NewNotificationSplunkResource,
@@ -317,39 +355,46 @@ func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resour
 		NewNotificationWAHAResource,
 		NewNotificationWebhookResource,
 		NewNotificationWeComResource,
-		NewMonitorHTTPResource,
-		NewMonitorHTTPKeywordResource,
-		NewMonitorGrpcKeywordResource,
-		NewMonitorHTTPJSONQueryResource,
-		NewMonitorGroupResource,
-		NewMonitorPingResource,
-		NewMonitorDNSResource,
-		NewMonitorSNMPResource,
-		NewMonitorPushResource,
-		NewMonitorRealBrowserResource,
-		NewMonitorPostgresResource,
-		NewMonitorMySQLResource,
-		NewMonitorMongoDBResource,
-		NewMonitorRedisResource,
-		NewMonitorSQLServerResource,
-		NewMonitorTCPPortResource,
-		NewMonitorDockerResource,
-		NewMonitorMQTTResource,
-		NewMonitorSMTPResource,
-		NewProxyResource,
-		NewTagResource,
-		NewDockerHostResource,
-		NewMaintenanceResource,
-		NewMaintenanceMonitorsResource,
-		NewMaintenanceStatusPagesResource,
-		NewSettingsResource,
-		NewStatusPageResource,
-		NewStatusPageIncidentResource,
 	}
 }
 
 // DataSources returns the list of data sources for the provider.
 func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+	dataSources := notificationDataSources()
+
+	dataSources = append(dataSources,
+		NewMonitorHTTPDataSource,
+		NewMonitorHTTPKeywordDataSource,
+		NewMonitorGrpcKeywordDataSource,
+		NewMonitorHTTPJSONQueryDataSource,
+		NewMonitorGroupDataSource,
+		NewMonitorPingDataSource,
+		NewMonitorDNSDataSource,
+		NewMonitorSNMPDataSource,
+		NewMonitorPushDataSource,
+		NewMonitorRealBrowserDataSource,
+		NewMonitorPostgresDataSource,
+		NewMonitorMySQLDataSource,
+		NewMonitorMongoDBDataSource,
+		NewMonitorRedisDataSource,
+		NewMonitorSQLServerDataSource,
+		NewMonitorTCPPortDataSource,
+		NewMonitorDockerDataSource,
+		NewMonitorMQTTDataSource,
+		NewMonitorSMTPDataSource,
+		NewProxyDataSource,
+		NewDockerHostDataSource,
+		NewMaintenanceDataSource,
+		NewMaintenanceMonitorsDataSource,
+		NewMaintenanceStatusPagesDataSource,
+		NewSettingsDataSource,
+		NewStatusPageDataSource,
+	)
+
+	return dataSources
+}
+
+func notificationDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewMaintenancesDataSource,
 		NewTagDataSource,
@@ -413,6 +458,7 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewNotificationSignalDataSource,
 		NewNotificationSlackDataSource,
 		NewNotificationSMSCDataSource,
+		NewNotificationSMSEagleDataSource,
 		NewNotificationStackfieldDataSource,
 		NewNotificationThreemaDataSource,
 		NewNotificationSplunkDataSource,
@@ -423,32 +469,6 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewNotificationWAHADataSource,
 		NewNotificationWebhookDataSource,
 		NewNotificationWeComDataSource,
-		NewMonitorHTTPDataSource,
-		NewMonitorHTTPKeywordDataSource,
-		NewMonitorGrpcKeywordDataSource,
-		NewMonitorHTTPJSONQueryDataSource,
-		NewMonitorGroupDataSource,
-		NewMonitorPingDataSource,
-		NewMonitorDNSDataSource,
-		NewMonitorSNMPDataSource,
-		NewMonitorPushDataSource,
-		NewMonitorRealBrowserDataSource,
-		NewMonitorPostgresDataSource,
-		NewMonitorMySQLDataSource,
-		NewMonitorMongoDBDataSource,
-		NewMonitorRedisDataSource,
-		NewMonitorSQLServerDataSource,
-		NewMonitorTCPPortDataSource,
-		NewMonitorDockerDataSource,
-		NewMonitorMQTTDataSource,
-		NewMonitorSMTPDataSource,
-		NewProxyDataSource,
-		NewDockerHostDataSource,
-		NewMaintenanceDataSource,
-		NewMaintenanceMonitorsDataSource,
-		NewMaintenanceStatusPagesDataSource,
-		NewSettingsDataSource,
-		NewStatusPageDataSource,
 	}
 }
 
