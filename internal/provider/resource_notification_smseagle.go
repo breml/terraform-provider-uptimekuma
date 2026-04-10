@@ -286,24 +286,38 @@ func (r *NotificationSMSEagleResource) Read(
 	data.IsDefault = types.BoolValue(smseagle.IsDefault)
 	data.ApplyExisting = types.BoolValue(smseagle.ApplyExisting)
 
-	data.URL = types.StringValue(smseagle.URL)
-	data.Token = types.StringValue(smseagle.Token)
+	if smseagle.URL != "" {
+		data.URL = types.StringValue(smseagle.URL)
+	}
+
+	if smseagle.Token != "" {
+		data.Token = types.StringValue(smseagle.Token)
+	}
+
 	data.RecipientType = types.StringValue(smseagle.RecipientType)
 
 	if smseagle.Recipient != "" {
 		data.Recipient = types.StringValue(smseagle.Recipient)
+	} else {
+		data.Recipient = types.StringNull()
 	}
 
 	if smseagle.RecipientTo != "" {
 		data.RecipientTo = types.StringValue(smseagle.RecipientTo)
+	} else {
+		data.RecipientTo = types.StringNull()
 	}
 
 	if smseagle.RecipientContact != "" {
 		data.RecipientContact = types.StringValue(smseagle.RecipientContact)
+	} else {
+		data.RecipientContact = types.StringNull()
 	}
 
 	if smseagle.RecipientGroup != "" {
 		data.RecipientGroup = types.StringValue(smseagle.RecipientGroup)
+	} else {
+		data.RecipientGroup = types.StringNull()
 	}
 
 	data.MsgType = types.StringValue(smseagle.MsgType)
