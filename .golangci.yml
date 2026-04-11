@@ -169,6 +169,11 @@ linters:
       # Default: false
       forbid-mutex: true
 
+    gomoddirectives:
+      # Allow local replace for the forked socket.io library (fixes race conditions, see #283).
+      replace-allow-list:
+        - github.com/maldikhan/go.socket.io
+
     errcheck:
       # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
       # Such cases aren't reported by default.
