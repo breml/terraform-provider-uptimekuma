@@ -181,7 +181,11 @@ func (r *NotificationSMSManagerResource) Read(
 	data.IsDefault = types.BoolValue(smsmanager.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsmanager.ApplyExisting)
 
-	data.APIKey = types.StringValue(smsmanager.APIKey)
+	// Preserve existing APIKey from state if the API does not return a usable value.
+	if smsmanager.APIKey != "" {
+		data.APIKey = types.StringValue(smsmanager.APIKey)
+	}
+
 	data.Numbers = types.StringValue(smsmanager.Numbers)
 	data.MessageType = types.StringValue(smsmanager.MessageType)
 
