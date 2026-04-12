@@ -1,0 +1,273 @@
+package provider
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strconv"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
+)
+
+var (
+	_ resource.Resource                = &NotificationSMSPartnerResource{}
+	_ resource.ResourceWithImportState = &NotificationSMSPartnerResource{}
+)
+
+// NewNotificationSMSPartnerResource returns a new instance of the SMS Partner notification resource.
+func NewNotificationSMSPartnerResource() resource.Resource {
+	return &NotificationSMSPartnerResource{}
+}
+
+// NotificationSMSPartnerResource defines the resource implementation.
+type NotificationSMSPartnerResource struct {
+	client *kuma.Client
+}
+
+// NotificationSMSPartnerResourceModel describes the resource data model.
+type NotificationSMSPartnerResourceModel struct {
+	NotificationBaseModel
+
+	APIKey      types.String `tfsdk:"api_key"`
+	PhoneNumber types.String `tfsdk:"phone_number"`
+	SenderName  types.String `tfsdk:"sender_name"`
+}
+
+// Metadata returns the metadata for the resource.
+func (*NotificationSMSPartnerResource) Metadata(
+	_ context.Context,
+	req resource.MetadataRequest,
+	resp *resource.MetadataResponse,
+) {
+	resp.TypeName = req.ProviderTypeName + "_notification_smspartner"
+}
+
+// Schema returns the schema for the resource.
+func (*NotificationSMSPartnerResource) Schema(
+	_ context.Context,
+	_ resource.SchemaRequest,
+	resp *resource.SchemaResponse,
+) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "SMS Partner notification resource",
+		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
+			"api_key": schema.StringAttribute{
+				MarkdownDescription: "SMSPartner API key for authentication",
+				Required:            true,
+				Sensitive:           true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
+			},
+			"phone_number": schema.StringAttribute{
+				MarkdownDescription: "Recipient phone number",
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
+			},
+			"sender_name": schema.StringAttribute{
+				MarkdownDescription: "Sender name or identifier",
+				Optional:            true,
+			},
+		}),
+	}
+}
+
+// Configure configures the SMS Partner notification resource with the API client.
+func (r *NotificationSMSPartnerResource) Configure(
+	_ context.Context,
+	req resource.ConfigureRequest,
+	resp *resource.ConfigureResponse,
+) {
+	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
+}
+
+// Create creates a new SMS Partner notification resource.
+func (r *NotificationSMSPartnerResource) Create(
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
+	var data NotificationSMSPartnerResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	smspartner := notification.SMSPartner{
+		Base: notification.Base{
+			ApplyExisting: data.ApplyExisting.ValueBool(),
+			IsDefault:     data.IsDefault.ValueBool(),
+			IsActive:      data.IsActive.ValueBool(),
+			Name:          data.Name.ValueString(),
+		},
+		SMSPartnerDetails: notification.SMSPartnerDetails{
+			APIKey:      data.APIKey.ValueString(),
+			PhoneNumber: data.PhoneNumber.ValueString(),
+			SenderName:  data.SenderName.ValueString(),
+		},
+	}
+
+	id, err := r.client.CreateNotification(ctx, smspartner)
+	// Handle error.
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create notification", err.Error())
+		return
+	}
+
+	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
+
+	data.ID = types.Int64Value(id)
+
+	// Populate state.
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// Read reads the current state of the SMS Partner notification resource.
+func (r *NotificationSMSPartnerResource) Read(
+	ctx context.Context,
+	req resource.ReadRequest,
+	resp *resource.ReadResponse,
+) {
+	var data NotificationSMSPartnerResourceModel
+
+	// Get resource from state.
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := data.ID.ValueInt64()
+
+	base, err := r.client.GetNotification(ctx, id)
+	// Handle error.
+	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
+		return
+	}
+
+	smspartner := notification.SMSPartner{}
+	err = base.As(&smspartner)
+	// Handle error.
+	if err != nil {
+		resp.Diagnostics.AddError(`failed to convert notification to type "SMSPartner"`, err.Error())
+		return
+	}
+
+	data.ID = types.Int64Value(id)
+	data.Name = types.StringValue(smspartner.Name)
+	data.IsActive = types.BoolValue(smspartner.IsActive)
+	data.IsDefault = types.BoolValue(smspartner.IsDefault)
+	data.ApplyExisting = types.BoolValue(smspartner.ApplyExisting)
+
+	data.APIKey = types.StringValue(smspartner.APIKey)
+	data.PhoneNumber = types.StringValue(smspartner.PhoneNumber)
+
+	if smspartner.SenderName != "" {
+		data.SenderName = types.StringValue(smspartner.SenderName)
+	}
+
+	// Populate state.
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// Update updates the SMS Partner notification resource.
+func (r *NotificationSMSPartnerResource) Update(
+	ctx context.Context,
+	req resource.UpdateRequest,
+	resp *resource.UpdateResponse,
+) {
+	var data NotificationSMSPartnerResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	smspartner := notification.SMSPartner{
+		Base: notification.Base{
+			ID:            data.ID.ValueInt64(),
+			ApplyExisting: data.ApplyExisting.ValueBool(),
+			IsDefault:     data.IsDefault.ValueBool(),
+			IsActive:      data.IsActive.ValueBool(),
+			Name:          data.Name.ValueString(),
+		},
+		SMSPartnerDetails: notification.SMSPartnerDetails{
+			APIKey:      data.APIKey.ValueString(),
+			PhoneNumber: data.PhoneNumber.ValueString(),
+			SenderName:  data.SenderName.ValueString(),
+		},
+	}
+
+	err := r.client.UpdateNotification(ctx, smspartner)
+	// Handle error.
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update notification", err.Error())
+		return
+	}
+
+	// Populate state.
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// Delete deletes the SMS Partner notification resource.
+func (r *NotificationSMSPartnerResource) Delete(
+	ctx context.Context,
+	req resource.DeleteRequest,
+	resp *resource.DeleteResponse,
+) {
+	var data NotificationSMSPartnerResourceModel
+
+	// Get resource from state.
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
+	// Handle error.
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete notification", err.Error())
+		return
+	}
+}
+
+// ImportState imports an existing resource by ID.
+func (*NotificationSMSPartnerResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	// Handle error.
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be a valid integer, got: %s", req.ID),
+		)
+		return
+	}
+
+	// Populate state.
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+}
