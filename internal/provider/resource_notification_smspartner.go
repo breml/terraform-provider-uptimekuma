@@ -178,11 +178,16 @@ func (r *NotificationSMSPartnerResource) Read(
 	data.IsDefault = types.BoolValue(smspartner.IsDefault)
 	data.ApplyExisting = types.BoolValue(smspartner.ApplyExisting)
 
-	data.APIKey = types.StringValue(smspartner.APIKey)
+	if smspartner.APIKey != "" {
+		data.APIKey = types.StringValue(smspartner.APIKey)
+	}
+
 	data.PhoneNumber = types.StringValue(smspartner.PhoneNumber)
 
 	if smspartner.SenderName != "" {
 		data.SenderName = types.StringValue(smspartner.SenderName)
+	} else {
+		data.SenderName = types.StringNull()
 	}
 
 	// Populate state.
