@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -28,9 +29,10 @@ func TestAccConnectionStability(t *testing.T) {
 	const perConnTimeout = 30 * time.Second
 
 	for i := range iterations {
-		// Create a fresh connection each iteration to exercise the full
-		// transport negotiation path (HTTP long-polling → WebSocket upgrade).
-		ctx := t.Context()
+		// Wrap each iteration in a context.WithTimeout so that a regression
+		// (event dispatch hang after transport establishment) fails fast
+		// instead of blocking until the global go test -timeout fires.
+		ctx, cancel := context.WithTimeout(t.Context(), perConnTimeout)
 
 		kumaClient, err := kuma.New(
 			ctx,
@@ -41,10 +43,14 @@ func TestAccConnectionStability(t *testing.T) {
 			kuma.WithLogLevel(kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL"))),
 		)
 		if err != nil {
+			cancel()
 			t.Fatalf("connection %d/%d failed: %v", i+1, iterations, err)
 		}
 
 		err = kumaClient.Disconnect()
+
+		cancel()
+
 		if err != nil {
 			t.Fatalf("disconnect %d/%d failed: %v", i+1, iterations, err)
 		}
