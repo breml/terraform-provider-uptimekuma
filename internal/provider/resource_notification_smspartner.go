@@ -61,7 +61,7 @@ func (*NotificationSMSPartnerResource) Schema(
 		MarkdownDescription: "SMS Partner notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "SMSPartner API key for authentication",
+				MarkdownDescription: "SMS Partner API key for authentication",
 				Required:            true,
 				Sensitive:           true,
 				Validators: []validator.String{

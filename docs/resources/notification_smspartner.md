@@ -36,7 +36,7 @@ resource "uptimekuma_notification_smspartner" "production" {
 
 ### Required
 
-- `api_key` (String, Sensitive) SMSPartner API key for authentication
+- `api_key` (String, Sensitive) SMS Partner API key for authentication
 - `name` (String) Notification name
 - `phone_number` (String) Recipient phone number
 
