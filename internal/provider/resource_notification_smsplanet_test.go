@@ -96,9 +96,10 @@ func TestAccNotificationSMSPlanetResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_smsplanet.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_smsplanet.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"api_token"},
 			},
 		},
 	})

@@ -178,11 +178,16 @@ func (r *NotificationSMSPlanetResource) Read(
 	data.IsDefault = types.BoolValue(smsplanet.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsplanet.ApplyExisting)
 
-	data.APIToken = types.StringValue(smsplanet.APIToken)
+	if smsplanet.APIToken != "" {
+		data.APIToken = types.StringValue(smsplanet.APIToken)
+	}
+
 	data.PhoneNumbers = types.StringValue(smsplanet.PhoneNumbers)
 
 	if smsplanet.SenderName != "" {
 		data.SenderName = types.StringValue(smsplanet.SenderName)
+	} else {
+		data.SenderName = types.StringNull()
 	}
 
 	// Populate state.
