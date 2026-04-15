@@ -163,7 +163,9 @@ func (r *NotificationSpugPushResource) Read(
 	data.IsDefault = types.BoolValue(spugpush.IsDefault)
 	data.ApplyExisting = types.BoolValue(spugpush.ApplyExisting)
 
-	data.TemplateKey = types.StringValue(spugpush.TemplateKey)
+	if spugpush.TemplateKey != "" {
+		data.TemplateKey = types.StringValue(spugpush.TemplateKey)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
