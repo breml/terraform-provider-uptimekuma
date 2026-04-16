@@ -190,18 +190,26 @@ func (r *NotificationTechulusPushResource) Read(
 	data.IsDefault = types.BoolValue(techulusPush.IsDefault)
 	data.ApplyExisting = types.BoolValue(techulusPush.ApplyExisting)
 
-	data.APIKey = types.StringValue(techulusPush.APIKey)
+	if techulusPush.APIKey != "" {
+		data.APIKey = types.StringValue(techulusPush.APIKey)
+	}
 
 	if techulusPush.Title != "" {
 		data.Title = types.StringValue(techulusPush.Title)
+	} else {
+		data.Title = types.StringNull()
 	}
 
 	if techulusPush.Sound != "" {
 		data.Sound = types.StringValue(techulusPush.Sound)
+	} else {
+		data.Sound = types.StringNull()
 	}
 
 	if techulusPush.Channel != "" {
 		data.Channel = types.StringValue(techulusPush.Channel)
+	} else {
+		data.Channel = types.StringNull()
 	}
 
 	data.TimeSensitive = types.BoolValue(techulusPush.TimeSensitive)

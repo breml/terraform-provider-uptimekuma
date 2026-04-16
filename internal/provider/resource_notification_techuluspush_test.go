@@ -116,9 +116,10 @@ func TestAccNotificationTechulusPushResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_techuluspush.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_techuluspush.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"api_key"},
 			},
 		},
 	})
