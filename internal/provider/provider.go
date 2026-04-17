@@ -360,6 +360,7 @@ func notificationResources() []func() resource.Resource {
 		NewNotificationTwilioResource,
 		NewNotificationWAHAResource,
 		NewNotificationWhapiResource,
+		NewNotificationWPushResource,
 		NewNotificationWebhookResource,
 		NewNotificationWeComResource,
 	}
@@ -481,6 +482,7 @@ func notificationDataSources() []func() datasource.DataSource {
 		NewNotificationTwilioDataSource,
 		NewNotificationWAHADataSource,
 		NewNotificationWhapiDataSource,
+		NewNotificationWPushDataSource,
 		NewNotificationWebhookDataSource,
 		NewNotificationWeComDataSource,
 	}
