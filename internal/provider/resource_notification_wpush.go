@@ -169,9 +169,14 @@ func (r *NotificationWPushResource) Read(
 	data.IsDefault = types.BoolValue(wpush.IsDefault)
 	data.ApplyExisting = types.BoolValue(wpush.ApplyExisting)
 
-	data.APIKey = types.StringValue(wpush.APIKey)
+	if wpush.APIKey != "" {
+		data.APIKey = types.StringValue(wpush.APIKey)
+	}
+
 	if wpush.Channel != "" {
 		data.Channel = types.StringValue(wpush.Channel)
+	} else {
+		data.Channel = types.StringNull()
 	}
 
 	// Populate state.

@@ -82,9 +82,10 @@ func TestAccNotificationWPushResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_wpush.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_wpush.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"api_key"},
 			},
 		},
 	})
