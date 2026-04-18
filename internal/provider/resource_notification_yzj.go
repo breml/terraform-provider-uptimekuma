@@ -173,8 +173,13 @@ func (r *NotificationYZJResource) Read(
 	data.IsDefault = types.BoolValue(yzj.IsDefault)
 	data.ApplyExisting = types.BoolValue(yzj.ApplyExisting)
 
-	data.WebHookURL = types.StringValue(yzj.WebHookURL)
-	data.Token = types.StringValue(yzj.Token)
+	if yzj.WebHookURL != "" {
+		data.WebHookURL = types.StringValue(yzj.WebHookURL)
+	}
+
+	if yzj.Token != "" {
+		data.Token = types.StringValue(yzj.Token)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
