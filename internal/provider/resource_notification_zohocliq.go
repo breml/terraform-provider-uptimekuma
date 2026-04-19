@@ -163,7 +163,9 @@ func (r *NotificationZohoCliqResource) Read(
 	data.IsDefault = types.BoolValue(zohoCliq.IsDefault)
 	data.ApplyExisting = types.BoolValue(zohoCliq.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(zohoCliq.WebhookURL)
+	if zohoCliq.WebhookURL != "" {
+		data.WebhookURL = types.StringValue(zohoCliq.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
