@@ -364,6 +364,7 @@ func notificationResources() []func() resource.Resource {
 		NewNotificationWebhookResource,
 		NewNotificationWeComResource,
 		NewNotificationYZJResource,
+		NewNotificationZohoCliqResource,
 	}
 }
 
@@ -487,6 +488,7 @@ func notificationDataSources() []func() datasource.DataSource {
 		NewNotificationWebhookDataSource,
 		NewNotificationWeComDataSource,
 		NewNotificationYZJDataSource,
+		NewNotificationZohoCliqDataSource,
 	}
 }
 
