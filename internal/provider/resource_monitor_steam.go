@@ -80,6 +80,9 @@ func (*MonitorSteamResource) Schema(
 				Optional:            true,
 				Computed:            true,
 				Default:             int64default.StaticInt64(48),
+				Validators: []validator.Int64{
+					int64validator.Between(1, 3600),
+				},
 			},
 		}),
 	}
