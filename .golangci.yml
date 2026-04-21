@@ -120,6 +120,10 @@ linters:
 
   # All settings can be found here https://github.com/golangci/golangci-lint/blob/HEAD/.golangci.reference.yml
   settings:
+    gomoddirectives:
+      replace-allow-list:
+        - github.com/maldikhan/go.socket.io
+
     depguard:
       # Rules to apply.
       #
