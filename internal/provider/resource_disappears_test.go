@@ -17,26 +17,22 @@ import (
 	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
-// testAccNewKumaClient creates a new kuma client for use in acceptance tests.
-// This is used to perform out-of-band operations (e.g. deleting resources)
-// to simulate external modifications.
-func testAccNewKumaClient(t *testing.T) *kuma.Client {
+// testAccOutOfBandClient returns the dedicated out-of-band kuma client for use
+// in acceptance tests. This client is separate from the provider's pooled
+// connection, created once in TestMain, to genuinely simulate external
+// modifications while avoiding Uptime Kuma's login rate limiting.
+func testAccOutOfBandClient(t *testing.T) *kuma.Client {
 	t.Helper()
 
 	if os.Getenv(resource.EnvTfAcc) == "" {
 		t.Skip("TF_ACC=1 not set")
 	}
 
-	kumaClient, err := kuma.New(t.Context(), endpoint, username, password)
-	if err != nil {
-		t.Fatalf("failed to create kuma client: %v", err)
+	if outOfBandClient == nil {
+		t.Fatal("out-of-band client not initialized — TestMain did not run with TF_ACC=1")
 	}
 
-	t.Cleanup(func() {
-		_ = kumaClient.Disconnect()
-	})
-
-	return kumaClient
+	return outOfBandClient
 }
 
 // testAccDeleteMonitorExternally deletes a monitor via the kuma API, simulating
@@ -77,7 +73,7 @@ func testAccDeleteMonitorExternally(
 func TestAccMonitorHTTPResource_disappears(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPDisappears")
 	url := "https://httpbin.org/status/200"
-	kumaClient := testAccNewKumaClient(t)
+	kumaClient := testAccOutOfBandClient(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -108,7 +104,7 @@ func TestAccMonitorHTTPResource_disappears(t *testing.T) {
 // deleted externally, the provider removes it from state and plans to recreate it.
 func TestAccMonitorPingResource_disappears(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPingDisappears")
-	kumaClient := testAccNewKumaClient(t)
+	kumaClient := testAccOutOfBandClient(t)
 
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_ping" "test" {
@@ -146,7 +142,7 @@ resource "uptimekuma_monitor_ping" "test" {
 // deleted externally, the provider removes it from state and plans to recreate it.
 func TestAccMonitorGroupResource_disappears(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGroupDisappears")
-	kumaClient := testAccNewKumaClient(t)
+	kumaClient := testAccOutOfBandClient(t)
 
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_group" "test" {
@@ -184,7 +180,7 @@ resource "uptimekuma_monitor_group" "test" {
 func TestAccTagResource_disappears(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestTagDisappears")
 	color := "#3498db"
-	kumaClient := testAccNewKumaClient(t)
+	kumaClient := testAccOutOfBandClient(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -236,7 +232,7 @@ func TestAccTagResource_disappears(t *testing.T) {
 func TestAccStatusPageResource_disappears(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-disappears")
 	title := "Disappears Test Status Page"
-	kumaClient := testAccNewKumaClient(t)
+	kumaClient := testAccOutOfBandClient(t)
 
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {

@@ -34,7 +34,7 @@ pre-push:
     - name: Run acceptance tests
       env:
         TF_ACC: "1"
-      run: go test -v -shuffle on -timeout 480s ./...
+      run: go test -v -shuffle on -timeout 900s ./...
 
 commit-msg:
   # Dogfood hooks
