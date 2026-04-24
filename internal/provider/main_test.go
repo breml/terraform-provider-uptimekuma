@@ -32,7 +32,8 @@ var endpoint string //nolint:gochecknoglobals // OK in tests.
 var outOfBandClient *kuma.Client //nolint:gochecknoglobals // OK in tests.
 
 func TestMain(m *testing.M) {
-	runTests(m)
+	//nolint:revive // Exit is needed to propagate exitcode set by deferred cleanup.
+	os.Exit(runTests(m))
 }
 
 func runTests(m *testing.M) (exitcode int) {
@@ -66,7 +67,7 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Fatalf("Could not start resource: %v", err)
 		}
 
-		err = container.Expire(900)
+		err = container.Expire(1200)
 		if err != nil {
 			log.Fatalf("Could not set expire on container: %v", err)
 		}
@@ -123,11 +124,13 @@ func runTests(m *testing.M) (exitcode int) {
 	}
 
 	// The terraform tests create a fresh connection pool, which we close after
-	// all tests have been executed.
+	// all tests have been executed. Use log.Printf + exitcode instead of
+	// log.Fatalf to avoid os.Exit skipping earlier deferred cleanups.
 	defer func() {
 		err := client.CloseGlobalPool()
 		if err != nil {
-			log.Fatalf("Failed to close connection pool after tests: %v", err)
+			log.Printf("Failed to close connection pool after tests: %v", err)
+			exitcode = 1
 		}
 	}()
 
