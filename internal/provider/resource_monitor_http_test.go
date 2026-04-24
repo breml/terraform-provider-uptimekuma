@@ -261,3 +261,75 @@ resource "uptimekuma_monitor_http" "test" {
 }
 `, name, url, cacheBust)
 }
+
+func TestAccMonitorHTTPResourceActiveToggle(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorActiveToggle")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, true),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, false),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, true),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestAccMonitorHTTPResourceCreateInactive(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorCreateInactive")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, false),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPResourceConfigActive(name string, active bool) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http" "test" {
+  name   = %[1]q
+  url    = "https://httpbin.org/status/200"
+  active = %[2]t
+}
+`, name, active)
+}

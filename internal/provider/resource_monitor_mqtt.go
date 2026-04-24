@@ -151,6 +151,11 @@ func (r *MonitorMQTTResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -359,6 +364,11 @@ func (r *MonitorMQTTResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	handleMonitorActiveStateUpdate(ctx, r.client, data.ID.ValueInt64(), state.Active, data.Active, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

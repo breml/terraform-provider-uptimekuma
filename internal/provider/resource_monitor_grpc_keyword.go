@@ -203,6 +203,11 @@ func (r *MonitorGrpcKeywordResource) Create(
 		return
 	}
 
+	handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var createdMonitor monitor.GrpcKeyword
 	// Fetch monitor from API.
 	err = r.client.GetMonitorAs(ctx, id, &createdMonitor)
@@ -329,6 +334,11 @@ func (r *MonitorGrpcKeywordResource) Update(
 	}
 
 	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	handleMonitorActiveStateUpdate(ctx, r.client, data.ID.ValueInt64(), state.Active, data.Active, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

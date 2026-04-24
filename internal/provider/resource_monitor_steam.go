@@ -38,9 +38,12 @@ type MonitorSteamResource struct {
 type MonitorSteamResourceModel struct {
 	MonitorBaseModel
 
+	// Hostname is the Steam game server host or IP address.
 	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
-	Timeout  types.Int64  `tfsdk:"timeout"`
+	// Port is the Steam game server query port.
+	Port types.Int64 `tfsdk:"port"`
+	// Timeout is the query timeout in seconds.
+	Timeout types.Int64 `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -129,6 +132,11 @@ func (r *MonitorSteamResource) Create(
 		return
 	}
 
+	handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -197,6 +205,11 @@ func (r *MonitorSteamResource) Update(
 	}
 
 	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	handleMonitorActiveStateUpdate(ctx, r.client, data.ID.ValueInt64(), state.Active, data.Active, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
