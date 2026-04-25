@@ -1,6 +1,6 @@
 module github.com/breml/terraform-provider-uptimekuma
 
-go 1.25.2
+go 1.25.8
 
 require (
 	github.com/breml/go-uptime-kuma-client v0.3.1
