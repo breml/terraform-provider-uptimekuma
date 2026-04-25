@@ -24,8 +24,16 @@ const (
 
 var endpoint string //nolint:gochecknoglobals // OK in tests.
 
+// outOfBandClient is a dedicated kuma client for out-of-band operations in
+// acceptance tests (e.g. deleting resources externally in disappears tests).
+// It is separate from the provider's pooled connection to genuinely simulate
+// external side effects, and is created once in TestMain to avoid Uptime
+// Kuma's login rate limiting.
+var outOfBandClient *kuma.Client //nolint:gochecknoglobals // OK in tests.
+
 func TestMain(m *testing.M) {
-	runTests(m)
+	//nolint:revive // Exit is needed to propagate exitcode set by deferred cleanup.
+	os.Exit(runTests(m))
 }
 
 func runTests(m *testing.M) (exitcode int) {
@@ -59,73 +67,71 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Fatalf("Could not start resource: %v", err)
 		}
 
-		err = container.Expire(600)
+		err = container.Expire(1200)
 		if err != nil {
 			log.Fatalf("Could not set expire on container: %v", err)
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+		// Register container cleanup immediately so the container is always
+		// purged, even if the connection retry below fails.
+		defer func() {
+			// Close the out-of-band client (may be nil if connection failed).
+			if outOfBandClient != nil {
+				disconnectErr := outOfBandClient.Disconnect()
+				if disconnectErr != nil {
+					log.Printf("Warning: failed to disconnect out-of-band client: %v", disconnectErr)
+					exitcode = 1
+				}
+			}
+
+			// Close the connection pool before purging the container.
+			closeErr := client.CloseGlobalPool()
+			if closeErr != nil {
+				log.Printf("Warning: failed to close connection pool: %v", closeErr)
+				exitcode = 1
+			}
+
+			purgeErr := pool.Purge(container)
+			if purgeErr != nil {
+				log.Printf("Warning: could not purge resource: %v", purgeErr)
+				exitcode = 1
+			}
+		}()
 
 		endpoint = fmt.Sprintf("http://localhost:%s", container.GetPort("3001/tcp"))
 
-		var kumaClient *kuma.Client
-
-		// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+		// exponential backoff-retry, because the application in the container
+		// might not be ready to accept connections yet. This first connection
+		// performs autosetup (creating the admin user) and is kept as the
+		// out-of-band client for disappears tests.
 		err = pool.Retry(func() error {
-			var err error
-			kumaClient, err = kuma.New(
-				ctx,
+			var retryErr error
+			outOfBandClient, retryErr = kuma.New(
+				context.Background(),
 				endpoint,
 				username,
 				password,
 				kuma.WithAutosetup(),
 				kuma.WithLogLevel(kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL"))),
-				kuma.WithConnectTimeout(10*time.Second),
+				kuma.WithConnectTimeout(30*time.Second),
 			)
-			if err != nil {
-				return err
-			}
 
-			return nil
+			return retryErr
 		})
 		if err != nil {
 			log.Printf("Could not connect to uptime kuma: %v", err)
 			return 1 // exitcode
 		}
-
-		// Close connection again, after we know, the application is running and
-		// auto setup has been performed. We don't need the client anymore,
-		// Terraform will establish its own connection via the pool.
-		err = kumaClient.Disconnect()
-		if err != nil {
-			log.Printf("Failed to disconnect from uptime kuma: %v", err)
-			return 1 // exitcode
-		}
-
-		// As of go1.15 testing.M returns the exit code of m.Run(), so it is safe to use defer here
-		defer func() {
-			// Close the connection pool before purging the container
-			err := client.CloseGlobalPool()
-			if err != nil {
-				log.Printf("Warning: failed to close connection pool: %v", err)
-				exitcode = 1
-			}
-
-			err = pool.Purge(container)
-			if err != nil {
-				log.Printf("Warning: could not purge resource: %v", err)
-				exitcode = 1
-			}
-		}()
 	}
 
 	// The terraform tests create a fresh connection pool, which we close after
-	// all tests have been executed.
+	// all tests have been executed. Use log.Printf + exitcode instead of
+	// log.Fatalf to avoid os.Exit skipping earlier deferred cleanups.
 	defer func() {
 		err := client.CloseGlobalPool()
 		if err != nil {
-			log.Fatalf("Failed to close connection pool after tests: %v", err)
+			log.Printf("Failed to close connection pool after tests: %v", err)
+			exitcode = 1
 		}
 	}()
 

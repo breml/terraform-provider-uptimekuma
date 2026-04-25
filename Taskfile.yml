@@ -42,7 +42,7 @@ tasks:
     env:
       TF_ACC: "1"
     cmds:
-      - go test -v -shuffle on -coverprofile coverage.out -timeout 600s ./...
+      - go test -v -shuffle on -coverprofile coverage.out -timeout 900s ./...
 
   testacc-cover-report:
     desc: "Generate acceptance tests coverage report"
