@@ -72,6 +72,32 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Fatalf("Could not set expire on container: %v", err)
 		}
 
+		// Register container cleanup immediately so the container is always
+		// purged, even if the connection retry below fails.
+		defer func() {
+			// Close the out-of-band client (may be nil if connection failed).
+			if outOfBandClient != nil {
+				disconnectErr := outOfBandClient.Disconnect()
+				if disconnectErr != nil {
+					log.Printf("Warning: failed to disconnect out-of-band client: %v", disconnectErr)
+					exitcode = 1
+				}
+			}
+
+			// Close the connection pool before purging the container.
+			closeErr := client.CloseGlobalPool()
+			if closeErr != nil {
+				log.Printf("Warning: failed to close connection pool: %v", closeErr)
+				exitcode = 1
+			}
+
+			purgeErr := pool.Purge(container)
+			if purgeErr != nil {
+				log.Printf("Warning: could not purge resource: %v", purgeErr)
+				exitcode = 1
+			}
+		}()
+
 		endpoint = fmt.Sprintf("http://localhost:%s", container.GetPort("3001/tcp"))
 
 		// exponential backoff-retry, because the application in the container
@@ -96,31 +122,6 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Printf("Could not connect to uptime kuma: %v", err)
 			return 1 // exitcode
 		}
-
-		// As of go1.15 testing.M returns the exit code of m.Run(), so it is safe to use defer here
-		defer func() {
-			// Close the out-of-band client
-			if outOfBandClient != nil {
-				disconnectErr := outOfBandClient.Disconnect()
-				if disconnectErr != nil {
-					log.Printf("Warning: failed to disconnect out-of-band client: %v", disconnectErr)
-					exitcode = 1
-				}
-			}
-
-			// Close the connection pool before purging the container
-			err := client.CloseGlobalPool()
-			if err != nil {
-				log.Printf("Warning: failed to close connection pool: %v", err)
-				exitcode = 1
-			}
-
-			err = pool.Purge(container)
-			if err != nil {
-				log.Printf("Warning: could not purge resource: %v", err)
-				exitcode = 1
-			}
-		}()
 	}
 
 	// The terraform tests create a fresh connection pool, which we close after
