@@ -23,12 +23,29 @@ func TestAccMonitorPingResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
+				Config:             testAccMonitorPingResourceConfigMinimal(name, hostname, 60, 56),
+				ExpectNonEmptyPlan: false,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(48),
+					),
+				},
+			},
+			{
 				Config: testAccMonitorPingResourceConfigWithDescription(
 					name,
 					hostname,
 					description,
 					60,
 					56,
+					48,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -59,13 +76,18 @@ func TestAccMonitorPingResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(48),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
 				},
 			},
 			{
-				Config: testAccMonitorPingResourceConfigWithDescription(nameUpdated, hostnameUpdated, "", 120, 64),
+				Config: testAccMonitorPingResourceConfigWithDescription(nameUpdated, hostnameUpdated, "", 120, 64, 30),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_ping.test",
@@ -89,6 +111,11 @@ func TestAccMonitorPingResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Int64Exact(30),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
@@ -105,7 +132,7 @@ func TestAccMonitorPingResource(t *testing.T) {
 
 func testAccMonitorPingResourceConfigWithDescription(
 	name string, hostname string, description string,
-	interval int64, packetSize int64,
+	interval int64, packetSize int64, timeout int64,
 ) string {
 	descField := ""
 	if description != "" {
@@ -119,7 +146,22 @@ resource "uptimekuma_monitor_ping" "test" {
 %[3]s
   interval    = %[4]d
   packet_size = %[5]d
+  timeout     = %[6]d
   active      = true
 }
-`, name, hostname, descField, interval, packetSize)
+`, name, hostname, descField, interval, packetSize, timeout)
+}
+
+func testAccMonitorPingResourceConfigMinimal(
+	name string, hostname string, interval int64, packetSize int64,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_ping" "test" {
+  name        = %[1]q
+  hostname    = %[2]q
+  interval    = %[3]d
+  packet_size = %[4]d
+  active      = true
+}
+`, name, hostname, interval, packetSize)
 }
