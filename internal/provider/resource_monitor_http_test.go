@@ -299,6 +299,14 @@ func TestAccMonitorHTTPResourceActiveToggle(t *testing.T) {
 					),
 				},
 			},
+			// Re-import after the toggle to confirm the server's view of `active`
+			// matches Terraform state. Without the pause/resume fix this step would
+			// fail because the server would still report active=true.
+			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -319,6 +327,13 @@ func TestAccMonitorHTTPResourceCreateInactive(t *testing.T) {
 						knownvalue.Bool(false),
 					),
 				},
+			},
+			// Import-verify confirms the server actually persisted active=false
+			// (vs. the prior bug where state was set from Read of an unchanged server).
+			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

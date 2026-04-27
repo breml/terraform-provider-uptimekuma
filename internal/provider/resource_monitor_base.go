@@ -138,24 +138,26 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 // active value is false. Uptime Kuma creates every monitor in the active state and
 // ignores the IsActive field of the editMonitor event, so the dedicated pauseMonitor
 // event must be used to deactivate it.
+//
+// Returns an error if the pause call fails. Callers must persist state with the new
+// monitor ID before surfacing the error so a transient pause failure does not orphan
+// the just-created monitor.
 func handleMonitorActiveStateCreate(
 	ctx context.Context,
 	client *kuma.Client,
 	monitorID int64,
 	active types.Bool,
-	diags *diag.Diagnostics,
-) {
+) error {
 	if active.IsNull() || active.IsUnknown() || active.ValueBool() {
-		return
+		return nil
 	}
 
 	err := client.PauseMonitor(ctx, monitorID)
 	if err != nil {
-		diags.AddError(
-			fmt.Sprintf("failed to pause monitor %d", monitorID),
-			err.Error(),
-		)
+		return fmt.Errorf("failed to pause monitor %d: %w", monitorID, err)
 	}
+
+	return nil
 }
 
 // handleMonitorActiveStateUpdate pauses or resumes the monitor when the desired
@@ -170,8 +172,13 @@ func handleMonitorActiveStateUpdate(
 	newActive types.Bool,
 	diags *diag.Diagnostics,
 ) {
+	if newActive.IsNull() || newActive.IsUnknown() {
+		return
+	}
+
 	oldVal := !oldActive.IsNull() && !oldActive.IsUnknown() && oldActive.ValueBool()
-	newVal := !newActive.IsNull() && !newActive.IsUnknown() && newActive.ValueBool()
+	newVal := newActive.ValueBool()
+
 	if oldVal == newVal {
 		return
 	}
