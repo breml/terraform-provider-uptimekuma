@@ -136,6 +136,13 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	if err != nil {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
+		return
+	}
+
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -269,6 +276,11 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	handleMonitorTagsUpdate(ctx, r.client, data.ID.ValueInt64(), state.Tags, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	handleMonitorActiveStateUpdate(ctx, r.client, data.ID.ValueInt64(), state.Active, data.Active, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

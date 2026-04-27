@@ -261,3 +261,90 @@ resource "uptimekuma_monitor_http" "test" {
 }
 `, name, url, cacheBust)
 }
+
+func TestAccMonitorHTTPResourceActiveToggle(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorActiveToggle")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, true),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, false),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, true),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+			// Re-import after the toggle to confirm the server's view of `active`
+			// matches Terraform state. Without the pause/resume fix this step would
+			// fail because the server would still report active=true.
+			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccMonitorHTTPResourceCreateInactive(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorCreateInactive")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfigActive(name, false),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+			// Import-verify confirms the server actually persisted active=false
+			// (vs. the prior bug where state was set from Read of an unchanged server).
+			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPResourceConfigActive(name string, active bool) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http" "test" {
+  name   = %[1]q
+  url    = "https://httpbin.org/status/200"
+  active = %[2]t
+}
+`, name, active)
+}
