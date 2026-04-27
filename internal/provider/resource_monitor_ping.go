@@ -38,6 +38,7 @@ type MonitorPingResourceModel struct {
 
 	Hostname   types.String `tfsdk:"hostname"`
 	PacketSize types.Int64  `tfsdk:"packet_size"`
+	Timeout    types.Int64  `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -65,6 +66,15 @@ func (*MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Default:             int64default.StaticInt64(56),
 				Validators: []validator.Int64{
 					int64validator.Between(1, 65500),
+				},
+			},
+			"timeout": schema.Int64Attribute{
+				MarkdownDescription: "Request timeout in seconds",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(48),
+				Validators: []validator.Int64{
+					int64validator.Between(1, 3600),
 				},
 			},
 		}),
@@ -104,6 +114,11 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 			Hostname:   data.Hostname.ValueString(),
 			PacketSize: int(data.PacketSize.ValueInt64()),
 		},
+	}
+
+	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
+		timeout := data.Timeout.ValueInt64()
+		pingMonitor.Timeout = &timeout
 	}
 
 	if !data.Description.IsNull() {
@@ -184,6 +199,12 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	data.Hostname = types.StringValue(pingMonitor.Hostname)
 	data.PacketSize = types.Int64Value(int64(pingMonitor.PacketSize))
 
+	if pingMonitor.Timeout != nil {
+		data.Timeout = types.Int64Value(*pingMonitor.Timeout)
+	} else {
+		data.Timeout = types.Int64Null()
+	}
+
 	if pingMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*pingMonitor.Parent)
 	} else {
@@ -243,6 +264,11 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 			Hostname:   data.Hostname.ValueString(),
 			PacketSize: int(data.PacketSize.ValueInt64()),
 		},
+	}
+
+	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
+		timeout := data.Timeout.ValueInt64()
+		pingMonitor.Timeout = &timeout
 	}
 
 	if !data.Description.IsNull() {
