@@ -66,6 +66,12 @@ func TestAccMonitorRadiusResource(t *testing.T) {
 				},
 			},
 			{
+				// Refresh-only step: ensure no perpetual diff is produced
+				// when the API does not return sensitive fields.
+				RefreshState:       true,
+				ExpectNonEmptyPlan: false,
+			},
+			{
 				Config: testAccMonitorRadiusResourceConfig(
 					nameUpdated,
 					descriptionUpdated,

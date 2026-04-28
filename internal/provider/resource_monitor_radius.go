@@ -223,8 +223,18 @@ func populateRadiusMonitorBaseFields(radiusMonitor *monitor.Radius, m *MonitorRa
 	m.Active = types.BoolValue(radiusMonitor.IsActive)
 	m.Hostname = types.StringValue(radiusMonitor.Hostname)
 	m.RadiusUsername = types.StringValue(radiusMonitor.Username)
-	m.RadiusPassword = types.StringValue(radiusMonitor.Password)
-	m.RadiusSecret = types.StringValue(radiusMonitor.Secret)
+
+	// Uptime Kuma may not return sensitive fields in the API response.
+	// Preserve the existing state values to avoid erasing the configured
+	// secrets and to prevent perpetual diffs after a refresh.
+	if radiusMonitor.Password != "" {
+		m.RadiusPassword = types.StringValue(radiusMonitor.Password)
+	}
+
+	if radiusMonitor.Secret != "" {
+		m.RadiusSecret = types.StringValue(radiusMonitor.Secret)
+	}
+
 	m.CalledStationID = stringOrNullPtr(radiusMonitor.CalledStationID)
 	m.CallingStationID = stringOrNullPtr(radiusMonitor.CallingStationID)
 
