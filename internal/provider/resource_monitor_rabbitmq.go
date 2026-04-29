@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -77,6 +79,9 @@ func (*MonitorRabbitMQResource) Schema(
 				Optional:            true,
 				Computed:            true,
 				Default:             int64default.StaticInt64(48),
+				Validators: []validator.Int64{
+					int64validator.Between(1, 3600),
+				},
 			},
 		}),
 	}
