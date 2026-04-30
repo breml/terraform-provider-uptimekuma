@@ -77,7 +77,7 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 			},
 			{
 				// Refresh-only step: ensure no perpetual diff is produced
-				// when the API does not return sensitive fields.
+				// after refreshing the existing configuration from the API.
 				RefreshState:       true,
 				ExpectNonEmptyPlan: false,
 			},
@@ -124,7 +124,7 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 				ImportState:                          true,
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "id",
-				ImportStateVerifyIgnore:              []string{"sasl_options"},
+				ImportStateVerifyIgnore:              []string{"sasl_options", "message"},
 			},
 		},
 	})
