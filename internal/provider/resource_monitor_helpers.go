@@ -50,3 +50,13 @@ func ptrToTypes(v *string) types.String {
 
 	return types.StringValue(*v)
 }
+
+// int64ToPtr converts a Terraform int64 type to a pointer to int64.
+// Returns nil if the value is null or unknown.
+func int64ToPtr(v types.Int64) *int64 {
+	if v.IsNull() || v.IsUnknown() {
+		return nil
+	}
+
+	return v.ValueInt64Pointer()
+}
