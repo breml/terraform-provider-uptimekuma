@@ -103,6 +103,16 @@ func TestPool_ConfigMatches(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "different per attempt timeout",
+			config: &Config{
+				Endpoint:          "http://localhost:3001",
+				Username:          "admin",
+				Password:          "secret",
+				PerAttemptTimeout: 5 * time.Second,
+			},
+			expected: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -146,20 +156,20 @@ func TestPool_ConfigMatches_EffectiveMaxRetries(t *testing.T) {
 			Endpoint:   "http://localhost:3001",
 			Username:   "admin",
 			Password:   "secret",
-			MaxRetries: 0, // resolves to defaultMaxRetries (5)
+			MaxRetries: 0, // resolves to defaultMaxRetries
 		},
 	}
 
-	// Explicitly passing 5 should match zero (both resolve to 5).
+	// Explicitly passing defaultMaxRetries should match zero (both resolve to the same value).
 	config := &Config{
 		Endpoint:   "http://localhost:3001",
 		Username:   "admin",
 		Password:   "secret",
-		MaxRetries: 5,
+		MaxRetries: defaultMaxRetries,
 	}
 
 	if !pool.configMatches(config) {
-		t.Error("expected configMatches to return true for MaxRetries=0 vs 5")
+		t.Errorf("expected configMatches to return true for MaxRetries=0 vs %d", defaultMaxRetries)
 	}
 }
 

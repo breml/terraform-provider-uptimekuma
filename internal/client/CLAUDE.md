@@ -27,9 +27,19 @@ const defaultConnectTimeout = 30 * time.Second
 
 Applied automatically when no explicit `ConnectTimeout` is configured (or when a negative value is provided). This
 prevents the provider from hanging indefinitely when Uptime Kuma is unreachable. The `effectiveTimeout` helper resolves
-the configured value or falls back to `defaultConnectTimeout`. The resolved timeout is used for per-attempt timeouts
-(via `kuma.WithConnectTimeout`), and the overall retry deadline is computed as
-`ConnectTimeout * (MaxRetries + 1)` — giving each attempt a full timeout window.
+the configured value or falls back to `defaultConnectTimeout`. The resolved timeout is the **overall** budget for the
+whole connection process (across all retry attempts and backoff). Each individual attempt is bounded by
+`min(PerAttemptTimeout, remainingBudget)` via `kuma.WithConnectTimeout`. When `PerAttemptTimeout` is zero, each
+attempt may use the full remaining budget.
+
+### defaultMaxRetries
+
+```go
+const defaultMaxRetries = 3
+```
+
+Applied when no explicit `MaxRetries` is configured (or when a negative value is provided). All retry attempts must
+complete within the overall `ConnectTimeout` budget, so the default is intentionally small.
 
 ## Key Types
 
@@ -44,8 +54,9 @@ type Config struct {
     Password             string         // Optional: Login password
     LogLevel             int            // Optional: Socket.IO logging level
     EnableConnectionPool bool           // For acceptance tests, enables pooling
-    ConnectTimeout       time.Duration  // Per-attempt + overall timeout (default: 30s)
-    MaxRetries           int            // Max retry attempts (default: 5)
+    ConnectTimeout       time.Duration  // Overall timeout budget across all retry attempts (default: 30s)
+    PerAttemptTimeout    time.Duration  // Optional per-attempt cap; defaults to remaining ConnectTimeout budget
+    MaxRetries           int            // Max retry attempts (default: 3)
 }
 ```
 
@@ -54,8 +65,10 @@ type Config struct {
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
-- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; per-attempt timeout uses this value,
-  overall deadline is `ConnectTimeout * (MaxRetries + 1)`
+- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; this value bounds the overall
+  connection process across all retry attempts and backoff
+- `PerAttemptTimeout` (when greater than zero) caps the time spent on each individual connection attempt; the effective
+  per-attempt timeout is `min(PerAttemptTimeout, remainingBudget)`
 
 ### Pool
 

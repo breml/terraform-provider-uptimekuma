@@ -12,11 +12,14 @@ import (
 )
 
 // defaultConnectTimeout is applied when no explicit ConnectTimeout is configured.
-// This prevents the provider from hanging indefinitely when Uptime Kuma is unreachable.
+// It bounds the overall connection process (across all retry attempts) to
+// prevent the provider from hanging indefinitely when Uptime Kuma is unreachable.
 const defaultConnectTimeout = 30 * time.Second
 
 // defaultMaxRetries is applied when no explicit MaxRetries is configured.
-const defaultMaxRetries = 5
+// It is intentionally small so that the default overall ConnectTimeout budget
+// can be split across a few quick attempts without requiring a large total wait.
+const defaultMaxRetries = 3
 
 // effectiveTimeout returns the configured timeout, or defaultConnectTimeout if
 // the configured value is zero or negative.
@@ -45,8 +48,15 @@ type Config struct {
 	Password             string
 	LogLevel             int
 	EnableConnectionPool bool
-	ConnectTimeout       time.Duration
-	MaxRetries           int
+	// ConnectTimeout is the overall connection budget across all retry
+	// attempts. It defaults to defaultConnectTimeout when zero or negative.
+	ConnectTimeout time.Duration
+	// PerAttemptTimeout, when greater than zero, caps the timeout used for
+	// each individual connection attempt. The effective per-attempt timeout
+	// is min(PerAttemptTimeout, remainingBudget). When zero, each attempt
+	// is allowed to use the full remaining ConnectTimeout budget.
+	PerAttemptTimeout time.Duration
+	MaxRetries        int
 }
 
 // New creates a new Uptime Kuma client with optional connection pooling.
@@ -65,13 +75,13 @@ func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 }
 
 // newClientDirect creates a new direct connection with retry logic.
-// It resolves the effective timeout (using defaultConnectTimeout when
-// none is configured) and bounds each individual connection attempt
-// via kuma.WithConnectTimeout. The overall retry process is bounded
-// by a separate timer set to ConnectTimeout * (MaxRetries + 1).
-// The timer is kept separate from the context passed to kuma.New,
-// because the socket.io client stores that context for the lifetime
-// of the connection.
+// It resolves the effective overall timeout (using defaultConnectTimeout
+// when none is configured) and bounds the entire connection process by
+// that budget. Each individual attempt is bounded by
+// min(PerAttemptTimeout, remainingBudget) via kuma.WithConnectTimeout.
+// The overall budget is enforced by a separate timer, kept independent
+// of the context passed to kuma.New, because the socket.io client stores
+// that context for the lifetime of the connection.
 func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) {
 	timeout := effectiveTimeout(config.ConnectTimeout)
 
@@ -79,33 +89,26 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 	resolved := *config
 	resolved.ConnectTimeout = timeout
 
-	opts := []kuma.Option{
-		kuma.WithLogLevel(config.LogLevel),
-		kuma.WithConnectTimeout(timeout),
-	}
-
-	return newClientDirectWithRetry(ctx, &resolved, opts)
+	return newClientDirectWithRetry(ctx, &resolved)
 }
 
 // newClientDirectWithRetry attempts to connect to Uptime Kuma with
 // exponential backoff retry logic. The retry loop is bounded by a
-// separate timer set to ConnectTimeout * (MaxRetries + 1), giving
-// each attempt a full ConnectTimeout window before the overall
-// deadline fires. The timer is intentionally not derived from ctx,
-// because ctx is passed into the socket.io client and controls the
-// connection lifetime — adding a deadline to it would kill the
-// connection after the timeout expires.
+// timer set to the overall ConnectTimeout budget. Each attempt's
+// per-attempt timeout is capped to the remaining budget so the
+// overall connection process never exceeds ConnectTimeout. The
+// timer is intentionally not derived from ctx, because ctx is passed
+// into the socket.io client and controls the connection lifetime —
+// adding a deadline to it would kill the connection after the
+// timeout expires.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,
-	opts []kuma.Option,
 ) (*kuma.Client, error) {
 	maxRetries := effectiveMaxRetries(config.MaxRetries)
 
-	// Overall deadline = ConnectTimeout * (MaxRetries + 1), so each
-	// attempt gets a full ConnectTimeout window before the deadline fires.
-	overallDeadline := config.ConnectTimeout * time.Duration(maxRetries+1)
-	timer := time.NewTimer(overallDeadline)
+	overallDeadline := time.Now().Add(config.ConnectTimeout)
+	timer := time.NewTimer(time.Until(overallDeadline))
 	defer timer.Stop()
 
 	deadline := timer.C
@@ -124,6 +127,16 @@ func newClientDirectWithRetry(
 		default:
 		}
 
+		attemptTimeout := remainingAttemptTimeout(overallDeadline, config.PerAttemptTimeout)
+		if attemptTimeout <= 0 {
+			return nil, newTimeoutError(attempt, err)
+		}
+
+		opts := []kuma.Option{
+			kuma.WithLogLevel(config.LogLevel),
+			kuma.WithConnectTimeout(attemptTimeout),
+		}
+
 		kumaClient, err = kuma.New(
 			ctx,
 			config.Endpoint,
@@ -139,11 +152,20 @@ func newClientDirectWithRetry(
 			break
 		}
 
-		// Exponential backoff with jitter.
+		// Exponential backoff with jitter, capped to remaining budget.
 		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
 		//nolint:gosec // Not for cryptographic use, only for jitter in backoff.
 		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
 		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
+
+		remaining := time.Until(overallDeadline)
+		if remaining <= 0 {
+			return nil, newTimeoutError(attempt+1, err)
+		}
+
+		if sleepDuration > remaining {
+			sleepDuration = remaining
+		}
 
 		select {
 		case <-ctx.Done():
@@ -158,6 +180,22 @@ func newClientDirectWithRetry(
 	}
 
 	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries+1, err)
+}
+
+// remainingAttemptTimeout returns the timeout to use for the next attempt.
+// It is bounded by the remaining overall budget, and additionally capped to
+// perAttempt when perAttempt is greater than zero.
+func remainingAttemptTimeout(overallDeadline time.Time, perAttempt time.Duration) time.Duration {
+	remaining := time.Until(overallDeadline)
+	if remaining <= 0 {
+		return 0
+	}
+
+	if perAttempt > 0 && perAttempt < remaining {
+		return perAttempt
+	}
+
+	return remaining
 }
 
 // newTimeoutError creates a timeout error message. If lastErr is not nil,
