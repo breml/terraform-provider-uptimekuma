@@ -86,9 +86,12 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 				Optional: true,
 			},
 			"max_retries": schema.Int64Attribute{
-				MarkdownDescription: "Maximum number of connection retry attempts (default: `3`). " +
-					"All retry attempts must complete within the overall `timeout` budget. " +
-					"Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.",
+				MarkdownDescription: fmt.Sprintf(
+					"Maximum number of connection retry attempts (default: `%d`). "+
+						"All retry attempts must complete within the overall `timeout` budget. "+
+						"Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.",
+					defaultMaxRetries,
+				),
 				Optional: true,
 			},
 		},
@@ -215,8 +218,10 @@ func parseClientOptions(
 	return opts
 }
 
-// defaultMaxRetries mirrors the client package default and is used here only
-// to surface the same value back to users via the provider schema description.
+// defaultMaxRetries mirrors the client package default. It is used both as
+// the fallback in parseClientOptions when the user does not provide an
+// explicit value, and to render the value in the `max_retries` schema
+// description so the documented default cannot drift from the runtime one.
 const defaultMaxRetries = 3
 
 // parseDurationAttribute parses a Go duration string from a Terraform string

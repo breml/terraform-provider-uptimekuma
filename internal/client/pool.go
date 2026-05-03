@@ -125,9 +125,10 @@ func (p *Pool) Close() error {
 }
 
 // configMatches checks if the provided config matches the pool's config.
-// Only connection-critical fields (endpoint, credentials, timeout, max_retries) are compared.
-// LogLevel and EnableConnectionPool are intentionally excluded as they don't
-// affect the connection identity - the first connection's LogLevel is used.
+// Only connection-critical fields (endpoint, credentials, timeout,
+// per_attempt_timeout, max_retries) are compared. LogLevel and
+// EnableConnectionPool are intentionally excluded as they don't affect the
+// connection identity - the first connection's LogLevel is used.
 func (p *Pool) configMatches(config *Config) bool {
 	if p.config == nil {
 		return false
