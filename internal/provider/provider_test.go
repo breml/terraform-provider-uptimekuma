@@ -460,6 +460,77 @@ func TestApplyEnvironmentDefaults_PerAttemptTimeoutConfigOverridesEnv(t *testing
 	}
 }
 
+func TestParseClientOptions_PerAttemptTimeoutExceedsTimeout(t *testing.T) {
+	tests := []struct {
+		name              string
+		timeout           string
+		perAttemptTimeout string
+		wantWarning       bool
+	}{
+		{
+			name:              "per_attempt_timeout greater than timeout warns",
+			timeout:           "30s",
+			perAttemptTimeout: "60s",
+			wantWarning:       true,
+		},
+		{
+			name:              "per_attempt_timeout equal to timeout warns",
+			timeout:           "30s",
+			perAttemptTimeout: "30s",
+			wantWarning:       true,
+		},
+		{
+			name:              "per_attempt_timeout less than timeout does not warn",
+			timeout:           "30s",
+			perAttemptTimeout: "5s",
+			wantWarning:       false,
+		},
+		{
+			name:              "per_attempt_timeout set but timeout not set does not warn",
+			timeout:           "",
+			perAttemptTimeout: "60s",
+			wantWarning:       false,
+		},
+		{
+			name:              "timeout set but per_attempt_timeout not set does not warn",
+			timeout:           "30s",
+			perAttemptTimeout: "",
+			wantWarning:       false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := UptimeKumaProviderModel{
+				Endpoint:          types.StringNull(),
+				Username:          types.StringNull(),
+				Password:          types.StringNull(),
+				Timeout:           types.StringNull(),
+				PerAttemptTimeout: types.StringNull(),
+				MaxRetries:        types.Int64Null(),
+			}
+
+			if tc.timeout != "" {
+				model.Timeout = types.StringValue(tc.timeout)
+			}
+
+			if tc.perAttemptTimeout != "" {
+				model.PerAttemptTimeout = types.StringValue(tc.perAttemptTimeout)
+			}
+
+			resp := &provider.ConfigureResponse{}
+			parseClientOptions(&model, resp)
+
+			hasWarning := len(resp.Diagnostics.Warnings()) > 0
+
+			if hasWarning != tc.wantWarning {
+				t.Errorf("wantWarning=%v but hasWarning=%v (warnings: %v)",
+					tc.wantWarning, hasWarning, resp.Diagnostics.Warnings())
+			}
+		})
+	}
+}
+
 func TestAccProviderInvalidTimeout(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,

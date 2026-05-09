@@ -200,6 +200,18 @@ func parseClientOptions(
 		return opts
 	}
 
+	if opts.perAttemptTimeout > 0 && opts.connectTimeout > 0 && opts.perAttemptTimeout >= opts.connectTimeout {
+		resp.Diagnostics.AddWarning(
+			"per_attempt_timeout has no effect",
+			fmt.Sprintf(
+				"per_attempt_timeout (%s) is greater than or equal to timeout (%s); "+
+					"each attempt is already bounded by the remaining overall budget, "+
+					"so per_attempt_timeout will never be applied",
+				opts.perAttemptTimeout, opts.connectTimeout,
+			),
+		)
+	}
+
 	opts.maxRetries = defaultMaxRetries
 
 	if !data.MaxRetries.IsNull() {

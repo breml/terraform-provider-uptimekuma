@@ -32,9 +32,9 @@ func effectiveTimeout(configured time.Duration) time.Duration {
 }
 
 // effectiveMaxRetries returns the configured max retries, or defaultMaxRetries if
-// the configured value is zero or negative.
+// the configured value is negative. Zero is treated as "no retries" (one attempt total).
 func effectiveMaxRetries(configured int) int {
-	if configured > 0 {
+	if configured >= 0 {
 		return configured
 	}
 

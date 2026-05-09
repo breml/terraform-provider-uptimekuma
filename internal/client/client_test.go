@@ -69,9 +69,16 @@ func TestEffectiveTimeout_Negative(t *testing.T) {
 }
 
 func TestEffectiveMaxRetries_Default(t *testing.T) {
-	got := effectiveMaxRetries(0)
+	got := effectiveMaxRetries(-1)
 	if got != defaultMaxRetries {
 		t.Errorf("expected %d, got %d", defaultMaxRetries, got)
+	}
+}
+
+func TestEffectiveMaxRetries_Zero(t *testing.T) {
+	got := effectiveMaxRetries(0)
+	if got != 0 {
+		t.Errorf("expected 0 for explicitly-zero max retries, got %d", got)
 	}
 }
 

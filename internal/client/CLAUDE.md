@@ -91,11 +91,13 @@ Used by the provider in both production and testing:
 
 ```go
 config := &Config{
-    Endpoint: "https://uptime-kuma.example.com",
-    Username: "admin",
-    Password: "password",
-    LogLevel: 0,
-    EnableConnectionPool: true,  // Always enabled by provider
+    Endpoint:             "https://uptime-kuma.example.com",
+    Username:             "admin",
+    Password:             "password",
+    LogLevel:             0,
+    EnableConnectionPool: true,           // Always enabled by provider
+    ConnectTimeout:       30 * time.Second, // overall budget; 0 uses defaultConnectTimeout
+    MaxRetries:           defaultMaxRetries, // 0 means no retries; negative uses defaultMaxRetries
 }
 
 client, err := client.New(ctx, config)
@@ -107,20 +109,18 @@ if err != nil {
 
 **Retry Logic:**
 
-- Maximum 5 retry attempts (6 total attempts including first try)
-- Exponential backoff: base delay 5 seconds, multiplied by 2^attempt
+- Maximum 3 retry attempts (4 total attempts including first try)
+- Exponential backoff: base delay 500ms, multiplied by 2^attempt
 - Jitter: ±20% randomization (0.8 to 1.2 multiplier)
-- Maximum backoff capped at 30 seconds
+- Backoff capped to the remaining overall `ConnectTimeout` budget
 - Respects context cancellation during backoff
 
-**Backoff Schedule:**
+**Backoff Schedule (with defaults):**
 
 - Attempt 1: Immediate
-- Attempt 2: ~5s (4-6s with jitter)
-- Attempt 3: ~10s (8-12s with jitter)
-- Attempt 4: ~20s (16-24s with jitter)
-- Attempt 5: ~30s (capped)
-- Attempt 6: ~30s (capped)
+- Attempt 2: ~500ms (400–600ms with jitter)
+- Attempt 3: ~1s (800ms–1.2s with jitter)
+- Attempt 4: ~2s (1.6–2.4s with jitter)
 
 ### Acceptance Tests
 
@@ -365,7 +365,7 @@ if err != nil {
 **Common Errors:**
 
 - `"endpoint is required"` - Config validation failure
-- `"failed after 6 attempts: ..."` - Connection retry exhaustion
+- `"failed after 4 attempts: ..."` - Connection retry exhaustion (with default `max_retries=3`)
 - `"connection cancelled: ..."` - Context cancellation during retry
 - `"pool config mismatch: ..."` - Credential confusion prevention
 

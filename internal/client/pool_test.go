@@ -156,20 +156,28 @@ func TestPool_ConfigMatches_EffectiveMaxRetries(t *testing.T) {
 			Endpoint:   "http://localhost:3001",
 			Username:   "admin",
 			Password:   "secret",
-			MaxRetries: 0, // resolves to defaultMaxRetries
+			MaxRetries: defaultMaxRetries, // explicit default value, as the provider always sets
 		},
 	}
 
-	// Explicitly passing defaultMaxRetries should match zero (both resolve to the same value).
-	config := &Config{
+	// Same explicit value should match.
+	if !pool.configMatches(&Config{
 		Endpoint:   "http://localhost:3001",
 		Username:   "admin",
 		Password:   "secret",
 		MaxRetries: defaultMaxRetries,
+	}) {
+		t.Errorf("expected configMatches to return true for MaxRetries=%d vs %d", defaultMaxRetries, defaultMaxRetries)
 	}
 
-	if !pool.configMatches(config) {
-		t.Errorf("expected configMatches to return true for MaxRetries=0 vs %d", defaultMaxRetries)
+	// MaxRetries=0 (no retries) must NOT match defaultMaxRetries.
+	if pool.configMatches(&Config{
+		Endpoint:   "http://localhost:3001",
+		Username:   "admin",
+		Password:   "secret",
+		MaxRetries: 0,
+	}) {
+		t.Errorf("expected configMatches to return false for MaxRetries=%d vs MaxRetries=0", defaultMaxRetries)
 	}
 }
 
