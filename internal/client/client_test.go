@@ -69,9 +69,16 @@ func TestEffectiveTimeout_Negative(t *testing.T) {
 }
 
 func TestEffectiveMaxRetries_Default(t *testing.T) {
-	got := effectiveMaxRetries(0)
+	got := effectiveMaxRetries(-1)
 	if got != defaultMaxRetries {
 		t.Errorf("expected %d, got %d", defaultMaxRetries, got)
+	}
+}
+
+func TestEffectiveMaxRetries_Zero(t *testing.T) {
+	got := effectiveMaxRetries(0)
+	if got != 0 {
+		t.Errorf("expected 0 for explicitly-zero max retries, got %d", got)
 	}
 }
 
@@ -86,6 +93,44 @@ func TestEffectiveMaxRetries_Negative(t *testing.T) {
 	got := effectiveMaxRetries(-3)
 	if got != defaultMaxRetries {
 		t.Errorf("expected %d for negative input, got %d", defaultMaxRetries, got)
+	}
+}
+
+func TestRemainingAttemptTimeout_NoCap(t *testing.T) {
+	deadline := time.Now().Add(5 * time.Second)
+
+	got := remainingAttemptTimeout(deadline, 0)
+	if got <= 0 || got > 5*time.Second {
+		t.Errorf("expected value within (0,5s], got %s", got)
+	}
+}
+
+func TestRemainingAttemptTimeout_CapApplied(t *testing.T) {
+	deadline := time.Now().Add(10 * time.Second)
+	perAttempt := 2 * time.Second
+
+	got := remainingAttemptTimeout(deadline, perAttempt)
+	if got != perAttempt {
+		t.Errorf("expected %s, got %s", perAttempt, got)
+	}
+}
+
+func TestRemainingAttemptTimeout_CapLargerThanRemaining(t *testing.T) {
+	deadline := time.Now().Add(1 * time.Second)
+	perAttempt := 30 * time.Second
+
+	got := remainingAttemptTimeout(deadline, perAttempt)
+	if got <= 0 || got > 1*time.Second {
+		t.Errorf("expected value within (0,1s], got %s", got)
+	}
+}
+
+func TestRemainingAttemptTimeout_DeadlinePassed(t *testing.T) {
+	deadline := time.Now().Add(-1 * time.Second)
+
+	got := remainingAttemptTimeout(deadline, 5*time.Second)
+	if got != 0 {
+		t.Errorf("expected 0 when deadline already passed, got %s", got)
 	}
 }
 
@@ -169,12 +214,11 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// Use a local listener that accepts TCP connections but never
 	// completes the socket.io handshake. This is deterministic and
 	// independent of network configuration, unlike TEST-NET addresses.
-	// ConnectTimeout bounds per-attempt timeout; the overall deadline
-	// is ConnectTimeout * (MaxRetries + 1). The timer is separate from
-	// the context because the socket.io client stores it for the
-	// connection lifetime.
+	// ConnectTimeout bounds the overall connection process across all
+	// retry attempts. The timer is separate from the context because
+	// the socket.io client stores it for the connection lifetime.
 	endpoint := startDeadEndListener(t)
-	connectTimeout := 2 * time.Second
+	connectTimeout := 3 * time.Second
 
 	config := &Config{
 		Endpoint:       endpoint,
@@ -195,9 +239,10 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 		t.Fatal("expected error for unreachable endpoint, got nil")
 	}
 
-	// Overall deadline = ConnectTimeout * (MaxRetries + 1) = 2s * 3 = 6s.
-	// Allow some slack for scheduling.
-	upperBound := connectTimeout*time.Duration(config.MaxRetries+1) + 2*time.Second
+	// Overall deadline equals ConnectTimeout (total budget). Allow some
+	// slack for scheduling and for the in-flight kuma.New attempt to
+	// observe the deadline.
+	upperBound := connectTimeout + 2*time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
@@ -207,21 +252,22 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	}
 }
 
-func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
-	// Verify that MaxRetries limits the number of connection attempts.
-	// Use a dead-end listener with a short ConnectTimeout so each
-	// attempt fails quickly. With MaxRetries=2 and ConnectTimeout=1s,
-	// the overall deadline is 1s * 3 = 3s. The test verifies that all
-	// 3 attempts run within that window.
+func TestNewClientDirect_PerAttemptTimeoutLimitsAttempts(t *testing.T) {
+	// Verify that PerAttemptTimeout caps each individual attempt so that
+	// multiple retry attempts can be performed within the overall
+	// ConnectTimeout budget. With PerAttemptTimeout=500ms and overall
+	// ConnectTimeout=3s, the loop should perform several attempts and
+	// still finish within ~3s.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{
-		Endpoint:       endpoint,
-		Username:       "admin",
-		Password:       "secret",
-		ConnectTimeout: 1 * time.Second,
-		MaxRetries:     2,
-		LogLevel:       kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+		Endpoint:          endpoint,
+		Username:          "admin",
+		Password:          "secret",
+		ConnectTimeout:    3 * time.Second,
+		PerAttemptTimeout: 500 * time.Millisecond,
+		MaxRetries:        5,
+		LogLevel:          kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
 
 	start := time.Now()
@@ -234,8 +280,8 @@ func TestNewClientDirect_MaxRetriesLimitsAttempts(t *testing.T) {
 		t.Fatal("expected error for dead-end endpoint, got nil")
 	}
 
-	// Overall deadline = 1s * (2 + 1) = 3s. Allow some slack.
-	upperBound := config.ConnectTimeout*time.Duration(config.MaxRetries+1) + 2*time.Second
+	// Overall deadline equals ConnectTimeout. Allow some slack.
+	upperBound := config.ConnectTimeout + 2*time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}

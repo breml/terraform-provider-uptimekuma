@@ -35,11 +35,12 @@ type UptimeKumaProvider struct {
 
 // UptimeKumaProviderModel describes the provider data model.
 type UptimeKumaProviderModel struct {
-	Endpoint   types.String `tfsdk:"endpoint"`
-	Username   types.String `tfsdk:"username"`
-	Password   types.String `tfsdk:"password"`
-	Timeout    types.String `tfsdk:"timeout"`
-	MaxRetries types.Int64  `tfsdk:"max_retries"`
+	Endpoint          types.String `tfsdk:"endpoint"`
+	Username          types.String `tfsdk:"username"`
+	Password          types.String `tfsdk:"password"`
+	Timeout           types.String `tfsdk:"timeout"`
+	PerAttemptTimeout types.String `tfsdk:"per_attempt_timeout"`
+	MaxRetries        types.Int64  `tfsdk:"max_retries"`
 }
 
 // Metadata returns the metadata for the provider.
@@ -70,14 +71,27 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 				Sensitive:           true,
 			},
 			"timeout": schema.StringAttribute{
-				MarkdownDescription: "Connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
-					"Defaults to `30s` if not specified. " +
+				MarkdownDescription: "Overall connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
+					"Bounds the total time spent attempting to connect to Uptime Kuma, including all retry " +
+					"attempts and backoff. Defaults to `30s` if not specified. " +
 					"Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.",
 				Optional: true,
 			},
+			"per_attempt_timeout": schema.StringAttribute{
+				MarkdownDescription: "Optional per-attempt connection timeout as a Go duration string " +
+					"(e.g. `5s`, `10s`). Caps the time spent on each individual connection attempt. The " +
+					"effective per-attempt timeout is the smaller of this value and the remaining `timeout` " +
+					"budget. When unset, each attempt may use the full remaining `timeout` budget. " +
+					"Can be set via `UPTIMEKUMA_PER_ATTEMPT_TIMEOUT` environment variable.",
+				Optional: true,
+			},
 			"max_retries": schema.Int64Attribute{
-				MarkdownDescription: "Maximum number of connection retry attempts (default: `5`). " +
-					"Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.",
+				MarkdownDescription: fmt.Sprintf(
+					"Maximum number of connection retry attempts (default: `%d`). "+
+						"All retry attempts must complete within the overall `timeout` budget. "+
+						"Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.",
+					defaultMaxRetries,
+				),
 				Optional: true,
 			},
 		},
@@ -126,7 +140,7 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
-	connectTimeout, maxRetries := parseClientOptions(&data, resp)
+	opts := parseClientOptions(&data, resp)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -137,8 +151,9 @@ func (*UptimeKumaProvider) Configure(
 		Password:             data.Password.ValueString(),
 		EnableConnectionPool: true,
 		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
-		ConnectTimeout:       connectTimeout,
-		MaxRetries:           maxRetries,
+		ConnectTimeout:       opts.connectTimeout,
+		PerAttemptTimeout:    opts.perAttemptTimeout,
+		MaxRetries:           opts.maxRetries,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create client", err.Error())
@@ -160,51 +175,100 @@ func (*UptimeKumaProvider) Configure(
 	resp.ResourceData = pd
 }
 
-// parseClientOptions extracts and validates timeout and max_retries from the provider model.
+// clientOptions holds parsed and validated provider connection options.
+type clientOptions struct {
+	connectTimeout    time.Duration
+	perAttemptTimeout time.Duration
+	maxRetries        int
+}
+
+// parseClientOptions extracts and validates timeout, per_attempt_timeout and
+// max_retries from the provider model.
 func parseClientOptions(
 	data *UptimeKumaProviderModel,
 	resp *provider.ConfigureResponse,
-) (connectTimeout time.Duration, maxRetries int) {
-	timeoutStr := strings.TrimSpace(data.Timeout.ValueString())
-	if !data.Timeout.IsNull() && timeoutStr != "" {
-		var parseErr error
+) clientOptions {
+	var opts clientOptions
 
-		connectTimeout, parseErr = time.ParseDuration(timeoutStr)
-		if parseErr != nil {
-			resp.Diagnostics.AddError(
-				"invalid timeout",
-				fmt.Sprintf("failed to parse timeout %q: %s", data.Timeout.ValueString(), parseErr.Error()),
-			)
-
-			return 0, 0
-		}
-
-		if connectTimeout < 0 {
-			resp.Diagnostics.AddError(
-				"invalid timeout",
-				fmt.Sprintf("timeout must be non-negative, got %s", connectTimeout),
-			)
-
-			return 0, 0
-		}
+	opts.connectTimeout = parseDurationAttribute(data.Timeout, "timeout", resp)
+	if resp.Diagnostics.HasError() {
+		return opts
 	}
 
-	maxRetries = 5
+	opts.perAttemptTimeout = parseDurationAttribute(data.PerAttemptTimeout, "per_attempt_timeout", resp)
+	if resp.Diagnostics.HasError() {
+		return opts
+	}
+
+	if opts.perAttemptTimeout > 0 && opts.connectTimeout > 0 && opts.perAttemptTimeout >= opts.connectTimeout {
+		resp.Diagnostics.AddWarning(
+			"per_attempt_timeout has no effect",
+			fmt.Sprintf(
+				"per_attempt_timeout (%s) is greater than or equal to timeout (%s); "+
+					"each attempt is already bounded by the remaining overall budget, "+
+					"so per_attempt_timeout will never be applied",
+				opts.perAttemptTimeout, opts.connectTimeout,
+			),
+		)
+	}
+
+	opts.maxRetries = defaultMaxRetries
 
 	if !data.MaxRetries.IsNull() {
-		maxRetries = int(data.MaxRetries.ValueInt64())
+		opts.maxRetries = int(data.MaxRetries.ValueInt64())
 	}
 
-	if maxRetries < 0 {
+	if opts.maxRetries < 0 {
 		resp.Diagnostics.AddError(
 			"invalid max_retries",
-			fmt.Sprintf("max_retries must be non-negative, got %d", maxRetries),
+			fmt.Sprintf("max_retries must be non-negative, got %d", opts.maxRetries),
 		)
 
-		return 0, 0
+		return clientOptions{}
 	}
 
-	return connectTimeout, maxRetries
+	return opts
+}
+
+// defaultMaxRetries mirrors the client package default. It is used both as
+// the fallback in parseClientOptions when the user does not provide an
+// explicit value, and to render the value in the `max_retries` schema
+// description so the documented default cannot drift from the runtime one.
+const defaultMaxRetries = 3
+
+// parseDurationAttribute parses a Go duration string from a Terraform string
+// attribute. Empty/null values yield a zero duration (meaning "use the default").
+// Negative values produce a diagnostic error.
+func parseDurationAttribute(
+	attr types.String,
+	name string,
+	resp *provider.ConfigureResponse,
+) time.Duration {
+	value := strings.TrimSpace(attr.ValueString())
+	if attr.IsNull() || value == "" {
+		return 0
+	}
+
+	parsed, err := time.ParseDuration(value)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("invalid %s", name),
+			fmt.Sprintf("failed to parse %s %q: %s", name, attr.ValueString(), err.Error()),
+		)
+
+		return 0
+	}
+
+	if parsed < 0 {
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("invalid %s", name),
+			fmt.Sprintf("%s must be non-negative, got %s", name, parsed),
+		)
+
+		return 0
+	}
+
+	return parsed
 }
 
 // applyEnvironmentDefaults applies environment variable defaults to the provider model.
@@ -228,6 +292,11 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.Conf
 	envTimeout := os.Getenv("UPTIMEKUMA_TIMEOUT")
 	if data.Timeout.IsNull() && envTimeout != "" {
 		data.Timeout = types.StringValue(envTimeout)
+	}
+
+	envPerAttemptTimeout := os.Getenv("UPTIMEKUMA_PER_ATTEMPT_TIMEOUT")
+	if data.PerAttemptTimeout.IsNull() && envPerAttemptTimeout != "" {
+		data.PerAttemptTimeout = types.StringValue(envPerAttemptTimeout)
 	}
 
 	envMaxRetries := os.Getenv("UPTIMEKUMA_MAX_RETRIES")

@@ -27,9 +27,19 @@ const defaultConnectTimeout = 30 * time.Second
 
 Applied automatically when no explicit `ConnectTimeout` is configured (or when a negative value is provided). This
 prevents the provider from hanging indefinitely when Uptime Kuma is unreachable. The `effectiveTimeout` helper resolves
-the configured value or falls back to `defaultConnectTimeout`. The resolved timeout is used for per-attempt timeouts
-(via `kuma.WithConnectTimeout`), and the overall retry deadline is computed as
-`ConnectTimeout * (MaxRetries + 1)` — giving each attempt a full timeout window.
+the configured value or falls back to `defaultConnectTimeout`. The resolved timeout is the **overall** budget for the
+whole connection process (across all retry attempts and backoff). Each individual attempt is bounded by
+`min(PerAttemptTimeout, remainingBudget)` via `kuma.WithConnectTimeout`. When `PerAttemptTimeout` is zero, each
+attempt may use the full remaining budget.
+
+### defaultMaxRetries
+
+```go
+const defaultMaxRetries = 3
+```
+
+Applied when no explicit `MaxRetries` is configured (or when a negative value is provided). All retry attempts must
+complete within the overall `ConnectTimeout` budget, so the default is intentionally small.
 
 ## Key Types
 
@@ -44,8 +54,9 @@ type Config struct {
     Password             string         // Optional: Login password
     LogLevel             int            // Optional: Socket.IO logging level
     EnableConnectionPool bool           // For acceptance tests, enables pooling
-    ConnectTimeout       time.Duration  // Per-attempt + overall timeout (default: 30s)
-    MaxRetries           int            // Max retry attempts (default: 5)
+    ConnectTimeout       time.Duration  // Overall timeout budget across all retry attempts (default: 30s)
+    PerAttemptTimeout    time.Duration  // Optional per-attempt cap; defaults to remaining ConnectTimeout budget
+    MaxRetries           int            // Max retry attempts (default: 3)
 }
 ```
 
@@ -54,8 +65,10 @@ type Config struct {
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
-- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; per-attempt timeout uses this value,
-  overall deadline is `ConnectTimeout * (MaxRetries + 1)`
+- `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; this value bounds the overall
+  connection process across all retry attempts and backoff
+- `PerAttemptTimeout` (when greater than zero) caps the time spent on each individual connection attempt; the effective
+  per-attempt timeout is `min(PerAttemptTimeout, remainingBudget)`
 
 ### Pool
 
@@ -78,11 +91,13 @@ Used by the provider in both production and testing:
 
 ```go
 config := &Config{
-    Endpoint: "https://uptime-kuma.example.com",
-    Username: "admin",
-    Password: "password",
-    LogLevel: 0,
-    EnableConnectionPool: true,  // Always enabled by provider
+    Endpoint:             "https://uptime-kuma.example.com",
+    Username:             "admin",
+    Password:             "password",
+    LogLevel:             0,
+    EnableConnectionPool: true,           // Always enabled by provider
+    ConnectTimeout:       30 * time.Second, // overall budget; 0 uses defaultConnectTimeout
+    MaxRetries:           defaultMaxRetries, // 0 means no retries; negative uses defaultMaxRetries
 }
 
 client, err := client.New(ctx, config)
@@ -94,20 +109,18 @@ if err != nil {
 
 **Retry Logic:**
 
-- Maximum 5 retry attempts (6 total attempts including first try)
-- Exponential backoff: base delay 5 seconds, multiplied by 2^attempt
+- Maximum 3 retry attempts (4 total attempts including first try)
+- Exponential backoff: base delay 500ms, multiplied by 2^attempt
 - Jitter: ±20% randomization (0.8 to 1.2 multiplier)
-- Maximum backoff capped at 30 seconds
+- Backoff capped to the remaining overall `ConnectTimeout` budget
 - Respects context cancellation during backoff
 
-**Backoff Schedule:**
+**Backoff Schedule (with defaults):**
 
 - Attempt 1: Immediate
-- Attempt 2: ~5s (4-6s with jitter)
-- Attempt 3: ~10s (8-12s with jitter)
-- Attempt 4: ~20s (16-24s with jitter)
-- Attempt 5: ~30s (capped)
-- Attempt 6: ~30s (capped)
+- Attempt 2: ~500ms (400–600ms with jitter)
+- Attempt 3: ~1s (800ms–1.2s with jitter)
+- Attempt 4: ~2s (1.6–2.4s with jitter)
 
 ### Acceptance Tests
 
@@ -352,7 +365,7 @@ if err != nil {
 **Common Errors:**
 
 - `"endpoint is required"` - Config validation failure
-- `"failed after 6 attempts: ..."` - Connection retry exhaustion
+- `"failed after 4 attempts: ..."` - Connection retry exhaustion (with default `max_retries=3`)
 - `"connection cancelled: ..."` - Context cancellation during retry
 - `"pool config mismatch: ..."` - Credential confusion prevention
 

@@ -47,15 +47,18 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	if p.client != nil {
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
-				"pool config mismatch: existing endpoint=%q username=%q timeout=%s max_retries=%d,"+
-					" requested endpoint=%q username=%q timeout=%s max_retries=%d",
+				"pool config mismatch: existing endpoint=%q username=%q timeout=%s per_attempt_timeout=%s"+
+					" max_retries=%d, requested endpoint=%q username=%q timeout=%s per_attempt_timeout=%s"+
+					" max_retries=%d",
 				p.config.Endpoint,
 				p.config.Username,
 				effectiveTimeout(p.config.ConnectTimeout),
+				p.config.PerAttemptTimeout,
 				effectiveMaxRetries(p.config.MaxRetries),
 				config.Endpoint,
 				config.Username,
 				effectiveTimeout(config.ConnectTimeout),
+				config.PerAttemptTimeout,
 				effectiveMaxRetries(config.MaxRetries),
 			)
 		}
@@ -122,9 +125,10 @@ func (p *Pool) Close() error {
 }
 
 // configMatches checks if the provided config matches the pool's config.
-// Only connection-critical fields (endpoint, credentials, timeout, max_retries) are compared.
-// LogLevel and EnableConnectionPool are intentionally excluded as they don't
-// affect the connection identity - the first connection's LogLevel is used.
+// Only connection-critical fields (endpoint, credentials, timeout,
+// per_attempt_timeout, max_retries) are compared. LogLevel and
+// EnableConnectionPool are intentionally excluded as they don't affect the
+// connection identity - the first connection's LogLevel is used.
 func (p *Pool) configMatches(config *Config) bool {
 	if p.config == nil {
 		return false
@@ -134,6 +138,7 @@ func (p *Pool) configMatches(config *Config) bool {
 		p.config.Username == config.Username &&
 		p.config.Password == config.Password &&
 		effectiveTimeout(p.config.ConnectTimeout) == effectiveTimeout(config.ConnectTimeout) &&
+		p.config.PerAttemptTimeout == config.PerAttemptTimeout &&
 		effectiveMaxRetries(p.config.MaxRetries) == effectiveMaxRetries(config.MaxRetries)
 }
 
