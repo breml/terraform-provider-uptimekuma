@@ -55,7 +55,7 @@ func runTests(m *testing.M) (exitcode int) {
 		// pulls an image, creates a container based on it and runs it
 		container, err := pool.RunWithOptions(&dockertest.RunOptions{
 			Repository: "louislam/uptime-kuma",
-			Tag:        "2.2.0",
+			Tag:        "2.3.2",
 		}, func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
 			config.AutoRemove = true
