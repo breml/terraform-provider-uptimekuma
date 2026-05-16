@@ -3,7 +3,7 @@ module github.com/breml/terraform-provider-uptimekuma
 go 1.25.8
 
 require (
-	github.com/breml/go-uptime-kuma-client v0.3.3
+	github.com/breml/go-uptime-kuma-client v0.3.4-0.20260516195750-0ca9256f0ea5
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
@@ -86,7 +86,7 @@ require (
 	github.com/bombsimon/wsl/v5 v5.6.0 // indirect
 	github.com/breml/bidichk v0.3.3 // indirect
 	github.com/breml/errchkjson v0.4.1 // indirect
-	github.com/breml/githooks v0.0.0-20260328191633-541253a9d3bd // indirect
+	github.com/breml/githooks v0.0.0-20260421174736-44943ba7a400 // indirect
 	github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 // indirect
 	github.com/briandowns/spinner v1.23.2 // indirect
 	github.com/butuzov/ireturn v0.4.0 // indirect
@@ -355,14 +355,14 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.3 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20260212183809-81e46e3db34a // indirect
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/term v0.42.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
-	golang.org/x/tools v0.43.0 // indirect
+	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/api v0.239.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
@@ -398,9 +398,9 @@ require (
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
@@ -418,4 +418,4 @@ tool (
 
 exclude github.com/docker/cli v28.2.2+incompatible
 
-replace github.com/maldikhan/go.socket.io => github.com/breml/go.socket.io v0.0.0-20260415184737-53d789da8f28
+replace github.com/maldikhan/go.socket.io => github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31
