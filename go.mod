@@ -3,7 +3,7 @@ module github.com/breml/terraform-provider-uptimekuma
 go 1.25.8
 
 require (
-	github.com/breml/go-uptime-kuma-client v0.3.3
+	github.com/breml/go-uptime-kuma-client v0.3.4-0.20260516125309-d6d1da1b9070
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
@@ -86,7 +86,7 @@ require (
 	github.com/bombsimon/wsl/v5 v5.6.0 // indirect
 	github.com/breml/bidichk v0.3.3 // indirect
 	github.com/breml/errchkjson v0.4.1 // indirect
-	github.com/breml/githooks v0.0.0-20260328191633-541253a9d3bd // indirect
+	github.com/breml/githooks v0.0.0-20260421174736-44943ba7a400 // indirect
 	github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 // indirect
 	github.com/briandowns/spinner v1.23.2 // indirect
 	github.com/butuzov/ireturn v0.4.0 // indirect
@@ -418,4 +418,4 @@ tool (
 
 exclude github.com/docker/cli v28.2.2+incompatible
 
-replace github.com/maldikhan/go.socket.io => github.com/breml/go.socket.io v0.0.0-20260415184737-53d789da8f28
+replace github.com/maldikhan/go.socket.io => github.com/breml/go.socket.io v0.0.0-20260516125011-c65dff628137
