@@ -338,6 +338,11 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 		return
 	}
 
+	if httpJSONQueryMonitor.Base.Type() != httpJSONQueryMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	var httpMonitor monitor.HTTP
 	httpMonitor.Base = httpJSONQueryMonitor.Base
 	httpMonitor.HTTPDetails = httpJSONQueryMonitor.HTTPDetails

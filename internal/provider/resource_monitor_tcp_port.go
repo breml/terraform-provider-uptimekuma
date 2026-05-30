@@ -184,6 +184,11 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
+	if tcpPortMonitor.Base.Type() != tcpPortMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(tcpPortMonitor.Name)
 	if tcpPortMonitor.Description != nil {
 		data.Description = types.StringValue(*tcpPortMonitor.Description)

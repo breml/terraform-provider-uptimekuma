@@ -151,6 +151,11 @@ func (r *MonitorGroupResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	if groupMonitor.Base.Type() != groupMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(groupMonitor.Name)
 	if groupMonitor.Description != nil {
 		data.Description = types.StringValue(*groupMonitor.Description)

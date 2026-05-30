@@ -326,6 +326,11 @@ func (r *MonitorMQTTResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if mqttMonitor.Base.Type() != mqttMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateMQTTMonitorBaseFieldsForMQTT(&mqttMonitor, &data)
 	populateOptionalFieldsForMQTT(ctx, &mqttMonitor, &data, &resp.Diagnostics)
 

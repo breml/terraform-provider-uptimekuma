@@ -196,6 +196,11 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
+	if dnsMonitor.Base.Type() != dnsMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(dnsMonitor.Name)
 	if dnsMonitor.Description != nil {
 		data.Description = types.StringValue(*dnsMonitor.Description)

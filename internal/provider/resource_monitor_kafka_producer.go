@@ -305,6 +305,11 @@ func (r *MonitorKafkaProducerResource) Read(
 		return
 	}
 
+	if kafkaMonitor.Base.Type() != kafkaMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateKafkaProducerMonitorBaseFields(ctx, &kafkaMonitor, &data, &resp.Diagnostics)
 	populateOptionalFieldsForKafkaProducer(ctx, &kafkaMonitor, &data, &resp.Diagnostics)
 

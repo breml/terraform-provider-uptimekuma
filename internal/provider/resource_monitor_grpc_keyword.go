@@ -253,6 +253,11 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
+	if grpcKeywordMonitor.Base.Type() != grpcKeywordMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	r.populateModelFromMonitor(ctx, &data, &grpcKeywordMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return

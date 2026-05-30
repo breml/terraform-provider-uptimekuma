@@ -194,6 +194,11 @@ func (r *MonitorMongoDBResource) Read(
 		return
 	}
 
+	if mongoDBMonitor.Base.Type() != mongoDBMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(mongoDBMonitor.Name)
 	if mongoDBMonitor.Description != nil {
 		data.Description = types.StringValue(*mongoDBMonitor.Description)

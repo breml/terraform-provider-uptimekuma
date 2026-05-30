@@ -190,6 +190,11 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if pingMonitor.Base.Type() != pingMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(pingMonitor.Name)
 	if pingMonitor.Description != nil {
 		data.Description = types.StringValue(*pingMonitor.Description)

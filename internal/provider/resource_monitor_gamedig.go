@@ -170,6 +170,11 @@ func (r *MonitorGameDigResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
+	if gameDigMonitor.Base.Type() != gameDigMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateGameDigModel(&gameDigMonitor, &data)
 	populateGameDigOptionalFields(ctx, &gameDigMonitor, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

@@ -164,6 +164,11 @@ func (r *MonitorSteamResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	if steamMonitor.Base.Type() != steamMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateSteamModel(&steamMonitor, &data)
 	populateSteamOptionalFields(ctx, &steamMonitor, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

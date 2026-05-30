@@ -173,6 +173,11 @@ func (r *MonitorTailscalePingResource) Read(
 		return
 	}
 
+	if tailscalePingMonitor.Base.Type() != tailscalePingMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(tailscalePingMonitor.Name)
 	if tailscalePingMonitor.Description != nil {
 		data.Description = types.StringValue(*tailscalePingMonitor.Description)

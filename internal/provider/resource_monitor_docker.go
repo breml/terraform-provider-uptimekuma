@@ -205,6 +205,11 @@ func (r *MonitorDockerResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
+	if dockerMonitor.Base.Type() != dockerMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateDockerMonitorBaseFields(&dockerMonitor, &data)
 	populateOptionalFieldsForDocker(ctx, &dockerMonitor, &data, &resp.Diagnostics)
 

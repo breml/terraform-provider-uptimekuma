@@ -179,6 +179,11 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
+	if postgresMonitor.Base.Type() != postgresMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(postgresMonitor.Name)
 	if postgresMonitor.Description != nil {
 		data.Description = types.StringValue(*postgresMonitor.Description)

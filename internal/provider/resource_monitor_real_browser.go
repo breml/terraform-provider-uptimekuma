@@ -332,6 +332,11 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
+	if realBrowserMonitor.Base.Type() != realBrowserMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateRealBrowserMonitorBaseFields(&realBrowserMonitor, &data)
 	populateOptionalFieldsForRealBrowser(ctx, &realBrowserMonitor, &data, &resp.Diagnostics)
 

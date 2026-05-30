@@ -289,6 +289,11 @@ func (r *MonitorRadiusResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
+	if radiusMonitor.Base.Type() != radiusMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateRadiusMonitorBaseFields(&radiusMonitor, &data)
 	populateOptionalFieldsForRadius(ctx, &radiusMonitor, &data, &resp.Diagnostics)
 

@@ -216,6 +216,11 @@ func (r *MonitorPushResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if pushMonitor.Base.Type() != pushMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(pushMonitor.Name)
 	if pushMonitor.Description != nil {
 		data.Description = types.StringValue(*pushMonitor.Description)

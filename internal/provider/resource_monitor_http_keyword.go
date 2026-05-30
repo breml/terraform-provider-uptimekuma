@@ -324,6 +324,11 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
+	if httpKeywordMonitor.Base.Type() != httpKeywordMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	var httpMonitor monitor.HTTP
 	httpMonitor.Base = httpKeywordMonitor.Base
 	httpMonitor.HTTPDetails = httpKeywordMonitor.HTTPDetails

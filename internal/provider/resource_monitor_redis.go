@@ -171,6 +171,11 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	if redisMonitor.Base.Type() != redisMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(redisMonitor.Name)
 	if redisMonitor.Description != nil {
 		data.Description = types.StringValue(*redisMonitor.Description)

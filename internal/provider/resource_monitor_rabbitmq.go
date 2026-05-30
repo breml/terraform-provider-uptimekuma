@@ -200,6 +200,11 @@ func (r *MonitorRabbitMQResource) Read(
 		return
 	}
 
+	if rabbitMQMonitor.Base.Type() != rabbitMQMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(rabbitMQMonitor.Name)
 	if rabbitMQMonitor.Description != nil {
 		data.Description = types.StringValue(*rabbitMQMonitor.Description)

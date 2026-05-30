@@ -252,6 +252,11 @@ func (r *MonitorSMTPResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if smtpMonitor.Base.Type() != smtpMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateSMTPMonitorFields(&smtpMonitor, &data)
 	populateSMTPOptionalFields(ctx, &smtpMonitor, &data, &resp.Diagnostics)
 

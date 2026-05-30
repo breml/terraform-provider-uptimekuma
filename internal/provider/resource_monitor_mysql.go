@@ -179,6 +179,11 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	if mysqlMonitor.Base.Type() != mysqlMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(mysqlMonitor.Name)
 	if mysqlMonitor.Description != nil {
 		data.Description = types.StringValue(*mysqlMonitor.Description)

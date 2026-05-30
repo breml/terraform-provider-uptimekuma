@@ -183,6 +183,11 @@ func (r *MonitorSQLServerResource) Read(
 		return
 	}
 
+	if sqlserverMonitor.Base.Type() != sqlserverMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	data.Name = types.StringValue(sqlserverMonitor.Name)
 	if sqlserverMonitor.Description != nil {
 		data.Description = types.StringValue(*sqlserverMonitor.Description)

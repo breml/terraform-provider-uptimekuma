@@ -299,6 +299,11 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if httpMonitor.Base.Type() != httpMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateHTTPMonitorBaseFieldsForHTTP(&httpMonitor, &data)
 	populateOptionalFieldsForHTTP(ctx, &httpMonitor, &data, &resp.Diagnostics)
 

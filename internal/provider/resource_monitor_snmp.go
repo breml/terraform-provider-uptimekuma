@@ -294,6 +294,11 @@ func (r *MonitorSNMPResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	if snmpMonitor.Base.Type() != snmpMonitor.Type() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	populateSNMPMonitorBaseFields(&snmpMonitor, &data)
 	populateOptionalFieldsForSNMP(ctx, &snmpMonitor, &data, &resp.Diagnostics)
 
