@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -324,7 +325,12 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-	if httpKeywordMonitor.Base.Type() != httpKeywordMonitor.Type() {
+	if actual := httpKeywordMonitor.Base.Type(); actual != "" && actual != httpKeywordMonitor.Type() {
+		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+			"id":            data.ID.ValueInt64(),
+			"expected_type": httpKeywordMonitor.Type(),
+			"actual_type":   actual,
+		})
 		resp.State.RemoveResource(ctx)
 		return
 	}

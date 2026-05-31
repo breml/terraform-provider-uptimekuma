@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -179,7 +180,12 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	if postgresMonitor.Base.Type() != postgresMonitor.Type() {
+	if actual := postgresMonitor.Base.Type(); actual != "" && actual != postgresMonitor.Type() {
+		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+			"id":            data.ID.ValueInt64(),
+			"expected_type": postgresMonitor.Type(),
+			"actual_type":   actual,
+		})
 		resp.State.RemoveResource(ctx)
 		return
 	}

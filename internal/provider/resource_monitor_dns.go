@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -196,7 +197,12 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	if dnsMonitor.Base.Type() != dnsMonitor.Type() {
+	if actual := dnsMonitor.Base.Type(); actual != "" && actual != dnsMonitor.Type() {
+		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+			"id":            data.ID.ValueInt64(),
+			"expected_type": dnsMonitor.Type(),
+			"actual_type":   actual,
+		})
 		resp.State.RemoveResource(ctx)
 		return
 	}
