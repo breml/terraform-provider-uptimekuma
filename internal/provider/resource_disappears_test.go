@@ -265,6 +265,8 @@ func testAccChangeMonitorTypeToHTTP(
 			Base: pingMonitor.Base,
 		}
 		httpMonitor.URL = "https://httpbin.org/status/200"
+		// Server requires accepted_statuscodes to be an array, not null.
+		httpMonitor.AcceptedStatusCodes = []string{"200-299"}
 
 		updateErr := kumaClient.UpdateMonitor(ctx, &httpMonitor)
 		if updateErr != nil {
