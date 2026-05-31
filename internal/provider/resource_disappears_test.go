@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
 // testAccOutOfBandClient returns the dedicated out-of-band kuma client for use
@@ -218,6 +219,94 @@ func TestAccTagResource_disappears(t *testing.T) {
 					PostRefresh: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"uptimekuma_tag.test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
+// testAccChangeMonitorTypeToHTTP changes a monitor's type to HTTP via the kuma
+// API, simulating an external type change outside of Terraform.
+func testAccChangeMonitorTypeToHTTP(
+	t *testing.T,
+	kumaClient *kuma.Client,
+	resourceAddr string,
+) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceAddr]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", resourceAddr)
+		}
+
+		id, err := strconv.ParseInt(rs.Primary.Attributes["id"], 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse monitor id: %w", err)
+		}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		// Get current monitor to copy base fields (ID, Name, Interval, etc.)
+		var pingMonitor monitor.Ping
+		getErr := kumaClient.GetMonitorAs(ctx, id, &pingMonitor)
+		if getErr != nil {
+			return fmt.Errorf("failed to get monitor: %w", getErr)
+		}
+
+		// Build an HTTP monitor with the same base fields but a different type.
+		// HTTP.MarshalJSON hardcodes type="http", so UpdateMonitor changes the
+		// server-side type regardless of the base's internalType.
+		httpMonitor := monitor.HTTP{
+			Base: pingMonitor.Base,
+		}
+		httpMonitor.URL = "https://httpbin.org/status/200"
+		// Server requires accepted_statuscodes to be an array, not null.
+		httpMonitor.AcceptedStatusCodes = []string{"200-299"}
+
+		updateErr := kumaClient.UpdateMonitor(ctx, &httpMonitor)
+		if updateErr != nil {
+			return fmt.Errorf("failed to change monitor type to http: %w", updateErr)
+		}
+
+		return nil
+	}
+}
+
+// TestAccMonitorPingResource_typeDrift verifies that when a ping monitor's type
+// is changed externally in Uptime Kuma, the provider detects the drift and
+// removes the resource from state, triggering a re-create on the next plan.
+func TestAccMonitorPingResource_typeDrift(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestPingTypeDrift")
+	kumaClient := testAccOutOfBandClient(t)
+
+	config := providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_ping" "test" {
+  name     = %[1]q
+  hostname = "8.8.8.8"
+}
+`, name)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             config,
+				Check:              testAccChangeMonitorTypeToHTTP(t, kumaClient, "uptimekuma_monitor_ping.test"),
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				RefreshPlanChecks: resource.RefreshPlanChecks{
+					PostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"uptimekuma_monitor_ping.test",
 							plancheck.ResourceActionCreate,
 						),
 					},

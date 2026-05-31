@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -323,6 +324,16 @@ func (r *MonitorMQTTResource) Read(ctx context.Context, req resource.ReadRequest
 		}
 
 		resp.Diagnostics.AddError("failed to read MQTT monitor", err.Error())
+		return
+	}
+
+	if actual := mqttMonitor.Base.Type(); actual != "" && actual != mqttMonitor.Type() {
+		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+			"id":            data.ID.ValueInt64(),
+			"expected_type": mqttMonitor.Type(),
+			"actual_type":   actual,
+		})
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

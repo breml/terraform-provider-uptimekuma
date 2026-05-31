@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -286,6 +287,16 @@ func (r *MonitorRadiusResource) Read(ctx context.Context, req resource.ReadReque
 		}
 
 		resp.Diagnostics.AddError("failed to read Radius monitor", err.Error())
+		return
+	}
+
+	if actual := radiusMonitor.Base.Type(); actual != "" && actual != radiusMonitor.Type() {
+		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+			"id":            data.ID.ValueInt64(),
+			"expected_type": radiusMonitor.Type(),
+			"actual_type":   actual,
+		})
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

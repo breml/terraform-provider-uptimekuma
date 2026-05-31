@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -296,6 +297,16 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 		}
 
 		resp.Diagnostics.AddError("failed to read HTTP monitor", err.Error())
+		return
+	}
+
+	if actual := httpMonitor.Base.Type(); actual != "" && actual != httpMonitor.Type() {
+		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+			"id":            data.ID.ValueInt64(),
+			"expected_type": httpMonitor.Type(),
+			"actual_type":   actual,
+		})
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
