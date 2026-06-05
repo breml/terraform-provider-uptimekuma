@@ -254,6 +254,9 @@ func (r *MonitorMongoDBResource) Read(
 	}
 
 	data.Conditions = populateConditions(ctx, mongoDBMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, mongoDBMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

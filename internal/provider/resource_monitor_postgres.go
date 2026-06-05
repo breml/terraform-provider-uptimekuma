@@ -114,6 +114,10 @@ func (r *MonitorPostgresResource) Create(
 		},
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		postgresMonitor.Description = &desc
@@ -232,6 +236,9 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	}
 
 	data.Conditions = populateConditions(ctx, postgresMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, postgresMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -279,6 +286,10 @@ func (r *MonitorPostgresResource) Update(
 			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

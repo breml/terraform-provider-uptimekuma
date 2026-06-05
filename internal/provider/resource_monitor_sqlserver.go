@@ -240,6 +240,9 @@ func (r *MonitorSQLServerResource) Read(
 	}
 
 	data.Conditions = populateConditions(ctx, sqlserverMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, sqlserverMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

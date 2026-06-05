@@ -252,6 +252,9 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	data.Conditions = populateConditions(ctx, dnsMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, dnsMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

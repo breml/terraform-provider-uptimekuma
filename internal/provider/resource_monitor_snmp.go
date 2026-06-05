@@ -94,7 +94,9 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			},
 			"snmp_v3_username": schema.StringAttribute{
 				MarkdownDescription: "SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this " +
-					"value but does not return it on read, so it cannot be detected as drift or recovered on import.",
+					"value but does not return it on read, so it cannot be detected as drift or recovered on import. " +
+					"Removing this field from configuration requires a `terraform apply` to synchronize state; " +
+					"`terraform plan` will always show a diff after removal until apply is run.",
 				Optional: true,
 			},
 			"json_path": schema.StringAttribute{
@@ -327,6 +329,9 @@ func (r *MonitorSNMPResource) Read(ctx context.Context, req resource.ReadRequest
 
 	populateSNMPMonitorBaseFields(&snmpMonitor, &data)
 	populateOptionalFieldsForSNMP(ctx, &snmpMonitor, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, snmpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

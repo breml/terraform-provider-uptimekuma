@@ -134,7 +134,8 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	attrs["screenshot_delay"] = schema.Int64Attribute{
 		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 " +
 			"stores this value but does not return it on read, so it cannot be detected as drift or " +
-			"recovered on import.",
+			"recovered on import. Removing this field from configuration requires a `terraform apply` " +
+			"to synchronize state; `terraform plan` will always show a diff after removal until apply is run.",
 		Optional: true,
 	}
 

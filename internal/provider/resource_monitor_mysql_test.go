@@ -294,9 +294,10 @@ func TestAccMonitorMySQLResourceWithConditions(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_monitor_mysql.test",
-				ImportState:       true,
-				ImportStateVerify: false,
+				ResourceName:            "uptimekuma_monitor_mysql.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"database_connection_string"},
 			},
 		},
 	})

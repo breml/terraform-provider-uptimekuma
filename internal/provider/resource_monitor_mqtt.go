@@ -345,6 +345,9 @@ func (r *MonitorMQTTResource) Read(ctx context.Context, req resource.ReadRequest
 
 	populateMQTTMonitorBaseFieldsForMQTT(&mqttMonitor, &data)
 	populateOptionalFieldsForMQTT(ctx, &mqttMonitor, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, mqttMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

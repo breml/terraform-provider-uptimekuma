@@ -237,6 +237,9 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	data.Conditions = populateConditions(ctx, mysqlMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, mysqlMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

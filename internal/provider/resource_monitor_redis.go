@@ -224,6 +224,9 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	data.Conditions = populateConditions(ctx, redisMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, redisMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
