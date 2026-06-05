@@ -121,7 +121,7 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 - `port` (Number) SNMP device port
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
-- `snmp_v3_username` (String) SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import.
+- `snmp_v3_username` (String) SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import. Removing this field from configuration requires a `terraform apply` to synchronize state; `terraform plan` will always show a diff after removal until apply is run.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
