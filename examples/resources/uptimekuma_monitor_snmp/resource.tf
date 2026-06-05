@@ -39,14 +39,32 @@ resource "uptimekuma_monitor_snmp" "full" {
 
 # SNMP monitor using basic SNMPv3 configuration
 resource "uptimekuma_monitor_snmp" "snmpv3" {
-  name           = "SNMPv3 Device Monitor"
-  hostname       = "192.168.1.2"
-  snmp_version   = "3"
+  name             = "SNMPv3 Device Monitor"
+  hostname         = "192.168.1.2"
+  snmp_version     = "3"
+  snmp_oid         = ".1.3.6.1.2.1.1.3.0"
+  snmp_community   = "private"
+  snmp_v3_username = "monitoring"
+  port             = 161
+  interval         = 300
+  active           = true
+}
+
+# SNMP monitor using conditions to assert on the returned value
+resource "uptimekuma_monitor_snmp" "conditions" {
+  name           = "SNMP Conditions Monitor"
+  hostname       = "192.168.1.4"
+  snmp_version   = "2c"
   snmp_oid       = ".1.3.6.1.2.1.1.3.0"
-  snmp_community = "private"
-  port           = 161
-  interval       = 300
-  active         = true
+  snmp_community = "public"
+
+  conditions = [
+    {
+      variable = "snmp"
+      operator = ">"
+      value    = "0"
+    },
+  ]
 }
 
 # SNMP monitor monitoring specific system uptime

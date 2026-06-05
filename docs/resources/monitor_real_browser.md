@@ -48,6 +48,7 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `remote_browser` (Number) Remote Browser ID (if using a remote browser for monitoring)
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
+- `screenshot_delay` (Number) Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `timeout` (Number) Request timeout in seconds
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)

@@ -50,6 +50,7 @@ type MonitorRealBrowserResourceModel struct {
 	AcceptedStatusCodes types.List   `tfsdk:"accepted_status_codes"`
 	ProxyID             types.Int64  `tfsdk:"proxy_id"`
 	RemoteBrowser       types.Int64  `tfsdk:"remote_browser"`
+	ScreenshotDelay     types.Int64  `tfsdk:"screenshot_delay"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -130,6 +131,13 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 		Optional:            true,
 	}
 
+	attrs["screenshot_delay"] = schema.Int64Attribute{
+		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 " +
+			"stores this value but does not return it on read, so it cannot be detected as drift or " +
+			"recovered on import.",
+		Optional: true,
+	}
+
 	return attrs
 }
 
@@ -142,22 +150,12 @@ func (r *MonitorRealBrowserResource) Configure(
 	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
-// Create creates a new Real Browser monitor resource.
-func (r *MonitorRealBrowserResource) Create(
-	// Extract and validate configuration.
+// buildRealBrowserMonitor constructs a Real Browser monitor from the resource model.
+func buildRealBrowserMonitor(
 	ctx context.Context,
-	req resource.CreateRequest,
-	resp *resource.CreateResponse,
-) {
-	var data MonitorRealBrowserResourceModel
-
-	// Extract plan data.
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
+	data *MonitorRealBrowserResourceModel,
+	diags *diag.Diagnostics,
+) monitor.RealBrowser {
 	realBrowserMonitor := monitor.RealBrowser{
 		Base: monitor.Base{
 			Name:           data.Name.ValueString(),
@@ -197,13 +195,14 @@ func (r *MonitorRealBrowserResource) Create(
 		realBrowserMonitor.RemoteBrowser = &remoteBrowser
 	}
 
+	if !data.ScreenshotDelay.IsNull() {
+		screenshotDelay := int(data.ScreenshotDelay.ValueInt64())
+		realBrowserMonitor.ScreenshotDelay = &screenshotDelay
+	}
+
 	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
 		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
+		diags.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
 		realBrowserMonitor.AcceptedStatusCodes = statusCodes
 	} else {
 		realBrowserMonitor.AcceptedStatusCodes = []string{"200-299"}
@@ -211,12 +210,32 @@ func (r *MonitorRealBrowserResource) Create(
 
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
-		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
+		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
 		realBrowserMonitor.NotificationIDs = notificationIDs
+	}
+
+	return realBrowserMonitor
+}
+
+// Create creates a new Real Browser monitor resource.
+func (r *MonitorRealBrowserResource) Create(
+	// Extract and validate configuration.
+	ctx context.Context,
+	req resource.CreateRequest,
+	resp *resource.CreateResponse,
+) {
+	var data MonitorRealBrowserResourceModel
+
+	// Extract plan data.
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	realBrowserMonitor := buildRealBrowserMonitor(ctx, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Create monitor via API.
@@ -291,6 +310,13 @@ func populateOptionalFieldsForRealBrowser(
 		data.RemoteBrowser = types.Int64Value(*m.RemoteBrowser)
 	} else {
 		data.RemoteBrowser = types.Int64Null()
+	}
+
+	// screenshot_delay is write-only on Uptime Kuma 2.3.2: the server stores it
+	// but does not echo it back on read. Preserve the configured value when the
+	// server omits it to avoid a perpetual diff.
+	if m.ScreenshotDelay != nil {
+		data.ScreenshotDelay = types.Int64Value(int64(*m.ScreenshotDelay))
 	}
 
 	if len(m.AcceptedStatusCodes) > 0 {
@@ -377,67 +403,12 @@ func (r *MonitorRealBrowserResource) Update(
 		return
 	}
 
-	realBrowserMonitor := monitor.RealBrowser{
-		Base: monitor.Base{
-			ID:             data.ID.ValueInt64(),
-			Name:           data.Name.ValueString(),
-			Interval:       data.Interval.ValueInt64(),
-			RetryInterval:  data.RetryInterval.ValueInt64(),
-			ResendInterval: data.ResendInterval.ValueInt64(),
-			MaxRetries:     data.MaxRetries.ValueInt64(),
-			UpsideDown:     data.UpsideDown.ValueBool(),
-			IsActive:       data.Active.ValueBool(),
-		},
-		RealBrowserDetails: monitor.RealBrowserDetails{
-			URL:                 data.URL.ValueString(),
-			Timeout:             data.Timeout.ValueInt64(),
-			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
-		},
+	realBrowserMonitor := buildRealBrowserMonitor(ctx, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if !data.Description.IsNull() {
-		desc := data.Description.ValueString()
-		realBrowserMonitor.Description = &desc
-	}
-
-	if !data.Parent.IsNull() {
-		parent := data.Parent.ValueInt64()
-		realBrowserMonitor.Parent = &parent
-	}
-
-	if !data.ProxyID.IsNull() {
-		proxyID := data.ProxyID.ValueInt64()
-		realBrowserMonitor.ProxyID = &proxyID
-	}
-
-	if !data.RemoteBrowser.IsNull() {
-		remoteBrowser := data.RemoteBrowser.ValueInt64()
-		realBrowserMonitor.RemoteBrowser = &remoteBrowser
-	}
-
-	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
-		var statusCodes []string
-		resp.Diagnostics.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		realBrowserMonitor.AcceptedStatusCodes = statusCodes
-	} else {
-		realBrowserMonitor.AcceptedStatusCodes = []string{"200-299"}
-	}
-
-	if !data.NotificationIDs.IsNull() {
-		var notificationIDs []int64
-		resp.Diagnostics.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		realBrowserMonitor.NotificationIDs = notificationIDs
-	}
+	realBrowserMonitor.ID = data.ID.ValueInt64()
 
 	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, &realBrowserMonitor)

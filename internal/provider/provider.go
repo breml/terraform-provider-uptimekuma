@@ -317,7 +317,8 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.Conf
 func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resource {
 	resources := notificationResources()
 
-	resources = append(resources,
+	resources = append(
+		resources,
 		NewMonitorHTTPResource,
 		NewMonitorHTTPKeywordResource,
 		NewMonitorGrpcKeywordResource,
@@ -389,7 +390,6 @@ func notificationResources() []func() resource.Resource {
 		NewNotificationKookResource,
 		NewNotificationLineResource,
 		NewNotificationLunaseaResource,
-		NewNotificationLinenotifyResource,
 		NewNotificationMatrixResource,
 		NewNotificationMattermostResource,
 		NewNotificationNextcloudTalkResource,
@@ -447,7 +447,8 @@ func notificationResources() []func() resource.Resource {
 func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	dataSources := notificationDataSources()
 
-	dataSources = append(dataSources,
+	dataSources = append(
+		dataSources,
 		NewMonitorHTTPDataSource,
 		NewMonitorHTTPKeywordDataSource,
 		NewMonitorGrpcKeywordDataSource,
@@ -519,7 +520,6 @@ func notificationDataSources() []func() datasource.DataSource {
 		NewNotificationKookDataSource,
 		NewNotificationLineDataSource,
 		NewNotificationLunaseaDataSource,
-		NewNotificationLinenotifyDataSource,
 		NewNotificationMatrixDataSource,
 		NewNotificationMattermostDataSource,
 		NewNotificationNextcloudTalkDataSource,

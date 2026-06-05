@@ -42,6 +42,7 @@ type MonitorHTTPBaseModel struct {
 	OAuthClientID       types.String `tfsdk:"oauth_client_id"`       // OAuth client ID.
 	OAuthClientSecret   types.String `tfsdk:"oauth_client_secret"`   // OAuth client secret.
 	OAuthScopes         types.String `tfsdk:"oauth_scopes"`          // OAuth scopes to request.
+	OAuthAudience       types.String `tfsdk:"oauth_audience"`        // OAuth audience to request.
 	CacheBust           types.Bool   `tfsdk:"cache_buster"`          // Enable cache busting.
 }
 
@@ -72,6 +73,7 @@ func withHTTPMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string
 	attrs["oauth_client_id"] = httpOAuthClientIDAttribute()
 	attrs["oauth_client_secret"] = httpOAuthClientSecretAttribute()
 	attrs["oauth_scopes"] = httpOAuthScopesAttribute()
+	attrs["oauth_audience"] = httpOAuthAudienceAttribute()
 	attrs["cache_buster"] = httpCacheBustAttribute()
 	return attrs
 }
@@ -278,6 +280,13 @@ func httpOAuthClientSecretAttribute() schema.StringAttribute {
 func httpOAuthScopesAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "OAuth scopes",
+		Optional:            true,
+	}
+}
+
+func httpOAuthAudienceAttribute() schema.StringAttribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "OAuth audience",
 		Optional:            true,
 	}
 }

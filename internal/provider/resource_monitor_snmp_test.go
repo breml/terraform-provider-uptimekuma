@@ -320,3 +320,77 @@ resource "uptimekuma_monitor_snmp" "test" {
 }
 `, name, description)
 }
+
+func TestAccMonitorSNMPResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestSNMPMonitorConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorSNMPResourceConfigWithConditions(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("snmp_v3_username"),
+						knownvalue.StringExact("snmpuser"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("snmp"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("operator"),
+						knownvalue.StringExact(">"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("0"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("and_or"),
+						knownvalue.StringExact("and"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_snmp.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// snmp_v3_username is write-only on Uptime Kuma 2.3.2 (not echoed on read).
+				ImportStateVerifyIgnore: []string{"snmp_v3_username"},
+			},
+		},
+	})
+}
+
+func testAccMonitorSNMPResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_snmp" "test" {
+  name             = %[1]q
+  hostname         = "192.168.1.1"
+  snmp_version     = "3"
+  snmp_oid         = ".1.3.6.1.2.1.1.5.0"
+  snmp_community   = "public"
+  snmp_v3_username = "snmpuser"
+
+  conditions = [
+    {
+      variable = "snmp"
+      operator = ">"
+      value    = "0"
+    },
+  ]
+}
+`, name)
+}

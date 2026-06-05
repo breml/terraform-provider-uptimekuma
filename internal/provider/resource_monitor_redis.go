@@ -37,6 +37,7 @@ type MonitorRedisResourceModel struct {
 
 	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
 	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
+	Conditions               types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -64,6 +65,7 @@ func (*MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -100,6 +102,7 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 		RedisDetails: monitor.RedisDetails{
 			ConnectionString: data.DatabaseConnectionString.ValueString(),
 			IgnoreTLS:        data.IgnoreTLS.ValueBool(),
+			Conditions:       buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -216,6 +219,8 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Conditions = populateConditions(ctx, redisMonitor.Conditions, &resp.Diagnostics)
+
 	data.Tags = handleMonitorTagsRead(ctx, redisMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -256,6 +261,7 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 		RedisDetails: monitor.RedisDetails{
 			ConnectionString: data.DatabaseConnectionString.ValueString(),
 			IgnoreTLS:        data.IgnoreTLS.ValueBool(),
+			Conditions:       buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

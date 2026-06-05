@@ -45,9 +45,11 @@ type MonitorSNMPResourceModel struct {
 	SNMPVersion      types.String `tfsdk:"snmp_version"`
 	SNMPOID          types.String `tfsdk:"snmp_oid"`
 	SNMPCommunity    types.String `tfsdk:"snmp_community"`
+	SNMPV3Username   types.String `tfsdk:"snmp_v3_username"`
 	JSONPath         types.String `tfsdk:"json_path"`
 	JSONPathOperator types.String `tfsdk:"json_path_operator"`
 	ExpectedValue    types.String `tfsdk:"expected_value"`
+	Conditions       types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -90,6 +92,11 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Required:            true,
 				Sensitive:           true,
 			},
+			"snmp_v3_username": schema.StringAttribute{
+				MarkdownDescription: "SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this " +
+					"value but does not return it on read, so it cannot be detected as drift or recovered on import.",
+				Optional: true,
+			},
 			"json_path": schema.StringAttribute{
 				MarkdownDescription: "JSON path for extracting value from SNMP response",
 				Optional:            true,
@@ -105,6 +112,7 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				MarkdownDescription: "Expected value to match",
 				Optional:            true,
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -199,6 +207,9 @@ func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags
 		snmpMonitor.ExpectedValue = &expectedValue
 	}
 
+	snmpMonitor.SNMPV3Username = strToPtr(data.SNMPV3Username)
+	snmpMonitor.Conditions = buildConditions(ctx, data.Conditions, diags)
+
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
 		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
@@ -229,6 +240,14 @@ func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPReso
 	m.SNMPVersion = types.StringValue(snmpMonitor.SNMPVersion)
 	m.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)
 	m.SNMPCommunity = types.StringValue(snmpMonitor.SNMPCommunity)
+	// snmp_v3_username is write-only on Uptime Kuma 2.3.2: the server stores it
+	// but omits it from toJSON() (upstream PR louislam/uptime-kuma#6552, not yet
+	// released). Preserve the configured value when the server omits it to avoid
+	// a perpetual diff; adopt the server value once a future version returns it.
+	if snmpMonitor.SNMPV3Username != nil && *snmpMonitor.SNMPV3Username != "" {
+		m.SNMPV3Username = types.StringValue(*snmpMonitor.SNMPV3Username)
+	}
+
 	m.JSONPath = stringOrNullPtr(snmpMonitor.JSONPath)
 	m.JSONPathOperator = stringOrNullPtr(snmpMonitor.JSONPathOperator)
 	m.ExpectedValue = stringOrNullPtr(snmpMonitor.ExpectedValue)
@@ -263,6 +282,8 @@ func populateOptionalFieldsForSNMP(
 	} else {
 		m.Parent = types.Int64Null()
 	}
+
+	m.Conditions = populateConditions(ctx, snmpMonitor.Conditions, diags)
 
 	// Convert notification IDs list if present.
 	if len(snmpMonitor.NotificationIDs) > 0 {

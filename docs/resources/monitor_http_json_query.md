@@ -62,6 +62,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `max_retries` (Number) Maximum number of retries
 - `method` (String) HTTP method
 - `notification_ids` (List of Number) List of notification IDs
+- `oauth_audience` (String) OAuth audience
 - `oauth_auth_method` (String) OAuth authentication method
 - `oauth_client_id` (String) OAuth client ID
 - `oauth_client_secret` (String, Sensitive) OAuth client secret

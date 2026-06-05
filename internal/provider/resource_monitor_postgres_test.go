@@ -235,3 +235,68 @@ resource "uptimekuma_monitor_postgres" "test" {
 }
 `, groupName, monitorName, connectionString)
 }
+
+func TestAccMonitorPostgresResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestPostgresConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorPostgresResourceConfigWithConditions(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(2),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("result"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("operator"),
+						knownvalue.StringExact("contains"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_postgres.test",
+						tfjsonpath.New("conditions").AtSliceIndex(1).AtMapKey("and_or"),
+						knownvalue.StringExact("or"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_postgres.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorPostgresResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_postgres" "test" {
+  name                       = %[1]q
+  database_connection_string = "postgres://user:pass@localhost:5432/db"
+  database_query             = "SELECT version()"
+
+  conditions = [
+    {
+      variable = "result"
+      operator = "contains"
+      value    = "PostgreSQL"
+    },
+    {
+      variable = "result"
+      operator = "contains"
+      value    = "16"
+      and_or   = "or"
+    },
+  ]
+}
+`, name)
+}

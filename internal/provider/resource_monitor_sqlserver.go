@@ -37,6 +37,7 @@ type MonitorSQLServerResourceModel struct {
 
 	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
 	DatabaseQuery            types.String `tfsdk:"database_query"`
+	Conditions               types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -68,6 +69,7 @@ func (*MonitorSQLServerResource) Schema(
 				Computed:            true,
 				Default:             stringdefault.StaticString("SELECT 1"),
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -108,6 +110,7 @@ func (r *MonitorSQLServerResource) Create(
 		SQLServerDetails: monitor.SQLServerDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
 			DatabaseQuery:            ptrString(data.DatabaseQuery.ValueString()),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -232,6 +235,8 @@ func (r *MonitorSQLServerResource) Read(
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Conditions = populateConditions(ctx, sqlserverMonitor.Conditions, &resp.Diagnostics)
+
 	data.Tags = handleMonitorTagsRead(ctx, sqlserverMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -276,6 +281,7 @@ func (r *MonitorSQLServerResource) Update(
 		SQLServerDetails: monitor.SQLServerDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
 			DatabaseQuery:            ptrString(data.DatabaseQuery.ValueString()),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

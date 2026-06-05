@@ -37,8 +37,9 @@ resource "uptimekuma_monitor_dns" "example" {
 ### Optional
 
 - `active` (Boolean) Monitor is active
+- `conditions` (Attributes List) Optional list of assertion clauses evaluated against the monitor result. Each condition is chained with the previous one using `and_or`. (see [below for nested schema](#nestedatt--conditions))
 - `description` (String) Description
-- `dns_resolve_server` (String) DNS resolver server IP address
+- `dns_resolve_server` (String) DNS resolver server IP address. Multiple resolvers may be provided as a comma-separated list (e.g. `1.1.1.1,8.8.8.8`).
 - `dns_resolve_type` (String) DNS record type to query
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
@@ -53,6 +54,20 @@ resource "uptimekuma_monitor_dns" "example" {
 ### Read-Only
 
 - `id` (Number) Monitor identifier
+
+<a id="nestedatt--conditions"></a>
+### Nested Schema for `conditions`
+
+Required:
+
+- `operator` (String) Comparison operator (e.g. `==`, `!=`, `<`, `>`, `contains`).
+- `value` (String) Value to compare against.
+- `variable` (String) Name of the field to test against (monitor-type specific).
+
+Optional:
+
+- `and_or` (String) Chains this condition with the previous one. Valid values: `and`, `or`.
+
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`

@@ -205,3 +205,56 @@ resource "uptimekuma_monitor_mqtt" "test" {
 }
 `, name, hostname, topic, websocketPath)
 }
+
+func TestAccMonitorMQTTResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMQTTConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorMQTTResourceConfigWithConditions(name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "conditions.#", "2"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "conditions.0.variable", "topic"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "conditions.0.operator", "=="),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "conditions.0.and_or", "and"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "conditions.1.variable", "message"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "conditions.1.and_or", "or"),
+				),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_mqtt.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorMQTTResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mqtt" "test" {
+  name            = %[1]q
+  hostname        = "localhost"
+  port            = 1883
+  mqtt_topic      = "sensors/temp"
+  mqtt_check_type = "keyword"
+
+  conditions = [
+    {
+      variable = "topic"
+      operator = "=="
+      value    = "sensors/temp"
+    },
+    {
+      variable = "message"
+      operator = "contains"
+      value    = "alert"
+      and_or   = "or"
+    },
+  ]
+}
+`, name)
+}
