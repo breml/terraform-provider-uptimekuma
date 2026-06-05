@@ -213,8 +213,6 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	data.DatabaseConnectionString = types.StringValue(postgresMonitor.DatabaseConnectionString)
 	if postgresMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*postgresMonitor.DatabaseQuery)
-	} else {
-		data.DatabaseQuery = types.StringValue("SELECT 1")
 	}
 
 	if postgresMonitor.Parent != nil {
