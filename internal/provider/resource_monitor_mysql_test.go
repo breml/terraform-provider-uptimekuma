@@ -255,3 +255,67 @@ func TestAccMonitorMySQLResourceImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccMonitorMySQLResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMySQLConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorMySQLResourceConfigWithConditions(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mysql.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mysql.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("result"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mysql.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("operator"),
+						knownvalue.StringExact("=="),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mysql.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mysql.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("and_or"),
+						knownvalue.StringExact("and"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_mysql.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+func testAccMonitorMySQLResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mysql" "test" {
+  name                       = %[1]q
+  database_connection_string = "user:password@tcp(localhost:3306)/testdb"
+  database_query             = "SELECT 1"
+
+  conditions = [
+    {
+      variable = "result"
+      operator = "=="
+      value    = "1"
+    },
+  ]
+}
+`, name)
+}

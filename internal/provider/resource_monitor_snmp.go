@@ -240,10 +240,9 @@ func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPReso
 	m.SNMPVersion = types.StringValue(snmpMonitor.SNMPVersion)
 	m.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)
 	m.SNMPCommunity = types.StringValue(snmpMonitor.SNMPCommunity)
-	// snmp_v3_username is write-only on Uptime Kuma 2.3.2: the server stores it
-	// but omits it from toJSON() (upstream PR louislam/uptime-kuma#6552, not yet
-	// released). Preserve the configured value when the server omits it to avoid
-	// a perpetual diff; adopt the server value once a future version returns it.
+	// snmp_v3_username is not echoed on read by the server. Preserve the
+	// configured value to avoid a perpetual diff; adopt the server value if a
+	// future version begins returning it.
 	if snmpMonitor.SNMPV3Username != nil && *snmpMonitor.SNMPV3Username != "" {
 		m.SNMPV3Username = types.StringValue(*snmpMonitor.SNMPV3Username)
 	}

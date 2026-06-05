@@ -203,6 +203,10 @@ func buildRealBrowserMonitor(
 	if !data.AcceptedStatusCodes.IsNull() && !data.AcceptedStatusCodes.IsUnknown() {
 		var statusCodes []string
 		diags.Append(data.AcceptedStatusCodes.ElementsAs(ctx, &statusCodes, false)...)
+		if diags.HasError() {
+			return realBrowserMonitor
+		}
+
 		realBrowserMonitor.AcceptedStatusCodes = statusCodes
 	} else {
 		realBrowserMonitor.AcceptedStatusCodes = []string{"200-299"}
@@ -211,6 +215,10 @@ func buildRealBrowserMonitor(
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
 		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
+		if diags.HasError() {
+			return realBrowserMonitor
+		}
+
 		realBrowserMonitor.NotificationIDs = notificationIDs
 	}
 

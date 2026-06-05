@@ -114,6 +114,10 @@ func (r *MonitorSQLServerResource) Create(
 		},
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		sqlserverMonitor.Description = &desc
@@ -283,6 +287,10 @@ func (r *MonitorSQLServerResource) Update(
 			DatabaseQuery:            ptrString(data.DatabaseQuery.ValueString()),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

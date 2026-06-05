@@ -115,6 +115,10 @@ func (r *MonitorMySQLResource) Create(
 		},
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		mysqlMonitor.Description = &desc
@@ -281,6 +285,10 @@ func (r *MonitorMySQLResource) Update(
 			DatabaseQuery:            &databaseQuery,
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

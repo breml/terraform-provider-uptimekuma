@@ -132,6 +132,10 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 		},
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		dnsMonitor.Description = &desc
@@ -293,6 +297,10 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 			Port:           int(data.Port.ValueInt64()),
 			Conditions:     buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

@@ -106,6 +106,10 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 		},
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		redisMonitor.Description = &desc
@@ -263,6 +267,10 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 			IgnoreTLS:        data.IgnoreTLS.ValueBool(),
 			Conditions:       buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

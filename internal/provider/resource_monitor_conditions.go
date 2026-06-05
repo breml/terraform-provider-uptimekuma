@@ -84,8 +84,9 @@ func buildConditions(ctx context.Context, list types.List, diags *diag.Diagnosti
 	}
 
 	var models []MonitorConditionModel
-	diags.Append(list.ElementsAs(ctx, &models, false)...)
-	if diags.HasError() || len(models) == 0 {
+	d := list.ElementsAs(ctx, &models, false)
+	diags.Append(d...)
+	if d.HasError() || len(models) == 0 {
 		return nil
 	}
 

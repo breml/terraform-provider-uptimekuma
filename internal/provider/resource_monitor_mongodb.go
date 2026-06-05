@@ -126,6 +126,10 @@ func (r *MonitorMongoDBResource) Create(
 		},
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
 		mongoDBMonitor.Description = &desc
@@ -299,6 +303,10 @@ func (r *MonitorMongoDBResource) Update(
 			ExpectedValue:            strToPtr(data.ExpectedValue),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {
