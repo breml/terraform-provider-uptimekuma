@@ -31,6 +31,26 @@ func TestAccMonitorGlobalpingDataSource(t *testing.T) {
 						tfjsonpath.New("subtype"),
 						knownvalue.StringExact("ping"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("location"),
+						knownvalue.StringExact("Europe"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("ip_family"),
+						knownvalue.StringExact("ipv4"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("ping_count"),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("invert_keyword"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -46,6 +66,21 @@ func TestAccMonitorGlobalpingDataSource(t *testing.T) {
 						tfjsonpath.New("subtype"),
 						knownvalue.StringExact("ping"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("location"),
+						knownvalue.StringExact("Europe"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("ip_family"),
+						knownvalue.StringExact("ipv4"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_globalping.test",
+						tfjsonpath.New("ping_count"),
+						knownvalue.Int64Exact(3),
+					),
 				},
 			},
 		},
@@ -55,9 +90,12 @@ func TestAccMonitorGlobalpingDataSource(t *testing.T) {
 func testAccMonitorGlobalpingDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_globalping" "test" {
-  name    = %[1]q
-  subtype = "ping"
-  url     = "https://example.com"
+  name       = %[1]q
+  subtype    = "ping"
+  url        = "https://example.com"
+  location   = "Europe"
+  ip_family  = "ipv4"
+  ping_count = 3
 }
 
 data "uptimekuma_monitor_globalping" "test" {
@@ -69,9 +107,12 @@ data "uptimekuma_monitor_globalping" "test" {
 func testAccMonitorGlobalpingDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_globalping" "test" {
-  name    = %[1]q
-  subtype = "ping"
-  url     = "https://example.com"
+  name       = %[1]q
+  subtype    = "ping"
+  url        = "https://example.com"
+  location   = "Europe"
+  ip_family  = "ipv4"
+  ping_count = 3
 }
 
 data "uptimekuma_monitor_globalping" "test" {

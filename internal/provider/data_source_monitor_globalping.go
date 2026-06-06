@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -174,6 +175,14 @@ func (d *MonitorGlobalpingDataSource) readByID(
 	var globalpingMonitor monitor.Globalping
 	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &globalpingMonitor)
 	if err != nil {
+		if isNotFoundError(err) {
+			resp.Diagnostics.AddError(
+				"Globalping monitor not found",
+				fmt.Sprintf("No Globalping monitor with ID %d exists.", data.ID.ValueInt64()),
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to read Globalping monitor", err.Error())
 		return
 	}

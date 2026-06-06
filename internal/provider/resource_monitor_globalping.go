@@ -445,15 +445,6 @@ func buildGlobalpingMonitor(
 	return globalpingMonitor
 }
 
-// stringOrNullGlobalping returns a null types.String when the input is empty.
-func stringOrNullGlobalping(s string) types.String {
-	if s == "" {
-		return types.StringNull()
-	}
-
-	return types.StringValue(s)
-}
-
 // populateGlobalpingModel populates the Terraform model from the Globalping monitor API response.
 func populateGlobalpingModel(globalpingMonitor *monitor.Globalping, data *MonitorGlobalpingResourceModel) {
 	data.Name = types.StringValue(globalpingMonitor.Name)
@@ -477,38 +468,38 @@ func populateGlobalpingModel(globalpingMonitor *monitor.Globalping, data *Monito
 	data.IgnoreTLS = types.BoolValue(globalpingMonitor.IgnoreTLS)
 	data.MaxRedirects = types.Int64Value(int64(globalpingMonitor.MaxRedirects))
 	data.HTTPBodyEncoding = types.StringValue(globalpingMonitor.HTTPBodyEncoding)
-	data.Body = stringOrNullGlobalping(globalpingMonitor.Body)
-	data.Headers = stringOrNullGlobalping(globalpingMonitor.Headers)
+	data.Body = stringOrNull(globalpingMonitor.Body)
+	data.Headers = stringOrNull(globalpingMonitor.Headers)
 	data.AuthMethod = types.StringValue(string(globalpingMonitor.AuthMethod))
-	data.BasicAuthUser = stringOrNullGlobalping(globalpingMonitor.BasicAuthUser)
-	data.BasicAuthPass = stringOrNullGlobalping(globalpingMonitor.BasicAuthPass)
-	data.AuthDomain = stringOrNullGlobalping(globalpingMonitor.AuthDomain)
-	data.AuthWorkstation = stringOrNullGlobalping(globalpingMonitor.AuthWorkstation)
-	data.TLSCert = stringOrNullGlobalping(globalpingMonitor.TLSCert)
-	data.TLSKey = stringOrNullGlobalping(globalpingMonitor.TLSKey)
-	data.TLSCa = stringOrNullGlobalping(globalpingMonitor.TLSCa)
-	data.OAuthAuthMethod = stringOrNullGlobalping(globalpingMonitor.OAuthAuthMethod)
-	data.OAuthTokenURL = stringOrNullGlobalping(globalpingMonitor.OAuthTokenURL)
-	data.OAuthClientID = stringOrNullGlobalping(globalpingMonitor.OAuthClientID)
-	data.OAuthClientSecret = stringOrNullGlobalping(globalpingMonitor.OAuthClientSecret)
-	data.OAuthScopes = stringOrNullGlobalping(globalpingMonitor.OAuthScopes)
-	data.OAuthAudience = stringOrNullGlobalping(globalpingMonitor.OAuthAudience)
+	data.BasicAuthUser = stringOrNull(globalpingMonitor.BasicAuthUser)
+	data.BasicAuthPass = stringOrNull(globalpingMonitor.BasicAuthPass)
+	data.AuthDomain = stringOrNull(globalpingMonitor.AuthDomain)
+	data.AuthWorkstation = stringOrNull(globalpingMonitor.AuthWorkstation)
+	data.TLSCert = stringOrNull(globalpingMonitor.TLSCert)
+	data.TLSKey = stringOrNull(globalpingMonitor.TLSKey)
+	data.TLSCa = stringOrNull(globalpingMonitor.TLSCa)
+	data.OAuthAuthMethod = stringOrNull(globalpingMonitor.OAuthAuthMethod)
+	data.OAuthTokenURL = stringOrNull(globalpingMonitor.OAuthTokenURL)
+	data.OAuthClientID = stringOrNull(globalpingMonitor.OAuthClientID)
+	data.OAuthClientSecret = stringOrNull(globalpingMonitor.OAuthClientSecret)
+	data.OAuthScopes = stringOrNull(globalpingMonitor.OAuthScopes)
+	data.OAuthAudience = stringOrNull(globalpingMonitor.OAuthAudience)
 	data.CacheBust = types.BoolValue(globalpingMonitor.CacheBust)
 
 	data.Subtype = types.StringValue(string(globalpingMonitor.Subtype))
-	data.Location = stringOrNullGlobalping(globalpingMonitor.Location)
+	data.Location = stringOrNull(globalpingMonitor.Location)
 	data.IPFamily = types.StringValue(string(globalpingMonitor.IPFamily))
-	data.Protocol = stringOrNullGlobalping(globalpingMonitor.Protocol)
+	data.Protocol = stringOrNull(globalpingMonitor.Protocol)
 	data.PingCount = types.Int64Value(int64(globalpingMonitor.PingCount))
-	data.Hostname = stringOrNullGlobalping(globalpingMonitor.Hostname)
+	data.Hostname = stringOrNull(globalpingMonitor.Hostname)
 	data.Port = types.Int64Value(int64(globalpingMonitor.Port))
-	data.DNSResolveType = stringOrNullGlobalping(string(globalpingMonitor.DNSResolveType))
-	data.DNSResolveServer = stringOrNullGlobalping(globalpingMonitor.DNSResolveServer)
-	data.Keyword = stringOrNullGlobalping(globalpingMonitor.Keyword)
+	data.DNSResolveType = stringOrNull(string(globalpingMonitor.DNSResolveType))
+	data.DNSResolveServer = stringOrNull(globalpingMonitor.DNSResolveServer)
+	data.Keyword = stringOrNull(globalpingMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(globalpingMonitor.InvertKeyword)
-	data.ExpectedValue = stringOrNullGlobalping(globalpingMonitor.ExpectedValue)
-	data.JSONPath = stringOrNullGlobalping(globalpingMonitor.JSONPath)
-	data.JSONPathOperator = stringOrNullGlobalping(globalpingMonitor.JSONPathOperator)
+	data.ExpectedValue = stringOrNull(globalpingMonitor.ExpectedValue)
+	data.JSONPath = stringOrNull(globalpingMonitor.JSONPath)
+	data.JSONPathOperator = stringOrNull(globalpingMonitor.JSONPathOperator)
 }
 
 // populateGlobalpingOptionalFields populates optional and computed fields from the API response.
@@ -534,6 +525,8 @@ func populateGlobalpingOptionalFields(
 		statusCodes, d := types.ListValueFrom(ctx, types.StringType, globalpingMonitor.AcceptedStatusCodes)
 		diags.Append(d...)
 		data.AcceptedStatusCodes = statusCodes
+	} else {
+		data.AcceptedStatusCodes = types.ListNull(types.StringType)
 	}
 
 	if len(globalpingMonitor.NotificationIDs) > 0 {
