@@ -153,7 +153,7 @@ func (r *NotificationGoogleSheetsResource) Read(
 	err = base.As(&googleSheets)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "googlesheets"`, err.Error())
+		resp.Diagnostics.AddError(`failed to convert notification to type "GoogleSheets"`, err.Error())
 		return
 	}
 

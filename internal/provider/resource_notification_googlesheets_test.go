@@ -74,6 +74,16 @@ func TestAccNotificationGoogleSheetsResource(t *testing.T) {
 						tfjsonpath.New("is_active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_googlesheets.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_googlesheets.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
