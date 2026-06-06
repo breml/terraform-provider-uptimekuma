@@ -232,6 +232,10 @@ func (r *NotificationBaleResource) Delete(
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	// Handle error.
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}

@@ -23,6 +23,11 @@ func TestAccNotificationBaleDataSource(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_bale.test",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_bale.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -31,6 +36,11 @@ func TestAccNotificationBaleDataSource(t *testing.T) {
 			{
 				Config: testAccNotificationBaleDataSourceConfigByID(name),
 				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_bale.test",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_bale.test",
 						tfjsonpath.New("name"),

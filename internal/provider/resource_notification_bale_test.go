@@ -46,6 +46,21 @@ func TestAccNotificationBaleResource(t *testing.T) {
 						tfjsonpath.New("is_active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_bale.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_bale.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_bale.test",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
 				},
 			},
 			{
@@ -74,9 +89,10 @@ func TestAccNotificationBaleResource(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_notification_bale.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_notification_bale.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"bot_token"},
 			},
 		},
 	})

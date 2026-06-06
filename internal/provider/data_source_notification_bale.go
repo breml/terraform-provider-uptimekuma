@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -108,7 +109,10 @@ func (d *NotificationBaleDataSource) readByID(
 	}
 
 	if notification.Type() != "bale" {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Bale notification")
+		resp.Diagnostics.AddError(
+			"incorrect notification type",
+			fmt.Sprintf("notification with ID %d has type %q, expected \"bale\"", data.ID.ValueInt64(), notification.Type()),
+		)
 		return
 	}
 
