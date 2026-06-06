@@ -142,3 +142,51 @@ resource "uptimekuma_monitor_real_browser" "test" {
 }
 `, name, url)
 }
+
+func TestAccMonitorRealBrowserResourceWithScreenshotDelay(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestRealBrowserScreenshotDelay")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorRealBrowserResourceConfigScreenshotDelay(name, 2000),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("screenshot_delay"),
+						knownvalue.Int64Exact(2000),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorRealBrowserResourceConfigScreenshotDelay(name, 5000),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("screenshot_delay"),
+						knownvalue.Int64Exact(5000),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_real_browser.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// screenshot_delay is write-only on Uptime Kuma 2.3.2 (not echoed on read).
+				ImportStateVerifyIgnore: []string{"screenshot_delay"},
+			},
+		},
+	})
+}
+
+func testAccMonitorRealBrowserResourceConfigScreenshotDelay(name string, screenshotDelay int64) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_real_browser" "test" {
+  name             = %[1]q
+  url              = "https://example.com"
+  screenshot_delay = %[2]d
+}
+`, name, screenshotDelay)
+}

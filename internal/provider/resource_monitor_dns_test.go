@@ -353,3 +353,58 @@ resource "uptimekuma_monitor_dns" "test" {
 }
 `, name, hostname, recordType)
 }
+
+func TestAccMonitorDNSResourceMultiResolverAndConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestDNSMultiResolver")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorDNSResourceConfigMultiResolver(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("dns_resolve_server"),
+						knownvalue.StringExact("1.1.1.1,8.8.8.8"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("record"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_dns.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorDNSResourceConfigMultiResolver(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_dns" "test" {
+  name               = %[1]q
+  hostname           = "example.com"
+  dns_resolve_type   = "A"
+  dns_resolve_server = "1.1.1.1,8.8.8.8"
+
+  conditions = [
+    {
+      variable = "record"
+      operator = "contains"
+      value    = "93.184"
+    },
+  ]
+}
+`, name)
+}

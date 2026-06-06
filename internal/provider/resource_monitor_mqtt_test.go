@@ -6,6 +6,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccMonitorMQTTResource(t *testing.T) {
@@ -204,4 +207,96 @@ resource "uptimekuma_monitor_mqtt" "test" {
   mqtt_check_type      = "keyword"
 }
 `, name, hostname, topic, websocketPath)
+}
+
+func TestAccMonitorMQTTResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMQTTConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorMQTTResourceConfigWithConditions(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(2),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("topic"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("operator"),
+						knownvalue.StringExact("=="),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("sensors/temp"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("and_or"),
+						knownvalue.StringExact("and"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(1).AtMapKey("variable"),
+						knownvalue.StringExact("message"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(1).AtMapKey("operator"),
+						knownvalue.StringExact("contains"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(1).AtMapKey("value"),
+						knownvalue.StringExact("alert"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mqtt.test",
+						tfjsonpath.New("conditions").AtSliceIndex(1).AtMapKey("and_or"),
+						knownvalue.StringExact("or"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_mqtt.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorMQTTResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mqtt" "test" {
+  name            = %[1]q
+  hostname        = "localhost"
+  port            = 1883
+  mqtt_topic      = "sensors/temp"
+  mqtt_check_type = "keyword"
+
+  conditions = [
+    {
+      variable = "topic"
+      operator = "=="
+      value    = "sensors/temp"
+    },
+    {
+      variable = "message"
+      operator = "contains"
+      value    = "alert"
+      and_or   = "or"
+    },
+  ]
+}
+`, name)
 }

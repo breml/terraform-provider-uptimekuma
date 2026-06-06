@@ -54,14 +54,32 @@ resource "uptimekuma_monitor_snmp" "full" {
 
 # SNMP monitor using basic SNMPv3 configuration
 resource "uptimekuma_monitor_snmp" "snmpv3" {
-  name           = "SNMPv3 Device Monitor"
-  hostname       = "192.168.1.2"
-  snmp_version   = "3"
+  name             = "SNMPv3 Device Monitor"
+  hostname         = "192.168.1.2"
+  snmp_version     = "3"
+  snmp_oid         = ".1.3.6.1.2.1.1.3.0"
+  snmp_community   = "private"
+  snmp_v3_username = "monitoring"
+  port             = 161
+  interval         = 300
+  active           = true
+}
+
+# SNMP monitor using conditions to assert on the returned value
+resource "uptimekuma_monitor_snmp" "conditions" {
+  name           = "SNMP Conditions Monitor"
+  hostname       = "192.168.1.4"
+  snmp_version   = "2c"
   snmp_oid       = ".1.3.6.1.2.1.1.3.0"
-  snmp_community = "private"
-  port           = 161
-  interval       = 300
-  active         = true
+  snmp_community = "public"
+
+  conditions = [
+    {
+      variable = "snmp"
+      operator = ">"
+      value    = "0"
+    },
+  ]
 }
 
 # SNMP monitor monitoring specific system uptime
@@ -91,6 +109,7 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 ### Optional
 
 - `active` (Boolean) Monitor is active
+- `conditions` (Attributes List) Optional list of assertion clauses evaluated against the monitor result. Each condition is chained with the previous one using `and_or`. (see [below for nested schema](#nestedatt--conditions))
 - `description` (String) Description
 - `expected_value` (String) Expected value to match
 - `interval` (Number) Heartbeat interval in seconds
@@ -102,12 +121,27 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 - `port` (Number) SNMP device port
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds
+- `snmp_v3_username` (String) SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import. Removing this field from configuration requires a `terraform apply` to synchronize state; `terraform plan` will always show a diff after removal until apply is run.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only
 
 - `id` (Number) Monitor identifier
+
+<a id="nestedatt--conditions"></a>
+### Nested Schema for `conditions`
+
+Required:
+
+- `operator` (String) Comparison operator (e.g. `==`, `!=`, `<`, `>`, `contains`).
+- `value` (String) Value to compare against.
+- `variable` (String) Name of the field to test against (monitor-type specific).
+
+Optional:
+
+- `and_or` (String) Chains this condition with the previous one. Valid values: `and`, `or`.
+
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`

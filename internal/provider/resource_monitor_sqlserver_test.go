@@ -249,3 +249,68 @@ func testAccMonitorSQLServerImportStateID(s *terraform.State) (string, error) {
 
 	return rs.Primary.Attributes["id"], nil
 }
+
+func TestAccMonitorSQLServerResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestSQLServerConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorSQLServerResourceConfigWithConditions(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sqlserver.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sqlserver.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("result"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sqlserver.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("operator"),
+						knownvalue.StringExact("=="),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sqlserver.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sqlserver.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("and_or"),
+						knownvalue.StringExact("and"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_sqlserver.test",
+				ImportState:       true,
+				ImportStateVerify: false,
+				ImportStateIdFunc: testAccMonitorSQLServerImportStateID,
+			},
+		},
+	})
+}
+
+func testAccMonitorSQLServerResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_sqlserver" "test" {
+  name                       = %[1]q
+  database_connection_string = "sqlserver://user:password@localhost:1433?database=master"
+  database_query             = "SELECT 1"
+
+  conditions = [
+    {
+      variable = "result"
+      operator = "=="
+      value    = "1"
+    },
+  ]
+}
+`, name)
+}

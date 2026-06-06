@@ -37,6 +37,7 @@ type MonitorPostgresResourceModel struct {
 
 	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
 	DatabaseQuery            types.String `tfsdk:"database_query"`
+	Conditions               types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -68,6 +69,7 @@ func (*MonitorPostgresResource) Schema(
 				Computed:            true,
 				Default:             stringdefault.StaticString("SELECT 1"),
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -107,8 +109,13 @@ func (r *MonitorPostgresResource) Create(
 		},
 		PostgresDetails: monitor.PostgresDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            data.DatabaseQuery.ValueString(),
+			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {
@@ -204,7 +211,9 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	data.UpsideDown = types.BoolValue(postgresMonitor.UpsideDown)
 	data.Active = types.BoolValue(postgresMonitor.IsActive)
 	data.DatabaseConnectionString = types.StringValue(postgresMonitor.DatabaseConnectionString)
-	data.DatabaseQuery = types.StringValue(postgresMonitor.DatabaseQuery)
+	if postgresMonitor.DatabaseQuery != nil {
+		data.DatabaseQuery = types.StringValue(*postgresMonitor.DatabaseQuery)
+	}
 
 	if postgresMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*postgresMonitor.Parent)
@@ -222,6 +231,11 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 		data.NotificationIDs = notificationIDs
 	} else {
 		data.NotificationIDs = types.ListNull(types.Int64Type)
+	}
+
+	data.Conditions = populateConditions(ctx, postgresMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	data.Tags = handleMonitorTagsRead(ctx, postgresMonitor.Tags, data.Tags, &resp.Diagnostics)
@@ -267,8 +281,13 @@ func (r *MonitorPostgresResource) Update(
 		},
 		PostgresDetails: monitor.PostgresDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            data.DatabaseQuery.ValueString(),
+			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

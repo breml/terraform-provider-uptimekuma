@@ -43,6 +43,7 @@ type MonitorDNSResourceModel struct {
 	DNSResolveServer types.String `tfsdk:"dns_resolve_server"`
 	DNSResolveType   types.String `tfsdk:"dns_resolve_type"`
 	Port             types.Int64  `tfsdk:"port"`
+	Conditions       types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -64,10 +65,11 @@ func (*MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Required:            true,
 			},
 			"dns_resolve_server": schema.StringAttribute{
-				MarkdownDescription: "DNS resolver server IP address",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("1.1.1.1"),
+				MarkdownDescription: "DNS resolver server IP address. Multiple resolvers may be provided as a " +
+					"comma-separated list (e.g. `1.1.1.1,8.8.8.8`).",
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString("1.1.1.1"),
 			},
 			"dns_resolve_type": schema.StringAttribute{
 				MarkdownDescription: "DNS record type to query",
@@ -87,6 +89,7 @@ func (*MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					int64validator.Between(0, 65535),
 				},
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -125,7 +128,12 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 			ResolverServer: data.DNSResolveServer.ValueString(),
 			ResolveType:    monitor.DNSResolveType(data.DNSResolveType.ValueString()),
 			Port:           int(data.Port.ValueInt64()),
+			Conditions:     buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {
@@ -243,6 +251,11 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Conditions = populateConditions(ctx, dnsMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	data.Tags = handleMonitorTagsRead(ctx, dnsMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -285,7 +298,12 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 			ResolverServer: data.DNSResolveServer.ValueString(),
 			ResolveType:    monitor.DNSResolveType(data.DNSResolveType.ValueString()),
 			Port:           int(data.Port.ValueInt64()),
+			Conditions:     buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

@@ -446,3 +446,48 @@ resource "uptimekuma_monitor_http_json_query" "test" {
 }
 `, name, url, jsonPath, expectedValue, cacheBust)
 }
+
+func TestAccMonitorHTTPJSONQueryResourceWithOAuthAudience(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorOAuthAudience")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPJSONQueryResourceConfigWithOAuthAudience(name, "https://api.example.com"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("oauth_audience"),
+						knownvalue.StringExact("https://api.example.com/resource"),
+					),
+				},
+			},
+			{
+				ResourceName:            "uptimekuma_monitor_http_json_query.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"oauth_client_secret"},
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPJSONQueryResourceConfigWithOAuthAudience(name string, url string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http_json_query" "test" {
+  name                = %[1]q
+  url                 = %[2]q
+  json_path           = "$.slideshow.author"
+  expected_value      = "Yours Truly"
+  auth_method         = "oauth2-cc"
+  oauth_auth_method   = "client_secret_basic"
+  oauth_token_url     = "https://auth.example.com/token"
+  oauth_client_id     = "client-id"
+  oauth_client_secret = "client-secret"
+  oauth_scopes        = "read"
+  oauth_audience      = "https://api.example.com/resource"
+}
+`, name, url)
+}

@@ -348,3 +348,46 @@ resource "uptimekuma_monitor_http" "test" {
 }
 `, name, active)
 }
+
+func TestAccMonitorHTTPResourceWithOAuthAudience(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorOAuthAudience")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfigWithOAuthAudience(name, "https://api.example.com"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("oauth_audience"),
+						knownvalue.StringExact("https://api.example.com/resource"),
+					),
+				},
+			},
+			{
+				ResourceName:            "uptimekuma_monitor_http.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"oauth_client_secret"},
+			},
+		},
+	})
+}
+
+func testAccMonitorHTTPResourceConfigWithOAuthAudience(name string, url string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http" "test" {
+  name                = %[1]q
+  url                 = %[2]q
+  auth_method         = "oauth2-cc"
+  oauth_auth_method   = "client_secret_basic"
+  oauth_token_url     = "https://auth.example.com/token"
+  oauth_client_id     = "client-id"
+  oauth_client_secret = "client-secret"
+  oauth_scopes        = "read"
+  oauth_audience      = "https://api.example.com/resource"
+}
+`, name, url)
+}

@@ -310,3 +310,67 @@ func TestAccMonitorMongoDBResourceImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccMonitorMongoDBResourceWithConditions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestMongoDBConditions")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorMongoDBResourceConfigWithConditions(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mongodb.test",
+						tfjsonpath.New("conditions"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mongodb.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("variable"),
+						knownvalue.StringExact("result"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mongodb.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("operator"),
+						knownvalue.StringExact("=="),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mongodb.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_mongodb.test",
+						tfjsonpath.New("conditions").AtSliceIndex(0).AtMapKey("and_or"),
+						knownvalue.StringExact("and"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_mongodb.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorMongoDBResourceConfigWithConditions(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mongodb" "test" {
+  name                       = %[1]q
+  database_connection_string = "mongodb://user:password@localhost:27017/testdb"
+  database_query             = "{\"ping\": 1}"
+
+  conditions = [
+    {
+      variable = "result"
+      operator = "=="
+      value    = "1"
+    },
+  ]
+}
+`, name)
+}

@@ -39,6 +39,7 @@ resource "uptimekuma_monitor_redis" "example" {
 ### Optional
 
 - `active` (Boolean) Monitor is active
+- `conditions` (Attributes List) Optional list of assertion clauses evaluated against the monitor result. Each condition is chained with the previous one using `and_or`. (see [below for nested schema](#nestedatt--conditions))
 - `description` (String) Description
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors for Redis connections
 - `interval` (Number) Heartbeat interval in seconds
@@ -53,6 +54,20 @@ resource "uptimekuma_monitor_redis" "example" {
 ### Read-Only
 
 - `id` (Number) Monitor identifier
+
+<a id="nestedatt--conditions"></a>
+### Nested Schema for `conditions`
+
+Required:
+
+- `operator` (String) Comparison operator (e.g. `==`, `!=`, `<`, `>`, `contains`).
+- `value` (String) Value to compare against.
+- `variable` (String) Name of the field to test against (monitor-type specific).
+
+Optional:
+
+- `and_or` (String) Chains this condition with the previous one. Valid values: `and`, `or`.
+
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`

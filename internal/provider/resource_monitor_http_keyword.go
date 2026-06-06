@@ -168,6 +168,7 @@ func buildHTTPKeywordMonitor(
 			OAuthClientID:       data.OAuthClientID.ValueString(),
 			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
 			OAuthScopes:         data.OAuthScopes.ValueString(),
+			OAuthAudience:       data.OAuthAudience.ValueString(),
 			CacheBust:           data.CacheBust.ValueBool(),
 		},
 		HTTPKeywordDetails: monitor.HTTPKeywordDetails{
@@ -259,6 +260,7 @@ func populateHTTPBaseFieldsForKeyword(httpMonitor *monitor.HTTP, m *MonitorHTTPK
 	m.OAuthClientID = stringOrNullKeyword(httpMonitor.OAuthClientID)
 	m.OAuthClientSecret = stringOrNullKeyword(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNullKeyword(httpMonitor.OAuthScopes)
+	m.OAuthAudience = stringOrNullKeyword(httpMonitor.OAuthAudience)
 	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
 }
 

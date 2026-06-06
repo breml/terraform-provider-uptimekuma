@@ -39,6 +39,7 @@ type MonitorMongoDBResourceModel struct {
 	DatabaseQuery            types.String `tfsdk:"database_query"`
 	JSONPath                 types.String `tfsdk:"json_path"`
 	ExpectedValue            types.String `tfsdk:"expected_value"`
+	Conditions               types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -78,6 +79,7 @@ func (*MonitorMongoDBResource) Schema(
 				MarkdownDescription: "Expected value when using json_path",
 				Optional:            true,
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -120,7 +122,12 @@ func (r *MonitorMongoDBResource) Create(
 			DatabaseQuery:            strToPtr(data.DatabaseQuery),
 			JSONPath:                 strToPtr(data.JSONPath),
 			ExpectedValue:            strToPtr(data.ExpectedValue),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {
@@ -246,6 +253,11 @@ func (r *MonitorMongoDBResource) Read(
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Conditions = populateConditions(ctx, mongoDBMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	data.Tags = handleMonitorTagsRead(ctx, mongoDBMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -292,7 +304,12 @@ func (r *MonitorMongoDBResource) Update(
 			DatabaseQuery:            strToPtr(data.DatabaseQuery),
 			JSONPath:                 strToPtr(data.JSONPath),
 			ExpectedValue:            strToPtr(data.ExpectedValue),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {

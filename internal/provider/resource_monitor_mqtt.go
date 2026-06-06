@@ -50,6 +50,7 @@ type MonitorMQTTResourceModel struct {
 	MQTTSuccessMessage types.String `tfsdk:"mqtt_success_message"` // Expected message for keyword check.
 	JSONPath           types.String `tfsdk:"json_path"`            // JSON path for json-query check.
 	ExpectedValue      types.String `tfsdk:"expected_value"`       // Expected value for json-query check.
+	Conditions         types.List   `tfsdk:"conditions"`           // Optional assertion clauses.
 }
 
 // Metadata returns the metadata for the resource.
@@ -114,6 +115,7 @@ func (*MonitorMQTTResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				MarkdownDescription: "Expected value for json-query check",
 				Optional:            true,
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -225,6 +227,8 @@ func buildMQTTMonitor(ctx context.Context, data *MonitorMQTTResourceModel, diags
 		mqttMonitor.ExpectedValue = &ev
 	}
 
+	mqttMonitor.Conditions = buildConditions(ctx, data.Conditions, diags)
+
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
 		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
@@ -304,6 +308,8 @@ func populateOptionalFieldsForMQTT(
 	} else {
 		m.NotificationIDs = types.ListNull(types.Int64Type)
 	}
+
+	m.Conditions = populateConditions(ctx, mqttMonitor.Conditions, diags)
 }
 
 // Read reads the current state of the resource.
@@ -339,6 +345,9 @@ func (r *MonitorMQTTResource) Read(ctx context.Context, req resource.ReadRequest
 
 	populateMQTTMonitorBaseFieldsForMQTT(&mqttMonitor, &data)
 	populateOptionalFieldsForMQTT(ctx, &mqttMonitor, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, mqttMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

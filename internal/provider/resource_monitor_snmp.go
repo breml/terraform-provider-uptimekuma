@@ -45,9 +45,11 @@ type MonitorSNMPResourceModel struct {
 	SNMPVersion      types.String `tfsdk:"snmp_version"`
 	SNMPOID          types.String `tfsdk:"snmp_oid"`
 	SNMPCommunity    types.String `tfsdk:"snmp_community"`
+	SNMPV3Username   types.String `tfsdk:"snmp_v3_username"`
 	JSONPath         types.String `tfsdk:"json_path"`
 	JSONPathOperator types.String `tfsdk:"json_path_operator"`
 	ExpectedValue    types.String `tfsdk:"expected_value"`
+	Conditions       types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -90,6 +92,13 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Required:            true,
 				Sensitive:           true,
 			},
+			"snmp_v3_username": schema.StringAttribute{
+				MarkdownDescription: "SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this " +
+					"value but does not return it on read, so it cannot be detected as drift or recovered on import. " +
+					"Removing this field from configuration requires a `terraform apply` to synchronize state; " +
+					"`terraform plan` will always show a diff after removal until apply is run.",
+				Optional: true,
+			},
 			"json_path": schema.StringAttribute{
 				MarkdownDescription: "JSON path for extracting value from SNMP response",
 				Optional:            true,
@@ -105,6 +114,7 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				MarkdownDescription: "Expected value to match",
 				Optional:            true,
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -199,6 +209,9 @@ func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags
 		snmpMonitor.ExpectedValue = &expectedValue
 	}
 
+	snmpMonitor.SNMPV3Username = strToPtr(data.SNMPV3Username)
+	snmpMonitor.Conditions = buildConditions(ctx, data.Conditions, diags)
+
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64
 		diags.Append(data.NotificationIDs.ElementsAs(ctx, &notificationIDs, false)...)
@@ -229,6 +242,13 @@ func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPReso
 	m.SNMPVersion = types.StringValue(snmpMonitor.SNMPVersion)
 	m.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)
 	m.SNMPCommunity = types.StringValue(snmpMonitor.SNMPCommunity)
+	// snmp_v3_username is not echoed on read by the server. Preserve the
+	// configured value to avoid a perpetual diff; adopt the server value if a
+	// future version begins returning it.
+	if snmpMonitor.SNMPV3Username != nil && *snmpMonitor.SNMPV3Username != "" {
+		m.SNMPV3Username = types.StringValue(*snmpMonitor.SNMPV3Username)
+	}
+
 	m.JSONPath = stringOrNullPtr(snmpMonitor.JSONPath)
 	m.JSONPathOperator = stringOrNullPtr(snmpMonitor.JSONPathOperator)
 	m.ExpectedValue = stringOrNullPtr(snmpMonitor.ExpectedValue)
@@ -263,6 +283,8 @@ func populateOptionalFieldsForSNMP(
 	} else {
 		m.Parent = types.Int64Null()
 	}
+
+	m.Conditions = populateConditions(ctx, snmpMonitor.Conditions, diags)
 
 	// Convert notification IDs list if present.
 	if len(snmpMonitor.NotificationIDs) > 0 {
@@ -307,6 +329,9 @@ func (r *MonitorSNMPResource) Read(ctx context.Context, req resource.ReadRequest
 
 	populateSNMPMonitorBaseFields(&snmpMonitor, &data)
 	populateOptionalFieldsForSNMP(ctx, &snmpMonitor, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	data.Tags = handleMonitorTagsRead(ctx, snmpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

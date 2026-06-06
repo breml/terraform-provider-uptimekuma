@@ -138,7 +138,6 @@ All notification types follow the same pattern with type-specific fields:
 - `uptimekuma_notification_signal` - Signal
 - `uptimekuma_notification_telegram` - Telegram
 - `uptimekuma_notification_line` - LINE
-- `uptimekuma_notification_linenotify` - LINE Notify
 - `uptimekuma_notification_twilio` - Twilio
 
 #### Cloud/Self-Hosted

@@ -112,6 +112,7 @@ resource "uptimekuma_monitor_mongodb" "example_with_notification" {
 ### Optional
 
 - `active` (Boolean) Monitor is active
+- `conditions` (Attributes List) Optional list of assertion clauses evaluated against the monitor result. Each condition is chained with the previous one using `and_or`. (see [below for nested schema](#nestedatt--conditions))
 - `database_query` (String) MongoDB command as JSON (e.g., {"ping": 1})
 - `description` (String) Description
 - `expected_value` (String) Expected value when using json_path
@@ -128,6 +129,20 @@ resource "uptimekuma_monitor_mongodb" "example_with_notification" {
 ### Read-Only
 
 - `id` (Number) Monitor identifier
+
+<a id="nestedatt--conditions"></a>
+### Nested Schema for `conditions`
+
+Required:
+
+- `operator` (String) Comparison operator (e.g. `==`, `!=`, `<`, `>`, `contains`).
+- `value` (String) Value to compare against.
+- `variable` (String) Name of the field to test against (monitor-type specific).
+
+Optional:
+
+- `and_or` (String) Chains this condition with the previous one. Valid values: `and`, `or`.
+
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`

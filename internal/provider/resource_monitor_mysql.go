@@ -37,6 +37,7 @@ type MonitorMySQLResourceModel struct {
 
 	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
 	DatabaseQuery            types.String `tfsdk:"database_query"`
+	Conditions               types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -68,6 +69,7 @@ func (*MonitorMySQLResource) Schema(
 				Computed:            true,
 				Default:             stringdefault.StaticString("SELECT 1"),
 			},
+			"conditions": conditionsAttribute(),
 		}),
 	}
 }
@@ -109,7 +111,12 @@ func (r *MonitorMySQLResource) Create(
 		MySQLDetails: monitor.MySQLDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
 			DatabaseQuery:            &databaseQuery,
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {
@@ -229,6 +236,11 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
+	data.Conditions = populateConditions(ctx, mysqlMonitor.Conditions, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	data.Tags = handleMonitorTagsRead(ctx, mysqlMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -274,7 +286,12 @@ func (r *MonitorMySQLResource) Update(
 		MySQLDetails: monitor.MySQLDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
 			DatabaseQuery:            &databaseQuery,
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	if !data.Description.IsNull() {
