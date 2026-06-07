@@ -288,7 +288,7 @@ resource "uptimekuma_monitor_smtp" "test" {
 }
 
 func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
-	securityModes := []string{"None", "STARTTLS", "TLS"}
+	securityModes := []string{"None", "STARTTLS", "TLS", "nostarttls"}
 
 	for _, mode := range securityModes {
 		t.Run(mode, func(t *testing.T) {
