@@ -112,7 +112,6 @@ func (r *MonitorOracleDBResource) Create(
 		return
 	}
 
-	databaseQuery := data.DatabaseQuery.ValueString()
 	oracleDBMonitor := monitor.OracleDB{
 		Base: monitor.Base{
 			Name:           data.Name.ValueString(),
@@ -125,7 +124,7 @@ func (r *MonitorOracleDBResource) Create(
 		},
 		OracleDBDetails: monitor.OracleDBDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            &databaseQuery,
+			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
 			Username:                 data.BasicAuthUser.ValueString(),
 			Password:                 data.BasicAuthPass.ValueString(),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
@@ -230,9 +229,6 @@ func (r *MonitorOracleDBResource) Read(ctx context.Context, req resource.ReadReq
 	data.DatabaseConnectionString = types.StringValue(oracleDBMonitor.DatabaseConnectionString)
 	if oracleDBMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*oracleDBMonitor.DatabaseQuery)
-	} else {
-		// Normalize a missing database query to the schema default ("SELECT 1 FROM DUAL")
-		data.DatabaseQuery = types.StringValue("SELECT 1 FROM DUAL")
 	}
 
 	data.BasicAuthUser = types.StringValue(oracleDBMonitor.Username)
@@ -291,7 +287,6 @@ func (r *MonitorOracleDBResource) Update(
 		return
 	}
 
-	databaseQuery := data.DatabaseQuery.ValueString()
 	oracleDBMonitor := monitor.OracleDB{
 		Base: monitor.Base{
 			ID:             data.ID.ValueInt64(),
@@ -305,7 +300,7 @@ func (r *MonitorOracleDBResource) Update(
 		},
 		OracleDBDetails: monitor.OracleDBDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            &databaseQuery,
+			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
 			Username:                 data.BasicAuthUser.ValueString(),
 			Password:                 data.BasicAuthPass.ValueString(),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),

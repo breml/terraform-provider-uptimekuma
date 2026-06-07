@@ -97,13 +97,20 @@ func TestAccMonitorOracleDBResourceWithOptionalFields(t *testing.T) {
 	description := "Test OracleDB monitor with optional fields"
 	connectionString := "localhost:1521/ORCL"
 	username := "monitoring_user"
+	password := "s3cr3t"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorOracleDBResourceConfigWithOptionalFields(name, description, connectionString, username),
+				Config: testAccMonitorOracleDBResourceConfigWithOptionalFields(
+					name,
+					description,
+					connectionString,
+					username,
+					password,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_oracledb.test",
@@ -171,6 +178,7 @@ func testAccMonitorOracleDBResourceConfigWithOptionalFields(
 	description string,
 	connectionString string,
 	username string,
+	password string,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_oracledb" "test" {
@@ -178,6 +186,7 @@ resource "uptimekuma_monitor_oracledb" "test" {
   description                = %[2]q
   database_connection_string = %[3]q
   basic_auth_user            = %[4]q
+  basic_auth_pass            = %[5]q
   interval                   = 60
   retry_interval             = 60
   resend_interval            = 0
@@ -185,7 +194,7 @@ resource "uptimekuma_monitor_oracledb" "test" {
   upside_down                = false
   active                     = true
 }
-`, name, description, connectionString, username)
+`, name, description, connectionString, username, password)
 }
 
 func TestAccMonitorOracleDBResourceWithParent(t *testing.T) {
@@ -277,9 +286,10 @@ func TestAccMonitorOracleDBResourceWithConditions(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:      "uptimekuma_monitor_oracledb.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "uptimekuma_monitor_oracledb.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"database_connection_string", "basic_auth_pass"},
 			},
 		},
 	})
