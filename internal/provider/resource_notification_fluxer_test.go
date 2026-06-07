@@ -21,6 +21,52 @@ func TestAccNotificationFluxerResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// Minimal config: verify optional fields default to null.
+			{
+				Config: testAccNotificationFluxerResourceConfigMinimal(name, webhookURL),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("username"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("prefix_message"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("disable_url"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("use_message_template"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("message_format"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("message_template"),
+						knownvalue.Null(),
+					),
+				},
+			},
 			{
 				Config: testAccNotificationFluxerResourceConfig(
 					name,
@@ -98,13 +144,72 @@ func TestAccNotificationFluxerResource(t *testing.T) {
 					),
 				},
 			},
+			// Set pointer-based template fields and verify they round-trip correctly.
 			{
-				ResourceName:      "uptimekuma_notification_fluxer.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				Config: testAccNotificationFluxerResourceConfigWithTemplate(
+					nameUpdated,
+					webhookURLUpdated,
+					true,
+					"minimalist",
+					"Alert: {{name}}",
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("use_message_template"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("message_format"),
+						knownvalue.StringExact("minimalist"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("message_template"),
+						knownvalue.StringExact("Alert: {{name}}"),
+					),
+				},
+			},
+			// Clear pointer-based fields and verify they return to null.
+			{
+				Config: testAccNotificationFluxerResourceConfigMinimal(nameUpdated, webhookURLUpdated),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("use_message_template"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("message_format"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_fluxer.test",
+						tfjsonpath.New("message_template"),
+						knownvalue.Null(),
+					),
+				},
+			},
+			{
+				ResourceName:            "uptimekuma_notification_fluxer.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"webhook_url"},
 			},
 		},
 	})
+}
+
+func testAccNotificationFluxerResourceConfigMinimal(name string, webhookURL string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_fluxer" "test" {
+  name        = %[1]q
+  is_active   = true
+  webhook_url = %[2]q
+}
+`, name, webhookURL)
 }
 
 func testAccNotificationFluxerResourceConfig(
@@ -120,4 +225,19 @@ resource "uptimekuma_notification_fluxer" "test" {
   disable_url    = %[5]t
 }
 `, name, webhookURL, username, prefixMessage, disableURL)
+}
+
+func testAccNotificationFluxerResourceConfigWithTemplate(
+	name string, webhookURL string, useMessageTemplate bool, messageFormat string, messageTemplate string,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_fluxer" "test" {
+  name                 = %[1]q
+  is_active            = true
+  webhook_url          = %[2]q
+  use_message_template = %[3]t
+  message_format       = %[4]q
+  message_template     = %[5]q
+}
+`, name, webhookURL, useMessageTemplate, messageFormat, messageTemplate)
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccNotificationFluxerDataSource(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestNotificationFluxer")
+	name := acctest.RandomWithPrefix("NotificationFluxer")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },

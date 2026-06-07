@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/notification"
@@ -135,8 +134,6 @@ func (r *NotificationFluxerResource) Create(
 		return
 	}
 
-	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
-
 	data.ID = types.Int64Value(id)
 
 	// Populate state.
@@ -218,8 +215,18 @@ func (r *NotificationFluxerResource) Update(
 		return
 	}
 
+	id := data.ID.ValueInt64()
+	if id == 0 {
+		resp.Diagnostics.AddError(
+			"Invalid resource state",
+			"Cannot update notification: resource ID is missing from state. This is a provider bug.",
+		)
+
+		return
+	}
+
 	fluxer := fluxerFromModel(&data)
-	fluxer.ID = data.ID.ValueInt64()
+	fluxer.ID = id
 
 	err := r.client.UpdateNotification(ctx, fluxer)
 	// Handle error.
