@@ -288,7 +288,7 @@ resource "uptimekuma_monitor_smtp" "test" {
 }
 
 func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
-	securityModes := []string{"None", "STARTTLS", "TLS"}
+	securityModes := []string{"None", "STARTTLS", "TLS", "nostarttls"}
 
 	for _, mode := range securityModes {
 		t.Run(mode, func(t *testing.T) {
@@ -317,6 +317,15 @@ func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
 								knownvalue.StringExact(mode),
 							),
 						},
+					},
+					{
+						RefreshState:       true,
+						ExpectNonEmptyPlan: false,
+					},
+					{
+						ResourceName:      "uptimekuma_monitor_smtp.test",
+						ImportState:       true,
+						ImportStateVerify: true,
 					},
 				},
 			})
