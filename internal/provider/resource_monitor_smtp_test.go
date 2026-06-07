@@ -318,6 +318,15 @@ func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
 							),
 						},
 					},
+					{
+						RefreshState:       true,
+						ExpectNonEmptyPlan: false,
+					},
+					{
+						ResourceName:      "uptimekuma_monitor_smtp.test",
+						ImportState:       true,
+						ImportStateVerify: true,
+					},
 				},
 			})
 		})
