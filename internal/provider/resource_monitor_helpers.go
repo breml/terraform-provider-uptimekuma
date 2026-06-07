@@ -60,3 +60,23 @@ func int64ToPtr(v types.Int64) *int64 {
 
 	return v.ValueInt64Pointer()
 }
+
+// boolToPtr converts a Terraform bool type to a pointer to bool.
+// Returns nil if the value is null or unknown.
+func boolToPtr(v types.Bool) *bool {
+	if v.IsNull() || v.IsUnknown() {
+		return nil
+	}
+
+	return v.ValueBoolPointer()
+}
+
+// boolPtrToTypes converts a pointer to bool to a Terraform bool type.
+// Returns BoolNull() if the pointer is nil.
+func boolPtrToTypes(v *bool) types.Bool {
+	if v == nil {
+		return types.BoolNull()
+	}
+
+	return types.BoolValue(*v)
+}
