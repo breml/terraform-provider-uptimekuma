@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -108,7 +109,14 @@ func (d *NotificationHaloPSADataSource) readByID(
 	}
 
 	if notification.Type() != "HaloPSA" {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a HaloPSA notification")
+		resp.Diagnostics.AddError(
+			"incorrect notification type",
+			fmt.Sprintf(
+				"notification with ID %d has type %q, expected \"HaloPSA\"",
+				data.ID.ValueInt64(),
+				notification.Type(),
+			),
+		)
 		return
 	}
 

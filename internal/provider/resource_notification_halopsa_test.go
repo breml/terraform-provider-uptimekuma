@@ -31,13 +31,33 @@ func TestAccNotificationHaloPSAResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_halopsa.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURL),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_halopsa.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("user1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
 					),
 				},
 			},
@@ -56,8 +76,28 @@ func TestAccNotificationHaloPSAResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("webhook_url"),
+						knownvalue.StringExact(webhookURLUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("user2"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_halopsa.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
 					),
 				},
 			},
