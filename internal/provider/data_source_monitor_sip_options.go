@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -118,10 +119,24 @@ func (d *MonitorSIPOptionsDataSource) readByID(
 		return
 	}
 
+	if actual := sipMon.Base.Type(); actual != "" && actual != sipMon.Type() {
+		resp.Diagnostics.AddError(
+			"Monitor type mismatch",
+			fmt.Sprintf(
+				"Monitor ID %d has type %q, expected %q.",
+				data.ID.ValueInt64(), actual, sipMon.Type(),
+			),
+		)
+		return
+	}
+
 	data.Name = types.StringValue(sipMon.Name)
 	data.Hostname = types.StringValue(sipMon.Hostname)
 	data.Port = types.Int64Value(int64(sipMon.Port))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // readByName fetches the SIP Options monitor data by its name.
@@ -146,4 +161,7 @@ func (d *MonitorSIPOptionsDataSource) readByName(
 	data.Hostname = types.StringValue(sipMon.Hostname)
 	data.Port = types.Int64Value(int64(sipMon.Port))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }

@@ -154,7 +154,10 @@ func (r *MonitorSIPOptionsResource) Create(
 	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
+		if !resp.Diagnostics.HasError() {
+			resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
+		}
+
 		return
 	}
 

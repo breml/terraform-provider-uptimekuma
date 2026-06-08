@@ -67,6 +67,11 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 				},
 			},
 			{
+				ResourceName:      "uptimekuma_monitor_sip_options.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccMonitorSIPOptionsResourceConfigWithDescription(
 					nameUpdated,
 					hostnameUpdated,
@@ -92,6 +97,11 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("description"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
 						tfjsonpath.New("interval"),
 						knownvalue.Int64Exact(120),
 					),
@@ -101,11 +111,6 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 						knownvalue.Bool(true),
 					),
 				},
-			},
-			{
-				ResourceName:      "uptimekuma_monitor_sip_options.test",
-				ImportState:       true,
-				ImportStateVerify: true,
 			},
 		},
 	})
@@ -131,4 +136,149 @@ resource "uptimekuma_monitor_sip_options" "test" {
   active   = true
 }
 `, name, hostname, port, descField, interval)
+}
+
+func TestAccMonitorSIPOptionsResourceMinimal(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestSIPOptionsMonitorMinimal")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorSIPOptionsResourceConfigMinimal(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("sip.example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(5060),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(60),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccMonitorSIPOptionsResourceConfigMinimal(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_sip_options" "test" {
+  name     = %[1]q
+  hostname = "sip.example.com"
+  port     = 5060
+}
+`, name)
+}
+
+func TestAccMonitorSIPOptionsResourceWithAllOptions(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestSIPOptionsMonitorFull")
+	description := "Full SIP Options monitor test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorSIPOptionsResourceConfigWithAllOptions(name, description),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("description"),
+						knownvalue.StringExact(description),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("sip.example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(5060),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(120),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("retry_interval"),
+						knownvalue.Int64Exact(90),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("resend_interval"),
+						knownvalue.Int64Exact(0),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("max_retries"),
+						knownvalue.Int64Exact(5),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("upside_down"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(false),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccMonitorSIPOptionsResourceConfigWithAllOptions(name string, description string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_sip_options" "test" {
+  name            = %[1]q
+  description     = %[2]q
+  hostname        = "sip.example.com"
+  port            = 5060
+  interval        = 120
+  retry_interval  = 90
+  resend_interval = 0
+  max_retries     = 5
+  upside_down     = false
+  active          = false
+}
+`, name, description)
 }

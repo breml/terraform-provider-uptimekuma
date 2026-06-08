@@ -26,6 +26,16 @@ func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("sip.example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(5060),
+					),
 				},
 			},
 			{
@@ -35,6 +45,16 @@ func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 						"data.uptimekuma_monitor_sip_options.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("hostname"),
+						knownvalue.StringExact("sip.example.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("port"),
+						knownvalue.Int64Exact(5060),
 					),
 				},
 			},
