@@ -157,6 +157,17 @@ func (d *MonitorSIPOptionsDataSource) readByName(
 		return
 	}
 
+	if actual := sipMon.Base.Type(); actual != "" && actual != sipMon.Type() {
+		resp.Diagnostics.AddError(
+			"Monitor type mismatch",
+			fmt.Sprintf(
+				"Monitor %q has type %q, expected %q.",
+				data.Name.ValueString(), actual, sipMon.Type(),
+			),
+		)
+		return
+	}
+
 	data.ID = types.Int64Value(sipMon.ID)
 	data.Hostname = types.StringValue(sipMon.Hostname)
 	data.Port = types.Int64Value(int64(sipMon.Port))
