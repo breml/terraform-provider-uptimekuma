@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/notification"
@@ -124,6 +125,8 @@ func (r *NotificationTelnyxResource) Create(
 
 	data.ID = types.Int64Value(id)
 
+	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
+
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -232,6 +235,10 @@ func (r *NotificationTelnyxResource) Delete(
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	// Handle error.
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}

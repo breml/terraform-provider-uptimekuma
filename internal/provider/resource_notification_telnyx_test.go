@@ -40,6 +40,21 @@ func TestAccNotificationTelnyxResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telnyx.test",
 						tfjsonpath.New("api_key"),
 						knownvalue.StringExact("KEY0000000000000000000000000000000"),
 					),
@@ -73,6 +88,21 @@ func TestAccNotificationTelnyxResource(t *testing.T) {
 						"uptimekuma_notification_telnyx.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("is_active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_telnyx.test",

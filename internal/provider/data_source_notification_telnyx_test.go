@@ -26,6 +26,11 @@ func TestAccNotificationTelnyxDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_telnyx.test",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
 				},
 			},
 			{
