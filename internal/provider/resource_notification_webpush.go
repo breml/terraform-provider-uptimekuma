@@ -212,6 +212,9 @@ func (r *NotificationWebpushResource) Read(
 	data.ApplyExisting = types.BoolValue(webpush.ApplyExisting)
 
 	data.Subscription = flattenWebpushSubscription(webpush.Subscription, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -358,6 +361,10 @@ func flattenWebpushSubscription(
 		"auth":   types.StringValue(subscription.Keys.Auth),
 	})
 	diags.Append(d...)
+
+	if diags.HasError() {
+		return types.ObjectNull(webpushSubscriptionAttrTypes())
+	}
 
 	subscriptionObj, d := types.ObjectValue(webpushSubscriptionAttrTypes(), map[string]attr.Value{
 		"endpoint": types.StringValue(subscription.Endpoint),
