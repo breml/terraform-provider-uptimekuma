@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -19,67 +18,61 @@ import (
 )
 
 var (
-	_ resource.Resource                = &MonitorSIPOptionsResource{}
-	_ resource.ResourceWithImportState = &MonitorSIPOptionsResource{}
+	_ resource.Resource                = &MonitorSystemServiceResource{}
+	_ resource.ResourceWithImportState = &MonitorSystemServiceResource{}
 )
 
-// NewMonitorSIPOptionsResource returns a new instance of the SIP Options monitor resource.
-func NewMonitorSIPOptionsResource() resource.Resource {
-	return &MonitorSIPOptionsResource{}
+// NewMonitorSystemServiceResource returns a new instance of the System Service monitor resource.
+func NewMonitorSystemServiceResource() resource.Resource {
+	return &MonitorSystemServiceResource{}
 }
 
-// MonitorSIPOptionsResource defines the resource implementation.
-type MonitorSIPOptionsResource struct {
+// MonitorSystemServiceResource defines the resource implementation.
+type MonitorSystemServiceResource struct {
 	client *kuma.Client
 }
 
-// MonitorSIPOptionsResourceModel describes the resource data model.
-type MonitorSIPOptionsResourceModel struct {
+// MonitorSystemServiceResourceModel describes the resource data model.
+type MonitorSystemServiceResourceModel struct {
 	MonitorBaseModel
 
-	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
+	SystemServiceName types.String `tfsdk:"system_service_name"`
 }
 
 // Metadata returns the metadata for the resource.
-func (*MonitorSIPOptionsResource) Metadata(
+func (*MonitorSystemServiceResource) Metadata(
 	_ context.Context,
 	req resource.MetadataRequest,
 	resp *resource.MetadataResponse,
 ) {
-	resp.TypeName = req.ProviderTypeName + "_monitor_sip_options"
+	resp.TypeName = req.ProviderTypeName + "_monitor_system_service"
 }
 
 // Schema returns the schema for the resource.
-func (*MonitorSIPOptionsResource) Schema(
+func (*MonitorSystemServiceResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "SIP Options monitor resource. Sends a SIP OPTIONS request to a host/port. " +
-			"Note: upstream uses `sipsak` and only works on non-container installs of Uptime Kuma.",
+		MarkdownDescription: "System Service monitor resource. Checks a systemd service (Linux) or " +
+			"SCM service (Windows).",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
-			"hostname": schema.StringAttribute{
-				MarkdownDescription: "Hostname or IP address to monitor",
-				Required:            true,
+			"system_service_name": schema.StringAttribute{
+				MarkdownDescription: "Name of the service to check. On Linux (systemd), this is the unit " +
+					"name (e.g. `nginx.service`, `sshd@0.service`); on Windows, this is the SCM service " +
+					"name (e.g. `Spooler`).",
+				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
-				},
-			},
-			"port": schema.Int64Attribute{
-				MarkdownDescription: "SIP port number to monitor",
-				Required:            true,
-				Validators: []validator.Int64{
-					int64validator.Between(1, 65535),
 				},
 			},
 		}),
 	}
 }
 
-// Configure configures the SIP Options monitor resource with the API client.
-func (r *MonitorSIPOptionsResource) Configure(
+// Configure configures the System Service monitor resource with the API client.
+func (r *MonitorSystemServiceResource) Configure(
 	_ context.Context,
 	req resource.ConfigureRequest,
 	resp *resource.ConfigureResponse,
@@ -87,13 +80,13 @@ func (r *MonitorSIPOptionsResource) Configure(
 	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
-// Create creates a new SIP Options monitor resource.
-func (r *MonitorSIPOptionsResource) Create(
+// Create creates a new System Service monitor resource.
+func (r *MonitorSystemServiceResource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
-	var data MonitorSIPOptionsResourceModel
+	var data MonitorSystemServiceResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
@@ -101,7 +94,7 @@ func (r *MonitorSIPOptionsResource) Create(
 		return
 	}
 
-	sipOptionsMonitor := monitor.SIPOptions{
+	systemServiceMonitor := monitor.SystemService{
 		Base: monitor.Base{
 			Name:           data.Name.ValueString(),
 			Interval:       data.Interval.ValueInt64(),
@@ -111,20 +104,19 @@ func (r *MonitorSIPOptionsResource) Create(
 			UpsideDown:     data.UpsideDown.ValueBool(),
 			IsActive:       data.Active.ValueBool(),
 		},
-		SIPOptionsDetails: monitor.SIPOptionsDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+		SystemServiceDetails: monitor.SystemServiceDetails{
+			SystemServiceName: data.SystemServiceName.ValueString(),
 		},
 	}
 
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
-		sipOptionsMonitor.Description = &desc
+		systemServiceMonitor.Description = &desc
 	}
 
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
-		sipOptionsMonitor.Parent = &parent
+		systemServiceMonitor.Parent = &parent
 	}
 
 	if !data.NotificationIDs.IsNull() {
@@ -134,13 +126,13 @@ func (r *MonitorSIPOptionsResource) Create(
 			return
 		}
 
-		sipOptionsMonitor.NotificationIDs = notificationIDs
+		systemServiceMonitor.NotificationIDs = notificationIDs
 	}
 
-	id, err := r.client.CreateMonitor(ctx, &sipOptionsMonitor)
+	id, err := r.client.CreateMonitor(ctx, &systemServiceMonitor)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create SIP Options monitor", err.Error())
+		resp.Diagnostics.AddError("failed to create System Service monitor", err.Error())
 		return
 	}
 
@@ -163,9 +155,13 @@ func (r *MonitorSIPOptionsResource) Create(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read reads the current state of the SIP Options monitor resource.
-func (r *MonitorSIPOptionsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data MonitorSIPOptionsResourceModel
+// Read reads the current state of the System Service monitor resource.
+func (r *MonitorSystemServiceResource) Read(
+	ctx context.Context,
+	req resource.ReadRequest,
+	resp *resource.ReadResponse,
+) {
+	var data MonitorSystemServiceResourceModel
 
 	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -174,8 +170,8 @@ func (r *MonitorSIPOptionsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	var sipOptionsMonitor monitor.SIPOptions
-	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &sipOptionsMonitor)
+	var systemServiceMonitor monitor.SystemService
+	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &systemServiceMonitor)
 	// Handle error.
 	if err != nil {
 		if isNotFoundError(err) {
@@ -183,44 +179,44 @@ func (r *MonitorSIPOptionsResource) Read(ctx context.Context, req resource.ReadR
 			return
 		}
 
-		resp.Diagnostics.AddError("failed to read SIP Options monitor", err.Error())
+		resp.Diagnostics.AddError("failed to read System Service monitor", err.Error())
 		return
 	}
 
-	if actual := sipOptionsMonitor.Base.Type(); actual != "" && actual != sipOptionsMonitor.Type() {
+	if actual := systemServiceMonitor.Base.Type(); actual != "" && actual != systemServiceMonitor.Type() {
 		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
 			"id":            data.ID.ValueInt64(),
-			"expected_type": sipOptionsMonitor.Type(),
+			"expected_type": systemServiceMonitor.Type(),
 			"actual_type":   actual,
 		})
 		resp.State.RemoveResource(ctx)
+
 		return
 	}
 
-	data.Name = types.StringValue(sipOptionsMonitor.Name)
-	if sipOptionsMonitor.Description != nil {
-		data.Description = types.StringValue(*sipOptionsMonitor.Description)
+	data.Name = types.StringValue(systemServiceMonitor.Name)
+	if systemServiceMonitor.Description != nil {
+		data.Description = types.StringValue(*systemServiceMonitor.Description)
 	} else {
 		data.Description = types.StringNull()
 	}
 
-	data.Interval = types.Int64Value(sipOptionsMonitor.Interval)
-	data.RetryInterval = types.Int64Value(sipOptionsMonitor.RetryInterval)
-	data.ResendInterval = types.Int64Value(sipOptionsMonitor.ResendInterval)
-	data.MaxRetries = types.Int64Value(sipOptionsMonitor.MaxRetries)
-	data.UpsideDown = types.BoolValue(sipOptionsMonitor.UpsideDown)
-	data.Active = types.BoolValue(sipOptionsMonitor.IsActive)
-	data.Hostname = types.StringValue(sipOptionsMonitor.Hostname)
-	data.Port = types.Int64Value(int64(sipOptionsMonitor.Port))
+	data.Interval = types.Int64Value(systemServiceMonitor.Interval)
+	data.RetryInterval = types.Int64Value(systemServiceMonitor.RetryInterval)
+	data.ResendInterval = types.Int64Value(systemServiceMonitor.ResendInterval)
+	data.MaxRetries = types.Int64Value(systemServiceMonitor.MaxRetries)
+	data.UpsideDown = types.BoolValue(systemServiceMonitor.UpsideDown)
+	data.Active = types.BoolValue(systemServiceMonitor.IsActive)
+	data.SystemServiceName = types.StringValue(systemServiceMonitor.SystemServiceName)
 
-	if sipOptionsMonitor.Parent != nil {
-		data.Parent = types.Int64Value(*sipOptionsMonitor.Parent)
+	if systemServiceMonitor.Parent != nil {
+		data.Parent = types.Int64Value(*systemServiceMonitor.Parent)
 	} else {
 		data.Parent = types.Int64Null()
 	}
 
-	if len(sipOptionsMonitor.NotificationIDs) > 0 {
-		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, sipOptionsMonitor.NotificationIDs)
+	if len(systemServiceMonitor.NotificationIDs) > 0 {
+		notificationIDs, diags := types.ListValueFrom(ctx, types.Int64Type, systemServiceMonitor.NotificationIDs)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -231,7 +227,7 @@ func (r *MonitorSIPOptionsResource) Read(ctx context.Context, req resource.ReadR
 		data.NotificationIDs = types.ListNull(types.Int64Type)
 	}
 
-	data.Tags = handleMonitorTagsRead(ctx, sipOptionsMonitor.Tags, data.Tags, &resp.Diagnostics)
+	data.Tags = handleMonitorTagsRead(ctx, systemServiceMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -240,20 +236,20 @@ func (r *MonitorSIPOptionsResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update updates the SIP Options monitor resource.
-func (r *MonitorSIPOptionsResource) Update(
+// Update updates the System Service monitor resource.
+func (r *MonitorSystemServiceResource) Update(
 	ctx context.Context,
 	req resource.UpdateRequest,
 	resp *resource.UpdateResponse,
 ) {
-	var data MonitorSIPOptionsResourceModel
+	var data MonitorSystemServiceResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var state MonitorSIPOptionsResourceModel
+	var state MonitorSystemServiceResourceModel
 
 	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -261,7 +257,7 @@ func (r *MonitorSIPOptionsResource) Update(
 		return
 	}
 
-	sipOptionsMonitor := monitor.SIPOptions{
+	systemServiceMonitor := monitor.SystemService{
 		Base: monitor.Base{
 			ID:             data.ID.ValueInt64(),
 			Name:           data.Name.ValueString(),
@@ -272,20 +268,19 @@ func (r *MonitorSIPOptionsResource) Update(
 			UpsideDown:     data.UpsideDown.ValueBool(),
 			IsActive:       data.Active.ValueBool(),
 		},
-		SIPOptionsDetails: monitor.SIPOptionsDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+		SystemServiceDetails: monitor.SystemServiceDetails{
+			SystemServiceName: data.SystemServiceName.ValueString(),
 		},
 	}
 
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
-		sipOptionsMonitor.Description = &desc
+		systemServiceMonitor.Description = &desc
 	}
 
 	if !data.Parent.IsNull() {
 		parent := data.Parent.ValueInt64()
-		sipOptionsMonitor.Parent = &parent
+		systemServiceMonitor.Parent = &parent
 	}
 
 	if !data.NotificationIDs.IsNull() {
@@ -295,13 +290,13 @@ func (r *MonitorSIPOptionsResource) Update(
 			return
 		}
 
-		sipOptionsMonitor.NotificationIDs = notificationIDs
+		systemServiceMonitor.NotificationIDs = notificationIDs
 	}
 
-	err := r.client.UpdateMonitor(ctx, &sipOptionsMonitor)
+	err := r.client.UpdateMonitor(ctx, &systemServiceMonitor)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError("failed to update SIP Options monitor", err.Error())
+		resp.Diagnostics.AddError("failed to update System Service monitor", err.Error())
 		return
 	}
 
@@ -319,13 +314,13 @@ func (r *MonitorSIPOptionsResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete deletes the SIP Options monitor resource.
-func (r *MonitorSIPOptionsResource) Delete(
+// Delete deletes the System Service monitor resource.
+func (r *MonitorSystemServiceResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
 	resp *resource.DeleteResponse,
 ) {
-	var data MonitorSIPOptionsResourceModel
+	var data MonitorSystemServiceResourceModel
 
 	// Get resource from state.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -337,13 +332,13 @@ func (r *MonitorSIPOptionsResource) Delete(
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError("failed to delete SIP Options monitor", err.Error())
+		resp.Diagnostics.AddError("failed to delete System Service monitor", err.Error())
 		return
 	}
 }
 
 // ImportState imports an existing resource by ID.
-func (*MonitorSIPOptionsResource) ImportState(
+func (*MonitorSystemServiceResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
