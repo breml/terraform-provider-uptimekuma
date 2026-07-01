@@ -156,7 +156,11 @@ func (*UptimeKumaProvider) Configure(
 		MaxRetries:           opts.maxRetries,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create client", err.Error())
+		resp.Diagnostics.AddError(
+			"failed to connect to Uptime Kuma",
+			connectionErrorDetail(data.Endpoint.ValueString(), err),
+		)
+
 		return
 	}
 
@@ -173,6 +177,23 @@ func (*UptimeKumaProvider) Configure(
 
 	resp.DataSourceData = pd
 	resp.ResourceData = pd
+}
+
+func connectionErrorDetail(endpoint string, err error) string {
+	return fmt.Sprintf(
+		"Could not establish a connection to Uptime Kuma at %q.\n\n"+
+			"Underlying error: %v\n\n"+
+			"Common causes:\n"+
+			"  - The endpoint URL is incorrect or Uptime Kuma is not reachable from this host.\n"+
+			"  - A reverse proxy is not forwarding the Socket.IO/WebSocket connection.\n"+
+			"  - TLS certificate issues when using a custom domain (try the direct URL to confirm).\n"+
+			"  - Two-factor authentication (2FA) is enabled on the account (currently not supported).\n\n"+
+			"To collect diagnostics, re-run with the following environment variables set and share the "+
+			"output when reporting the issue:\n"+
+			"  TF_LOG=DEBUG SOCKETIO_LOG_LEVEL=DEBUG terraform plan",
+		endpoint,
+		err,
+	)
 }
 
 // clientOptions holds parsed and validated provider connection options.
