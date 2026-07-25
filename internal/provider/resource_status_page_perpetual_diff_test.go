@@ -12,10 +12,10 @@ import (
 )
 
 // TestAccStatusPageNoPerpetualDiff verifies that re-applying the same config
-// with public_group_list (including explicit send_url=false and weight) does
-// not produce a perpetual diff. This reproduces the remaining issue from #223
-// where the server response omits optional fields, causing state to diverge
-// from config.
+// with public_group_list (including explicit send_url=false, url, and weight)
+// does not produce a perpetual diff. This reproduces the remaining issue from
+// #223 where the server response omits optional fields, causing state to
+// diverge from config.
 func TestAccStatusPageNoPerpetualDiff(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-nodiff")
 	title := "No Perpetual Diff Test"
@@ -56,6 +56,12 @@ func TestAccStatusPageNoPerpetualDiff(t *testing.T) {
 						"uptimekuma_status_page.test",
 						tfjsonpath.New("public_group_list").AtSliceIndex(1).AtMapKey("name"),
 						knownvalue.StringExact("Services"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("public_group_list").AtSliceIndex(1).AtMapKey("monitor_list").
+							AtSliceIndex(0).AtMapKey("url"),
+						knownvalue.StringExact("https://example.org/"),
 					),
 				},
 			},
@@ -168,6 +174,7 @@ resource "uptimekuma_status_page" "test" {
         {
           id       = uptimekuma_monitor_http.mon2.id
           send_url = false
+          url      = "https://example.org/"
         }
       ]
     }

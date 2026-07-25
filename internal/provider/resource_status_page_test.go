@@ -397,6 +397,12 @@ func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 						tfjsonpath.New("title"),
 						knownvalue.StringExact(title),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("public_group_list").AtSliceIndex(0).AtMapKey("monitor_list").
+							AtSliceIndex(0).AtMapKey("url"),
+						knownvalue.StringExact("https://example.com/"),
+					),
 				},
 			},
 		},
@@ -407,7 +413,7 @@ func testAccStatusPageResourceConfigWithMonitors(slug string, title string, moni
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[3]q
-  url  = "https://example.com"
+  url  = "https://example.com/healthz"
 }
 
 resource "uptimekuma_status_page" "test" {
@@ -423,6 +429,7 @@ resource "uptimekuma_status_page" "test" {
         {
           id       = uptimekuma_monitor_http.test.id
           send_url = false
+          url      = "https://example.com/"
         }
       ]
     }

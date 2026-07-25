@@ -174,8 +174,8 @@ github.com/breml/errchkjson v0.4.1 h1:keFSS8D7A2T0haP9kzZTi7o26r7kE3vymjZNeNDRDw
 github.com/breml/errchkjson v0.4.1/go.mod h1:a23OvR6Qvcl7DG/Z4o0el6BRAjKnaReoPQFciAl9U3s=
 github.com/breml/githooks v0.0.0-20260421174736-44943ba7a400 h1:cIb+p5+NZWX/LW6mg7bjKRC9CwLSAuT4BTh4myHmAsI=
 github.com/breml/githooks v0.0.0-20260421174736-44943ba7a400/go.mod h1:NMjkJNTWH8yMiZ1m7Gtpm3YdMT28YZoltLEo0mDPqZ0=
-github.com/breml/go-uptime-kuma-client v0.4.1 h1:DqOOrKpqF+Xm6pQivJWkWCQkLHtnkBwQAmIRy4PRS/Y=
-github.com/breml/go-uptime-kuma-client v0.4.1/go.mod h1:rCvWTrKsbBPw79rFFtq5xLZNG48Ejc6iKeAddhtz2jo=
+github.com/breml/go-uptime-kuma-client v0.4.2 h1:9n630BMjethzqh4O5cpps0ilrQYukSV59fln2rEJiYQ=
+github.com/breml/go-uptime-kuma-client v0.4.2/go.mod h1:rCvWTrKsbBPw79rFFtq5xLZNG48Ejc6iKeAddhtz2jo=
 github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31 h1:l5fVxSzbJHJ1jcLxmcOLVY0uxZFfB1yuztPJVtMfLRg=
 github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31/go.mod h1:H1EoWDJvqfV2WryM8F9og6ZkH7NsZDlHr0BRkKb58tY=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 h1:ilIWXePccxYq7HvA/max1ZqS0kTkIB/sKzBPDneECts=

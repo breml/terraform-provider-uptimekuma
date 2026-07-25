@@ -124,8 +124,9 @@ type PublicGroupModel struct {
 
 // PublicMonitorModel describes a monitor in a public group.
 type PublicMonitorModel struct {
-	ID      types.Int64 `tfsdk:"id"`
-	SendURL types.Bool  `tfsdk:"send_url"`
+	ID      types.Int64  `tfsdk:"id"`
+	SendURL types.Bool   `tfsdk:"send_url"`
+	URL     types.String `tfsdk:"url"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -271,6 +272,11 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 									"send_url": schema.BoolAttribute{
 										MarkdownDescription: "Include monitor URL in status page",
 										Optional:            true,
+									},
+									"url": schema.StringAttribute{
+										MarkdownDescription: "Custom URL to use as the clickable link for this" +
+											" monitor on the status page, overriding the monitor's own check URL",
+										Optional: true,
 									},
 								},
 							},
@@ -563,6 +569,11 @@ func convertMonitorModelsToAPI(monitors []PublicMonitorModel) []statuspage.Publi
 			sendURL := monitor.SendURL.ValueBool()
 			apiMonitors[j].SendURL = &sendURL
 		}
+
+		if !monitor.URL.IsNull() {
+			url := monitor.URL.ValueString()
+			apiMonitors[j].URL = &url
+		}
 	}
 
 	return apiMonitors
@@ -667,6 +678,11 @@ func (*StatusPageResource) populatePublicGroup(
 			if !monitor.SendURL.IsNull() {
 				sendURL := monitor.SendURL.ValueBool()
 				publicGroup.MonitorList[j].SendURL = &sendURL
+			}
+
+			if !monitor.URL.IsNull() {
+				url := monitor.URL.ValueString()
+				publicGroup.MonitorList[j].URL = &url
 			}
 		}
 	}
