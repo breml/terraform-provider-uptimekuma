@@ -49,6 +49,12 @@ func TestAccStatusPageNoPerpetualDiff(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
+						tfjsonpath.New("public_group_list").AtSliceIndex(0).AtMapKey("monitor_list").
+							AtSliceIndex(0).AtMapKey("url"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
 						tfjsonpath.New("public_group_list").AtSliceIndex(1).AtMapKey("id"),
 						knownvalue.NotNull(),
 					),

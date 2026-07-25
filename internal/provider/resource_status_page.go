@@ -275,7 +275,8 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 									},
 									"url": schema.StringAttribute{
 										MarkdownDescription: "Custom URL to use as the clickable link for this" +
-											" monitor on the status page, overriding the monitor's own check URL",
+											" monitor on the status page, overriding the monitor's own check URL." +
+											" Only takes effect when `send_url` is also set to `true`",
 										Optional: true,
 									},
 								},
@@ -315,37 +316,9 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Resolve analytics fields, handling the deprecated google_analytics_id.
-	analyticsType, analyticsID := resolveAnalyticsFields(&data)
-
-	// Build the status page object with all configuration.
-	sp := &statuspage.StatusPage{
-		Slug:                  data.Slug.ValueString(),
-		Title:                 data.Title.ValueString(),
-		Description:           data.Description.ValueString(),
-		Icon:                  data.Icon.ValueString(),
-		Theme:                 data.Theme.ValueString(),
-		Published:             data.Published.ValueBool(),
-		ShowTags:              data.ShowTags.ValueBool(),
-		AnalyticsType:         analyticsType,
-		AnalyticsID:           analyticsID,
-		AnalyticsScriptURL:    data.AnalyticsScriptURL.ValueString(),
-		CustomCSS:             data.CustomCSS.ValueString(),
-		FooterText:            data.FooterText.ValueString(),
-		ShowPoweredBy:         data.ShowPoweredBy.ValueBool(),
-		ShowCertificateExpiry: data.ShowCertificateExpiry.ValueBool(),
-		DomainNameList:        []string{},
-		PublicGroupList:       []statuspage.PublicGroup{},
-	}
-
-	// Populate domain names from configuration.
-	r.populateStatusPageDomainNames(ctx, &data, sp, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Populate public groups (monitor groupings) from configuration.
-	r.populateStatusPagePublicGroups(ctx, &data, sp, &resp.Diagnostics)
+	// Build the status page object with all configuration, using the same
+	// conversion logic as Update so Create and Update never diverge.
+	sp := buildStatusPageFromModel(ctx, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -606,85 +579,6 @@ func (r *StatusPageResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete status page", err.Error())
 		return
-	}
-}
-
-func (*StatusPageResource) populateStatusPageDomainNames(
-	ctx context.Context,
-	data *StatusPageResourceModel,
-	sp *statuspage.StatusPage,
-	diags *diag.Diagnostics,
-) {
-	if !data.DomainNameList.IsNull() {
-		var domainNames []string
-		diags.Append(data.DomainNameList.ElementsAs(ctx, &domainNames, false)...)
-		if !diags.HasError() {
-			sp.DomainNameList = domainNames
-		}
-	}
-}
-
-// populateStatusPagePublicGroups populates the public group list from the resource model.
-func (r *StatusPageResource) populateStatusPagePublicGroups(
-	ctx context.Context,
-	data *StatusPageResourceModel,
-	sp *statuspage.StatusPage,
-	diags *diag.Diagnostics,
-) {
-	if !data.PublicGroupList.IsNull() {
-		var groups []PublicGroupModel
-		diags.Append(data.PublicGroupList.ElementsAs(ctx, &groups, false)...)
-		if diags.HasError() {
-			return
-		}
-
-		sp.PublicGroupList = make([]statuspage.PublicGroup, len(groups))
-		for i, group := range groups {
-			r.populatePublicGroup(ctx, &group, &sp.PublicGroupList[i], diags)
-			if diags.HasError() {
-				return
-			}
-		}
-	}
-}
-
-// populatePublicGroup populates a single public group and its monitors.
-func (*StatusPageResource) populatePublicGroup(
-	ctx context.Context,
-	groupModel *PublicGroupModel,
-	publicGroup *statuspage.PublicGroup,
-	diags *diag.Diagnostics,
-) {
-	publicGroup.Name = groupModel.Name.ValueString()
-	publicGroup.Weight = int(groupModel.Weight.ValueInt64())
-	publicGroup.MonitorList = []statuspage.PublicMonitor{}
-
-	if !groupModel.ID.IsNull() {
-		publicGroup.ID = groupModel.ID.ValueInt64()
-	}
-
-	if !groupModel.MonitorList.IsNull() {
-		var monitors []PublicMonitorModel
-		diags.Append(groupModel.MonitorList.ElementsAs(ctx, &monitors, false)...)
-		if diags.HasError() {
-			return
-		}
-
-		publicGroup.MonitorList = make([]statuspage.PublicMonitor, len(monitors))
-		for j, monitor := range monitors {
-			publicGroup.MonitorList[j] = statuspage.PublicMonitor{
-				ID: monitor.ID.ValueInt64(),
-			}
-			if !monitor.SendURL.IsNull() {
-				sendURL := monitor.SendURL.ValueBool()
-				publicGroup.MonitorList[j].SendURL = &sendURL
-			}
-
-			if !monitor.URL.IsNull() {
-				url := monitor.URL.ValueString()
-				publicGroup.MonitorList[j].URL = &url
-			}
-		}
 	}
 }
 

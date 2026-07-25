@@ -19,7 +19,7 @@ resource "uptimekuma_status_page" "example" {
       monitor_list = [
         {
           id       = uptimekuma_monitor_http.example.id
-          send_url = false
+          send_url = true
           url      = "https://example.com"
         }
       ]
