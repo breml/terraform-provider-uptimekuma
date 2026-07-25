@@ -34,7 +34,8 @@ resource "uptimekuma_status_page" "example" {
       monitor_list = [
         {
           id       = uptimekuma_monitor_http.example.id
-          send_url = false
+          send_url = true
+          url      = "https://example.com"
         }
       ]
     }
@@ -95,3 +96,4 @@ Required:
 Optional:
 
 - `send_url` (Boolean) Include monitor URL in status page
+- `url` (String) Custom URL to use as the clickable link for this monitor on the status page, overriding the monitor's own check URL. Only takes effect when `send_url` is also set to `true`

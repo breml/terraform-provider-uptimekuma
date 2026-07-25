@@ -20,7 +20,9 @@ func TestAccStatusPageGroupIDs(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName),
+				Config: testAccStatusPageResourceConfigWithMonitors(
+					slug, title, monitorName, "https://example.com/",
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					// Verify that the server-assigned group ID is populated in state.
@@ -36,7 +38,9 @@ func TestAccStatusPageGroupIDs(t *testing.T) {
 				// UseStateForUnknown plan modifier on public_group_list[].id, Terraform
 				// marks the group ID as (known after apply) on every plan, producing a
 				// perpetual diff.
-				Config:             testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName),
+				Config: testAccStatusPageResourceConfigWithMonitors(
+					slug, title, monitorName, "https://example.com/",
+				),
 				ExpectNonEmptyPlan: false,
 			},
 		},

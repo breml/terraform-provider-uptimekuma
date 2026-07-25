@@ -385,6 +385,7 @@ type PublicGroupModel struct {
 type PublicMonitorModel struct {
     ID      types.Int64
     SendURL types.Bool        // Show URL in status page
+    URL     types.String      // Custom clickable URL, overriding the monitor's own check URL
 }
 ```
 

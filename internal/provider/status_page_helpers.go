@@ -65,6 +65,7 @@ func groupListAttrType() types.ObjectType {
 				AttrTypes: map[string]attr.Type{
 					"id":       types.Int64Type,
 					"send_url": types.BoolType,
+					"url":      types.StringType,
 				},
 			}},
 		},

@@ -385,7 +385,9 @@ func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccStatusPageResourceConfigWithMonitors(slug, title, monitorName),
+				Config: testAccStatusPageResourceConfigWithMonitors(
+					slug, title, monitorName, "https://example.com/",
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
@@ -397,17 +399,44 @@ func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 						tfjsonpath.New("title"),
 						knownvalue.StringExact(title),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("public_group_list").AtSliceIndex(0).AtMapKey("monitor_list").
+							AtSliceIndex(0).AtMapKey("send_url"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("public_group_list").AtSliceIndex(0).AtMapKey("monitor_list").
+							AtSliceIndex(0).AtMapKey("url"),
+						knownvalue.StringExact("https://example.com/"),
+					),
+				},
+			},
+			{
+				// Update the custom url on an already-created status page to
+				// exercise the Update code path (as opposed to Create).
+				Config: testAccStatusPageResourceConfigWithMonitors(
+					slug, title, monitorName, "https://example.com/v2",
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("public_group_list").AtSliceIndex(0).AtMapKey("monitor_list").
+							AtSliceIndex(0).AtMapKey("url"),
+						knownvalue.StringExact("https://example.com/v2"),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccStatusPageResourceConfigWithMonitors(slug string, title string, monitorName string) string {
+func testAccStatusPageResourceConfigWithMonitors(slug string, title string, monitorName string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name = %[3]q
-  url  = "https://example.com"
+  url  = "https://example.com/healthz"
 }
 
 resource "uptimekuma_status_page" "test" {
@@ -422,11 +451,12 @@ resource "uptimekuma_status_page" "test" {
       monitor_list = [
         {
           id       = uptimekuma_monitor_http.test.id
-          send_url = false
+          send_url = true
+          url      = %[4]q
         }
       ]
     }
   ]
 }
-`, slug, title, monitorName)
+`, slug, title, monitorName, url)
 }
