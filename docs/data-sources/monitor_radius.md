@@ -52,5 +52,6 @@ resource "uptimekuma_monitor_radius" "monitored" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) Radius server hostname or IP address
 - `radius_username` (String) Username for Radius authentication

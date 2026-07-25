@@ -31,6 +31,7 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 					port,
 					60,
 					description,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -64,6 +65,11 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -78,6 +84,7 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 					portUpdated,
 					120,
 					"",
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -110,6 +117,11 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
@@ -120,6 +132,7 @@ func testAccMonitorSIPOptionsResourceConfigWithDescription(
 	name string, hostname string,
 	port int64, interval int64,
 	description string,
+	domainExpiry bool,
 ) string {
 	descField := ""
 	if description != "" {
@@ -128,14 +141,15 @@ func testAccMonitorSIPOptionsResourceConfigWithDescription(
 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_sip_options" "test" {
-  name     = %[1]q
-  hostname = %[2]q
-  port     = %[3]d
+  name                        = %[1]q
+  hostname                    = %[2]q
+  port                        = %[3]d
 %[4]s
-  interval = %[5]d
-  active   = true
+  interval                    = %[5]d
+  active                      = true
+  domain_expiry_notification  = %[6]t
 }
-`, name, hostname, port, descField, interval)
+`, name, hostname, port, descField, interval, domainExpiry)
 }
 
 func TestAccMonitorSIPOptionsResourceMinimal(t *testing.T) {

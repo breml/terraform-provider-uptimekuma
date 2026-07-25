@@ -44,4 +44,5 @@ resource "uptimekuma_notification_slack" "mqtt_alerts" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `topic` (String) MQTT topic

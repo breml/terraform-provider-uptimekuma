@@ -38,14 +38,15 @@ type MonitorGrpcKeywordResource struct {
 type MonitorGrpcKeywordResourceModel struct {
 	MonitorBaseModel
 
-	GrpcURL         types.String `tfsdk:"grpc_url"`
-	GrpcProtobuf    types.String `tfsdk:"grpc_protobuf"`
-	GrpcServiceName types.String `tfsdk:"grpc_service_name"`
-	GrpcMethod      types.String `tfsdk:"grpc_method"`
-	GrpcEnableTLS   types.Bool   `tfsdk:"grpc_enable_tls"`
-	GrpcBody        types.String `tfsdk:"grpc_body"`
-	Keyword         types.String `tfsdk:"keyword"`
-	InvertKeyword   types.Bool   `tfsdk:"invert_keyword"`
+	GrpcURL                  types.String `tfsdk:"grpc_url"`
+	GrpcProtobuf             types.String `tfsdk:"grpc_protobuf"`
+	GrpcServiceName          types.String `tfsdk:"grpc_service_name"`
+	GrpcMethod               types.String `tfsdk:"grpc_method"`
+	GrpcEnableTLS            types.Bool   `tfsdk:"grpc_enable_tls"`
+	GrpcBody                 types.String `tfsdk:"grpc_body"`
+	Keyword                  types.String `tfsdk:"keyword"`
+	InvertKeyword            types.Bool   `tfsdk:"invert_keyword"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -118,6 +119,7 @@ func (*MonitorGrpcKeywordResource) Schema(
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -158,14 +160,15 @@ func (r *MonitorGrpcKeywordResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		GrpcKeywordDetails: monitor.GrpcKeywordDetails{
-			GrpcURL:         data.GrpcURL.ValueString(),
-			GrpcProtobuf:    data.GrpcProtobuf.ValueString(),
-			GrpcServiceName: data.GrpcServiceName.ValueString(),
-			GrpcMethod:      data.GrpcMethod.ValueString(),
-			GrpcEnableTLS:   data.GrpcEnableTLS.ValueBool(),
-			GrpcBody:        data.GrpcBody.ValueString(),
-			Keyword:         data.Keyword.ValueString(),
-			InvertKeyword:   data.InvertKeyword.ValueBool(),
+			GrpcURL:                  data.GrpcURL.ValueString(),
+			GrpcProtobuf:             data.GrpcProtobuf.ValueString(),
+			GrpcServiceName:          data.GrpcServiceName.ValueString(),
+			GrpcMethod:               data.GrpcMethod.ValueString(),
+			GrpcEnableTLS:            data.GrpcEnableTLS.ValueBool(),
+			GrpcBody:                 data.GrpcBody.ValueString(),
+			Keyword:                  data.Keyword.ValueString(),
+			InvertKeyword:            data.InvertKeyword.ValueBool(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -307,14 +310,15 @@ func (r *MonitorGrpcKeywordResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		GrpcKeywordDetails: monitor.GrpcKeywordDetails{
-			GrpcURL:         data.GrpcURL.ValueString(),
-			GrpcProtobuf:    data.GrpcProtobuf.ValueString(),
-			GrpcServiceName: data.GrpcServiceName.ValueString(),
-			GrpcMethod:      data.GrpcMethod.ValueString(),
-			GrpcEnableTLS:   data.GrpcEnableTLS.ValueBool(),
-			GrpcBody:        data.GrpcBody.ValueString(),
-			Keyword:         data.Keyword.ValueString(),
-			InvertKeyword:   data.InvertKeyword.ValueBool(),
+			GrpcURL:                  data.GrpcURL.ValueString(),
+			GrpcProtobuf:             data.GrpcProtobuf.ValueString(),
+			GrpcServiceName:          data.GrpcServiceName.ValueString(),
+			GrpcMethod:               data.GrpcMethod.ValueString(),
+			GrpcEnableTLS:            data.GrpcEnableTLS.ValueBool(),
+			GrpcBody:                 data.GrpcBody.ValueString(),
+			Keyword:                  data.Keyword.ValueString(),
+			InvertKeyword:            data.InvertKeyword.ValueBool(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -446,6 +450,7 @@ func (*MonitorGrpcKeywordResource) populateModelFromMonitor(
 	data.GrpcBody = stringOrNull(grpcKeywordMonitor.GrpcBody)
 	data.Keyword = types.StringValue(grpcKeywordMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(grpcKeywordMonitor.InvertKeyword)
+	data.DomainExpiryNotification = types.BoolValue(grpcKeywordMonitor.DomainExpiryNotification)
 
 	if grpcKeywordMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*grpcKeywordMonitor.Parent)

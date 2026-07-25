@@ -29,6 +29,7 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 					"==",
 					60,
 					48,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -72,6 +73,11 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -83,6 +89,7 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 					"contains",
 					120,
 					60,
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -125,6 +132,11 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -139,19 +151,21 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 func testAccMonitorHTTPJSONQueryResourceConfig(
 	name string, url string, jsonPath string, expectedValue string, operator string,
 	interval int64, timeout int64,
+	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
-  name                = %[1]q
-  url                 = %[2]q
-  json_path           = %[3]q
-  expected_value      = %[4]q
-  json_path_operator  = %[5]q
-  interval            = %[6]d
-  timeout             = %[7]d
-  active              = true
+  name                        = %[1]q
+  url                         = %[2]q
+  json_path                   = %[3]q
+  expected_value              = %[4]q
+  json_path_operator          = %[5]q
+  interval                    = %[6]d
+  timeout                     = %[7]d
+  active                      = true
+  domain_expiry_notification  = %[8]t
 }
-`, name, url, jsonPath, expectedValue, operator, interval, timeout)
+`, name, url, jsonPath, expectedValue, operator, interval, timeout, domainExpiry)
 }
 
 func TestAccMonitorHTTPJSONQueryResourceWithDefaultOperator(t *testing.T) {

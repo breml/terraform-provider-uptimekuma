@@ -30,6 +30,7 @@ func TestAccMonitorRadiusResource(t *testing.T) {
 					"testpass",
 					"testsecret",
 					1812,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -63,6 +64,11 @@ func TestAccMonitorRadiusResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_radius.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -80,6 +86,7 @@ func TestAccMonitorRadiusResource(t *testing.T) {
 					"newpass",
 					"newsecret",
 					1813,
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -112,6 +119,11 @@ func TestAccMonitorRadiusResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_radius.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -133,19 +145,21 @@ func testAccMonitorRadiusResourceConfig(
 	radiusPassword string,
 	radiusSecret string,
 	port int64,
+	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_radius" "test" {
-  name            = %[1]q
-  description     = %[2]q
-  hostname        = %[3]q
-  radius_username = %[4]q
-  radius_password = %[5]q
-  radius_secret   = %[6]q
-  port            = %[7]d
-  active          = true
+  name                        = %[1]q
+  description                 = %[2]q
+  hostname                    = %[3]q
+  radius_username              = %[4]q
+  radius_password              = %[5]q
+  radius_secret                = %[6]q
+  port                        = %[7]d
+  active                      = true
+  domain_expiry_notification  = %[8]t
 }
-`, name, description, hostname, radiusUsername, radiusPassword, radiusSecret, port)
+`, name, description, hostname, radiusUsername, radiusPassword, radiusSecret, port, domainExpiry)
 }
 
 func TestAccMonitorRadiusResourceMinimal(t *testing.T) {

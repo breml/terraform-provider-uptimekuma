@@ -25,12 +25,13 @@ type MonitorGameDigDataSource struct {
 
 // MonitorGameDigDataSourceModel describes the data model for GameDig monitor data source.
 type MonitorGameDigDataSourceModel struct {
-	ID                   types.Int64  `tfsdk:"id"`
-	Name                 types.String `tfsdk:"name"`
-	Hostname             types.String `tfsdk:"hostname"`
-	Port                 types.Int64  `tfsdk:"port"`
-	Game                 types.String `tfsdk:"game"`
-	GameDigGivenPortOnly types.Bool   `tfsdk:"gamedig_given_port_only"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	Game                     types.String `tfsdk:"game"`
+	GameDigGivenPortOnly     types.Bool   `tfsdk:"gamedig_given_port_only"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -75,6 +76,10 @@ func (*MonitorGameDigDataSource) Schema(
 			},
 			"gamedig_given_port_only": schema.BoolAttribute{
 				MarkdownDescription: "Use only the given port without auto-detection",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -133,6 +138,7 @@ func (d *MonitorGameDigDataSource) readByID(
 	data.Port = types.Int64Value(int64(gameDigMonitor.Port))
 	data.Game = types.StringValue(gameDigMonitor.Game)
 	data.GameDigGivenPortOnly = types.BoolValue(gameDigMonitor.GameDigGivenPortOnly)
+	data.DomainExpiryNotification = types.BoolValue(gameDigMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -159,5 +165,6 @@ func (d *MonitorGameDigDataSource) readByName(
 	data.Port = types.Int64Value(int64(gameDigMon.Port))
 	data.Game = types.StringValue(gameDigMon.Game)
 	data.GameDigGivenPortOnly = types.BoolValue(gameDigMon.GameDigGivenPortOnly)
+	data.DomainExpiryNotification = types.BoolValue(gameDigMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

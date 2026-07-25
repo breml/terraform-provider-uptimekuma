@@ -16,12 +16,13 @@ SMTP monitor resource
 # SMTP monitor resource for basic connectivity checking.
 # This monitor checks connectivity to an SMTP mail server.
 resource "uptimekuma_monitor_smtp" "mail_server" {
-  name          = "Mail Server"
-  description   = "Monitor SMTP mail server connectivity"
-  hostname      = "smtp.example.com"
-  port          = 587
-  smtp_security = "STARTTLS"
-  interval      = 60
+  name                       = "Mail Server"
+  description                = "Monitor SMTP mail server connectivity"
+  hostname                   = "smtp.example.com"
+  port                       = 587
+  smtp_security              = "STARTTLS"
+  interval                   = 60
+  domain_expiry_notification = false
 }
 
 # SMTP monitor with TLS security.
@@ -74,6 +75,7 @@ resource "uptimekuma_monitor_group" "mail_monitors" {
 
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs

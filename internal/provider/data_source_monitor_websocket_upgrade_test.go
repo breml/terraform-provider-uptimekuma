@@ -42,6 +42,11 @@ func TestAccMonitorWebsocketUpgradeDataSource(t *testing.T) {
 						tfjsonpath.New("ws_ignore_sec_websocket_accept_header"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_websocket_upgrade.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -67,6 +72,11 @@ func TestAccMonitorWebsocketUpgradeDataSource(t *testing.T) {
 						tfjsonpath.New("ws_ignore_sec_websocket_accept_header"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_websocket_upgrade.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -80,6 +90,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "test" {
   url                                    = %[2]q
   ws_subprotocol                         = "chat"
   ws_ignore_sec_websocket_accept_header  = true
+  domain_expiry_notification             = true
 }
 
 data "uptimekuma_monitor_websocket_upgrade" "test" {
@@ -95,6 +106,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "test" {
   url                                    = %[2]q
   ws_subprotocol                         = "chat"
   ws_ignore_sec_websocket_accept_header  = true
+  domain_expiry_notification             = true
 }
 
 data "uptimekuma_monitor_websocket_upgrade" "test" {

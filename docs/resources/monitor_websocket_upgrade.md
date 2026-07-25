@@ -22,6 +22,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "example" {
   max_retries                           = 2
   upside_down                           = false
   active                                = true
+  domain_expiry_notification            = false
 }
 ```
 
@@ -45,6 +46,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "example" {
 - `body` (String) Request body
 - `cache_buster` (Boolean) Enable cache busting for HTTP requests
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `expiry_notification` (Boolean) Enable certificate expiry notification
 - `headers` (String) Request headers (JSON format)
 - `http_body_encoding` (String) HTTP body encoding

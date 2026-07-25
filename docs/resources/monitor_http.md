@@ -14,39 +14,40 @@ HTTP monitor resource
 
 ```terraform
 resource "uptimekuma_monitor_http" "example" {
-  name                  = "Example API Monitoring"
-  url                   = "https://api.example.com/health"
-  interval              = 60
-  timeout               = 30
-  max_retries           = 2
-  retry_interval        = 60
-  resend_interval       = 0
-  upside_down           = false
-  active                = true
-  method                = "GET"
-  body                  = ""
-  headers               = ""
-  auth_method           = ""
-  basic_auth_user       = ""
-  basic_auth_pass       = ""
-  auth_domain           = ""
-  auth_workstation      = ""
-  ignore_tls            = false
-  tls_cert              = ""
-  tls_key               = ""
-  tls_ca                = ""
-  max_redirects         = 10
-  accepted_status_codes = ["200-299"]
-  http_body_encoding    = "utf8"
-  oauth_auth_method     = ""
-  oauth_token_url       = ""
-  oauth_client_id       = ""
-  oauth_client_secret   = ""
-  oauth_username        = ""
-  oauth_password        = ""
-  oauth_scope           = ""
-  oauth_token_url_body  = ""
-  expiry_notification   = false
+  name                       = "Example API Monitoring"
+  url                        = "https://api.example.com/health"
+  interval                   = 60
+  timeout                    = 30
+  max_retries                = 2
+  retry_interval             = 60
+  resend_interval            = 0
+  upside_down                = false
+  active                     = true
+  method                     = "GET"
+  body                       = ""
+  headers                    = ""
+  auth_method                = ""
+  basic_auth_user            = ""
+  basic_auth_pass            = ""
+  auth_domain                = ""
+  auth_workstation           = ""
+  ignore_tls                 = false
+  tls_cert                   = ""
+  tls_key                    = ""
+  tls_ca                     = ""
+  max_redirects              = 10
+  accepted_status_codes      = ["200-299"]
+  http_body_encoding         = "utf8"
+  oauth_auth_method          = ""
+  oauth_token_url            = ""
+  oauth_client_id            = ""
+  oauth_client_secret        = ""
+  oauth_username             = ""
+  oauth_password             = ""
+  oauth_scope                = ""
+  oauth_token_url_body       = ""
+  expiry_notification        = false
+  domain_expiry_notification = false
 }
 
 resource "uptimekuma_monitor_http" "with_keyword" {
@@ -87,6 +88,7 @@ resource "uptimekuma_monitor_http" "with_json_query" {
 - `body` (String) Request body
 - `cache_buster` (Boolean) Enable cache busting for HTTP requests
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `expiry_notification` (Boolean) Enable certificate expiry notification
 - `headers` (String) Request headers (JSON format)
 - `http_body_encoding` (String) HTTP body encoding

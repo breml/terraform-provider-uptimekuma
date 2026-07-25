@@ -34,5 +34,6 @@ data "uptimekuma_monitor_sip_options" "by_id" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) Hostname or IP address being monitored
 - `port` (Number) SIP port number being monitored

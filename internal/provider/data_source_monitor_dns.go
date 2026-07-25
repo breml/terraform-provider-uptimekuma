@@ -25,9 +25,10 @@ type MonitorDNSDataSource struct {
 
 // MonitorDNSDataSourceModel describes the data model for DNS monitor data source.
 type MonitorDNSDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorDNSDataSource) Schema(
 			},
 			"hostname": schema.StringAttribute{
 				MarkdownDescription: "Hostname to resolve",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -111,6 +116,7 @@ func (d *MonitorDNSDataSource) readByID(
 
 	data.Name = types.StringValue(dnsMonitor.Name)
 	data.Hostname = types.StringValue(dnsMonitor.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(dnsMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -134,5 +140,6 @@ func (d *MonitorDNSDataSource) readByName(
 
 	data.ID = types.Int64Value(dnsMon.ID)
 	data.Hostname = types.StringValue(dnsMon.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(dnsMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

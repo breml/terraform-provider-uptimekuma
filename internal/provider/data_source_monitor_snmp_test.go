@@ -26,6 +26,11 @@ func TestAccMonitorSNMPDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorSNMPDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,11 +55,12 @@ func TestAccMonitorSNMPDataSource(t *testing.T) {
 func testAccMonitorSNMPDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_snmp" "test" {
-  name           = %[1]q
-  hostname       = "192.168.1.1"
-  snmp_version   = "2c"
-  snmp_oid       = ".1.3.6.1.2.1.1.5.0"
-  snmp_community = "public"
+  name                       = %[1]q
+  hostname                   = "192.168.1.1"
+  snmp_version               = "2c"
+  snmp_oid                   = ".1.3.6.1.2.1.1.5.0"
+  snmp_community             = "public"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_snmp" "test" {
@@ -61,11 +72,12 @@ data "uptimekuma_monitor_snmp" "test" {
 func testAccMonitorSNMPDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_snmp" "test" {
-  name           = %[1]q
-  hostname       = "192.168.1.1"
-  snmp_version   = "2c"
-  snmp_oid       = ".1.3.6.1.2.1.1.5.0"
-  snmp_community = "public"
+  name                       = %[1]q
+  hostname                   = "192.168.1.1"
+  snmp_version               = "2c"
+  snmp_oid                   = ".1.3.6.1.2.1.1.5.0"
+  snmp_community             = "public"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_snmp" "test" {

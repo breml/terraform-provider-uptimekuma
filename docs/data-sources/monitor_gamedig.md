@@ -39,6 +39,7 @@ output "minecraft_server_hostname" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `game` (String) Game type identifier (e.g. minecraft, csgo)
 - `gamedig_given_port_only` (Boolean) Use only the given port without auto-detection
 - `hostname` (String) Game server IP address or hostname

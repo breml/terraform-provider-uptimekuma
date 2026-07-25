@@ -34,6 +34,7 @@ func TestAccMonitorGameDigResource(t *testing.T) {
 					game,
 					60,
 					description,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -77,6 +78,11 @@ func TestAccMonitorGameDigResource(t *testing.T) {
 						tfjsonpath.New("gamedig_given_port_only"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_gamedig.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -87,6 +93,7 @@ func TestAccMonitorGameDigResource(t *testing.T) {
 					gameUpdated,
 					120,
 					"",
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -119,6 +126,11 @@ func TestAccMonitorGameDigResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_gamedig.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -134,6 +146,7 @@ func testAccMonitorGameDigResourceConfigWithDescription(
 	name string, hostname string,
 	port int64, game string,
 	interval int64, description string,
+	domainExpiry bool,
 ) string {
 	descField := ""
 	if description != "" {
@@ -142,13 +155,14 @@ func testAccMonitorGameDigResourceConfigWithDescription(
 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_gamedig" "test" {
-  name     = %[1]q
-  hostname = %[2]q
-  port     = %[3]d
-  game     = %[4]q
+  name                        = %[1]q
+  hostname                    = %[2]q
+  port                        = %[3]d
+  game                        = %[4]q
 %[5]s
-  interval = %[6]d
-  active   = true
+  interval                    = %[6]d
+  active                      = true
+  domain_expiry_notification  = %[7]t
 }
-`, name, hostname, port, game, descField, interval)
+`, name, hostname, port, game, descField, interval, domainExpiry)
 }

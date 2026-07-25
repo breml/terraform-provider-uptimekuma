@@ -40,16 +40,17 @@ type MonitorSNMPResource struct {
 type MonitorSNMPResourceModel struct {
 	MonitorBaseModel
 
-	Hostname         types.String `tfsdk:"hostname"`
-	Port             types.Int64  `tfsdk:"port"`
-	SNMPVersion      types.String `tfsdk:"snmp_version"`
-	SNMPOID          types.String `tfsdk:"snmp_oid"`
-	SNMPCommunity    types.String `tfsdk:"snmp_community"`
-	SNMPV3Username   types.String `tfsdk:"snmp_v3_username"`
-	JSONPath         types.String `tfsdk:"json_path"`
-	JSONPathOperator types.String `tfsdk:"json_path_operator"`
-	ExpectedValue    types.String `tfsdk:"expected_value"`
-	Conditions       types.List   `tfsdk:"conditions"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	SNMPVersion              types.String `tfsdk:"snmp_version"`
+	SNMPOID                  types.String `tfsdk:"snmp_oid"`
+	SNMPCommunity            types.String `tfsdk:"snmp_community"`
+	SNMPV3Username           types.String `tfsdk:"snmp_v3_username"`
+	JSONPath                 types.String `tfsdk:"json_path"`
+	JSONPathOperator         types.String `tfsdk:"json_path_operator"`
+	ExpectedValue            types.String `tfsdk:"expected_value"`
+	Conditions               types.List   `tfsdk:"conditions"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -114,7 +115,8 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				MarkdownDescription: "Expected value to match",
 				Optional:            true,
 			},
-			"conditions": conditionsAttribute(),
+			"conditions":                 conditionsAttribute(),
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -176,11 +178,12 @@ func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags
 			IsActive:       data.Active.ValueBool(),
 		},
 		SNMPDetails: monitor.SNMPDetails{
-			Hostname:      data.Hostname.ValueString(),
-			Port:          &port,
-			SNMPVersion:   data.SNMPVersion.ValueString(),
-			SNMPOID:       data.SNMPOID.ValueString(),
-			SNMPCommunity: data.SNMPCommunity.ValueString(),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     &port,
+			SNMPVersion:              data.SNMPVersion.ValueString(),
+			SNMPOID:                  data.SNMPOID.ValueString(),
+			SNMPCommunity:            data.SNMPCommunity.ValueString(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -242,6 +245,7 @@ func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPReso
 	m.SNMPVersion = types.StringValue(snmpMonitor.SNMPVersion)
 	m.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)
 	m.SNMPCommunity = types.StringValue(snmpMonitor.SNMPCommunity)
+	m.DomainExpiryNotification = types.BoolValue(snmpMonitor.DomainExpiryNotification)
 	// snmp_v3_username is not echoed on read by the server. Preserve the
 	// configured value to avoid a perpetual diff; adopt the server value if a
 	// future version begins returning it.

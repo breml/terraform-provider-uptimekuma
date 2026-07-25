@@ -25,9 +25,10 @@ type MonitorMQTTDataSource struct {
 
 // MonitorMQTTDataSourceModel describes the data model for MQTT monitor data source.
 type MonitorMQTTDataSourceModel struct {
-	ID    types.Int64  `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Topic types.String `tfsdk:"topic"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Topic                    types.String `tfsdk:"topic"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorMQTTDataSource) Schema(
 			},
 			"topic": schema.StringAttribute{
 				MarkdownDescription: "MQTT topic",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -111,6 +116,7 @@ func (d *MonitorMQTTDataSource) readByID(
 
 	data.Name = types.StringValue(mqttMonitor.Name)
 	data.Topic = types.StringValue(mqttMonitor.MQTTTopic)
+	data.DomainExpiryNotification = types.BoolValue(mqttMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -134,5 +140,6 @@ func (d *MonitorMQTTDataSource) readByName(
 
 	data.ID = types.Int64Value(mqttMon.ID)
 	data.Topic = types.StringValue(mqttMon.MQTTTopic)
+	data.DomainExpiryNotification = types.BoolValue(mqttMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

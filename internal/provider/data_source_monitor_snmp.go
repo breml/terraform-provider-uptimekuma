@@ -25,10 +25,11 @@ type MonitorSNMPDataSource struct {
 
 // MonitorSNMPDataSourceModel describes the data model for SNMP monitor data source.
 type MonitorSNMPDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
-	SNMPOID  types.String `tfsdk:"snmp_oid"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	SNMPOID                  types.String `tfsdk:"snmp_oid"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -65,6 +66,10 @@ func (*MonitorSNMPDataSource) Schema(
 			},
 			"snmp_oid": schema.StringAttribute{
 				MarkdownDescription: "SNMP Object Identifier (OID) to query",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -117,6 +122,7 @@ func (d *MonitorSNMPDataSource) readByID(
 	data.Name = types.StringValue(snmpMonitor.Name)
 	data.Hostname = types.StringValue(snmpMonitor.Hostname)
 	data.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)
+	data.DomainExpiryNotification = types.BoolValue(snmpMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -141,5 +147,6 @@ func (d *MonitorSNMPDataSource) readByName(
 	data.ID = types.Int64Value(snmpMon.ID)
 	data.Hostname = types.StringValue(snmpMon.Hostname)
 	data.SNMPOID = types.StringValue(snmpMon.SNMPOID)
+	data.DomainExpiryNotification = types.BoolValue(snmpMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

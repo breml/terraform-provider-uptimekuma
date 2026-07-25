@@ -25,9 +25,10 @@ type MonitorHTTPDataSource struct {
 
 // MonitorHTTPDataSourceModel describes the data model for HTTP monitor data source.
 type MonitorHTTPDataSourceModel struct {
-	ID   types.Int64  `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	URL  types.String `tfsdk:"url"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	URL                      types.String `tfsdk:"url"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorHTTPDataSource) Schema(
 			},
 			"url": schema.StringAttribute{
 				MarkdownDescription: "URL to monitor",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -111,6 +116,7 @@ func (d *MonitorHTTPDataSource) readByID(
 
 	data.Name = types.StringValue(httpMonitor.Name)
 	data.URL = types.StringValue(httpMonitor.URL)
+	data.DomainExpiryNotification = types.BoolValue(httpMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -134,5 +140,6 @@ func (d *MonitorHTTPDataSource) readByName(
 
 	data.ID = types.Int64Value(httpMon.ID)
 	data.URL = types.StringValue(httpMon.URL)
+	data.DomainExpiryNotification = types.BoolValue(httpMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

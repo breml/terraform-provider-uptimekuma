@@ -22,7 +22,7 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorRealBrowserResourceConfig(name, url, 60, 48),
+				Config:             testAccMonitorRealBrowserResourceConfig(name, url, 60, 48, true),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -50,10 +50,15 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorRealBrowserResourceConfig(nameUpdated, urlUpdated, 120, 60),
+				Config: testAccMonitorRealBrowserResourceConfig(nameUpdated, urlUpdated, 120, 60, false),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_real_browser.test",
@@ -80,22 +85,30 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccMonitorRealBrowserResourceConfig(name string, url string, interval int64, timeout int64) string {
+func testAccMonitorRealBrowserResourceConfig(
+	name string, url string, interval int64, timeout int64, domainExpiry bool,
+) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
-  name     = %[1]q
-  url      = %[2]q
-  interval = %[3]d
-  timeout  = %[4]d
-  active   = true
+  name                        = %[1]q
+  url                         = %[2]q
+  interval                    = %[3]d
+  timeout                     = %[4]d
+  active                      = true
+  domain_expiry_notification  = %[5]t
 }
-`, name, url, interval, timeout)
+`, name, url, interval, timeout, domainExpiry)
 }
 
 func TestAccMonitorRealBrowserResourceWithStatusCodes(t *testing.T) {

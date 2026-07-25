@@ -28,4 +28,5 @@ data "uptimekuma_monitor_tailscale_ping" "example" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) Tailscale hostname or IP address to ping.

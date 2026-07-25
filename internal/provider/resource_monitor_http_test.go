@@ -22,7 +22,7 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorHTTPResourceConfig(name, url, "GET", 60, 48),
+				Config:             testAccMonitorHTTPResourceConfigWithDomainExpiry(name, url, "GET", 60, 48, true),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -55,10 +55,15 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorHTTPResourceConfig(nameUpdated, urlUpdated, "POST", 120, 60),
+				Config: testAccMonitorHTTPResourceConfigWithDomainExpiry(nameUpdated, urlUpdated, "POST", 120, 60, false),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
@@ -90,6 +95,11 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -112,6 +122,22 @@ resource "uptimekuma_monitor_http" "test" {
   active   = true
 }
 `, name, url, method, interval, timeout)
+}
+
+func testAccMonitorHTTPResourceConfigWithDomainExpiry(
+	name string, url string, method string, interval int64, timeout int64, domainExpiry bool,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http" "test" {
+  name                        = %[1]q
+  url                         = %[2]q
+  method                      = %[3]q
+  interval                    = %[4]d
+  timeout                     = %[5]d
+  active                      = true
+  domain_expiry_notification  = %[6]t
+}
+`, name, url, method, interval, timeout, domainExpiry)
 }
 
 func TestAccMonitorHTTPResourceWithAuth(t *testing.T) {

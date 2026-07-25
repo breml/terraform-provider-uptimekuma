@@ -17,11 +17,12 @@ SNMP monitor resource
 
 # Basic SNMP monitor with minimum required configuration
 resource "uptimekuma_monitor_snmp" "basic" {
-  name           = "Network Device SNMP Monitor"
-  hostname       = "192.168.1.1"
-  snmp_version   = "2c"
-  snmp_oid       = ".1.3.6.1.2.1.1.5.0"
-  snmp_community = "public"
+  name                       = "Network Device SNMP Monitor"
+  hostname                   = "192.168.1.1"
+  snmp_version               = "2c"
+  snmp_oid                   = ".1.3.6.1.2.1.1.5.0"
+  snmp_community             = "public"
+  domain_expiry_notification = false
 }
 
 # SNMP monitor with all available options
@@ -111,6 +112,7 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 - `active` (Boolean) Monitor is active
 - `conditions` (Attributes List) Optional list of assertion clauses evaluated against the monitor result. Each condition is chained with the previous one using `and_or`. (see [below for nested schema](#nestedatt--conditions))
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `expected_value` (String) Expected value to match
 - `interval` (Number) Heartbeat interval in seconds
 - `json_path` (String) JSON path for extracting value from SNMP response

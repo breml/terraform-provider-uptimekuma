@@ -34,6 +34,7 @@ data "uptimekuma_monitor_websocket_upgrade" "by_id" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `url` (String) URL to monitor
 - `ws_ignore_sec_websocket_accept_header` (Boolean) Skip verification of the `Sec-WebSocket-Accept` response header during the WebSocket handshake.
 - `ws_subprotocol` (String) Requested `Sec-WebSocket-Protocol` value sent during the WebSocket handshake.

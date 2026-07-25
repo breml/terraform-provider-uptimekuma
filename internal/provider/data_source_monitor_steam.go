@@ -25,10 +25,11 @@ type MonitorSteamDataSource struct {
 
 // MonitorSteamDataSourceModel describes the data model for Steam monitor data source.
 type MonitorSteamDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -65,6 +66,10 @@ func (*MonitorSteamDataSource) Schema(
 			},
 			"port": schema.Int64Attribute{
 				MarkdownDescription: "Steam game server port",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -121,6 +126,7 @@ func (d *MonitorSteamDataSource) readByID(
 	data.Name = types.StringValue(steamMonitor.Name)
 	data.Hostname = types.StringValue(steamMonitor.Hostname)
 	data.Port = types.Int64Value(int64(steamMonitor.Port))
+	data.DomainExpiryNotification = types.BoolValue(steamMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -145,5 +151,6 @@ func (d *MonitorSteamDataSource) readByName(
 	data.ID = types.Int64Value(steamMon.ID)
 	data.Hostname = types.StringValue(steamMon.Hostname)
 	data.Port = types.Int64Value(int64(steamMon.Port))
+	data.DomainExpiryNotification = types.BoolValue(steamMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

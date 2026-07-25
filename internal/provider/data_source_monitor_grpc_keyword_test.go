@@ -26,6 +26,11 @@ func TestAccMonitorGRPCKeywordDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_grpc_keyword.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorGRPCKeywordDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_grpc_keyword.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,12 +55,13 @@ func TestAccMonitorGRPCKeywordDataSource(t *testing.T) {
 func testAccMonitorGRPCKeywordDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_grpc_keyword" "test" {
-  name              = %[1]q
-  grpc_url          = "grpc.example.com:50051"
-  keyword           = "success"
-  grpc_service_name = "example.Service"
-  grpc_method       = "Check"
-  grpc_protobuf     = "syntax = \"proto3\";"
+  name                       = %[1]q
+  grpc_url                   = "grpc.example.com:50051"
+  keyword                    = "success"
+  grpc_service_name          = "example.Service"
+  grpc_method                = "Check"
+  grpc_protobuf              = "syntax = \"proto3\";"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_grpc_keyword" "test" {
@@ -62,12 +73,13 @@ data "uptimekuma_monitor_grpc_keyword" "test" {
 func testAccMonitorGRPCKeywordDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_grpc_keyword" "test" {
-  name              = %[1]q
-  grpc_url          = "grpc.example.com:50051"
-  keyword           = "success"
-  grpc_service_name = "example.Service"
-  grpc_method       = "Check"
-  grpc_protobuf     = "syntax = \"proto3\";"
+  name                       = %[1]q
+  grpc_url                   = "grpc.example.com:50051"
+  keyword                    = "success"
+  grpc_service_name          = "example.Service"
+  grpc_method                = "Check"
+  grpc_protobuf              = "syntax = \"proto3\";"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_grpc_keyword" "test" {

@@ -39,13 +39,14 @@ type MonitorRadiusResource struct {
 type MonitorRadiusResourceModel struct {
 	MonitorBaseModel
 
-	Hostname         types.String `tfsdk:"hostname"`
-	Port             types.Int64  `tfsdk:"port"`
-	RadiusUsername   types.String `tfsdk:"radius_username"`
-	RadiusPassword   types.String `tfsdk:"radius_password"`
-	RadiusSecret     types.String `tfsdk:"radius_secret"`
-	CalledStationID  types.String `tfsdk:"called_station_id"`
-	CallingStationID types.String `tfsdk:"calling_station_id"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	RadiusUsername           types.String `tfsdk:"radius_username"`
+	RadiusPassword           types.String `tfsdk:"radius_password"`
+	RadiusSecret             types.String `tfsdk:"radius_secret"`
+	CalledStationID          types.String `tfsdk:"called_station_id"`
+	CallingStationID         types.String `tfsdk:"calling_station_id"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -97,6 +98,7 @@ func (*MonitorRadiusResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "Optional Calling-Station-Id attribute",
 				Optional:            true,
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -168,11 +170,12 @@ func buildRadiusMonitor(
 			IsActive:       data.Active.ValueBool(),
 		},
 		RadiusDetails: monitor.RadiusDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     &port,
-			Username: data.RadiusUsername.ValueString(),
-			Password: data.RadiusPassword.ValueString(),
-			Secret:   data.RadiusSecret.ValueString(),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     &port,
+			Username:                 data.RadiusUsername.ValueString(),
+			Password:                 data.RadiusPassword.ValueString(),
+			Secret:                   data.RadiusSecret.ValueString(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -238,6 +241,7 @@ func populateRadiusMonitorBaseFields(radiusMonitor *monitor.Radius, m *MonitorRa
 
 	m.CalledStationID = stringOrNullPtr(radiusMonitor.CalledStationID)
 	m.CallingStationID = stringOrNullPtr(radiusMonitor.CallingStationID)
+	m.DomainExpiryNotification = types.BoolValue(radiusMonitor.DomainExpiryNotification)
 
 	if radiusMonitor.Port != nil {
 		m.Port = types.Int64Value(*radiusMonitor.Port)

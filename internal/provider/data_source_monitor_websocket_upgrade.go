@@ -31,6 +31,7 @@ type MonitorWebsocketUpgradeDataSourceModel struct {
 	URL                              types.String `tfsdk:"url"`
 	WSIgnoreSecWebsocketAcceptHeader types.Bool   `tfsdk:"ws_ignore_sec_websocket_accept_header"`
 	WSSubprotocol                    types.String `tfsdk:"ws_subprotocol"`
+	DomainExpiryNotification         types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -74,6 +75,10 @@ func (*MonitorWebsocketUpgradeDataSource) Schema(
 				MarkdownDescription: "Requested `Sec-WebSocket-Protocol` value sent during the " +
 					"WebSocket handshake.",
 				Computed: true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
+				Computed:            true,
 			},
 		},
 	}
@@ -141,6 +146,7 @@ func (d *MonitorWebsocketUpgradeDataSource) readByID(
 	data.URL = types.StringValue(wsMon.URL)
 	data.WSIgnoreSecWebsocketAcceptHeader = types.BoolValue(wsMon.IgnoreSecWebsocketAcceptHeader)
 	data.WSSubprotocol = types.StringValue(wsMon.Subprotocol)
+	data.DomainExpiryNotification = types.BoolValue(wsMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -169,6 +175,7 @@ func (d *MonitorWebsocketUpgradeDataSource) readByName(
 	data.URL = types.StringValue(wsMon.URL)
 	data.WSIgnoreSecWebsocketAcceptHeader = types.BoolValue(wsMon.IgnoreSecWebsocketAcceptHeader)
 	data.WSSubprotocol = types.StringValue(wsMon.Subprotocol)
+	data.DomainExpiryNotification = types.BoolValue(wsMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

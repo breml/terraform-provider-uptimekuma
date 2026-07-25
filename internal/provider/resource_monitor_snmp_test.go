@@ -30,6 +30,7 @@ func TestAccMonitorSNMPResource(t *testing.T) {
 					".1.3.6.1.2.1.1.5.0",
 					"public",
 					161,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -68,6 +69,11 @@ func TestAccMonitorSNMPResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -79,6 +85,7 @@ func TestAccMonitorSNMPResource(t *testing.T) {
 					".1.3.6.1.2.1.1.3.0",
 					"private",
 					161,
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -111,6 +118,11 @@ func TestAccMonitorSNMPResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_snmp.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -130,19 +142,21 @@ func testAccMonitorSNMPResourceConfig(
 	snmpOID string,
 	snmpCommunity string,
 	port int64,
+	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_snmp" "test" {
-  name            = %[1]q
-  description     = %[2]q
-  hostname        = %[3]q
-  snmp_version    = %[4]q
-  snmp_oid        = %[5]q
-  snmp_community  = %[6]q
-  port            = %[7]d
-  active          = true
+  name                        = %[1]q
+  description                 = %[2]q
+  hostname                    = %[3]q
+  snmp_version                = %[4]q
+  snmp_oid                    = %[5]q
+  snmp_community              = %[6]q
+  port                        = %[7]d
+  active                      = true
+  domain_expiry_notification  = %[8]t
 }
-`, name, description, hostname, snmpVersion, snmpOID, snmpCommunity, port)
+`, name, description, hostname, snmpVersion, snmpOID, snmpCommunity, port, domainExpiry)
 }
 
 func TestAccMonitorSNMPResourceMinimal(t *testing.T) {

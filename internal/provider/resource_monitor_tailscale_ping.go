@@ -34,7 +34,8 @@ type MonitorTailscalePingResource struct {
 type MonitorTailscalePingResourceModel struct {
 	MonitorBaseModel
 
-	Hostname types.String `tfsdk:"hostname"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -59,6 +60,7 @@ func (*MonitorTailscalePingResource) Schema(
 				MarkdownDescription: "Tailscale hostname or IP address to ping",
 				Required:            true,
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -97,7 +99,8 @@ func (r *MonitorTailscalePingResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		TailscalePingDetails: monitor.TailscalePingDetails{
-			Hostname: data.Hostname.ValueString(),
+			Hostname:                 data.Hostname.ValueString(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -198,6 +201,7 @@ func (r *MonitorTailscalePingResource) Read(
 	data.UpsideDown = types.BoolValue(tailscalePingMonitor.UpsideDown)
 	data.Active = types.BoolValue(tailscalePingMonitor.IsActive)
 	data.Hostname = types.StringValue(tailscalePingMonitor.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(tailscalePingMonitor.DomainExpiryNotification)
 
 	if tailscalePingMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*tailscalePingMonitor.Parent)
@@ -259,7 +263,8 @@ func (r *MonitorTailscalePingResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		TailscalePingDetails: monitor.TailscalePingDetails{
-			Hostname: data.Hostname.ValueString(),
+			Hostname:                 data.Hostname.ValueString(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 

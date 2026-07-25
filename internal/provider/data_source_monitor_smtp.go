@@ -25,9 +25,10 @@ type MonitorSMTPDataSource struct {
 
 // MonitorSMTPDataSourceModel describes the data model for SMTP monitor data source.
 type MonitorSMTPDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorSMTPDataSource) Schema(
 			},
 			"hostname": schema.StringAttribute{
 				MarkdownDescription: "SMTP server hostname",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -111,6 +116,7 @@ func (d *MonitorSMTPDataSource) readByID(
 
 	data.Name = types.StringValue(smtpMonitor.Name)
 	data.Hostname = types.StringValue(smtpMonitor.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(smtpMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -134,5 +140,6 @@ func (d *MonitorSMTPDataSource) readByName(
 
 	data.ID = types.Int64Value(smtpMon.ID)
 	data.Hostname = types.StringValue(smtpMon.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(smtpMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

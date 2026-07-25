@@ -26,10 +26,11 @@ type MonitorSIPOptionsDataSource struct {
 
 // MonitorSIPOptionsDataSourceModel describes the data model for SIP Options monitor data source.
 type MonitorSIPOptionsDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -66,6 +67,10 @@ func (*MonitorSIPOptionsDataSource) Schema(
 			},
 			"port": schema.Int64Attribute{
 				MarkdownDescription: "SIP port number being monitored",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -133,6 +138,7 @@ func (d *MonitorSIPOptionsDataSource) readByID(
 	data.Name = types.StringValue(sipMon.Name)
 	data.Hostname = types.StringValue(sipMon.Hostname)
 	data.Port = types.Int64Value(int64(sipMon.Port))
+	data.DomainExpiryNotification = types.BoolValue(sipMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -171,6 +177,7 @@ func (d *MonitorSIPOptionsDataSource) readByName(
 	data.ID = types.Int64Value(sipMon.ID)
 	data.Hostname = types.StringValue(sipMon.Hostname)
 	data.Port = types.Int64Value(int64(sipMon.Port))
+	data.DomainExpiryNotification = types.BoolValue(sipMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

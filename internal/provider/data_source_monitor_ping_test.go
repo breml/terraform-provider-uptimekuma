@@ -26,6 +26,11 @@ func TestAccMonitorPingDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorPingDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,8 +55,9 @@ func TestAccMonitorPingDataSource(t *testing.T) {
 func testAccMonitorPingDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_ping" "test" {
-  name     = %[1]q
-  hostname = "8.8.8.8"
+  name                       = %[1]q
+  hostname                   = "8.8.8.8"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_ping" "test" {
@@ -58,8 +69,9 @@ data "uptimekuma_monitor_ping" "test" {
 func testAccMonitorPingDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_ping" "test" {
-  name     = %[1]q
-  hostname = "8.8.8.8"
+  name                       = %[1]q
+  hostname                   = "8.8.8.8"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_ping" "test" {

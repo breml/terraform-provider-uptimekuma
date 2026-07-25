@@ -40,17 +40,18 @@ type MonitorMQTTResource struct {
 type MonitorMQTTResourceModel struct {
 	MonitorBaseModel
 
-	Hostname           types.String `tfsdk:"hostname"`             // MQTT broker hostname or IP.
-	Port               types.Int64  `tfsdk:"port"`                 // MQTT broker port.
-	MQTTTopic          types.String `tfsdk:"mqtt_topic"`           // Topic to subscribe to.
-	MQTTUsername       types.String `tfsdk:"mqtt_username"`        // Optional username for MQTT authentication.
-	MQTTPassword       types.String `tfsdk:"mqtt_password"`        // Optional password for MQTT authentication.
-	MQTTWebsocketPath  types.String `tfsdk:"mqtt_websocket_path"`  // Optional WebSocket path for WebSocket connections.
-	MQTTCheckType      types.String `tfsdk:"mqtt_check_type"`      // Check type: keyword or json-query.
-	MQTTSuccessMessage types.String `tfsdk:"mqtt_success_message"` // Expected message for keyword check.
-	JSONPath           types.String `tfsdk:"json_path"`            // JSON path for json-query check.
-	ExpectedValue      types.String `tfsdk:"expected_value"`       // Expected value for json-query check.
-	Conditions         types.List   `tfsdk:"conditions"`           // Optional assertion clauses.
+	Hostname                 types.String `tfsdk:"hostname"`             // MQTT broker hostname or IP.
+	Port                     types.Int64  `tfsdk:"port"`                 // MQTT broker port.
+	MQTTTopic                types.String `tfsdk:"mqtt_topic"`           // Topic to subscribe to.
+	MQTTUsername             types.String `tfsdk:"mqtt_username"`        // Optional username for MQTT authentication.
+	MQTTPassword             types.String `tfsdk:"mqtt_password"`        // Optional password for MQTT authentication.
+	MQTTWebsocketPath        types.String `tfsdk:"mqtt_websocket_path"`  // Optional WebSocket path for WebSocket connections.
+	MQTTCheckType            types.String `tfsdk:"mqtt_check_type"`      // Check type: keyword or json-query.
+	MQTTSuccessMessage       types.String `tfsdk:"mqtt_success_message"` // Expected message for keyword check.
+	JSONPath                 types.String `tfsdk:"json_path"`            // JSON path for json-query check.
+	ExpectedValue            types.String `tfsdk:"expected_value"`       // Expected value for json-query check.
+	Conditions               types.List   `tfsdk:"conditions"`           // Optional assertion clauses.
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -115,7 +116,8 @@ func (*MonitorMQTTResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				MarkdownDescription: "Expected value for json-query check",
 				Optional:            true,
 			},
-			"conditions": conditionsAttribute(),
+			"conditions":                 conditionsAttribute(),
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -176,9 +178,10 @@ func buildMQTTMonitor(ctx context.Context, data *MonitorMQTTResourceModel, diags
 			IsActive:       data.Active.ValueBool(),
 		},
 		MQTTDetails: monitor.MQTTDetails{
-			Hostname:      data.Hostname.ValueString(),
-			MQTTTopic:     data.MQTTTopic.ValueString(),
-			MQTTCheckType: monitor.MQTTCheckType(data.MQTTCheckType.ValueString()),
+			Hostname:                 data.Hostname.ValueString(),
+			MQTTTopic:                data.MQTTTopic.ValueString(),
+			MQTTCheckType:            monitor.MQTTCheckType(data.MQTTCheckType.ValueString()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -266,6 +269,7 @@ func populateMQTTMonitorBaseFieldsForMQTT(mqttMonitor *monitor.MQTT, m *MonitorM
 	m.MQTTUsername = stringOrNull(stringPtrValue(mqttMonitor.MQTTUsername))
 	m.MQTTPassword = stringOrNull(stringPtrValue(mqttMonitor.MQTTPassword))
 	m.MQTTWebsocketPath = stringOrNull(stringPtrValue(mqttMonitor.MQTTWebsocketPath))
+	m.DomainExpiryNotification = types.BoolValue(mqttMonitor.DomainExpiryNotification)
 }
 
 // stringPtrValue returns the value of a string pointer, or empty string if nil.

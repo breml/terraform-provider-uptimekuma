@@ -40,8 +40,9 @@ type MonitorHTTPKeywordResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
 
-	Keyword       types.String `tfsdk:"keyword"`
-	InvertKeyword types.Bool   `tfsdk:"invert_keyword"`
+	Keyword                  types.String `tfsdk:"keyword"`
+	InvertKeyword            types.Bool   `tfsdk:"invert_keyword"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -76,6 +77,7 @@ func (*MonitorHTTPKeywordResource) Schema(
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		})),
 	}
 }
@@ -145,31 +147,32 @@ func buildHTTPKeywordMonitor(
 			IsActive:       data.Active.ValueBool(),
 		},
 		HTTPDetails: monitor.HTTPDetails{
-			URL:                 data.URL.ValueString(),
-			Timeout:             data.Timeout.ValueInt64(),
-			Method:              data.Method.ValueString(),
-			ExpiryNotification:  data.ExpiryNotification.ValueBool(),
-			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
-			HTTPBodyEncoding:    data.HTTPBodyEncoding.ValueString(),
-			Body:                data.Body.ValueString(),
-			Headers:             data.Headers.ValueString(),
-			AuthMethod:          monitor.AuthMethod(data.AuthMethod.ValueString()),
-			BasicAuthUser:       data.BasicAuthUser.ValueString(),
-			BasicAuthPass:       data.BasicAuthPass.ValueString(),
-			AuthDomain:          data.AuthDomain.ValueString(),
-			AuthWorkstation:     data.AuthWorkstation.ValueString(),
-			TLSCert:             data.TLSCert.ValueString(),
-			TLSKey:              data.TLSKey.ValueString(),
-			TLSCa:               data.TLSCa.ValueString(),
-			OAuthAuthMethod:     data.OAuthAuthMethod.ValueString(),
-			OAuthTokenURL:       data.OAuthTokenURL.ValueString(),
-			OAuthClientID:       data.OAuthClientID.ValueString(),
-			OAuthClientSecret:   data.OAuthClientSecret.ValueString(),
-			OAuthScopes:         data.OAuthScopes.ValueString(),
-			OAuthAudience:       data.OAuthAudience.ValueString(),
-			CacheBust:           data.CacheBust.ValueBool(),
+			URL:                      data.URL.ValueString(),
+			Timeout:                  data.Timeout.ValueInt64(),
+			Method:                   data.Method.ValueString(),
+			ExpiryNotification:       data.ExpiryNotification.ValueBool(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
+			IgnoreTLS:                data.IgnoreTLS.ValueBool(),
+			MaxRedirects:             int(data.MaxRedirects.ValueInt64()),
+			AcceptedStatusCodes:      []string{},
+			HTTPBodyEncoding:         data.HTTPBodyEncoding.ValueString(),
+			Body:                     data.Body.ValueString(),
+			Headers:                  data.Headers.ValueString(),
+			AuthMethod:               monitor.AuthMethod(data.AuthMethod.ValueString()),
+			BasicAuthUser:            data.BasicAuthUser.ValueString(),
+			BasicAuthPass:            data.BasicAuthPass.ValueString(),
+			AuthDomain:               data.AuthDomain.ValueString(),
+			AuthWorkstation:          data.AuthWorkstation.ValueString(),
+			TLSCert:                  data.TLSCert.ValueString(),
+			TLSKey:                   data.TLSKey.ValueString(),
+			TLSCa:                    data.TLSCa.ValueString(),
+			OAuthAuthMethod:          data.OAuthAuthMethod.ValueString(),
+			OAuthTokenURL:            data.OAuthTokenURL.ValueString(),
+			OAuthClientID:            data.OAuthClientID.ValueString(),
+			OAuthClientSecret:        data.OAuthClientSecret.ValueString(),
+			OAuthScopes:              data.OAuthScopes.ValueString(),
+			OAuthAudience:            data.OAuthAudience.ValueString(),
+			CacheBust:                data.CacheBust.ValueBool(),
 		},
 		HTTPKeywordDetails: monitor.HTTPKeywordDetails{
 			Keyword:       data.Keyword.ValueString(),
@@ -242,6 +245,7 @@ func populateHTTPBaseFieldsForKeyword(httpMonitor *monitor.HTTP, m *MonitorHTTPK
 	m.Timeout = types.Int64Value(httpMonitor.Timeout)
 	m.Method = types.StringValue(httpMonitor.Method)
 	m.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
+	m.DomainExpiryNotification = types.BoolValue(httpMonitor.DomainExpiryNotification)
 	m.IgnoreTLS = types.BoolValue(httpMonitor.IgnoreTLS)
 	m.MaxRedirects = types.Int64Value(int64(httpMonitor.MaxRedirects))
 	m.HTTPBodyEncoding = types.StringValue(httpMonitor.HTTPBodyEncoding)

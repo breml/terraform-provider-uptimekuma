@@ -37,8 +37,9 @@ type MonitorTCPPortResource struct {
 type MonitorTCPPortResourceModel struct {
 	MonitorBaseModel
 
-	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -73,6 +74,7 @@ func (*MonitorTCPPortResource) Schema(
 					int64validator.Between(1, 65535),
 				},
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -111,8 +113,9 @@ func (r *MonitorTCPPortResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		TCPPortDetails: monitor.TCPPortDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     int(data.Port.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -210,6 +213,7 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 	data.Active = types.BoolValue(tcpPortMonitor.IsActive)
 	data.Hostname = types.StringValue(tcpPortMonitor.Hostname)
 	data.Port = types.Int64Value(int64(tcpPortMonitor.Port))
+	data.DomainExpiryNotification = types.BoolValue(tcpPortMonitor.DomainExpiryNotification)
 
 	if tcpPortMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*tcpPortMonitor.Parent)
@@ -271,8 +275,9 @@ func (r *MonitorTCPPortResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		TCPPortDetails: monitor.TCPPortDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     int(data.Port.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 

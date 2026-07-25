@@ -31,6 +31,11 @@ func TestAccMonitorGameDigDataSource(t *testing.T) {
 						tfjsonpath.New("game"),
 						knownvalue.StringExact("minecraft"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_gamedig.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -46,6 +51,11 @@ func TestAccMonitorGameDigDataSource(t *testing.T) {
 						tfjsonpath.New("game"),
 						knownvalue.StringExact("minecraft"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_gamedig.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -55,10 +65,11 @@ func TestAccMonitorGameDigDataSource(t *testing.T) {
 func testAccMonitorGameDigDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_gamedig" "test" {
-  name     = %[1]q
-  hostname = "192.168.1.100"
-  port     = 25565
-  game     = "minecraft"
+  name                       = %[1]q
+  hostname                   = "192.168.1.100"
+  port                       = 25565
+  game                       = "minecraft"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_gamedig" "test" {
@@ -70,10 +81,11 @@ data "uptimekuma_monitor_gamedig" "test" {
 func testAccMonitorGameDigDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_gamedig" "test" {
-  name     = %[1]q
-  hostname = "192.168.1.100"
-  port     = 25565
-  game     = "minecraft"
+  name                       = %[1]q
+  hostname                   = "192.168.1.100"
+  port                       = 25565
+  game                       = "minecraft"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_gamedig" "test" {

@@ -25,9 +25,10 @@ type MonitorPingDataSource struct {
 
 // MonitorPingDataSourceModel describes the data model for PING monitor data source.
 type MonitorPingDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorPingDataSource) Schema(
 			},
 			"hostname": schema.StringAttribute{
 				MarkdownDescription: "Hostname to ping",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -111,6 +116,7 @@ func (d *MonitorPingDataSource) readByID(
 
 	data.Name = types.StringValue(pingMonitor.Name)
 	data.Hostname = types.StringValue(pingMonitor.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(pingMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -134,5 +140,6 @@ func (d *MonitorPingDataSource) readByName(
 
 	data.ID = types.Int64Value(pingMon.ID)
 	data.Hostname = types.StringValue(pingMon.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(pingMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

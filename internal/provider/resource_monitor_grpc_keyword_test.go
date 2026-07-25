@@ -55,6 +55,7 @@ message HealthCheckResponse {
 					keyword,
 					false,
 					60,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -103,6 +104,11 @@ message HealthCheckResponse {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_grpc_keyword.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -115,6 +121,7 @@ message HealthCheckResponse {
 					keywordUpdated,
 					false,
 					120,
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -137,7 +144,17 @@ message HealthCheckResponse {
 						tfjsonpath.New("interval"),
 						knownvalue.Int64Exact(120),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_grpc_keyword.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_grpc_keyword.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -147,20 +164,22 @@ func testAccMonitorGrpcKeywordResourceConfig(
 	name string, grpcURL string, serviceName string, method string, protobuf string, keyword string,
 	invertKeyword bool,
 	interval int64,
+	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_grpc_keyword" "test" {
-  name              = %[1]q
-  grpc_url          = %[2]q
-  grpc_service_name = %[3]q
-  grpc_method       = %[4]q
-  grpc_protobuf     = %[5]q
-  keyword           = %[6]q
-  invert_keyword    = %[7]t
-  interval          = %[8]d
-  active            = true
+  name                        = %[1]q
+  grpc_url                    = %[2]q
+  grpc_service_name           = %[3]q
+  grpc_method                 = %[4]q
+  grpc_protobuf               = %[5]q
+  keyword                     = %[6]q
+  invert_keyword              = %[7]t
+  interval                    = %[8]d
+  active                      = true
+  domain_expiry_notification  = %[9]t
 }
-`, name, grpcURL, serviceName, method, protobuf, keyword, invertKeyword, interval)
+`, name, grpcURL, serviceName, method, protobuf, keyword, invertKeyword, interval, domainExpiry)
 }
 
 func TestAccMonitorGrpcKeywordResourceWithInvert(t *testing.T) {
@@ -205,6 +224,7 @@ message HealthCheckResponse {
 					keyword,
 					true,
 					60,
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(

@@ -25,8 +25,9 @@ type MonitorHTTPJSONQueryDataSource struct {
 
 // MonitorHTTPJSONQueryDataSourceModel describes the data model for HTTP JSON Query monitor data source.
 type MonitorHTTPJSONQueryDataSourceModel struct {
-	ID   types.Int64  `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -55,6 +56,10 @@ func (*MonitorHTTPJSONQueryDataSource) Schema(
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Monitor name",
 				Optional:            true,
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -109,6 +114,7 @@ func (d *MonitorHTTPJSONQueryDataSource) readByID(
 	}
 
 	data.Name = types.StringValue(httpJSONMonitor.Name)
+	data.DomainExpiryNotification = types.BoolValue(httpJSONMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -131,5 +137,6 @@ func (d *MonitorHTTPJSONQueryDataSource) readByName(
 	}
 
 	data.ID = types.Int64Value(httpJSONMon.ID)
+	data.DomainExpiryNotification = types.BoolValue(httpJSONMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

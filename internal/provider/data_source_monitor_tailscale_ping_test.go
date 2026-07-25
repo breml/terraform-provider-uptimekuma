@@ -26,6 +26,11 @@ func TestAccMonitorTailscalePingDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tailscale_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorTailscalePingDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tailscale_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,8 +55,9 @@ func TestAccMonitorTailscalePingDataSource(t *testing.T) {
 func testAccMonitorTailscalePingDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tailscale_ping" "test" {
-  name     = %[1]q
-  hostname = "100.64.0.1"
+  name                       = %[1]q
+  hostname                   = "100.64.0.1"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_tailscale_ping" "test" {
@@ -58,8 +69,9 @@ data "uptimekuma_monitor_tailscale_ping" "test" {
 func testAccMonitorTailscalePingDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tailscale_ping" "test" {
-  name     = %[1]q
-  hostname = "100.64.0.1"
+  name                       = %[1]q
+  hostname                   = "100.64.0.1"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_tailscale_ping" "test" {

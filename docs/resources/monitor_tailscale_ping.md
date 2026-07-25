@@ -14,13 +14,14 @@ Tailscale Ping monitor resource. Checks connectivity to Tailscale VPN nodes and 
 
 ```terraform
 resource "uptimekuma_monitor_tailscale_ping" "example" {
-  name           = "Tailscale Node Monitoring"
-  hostname       = "100.64.0.1"
-  interval       = 60
-  max_retries    = 2
-  retry_interval = 60
-  upside_down    = false
-  active         = true
+  name                       = "Tailscale Node Monitoring"
+  hostname                   = "100.64.0.1"
+  interval                   = 60
+  max_retries                = 2
+  retry_interval             = 60
+  upside_down                = false
+  active                     = true
+  domain_expiry_notification = false
 }
 ```
 
@@ -36,6 +37,7 @@ resource "uptimekuma_monitor_tailscale_ping" "example" {
 
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
