@@ -29,6 +29,7 @@ func TestAccMonitorMQTTResource(t *testing.T) {
 					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "port", "1883"),
 					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "mqtt_topic", "test/topic"),
 					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "mqtt_check_type", "keyword"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "domain_expiry_notification", "true"),
 				),
 			},
 			// ImportState testing
@@ -42,10 +43,13 @@ func TestAccMonitorMQTTResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccMonitorMQTTResourceConfig(nameUpdated, "localhost", 1883, "updated/topic"),
+				Config: testAccMonitorMQTTResourceConfigWithDomainExpiry(
+					nameUpdated, "localhost", 1883, "updated/topic", false,
+				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "name", nameUpdated),
 					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "mqtt_topic", "updated/topic"),
+					resource.TestCheckResourceAttr("uptimekuma_monitor_mqtt.test", "domain_expiry_notification", "false"),
 				),
 			},
 		},
@@ -141,13 +145,33 @@ func testAccMonitorMQTTResourceConfig(
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_mqtt" "test" {
-  name            = %[1]q
-  hostname        = %[2]q
-  port            = %[3]d
-  mqtt_topic      = %[4]q
-  mqtt_check_type = "keyword"
+  name                        = %[1]q
+  hostname                    = %[2]q
+  port                        = %[3]d
+  mqtt_topic                  = %[4]q
+  mqtt_check_type             = "keyword"
+  domain_expiry_notification  = true
 }
 `, name, hostname, port, topic)
+}
+
+func testAccMonitorMQTTResourceConfigWithDomainExpiry(
+	name string,
+	hostname string,
+	port int64,
+	topic string,
+	domainExpiry bool,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_mqtt" "test" {
+  name                        = %[1]q
+  hostname                    = %[2]q
+  port                        = %[3]d
+  mqtt_topic                  = %[4]q
+  mqtt_check_type             = "keyword"
+  domain_expiry_notification  = %[5]t
+}
+`, name, hostname, port, topic, domainExpiry)
 }
 
 func testAccMonitorMQTTResourceConfigWithAuth(

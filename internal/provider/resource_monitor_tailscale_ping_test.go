@@ -49,6 +49,7 @@ func TestAccMonitorTailscalePingResource(t *testing.T) {
 					hostname,
 					description,
 					60,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -77,10 +78,17 @@ func TestAccMonitorTailscalePingResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tailscale_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorTailscalePingResourceConfigFull(nameUpdated, hostnameUpdated, "", 120),
+				Config: testAccMonitorTailscalePingResourceConfigFull(
+					nameUpdated, hostnameUpdated, "", 120, false,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_tailscale_ping.test",
@@ -102,6 +110,11 @@ func TestAccMonitorTailscalePingResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tailscale_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -116,6 +129,7 @@ func TestAccMonitorTailscalePingResource(t *testing.T) {
 func testAccMonitorTailscalePingResourceConfigFull(
 	name string, hostname string, description string,
 	interval int64,
+	domainExpiry bool,
 ) string {
 	descField := ""
 	if description != "" {
@@ -124,13 +138,14 @@ func testAccMonitorTailscalePingResourceConfigFull(
 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tailscale_ping" "test" {
-  name     = %[1]q
-  hostname = %[2]q
+  name                        = %[1]q
+  hostname                    = %[2]q
 %[3]s
-  interval = %[4]d
-  active   = true
+  interval                    = %[4]d
+  active                      = true
+  domain_expiry_notification  = %[5]t
 }
-`, name, hostname, descField, interval)
+`, name, hostname, descField, interval, domainExpiry)
 }
 
 func testAccMonitorTailscalePingResourceConfigMinimal(name string, hostname string) string {

@@ -35,4 +35,5 @@ data "uptimekuma_monitor_smtp" "example_by_name" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) SMTP server hostname

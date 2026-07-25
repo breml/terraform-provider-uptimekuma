@@ -19,3 +19,7 @@ Get HTTP JSON Query monitor information by ID or name
 
 - `id` (Number) Monitor identifier
 - `name` (String) Monitor name
+
+### Read-Only
+
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification

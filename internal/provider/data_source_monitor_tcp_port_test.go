@@ -26,6 +26,11 @@ func TestAccMonitorTCPPortDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorTCPPortDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,9 +55,10 @@ func TestAccMonitorTCPPortDataSource(t *testing.T) {
 func testAccMonitorTCPPortDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tcp_port" "test" {
-  name     = %[1]q
-  hostname = "google.com"
-  port     = 443
+  name                       = %[1]q
+  hostname                   = "google.com"
+  port                       = 443
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_tcp_port" "test" {
@@ -59,9 +70,10 @@ data "uptimekuma_monitor_tcp_port" "test" {
 func testAccMonitorTCPPortDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tcp_port" "test" {
-  name     = %[1]q
-  hostname = "google.com"
-  port     = 443
+  name                       = %[1]q
+  hostname                   = "google.com"
+  port                       = 443
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_tcp_port" "test" {

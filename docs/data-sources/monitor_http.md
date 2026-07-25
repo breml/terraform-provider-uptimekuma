@@ -39,4 +39,5 @@ output "website_url" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `url` (String) URL to monitor

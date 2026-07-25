@@ -28,6 +28,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 					"smtp.example.com",
 					587,
 					"STARTTLS",
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -61,6 +62,11 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_smtp.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -70,6 +76,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 					"mail.example.com",
 					465,
 					"TLS",
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -102,6 +109,11 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_smtp.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -119,17 +131,19 @@ func testAccMonitorSMTPResourceConfig(
 	hostname string,
 	port int64,
 	smtpSecurity string,
+	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_smtp" "test" {
-  name          = %[1]q
-  description   = %[2]q
-  hostname      = %[3]q
-  port          = %[4]d
-  smtp_security = %[5]q
-  active        = true
+  name                        = %[1]q
+  description                 = %[2]q
+  hostname                    = %[3]q
+  port                        = %[4]d
+  smtp_security               = %[5]q
+  active                      = true
+  domain_expiry_notification  = %[6]t
 }
-`, name, description, hostname, port, smtpSecurity)
+`, name, description, hostname, port, smtpSecurity, domainExpiry)
 }
 
 func TestAccMonitorSMTPResourceMinimal(t *testing.T) {

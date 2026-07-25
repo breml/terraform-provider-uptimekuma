@@ -47,6 +47,8 @@ type MonitorGameDigResourceModel struct {
 	Game types.String `tfsdk:"game"`
 	// GameDigGivenPortOnly indicates whether to use only the given port without auto-detection.
 	GameDigGivenPortOnly types.Bool `tfsdk:"gamedig_given_port_only"`
+	// DomainExpiryNotification enables domain (WHOIS) expiry notification.
+	DomainExpiryNotification types.Bool `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -94,6 +96,7 @@ func (*MonitorGameDigResource) Schema(
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -292,10 +295,11 @@ func buildGameDigMonitor(
 			IsActive:       data.Active.ValueBool(),
 		},
 		GameDigDetails: monitor.GameDigDetails{
-			Hostname:             data.Hostname.ValueString(),
-			Port:                 int(data.Port.ValueInt64()),
-			Game:                 data.Game.ValueString(),
-			GameDigGivenPortOnly: data.GameDigGivenPortOnly.ValueBool(),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     int(data.Port.ValueInt64()),
+			Game:                     data.Game.ValueString(),
+			GameDigGivenPortOnly:     data.GameDigGivenPortOnly.ValueBool(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -341,6 +345,7 @@ func populateGameDigModel(gameDigMonitor *monitor.GameDig, data *MonitorGameDigR
 	data.Port = types.Int64Value(int64(gameDigMonitor.Port))
 	data.Game = types.StringValue(gameDigMonitor.Game)
 	data.GameDigGivenPortOnly = types.BoolValue(gameDigMonitor.GameDigGivenPortOnly)
+	data.DomainExpiryNotification = types.BoolValue(gameDigMonitor.DomainExpiryNotification)
 }
 
 // populateGameDigOptionalFields populates optional and computed fields from the API response.

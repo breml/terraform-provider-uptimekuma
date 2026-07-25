@@ -14,15 +14,16 @@ DNS monitor resource
 
 ```terraform
 resource "uptimekuma_monitor_dns" "example" {
-  name               = "DNS Resolution Check"
-  hostname           = "example.com"
-  dns_resolve_server = "8.8.8.8"
-  interval           = 300
-  timeout            = 30
-  max_retries        = 2
-  upside_down        = false
-  active             = true
-  port               = 53
+  name                       = "DNS Resolution Check"
+  hostname                   = "example.com"
+  dns_resolve_server         = "8.8.8.8"
+  interval                   = 300
+  timeout                    = 30
+  max_retries                = 2
+  upside_down                = false
+  active                     = true
+  port                       = 53
+  domain_expiry_notification = false
 }
 ```
 
@@ -41,6 +42,7 @@ resource "uptimekuma_monitor_dns" "example" {
 - `description` (String) Description
 - `dns_resolve_server` (String) DNS resolver server IP address. Multiple resolvers may be provided as a comma-separated list (e.g. `1.1.1.1,8.8.8.8`).
 - `dns_resolve_type` (String) DNS record type to query
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs

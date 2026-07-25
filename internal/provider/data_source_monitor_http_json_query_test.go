@@ -27,6 +27,11 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -37,6 +42,11 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_http_json_query.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -46,10 +56,11 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 func testAccMonitorHTTPJSONQueryDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
-  name       = %[1]q
-  url        = %[2]q
-  json_path  = "$.slideshow"
-  expected_value = ""
+  name                       = %[1]q
+  url                        = %[2]q
+  json_path                  = "$.slideshow"
+  expected_value             = ""
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_http_json_query" "test" {
@@ -61,10 +72,11 @@ data "uptimekuma_monitor_http_json_query" "test" {
 func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_json_query" "test" {
-  name       = %[1]q
-  url        = %[2]q
-  json_path  = "$.slideshow"
-  expected_value = ""
+  name                       = %[1]q
+  url                        = %[2]q
+  json_path                  = "$.slideshow"
+  expected_value             = ""
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_http_json_query" "test" {

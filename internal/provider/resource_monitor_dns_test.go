@@ -29,6 +29,7 @@ func TestAccMonitorDNSResource(t *testing.T) {
 					"A",
 					"1.1.1.1",
 					53,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -67,6 +68,11 @@ func TestAccMonitorDNSResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -77,6 +83,7 @@ func TestAccMonitorDNSResource(t *testing.T) {
 					"AAAA",
 					"8.8.8.8",
 					53,
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -109,6 +116,11 @@ func TestAccMonitorDNSResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_dns.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -127,18 +139,20 @@ func testAccMonitorDNSResourceConfig(
 	resolveType string,
 	server string,
 	port int64,
+	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
-  name               = %[1]q
-  description        = %[2]q
-  hostname           = %[3]q
-  dns_resolve_type   = %[4]q
-  dns_resolve_server = %[5]q
-  port               = %[6]d
-  active             = true
+  name                        = %[1]q
+  description                 = %[2]q
+  hostname                    = %[3]q
+  dns_resolve_type            = %[4]q
+  dns_resolve_server          = %[5]q
+  port                        = %[6]d
+  active                      = true
+  domain_expiry_notification  = %[7]t
 }
-`, name, description, hostname, resolveType, server, port)
+`, name, description, hostname, resolveType, server, port, domainExpiry)
 }
 
 func TestAccMonitorDNSResourceMinimal(t *testing.T) {

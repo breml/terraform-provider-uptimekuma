@@ -14,12 +14,13 @@ Steam game server monitor resource
 
 ```terraform
 resource "uptimekuma_monitor_steam" "example" {
-  name     = "Game Server Monitoring"
-  hostname = "192.168.1.100"
-  port     = 27015
-  timeout  = 48
-  interval = 60
-  active   = true
+  name                       = "Game Server Monitoring"
+  hostname                   = "192.168.1.100"
+  port                       = 27015
+  timeout                    = 48
+  interval                   = 60
+  active                     = true
+  domain_expiry_notification = false
 }
 ```
 
@@ -36,6 +37,7 @@ resource "uptimekuma_monitor_steam" "example" {
 
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs

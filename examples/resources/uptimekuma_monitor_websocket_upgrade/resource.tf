@@ -7,4 +7,5 @@ resource "uptimekuma_monitor_websocket_upgrade" "example" {
   max_retries                           = 2
   upside_down                           = false
   active                                = true
+  domain_expiry_notification            = false
 }

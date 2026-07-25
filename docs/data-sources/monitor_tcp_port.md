@@ -22,5 +22,6 @@ Get TCP Port monitor information by ID or name
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) Hostname to monitor
 - `port` (Number) Port number

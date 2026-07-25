@@ -46,6 +46,7 @@ func TestAccMonitorPingResource(t *testing.T) {
 					60,
 					56,
 					48,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -84,10 +85,17 @@ func TestAccMonitorPingResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorPingResourceConfigWithDescription(nameUpdated, hostnameUpdated, "", 120, 64, 30),
+				Config: testAccMonitorPingResourceConfigWithDescription(
+					nameUpdated, hostnameUpdated, "", 120, 64, 30, false,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_ping.test",
@@ -119,6 +127,11 @@ func TestAccMonitorPingResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_ping.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -133,6 +146,7 @@ func TestAccMonitorPingResource(t *testing.T) {
 func testAccMonitorPingResourceConfigWithDescription(
 	name string, hostname string, description string,
 	interval int64, packetSize int64, timeout int64,
+	domainExpiry bool,
 ) string {
 	descField := ""
 	if description != "" {
@@ -141,15 +155,16 @@ func testAccMonitorPingResourceConfigWithDescription(
 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_ping" "test" {
-  name        = %[1]q
-  hostname    = %[2]q
+  name                        = %[1]q
+  hostname                    = %[2]q
 %[3]s
-  interval    = %[4]d
-  packet_size = %[5]d
-  timeout     = %[6]d
-  active      = true
+  interval                    = %[4]d
+  packet_size                 = %[5]d
+  timeout                     = %[6]d
+  active                      = true
+  domain_expiry_notification  = %[7]t
 }
-`, name, hostname, descField, interval, packetSize, timeout)
+`, name, hostname, descField, interval, packetSize, timeout, domainExpiry)
 }
 
 func testAccMonitorPingResourceConfigMinimal(

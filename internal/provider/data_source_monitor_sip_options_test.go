@@ -36,6 +36,11 @@ func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 						tfjsonpath.New("port"),
 						knownvalue.Int64Exact(5060),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -56,6 +61,11 @@ func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 						tfjsonpath.New("port"),
 						knownvalue.Int64Exact(5060),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_sip_options.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -65,9 +75,10 @@ func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 func testAccMonitorSIPOptionsDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_sip_options" "test" {
-  name     = %[1]q
-  hostname = "sip.example.com"
-  port     = 5060
+  name                       = %[1]q
+  hostname                   = "sip.example.com"
+  port                       = 5060
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_sip_options" "test" {
@@ -79,9 +90,10 @@ data "uptimekuma_monitor_sip_options" "test" {
 func testAccMonitorSIPOptionsDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_sip_options" "test" {
-  name     = %[1]q
-  hostname = "sip.example.com"
-  port     = 5060
+  name                       = %[1]q
+  hostname                   = "sip.example.com"
+  port                       = 5060
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_sip_options" "test" {

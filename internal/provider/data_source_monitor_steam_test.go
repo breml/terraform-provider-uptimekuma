@@ -26,6 +26,11 @@ func TestAccMonitorSteamDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_steam.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorSteamDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_steam.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,9 +55,10 @@ func TestAccMonitorSteamDataSource(t *testing.T) {
 func testAccMonitorSteamDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_steam" "test" {
-  name     = %[1]q
-  hostname = "192.168.1.100"
-  port     = 27015
+  name                       = %[1]q
+  hostname                   = "192.168.1.100"
+  port                       = 27015
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_steam" "test" {
@@ -59,9 +70,10 @@ data "uptimekuma_monitor_steam" "test" {
 func testAccMonitorSteamDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_steam" "test" {
-  name     = %[1]q
-  hostname = "192.168.1.100"
-  port     = 27015
+  name                       = %[1]q
+  hostname                   = "192.168.1.100"
+  port                       = 27015
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_steam" "test" {

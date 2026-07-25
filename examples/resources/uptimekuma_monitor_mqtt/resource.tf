@@ -1,13 +1,14 @@
 # MQTT monitor resource for basic connectivity checking.
 # This monitor connects to an MQTT broker and checks for messages on a specific topic.
 resource "uptimekuma_monitor_mqtt" "home_automation" {
-  name            = "Home Automation MQTT Broker"
-  description     = "Monitor MQTT broker for home automation system"
-  hostname        = "mqtt.example.com"
-  port            = 1883
-  mqtt_topic      = "home/status"
-  mqtt_check_type = "keyword"
-  interval        = 60
+  name                       = "Home Automation MQTT Broker"
+  description                = "Monitor MQTT broker for home automation system"
+  hostname                   = "mqtt.example.com"
+  port                       = 1883
+  mqtt_topic                 = "home/status"
+  mqtt_check_type            = "keyword"
+  interval                   = 60
+  domain_expiry_notification = false
 }
 
 # MQTT monitor with authentication.

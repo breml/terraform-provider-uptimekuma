@@ -43,14 +43,15 @@ type MonitorRealBrowserResource struct {
 type MonitorRealBrowserResourceModel struct {
 	MonitorBaseModel
 
-	URL                 types.String `tfsdk:"url"`
-	Timeout             types.Int64  `tfsdk:"timeout"`
-	IgnoreTLS           types.Bool   `tfsdk:"ignore_tls"`
-	MaxRedirects        types.Int64  `tfsdk:"max_redirects"`
-	AcceptedStatusCodes types.List   `tfsdk:"accepted_status_codes"`
-	ProxyID             types.Int64  `tfsdk:"proxy_id"`
-	RemoteBrowser       types.Int64  `tfsdk:"remote_browser"`
-	ScreenshotDelay     types.Int64  `tfsdk:"screenshot_delay"`
+	URL                      types.String `tfsdk:"url"`
+	Timeout                  types.Int64  `tfsdk:"timeout"`
+	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
+	MaxRedirects             types.Int64  `tfsdk:"max_redirects"`
+	AcceptedStatusCodes      types.List   `tfsdk:"accepted_status_codes"`
+	ProxyID                  types.Int64  `tfsdk:"proxy_id"`
+	RemoteBrowser            types.Int64  `tfsdk:"remote_browser"`
+	ScreenshotDelay          types.Int64  `tfsdk:"screenshot_delay"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -139,6 +140,8 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 		Optional: true,
 	}
 
+	attrs["domain_expiry_notification"] = domainExpiryNotificationAttribute()
+
 	return attrs
 }
 
@@ -168,11 +171,12 @@ func buildRealBrowserMonitor(
 			IsActive:       data.Active.ValueBool(),
 		},
 		RealBrowserDetails: monitor.RealBrowserDetails{
-			URL:                 data.URL.ValueString(),
-			Timeout:             data.Timeout.ValueInt64(),
-			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
-			MaxRedirects:        int(data.MaxRedirects.ValueInt64()),
-			AcceptedStatusCodes: []string{},
+			URL:                      data.URL.ValueString(),
+			Timeout:                  data.Timeout.ValueInt64(),
+			IgnoreTLS:                data.IgnoreTLS.ValueBool(),
+			MaxRedirects:             int(data.MaxRedirects.ValueInt64()),
+			AcceptedStatusCodes:      []string{},
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -292,6 +296,7 @@ func populateRealBrowserMonitorBaseFields(m *monitor.RealBrowser, data *MonitorR
 	data.Timeout = types.Int64Value(m.Timeout)
 	data.IgnoreTLS = types.BoolValue(m.IgnoreTLS)
 	data.MaxRedirects = types.Int64Value(int64(m.MaxRedirects))
+	data.DomainExpiryNotification = types.BoolValue(m.DomainExpiryNotification)
 }
 
 // populateOptionalFieldsForRealBrowser populates optional fields for Real Browser monitor.

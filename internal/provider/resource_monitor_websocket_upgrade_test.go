@@ -22,7 +22,9 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorWebsocketUpgradeResourceConfigWithDescription(name, url, 60, 48, description),
+				Config: testAccMonitorWebsocketUpgradeResourceConfigWithDescription(
+					name, url, 60, 48, description, true,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -70,6 +72,11 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 						tfjsonpath.New("ws_subprotocol"),
 						knownvalue.Null(),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_websocket_upgrade.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -78,7 +85,9 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccMonitorWebsocketUpgradeResourceConfigWithDescription(nameUpdated, url, 120, 60, ""),
+				Config: testAccMonitorWebsocketUpgradeResourceConfigWithDescription(
+					nameUpdated, url, 120, 60, "", false,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_websocket_upgrade.test",
@@ -110,6 +119,11 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_websocket_upgrade.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 		},
@@ -120,6 +134,7 @@ func testAccMonitorWebsocketUpgradeResourceConfigWithDescription(
 	name string, url string,
 	interval int64, timeout int64,
 	description string,
+	domainExpiry bool,
 ) string {
 	descField := ""
 	if description != "" {
@@ -128,14 +143,15 @@ func testAccMonitorWebsocketUpgradeResourceConfigWithDescription(
 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_websocket_upgrade" "test" {
-  name     = %[1]q
-  url      = %[2]q
+  name                        = %[1]q
+  url                         = %[2]q
 %[3]s
-  interval = %[4]d
-  timeout  = %[5]d
-  active   = true
+  interval                    = %[4]d
+  timeout                     = %[5]d
+  active                      = true
+  domain_expiry_notification  = %[6]t
 }
-`, name, url, descField, interval, timeout)
+`, name, url, descField, interval, timeout, domainExpiry)
 }
 
 func TestAccMonitorWebsocketUpgradeResourceWithAuth(t *testing.T) {

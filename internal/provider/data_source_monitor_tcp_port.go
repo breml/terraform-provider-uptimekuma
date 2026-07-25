@@ -25,10 +25,11 @@ type MonitorTCPPortDataSource struct {
 
 // MonitorTCPPortDataSourceModel describes the data model for TCP Port monitor data source.
 type MonitorTCPPortDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -65,6 +66,10 @@ func (*MonitorTCPPortDataSource) Schema(
 			},
 			"port": schema.Int64Attribute{
 				MarkdownDescription: "Port number",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -121,6 +126,7 @@ func (d *MonitorTCPPortDataSource) readByID(
 	data.Name = types.StringValue(tcpMonitor.Name)
 	data.Hostname = types.StringValue(tcpMonitor.Hostname)
 	data.Port = types.Int64Value(int64(tcpMonitor.Port))
+	data.DomainExpiryNotification = types.BoolValue(tcpMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -145,5 +151,6 @@ func (d *MonitorTCPPortDataSource) readByName(
 	data.ID = types.Int64Value(tcpMon.ID)
 	data.Hostname = types.StringValue(tcpMon.Hostname)
 	data.Port = types.Int64Value(int64(tcpMon.Port))
+	data.DomainExpiryNotification = types.BoolValue(tcpMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

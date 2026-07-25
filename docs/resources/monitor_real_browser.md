@@ -14,14 +14,15 @@ Real Browser monitor resource
 
 ```terraform
 resource "uptimekuma_monitor_real_browser" "example" {
-  name              = "Browser-based Synthetic Monitoring"
-  url               = "https://example.com"
-  interval          = 300
-  timeout           = 60
-  max_retries       = 2
-  upside_down       = false
-  active            = true
-  automation_script = "step('load page', async () => { await page.goto('https://example.com'); });"
+  name                       = "Browser-based Synthetic Monitoring"
+  url                        = "https://example.com"
+  interval                   = 300
+  timeout                    = 60
+  max_retries                = 2
+  upside_down                = false
+  active                     = true
+  automation_script          = "step('load page', async () => { await page.goto('https://example.com'); });"
+  domain_expiry_notification = false
 }
 ```
 
@@ -38,6 +39,7 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301'])
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
 - `interval` (Number) Heartbeat interval in seconds
 - `max_redirects` (Number) Maximum number of redirects to follow

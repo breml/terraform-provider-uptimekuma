@@ -17,6 +17,9 @@ func TestAccDataSourceMonitorMQTTByID(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.uptimekuma_monitor_mqtt.test", "id"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_mqtt.test", "name", "mqtt-datasource-test"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_mqtt.test", "topic", "test/datasource"),
+					resource.TestCheckResourceAttr(
+						"data.uptimekuma_monitor_mqtt.test", "domain_expiry_notification", "true",
+					),
 				),
 			},
 		},
@@ -34,6 +37,9 @@ func TestAccDataSourceMonitorMQTTByName(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.uptimekuma_monitor_mqtt.test", "id"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_mqtt.test", "name", "mqtt-datasource-test"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_mqtt.test", "topic", "test/datasource"),
+					resource.TestCheckResourceAttr(
+						"data.uptimekuma_monitor_mqtt.test", "domain_expiry_notification", "true",
+					),
 				),
 			},
 		},
@@ -43,11 +49,12 @@ func TestAccDataSourceMonitorMQTTByName(t *testing.T) {
 func testAccDataSourceMonitorMQTTByIDConfig() string {
 	return providerConfig() + `
 resource "uptimekuma_monitor_mqtt" "test" {
-  name            = "mqtt-datasource-test"
-  hostname        = "localhost"
-  port            = 1883
-  mqtt_topic      = "test/datasource"
-  mqtt_check_type = "keyword"
+  name                       = "mqtt-datasource-test"
+  hostname                   = "localhost"
+  port                       = 1883
+  mqtt_topic                 = "test/datasource"
+  mqtt_check_type            = "keyword"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_mqtt" "test" {
@@ -59,11 +66,12 @@ data "uptimekuma_monitor_mqtt" "test" {
 func testAccDataSourceMonitorMQTTByNameConfig() string {
 	return providerConfig() + `
 resource "uptimekuma_monitor_mqtt" "test" {
-  name            = "mqtt-datasource-test"
-  hostname        = "localhost"
-  port            = 1883
-  mqtt_topic      = "test/datasource"
-  mqtt_check_type = "keyword"
+  name                       = "mqtt-datasource-test"
+  hostname                   = "localhost"
+  port                       = 1883
+  mqtt_topic                 = "test/datasource"
+  mqtt_check_type            = "keyword"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_mqtt" "test" {

@@ -17,6 +17,9 @@ func TestAccDataSourceMonitorSMTPByID(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.uptimekuma_monitor_smtp.test", "id"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_smtp.test", "name", "smtp-datasource-test"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_smtp.test", "hostname", "smtp.example.com"),
+					resource.TestCheckResourceAttr(
+						"data.uptimekuma_monitor_smtp.test", "domain_expiry_notification", "true",
+					),
 				),
 			},
 		},
@@ -34,6 +37,9 @@ func TestAccDataSourceMonitorSMTPByName(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.uptimekuma_monitor_smtp.test", "id"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_smtp.test", "name", "smtp-datasource-test"),
 					resource.TestCheckResourceAttr("data.uptimekuma_monitor_smtp.test", "hostname", "smtp.example.com"),
+					resource.TestCheckResourceAttr(
+						"data.uptimekuma_monitor_smtp.test", "domain_expiry_notification", "true",
+					),
 				),
 			},
 		},
@@ -43,9 +49,10 @@ func TestAccDataSourceMonitorSMTPByName(t *testing.T) {
 func testAccDataSourceMonitorSMTPByIDConfig() string {
 	return providerConfig() + `
 resource "uptimekuma_monitor_smtp" "test" {
-  name     = "smtp-datasource-test"
-  hostname = "smtp.example.com"
-  port     = 587
+  name                       = "smtp-datasource-test"
+  hostname                   = "smtp.example.com"
+  port                       = 587
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_smtp" "test" {
@@ -57,9 +64,10 @@ data "uptimekuma_monitor_smtp" "test" {
 func testAccDataSourceMonitorSMTPByNameConfig() string {
 	return providerConfig() + `
 resource "uptimekuma_monitor_smtp" "test" {
-  name     = "smtp-datasource-test"
-  hostname = "smtp.example.com"
-  port     = 587
+  name                       = "smtp-datasource-test"
+  hostname                   = "smtp.example.com"
+  port                       = 587
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_smtp" "test" {

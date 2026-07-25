@@ -17,11 +17,12 @@ Radius monitor resource for testing Radius server authentication.
 
 # Basic Radius monitor with minimum required configuration
 resource "uptimekuma_monitor_radius" "basic" {
-  name            = "Radius Authentication Monitor"
-  hostname        = "radius.example.com"
-  radius_username = "monitor-user"
-  radius_password = "monitor-password"
-  radius_secret   = "shared-secret"
+  name                       = "Radius Authentication Monitor"
+  hostname                   = "radius.example.com"
+  radius_username            = "monitor-user"
+  radius_password            = "monitor-password"
+  radius_secret              = "shared-secret"
+  domain_expiry_notification = false
 }
 
 # Radius monitor with all available options
@@ -80,6 +81,7 @@ resource "uptimekuma_monitor_radius" "accounting" {
 - `called_station_id` (String) Optional Called-Station-Id attribute
 - `calling_station_id` (String) Optional Calling-Station-Id attribute
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs

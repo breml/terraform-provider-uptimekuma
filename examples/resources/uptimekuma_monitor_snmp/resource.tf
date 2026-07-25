@@ -2,11 +2,12 @@
 
 # Basic SNMP monitor with minimum required configuration
 resource "uptimekuma_monitor_snmp" "basic" {
-  name           = "Network Device SNMP Monitor"
-  hostname       = "192.168.1.1"
-  snmp_version   = "2c"
-  snmp_oid       = ".1.3.6.1.2.1.1.5.0"
-  snmp_community = "public"
+  name                       = "Network Device SNMP Monitor"
+  hostname                   = "192.168.1.1"
+  snmp_version               = "2c"
+  snmp_oid                   = ".1.3.6.1.2.1.1.5.0"
+  snmp_community             = "public"
+  domain_expiry_notification = false
 }
 
 # SNMP monitor with all available options

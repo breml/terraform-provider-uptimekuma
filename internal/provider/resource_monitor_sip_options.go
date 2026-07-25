@@ -37,8 +37,9 @@ type MonitorSIPOptionsResource struct {
 type MonitorSIPOptionsResourceModel struct {
 	MonitorBaseModel
 
-	Hostname types.String `tfsdk:"hostname"`
-	Port     types.Int64  `tfsdk:"port"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	Port                     types.Int64  `tfsdk:"port"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -74,6 +75,7 @@ func (*MonitorSIPOptionsResource) Schema(
 					int64validator.Between(1, 65535),
 				},
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -112,8 +114,9 @@ func (r *MonitorSIPOptionsResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		SIPOptionsDetails: monitor.SIPOptionsDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     int(data.Port.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -212,6 +215,7 @@ func (r *MonitorSIPOptionsResource) Read(ctx context.Context, req resource.ReadR
 	data.Active = types.BoolValue(sipOptionsMonitor.IsActive)
 	data.Hostname = types.StringValue(sipOptionsMonitor.Hostname)
 	data.Port = types.Int64Value(int64(sipOptionsMonitor.Port))
+	data.DomainExpiryNotification = types.BoolValue(sipOptionsMonitor.DomainExpiryNotification)
 
 	if sipOptionsMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*sipOptionsMonitor.Parent)
@@ -273,8 +277,9 @@ func (r *MonitorSIPOptionsResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		SIPOptionsDetails: monitor.SIPOptionsDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     int(data.Port.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 

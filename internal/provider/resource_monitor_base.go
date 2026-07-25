@@ -134,6 +134,21 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 	return attrs
 }
 
+// domainExpiryNotificationAttribute returns the shared schema attribute for domain (WHOIS)
+// expiry notification. It is intentionally not part of withMonitorBaseAttributes or
+// withHTTPMonitorBaseAttributes: MonitorGlobalpingResourceModel embeds MonitorHTTPBaseModel but
+// the go-uptime-kuma-client library does not support domain expiry notification for Globalping
+// monitors, so this attribute is added individually to each monitor type that does support it.
+func domainExpiryNotificationAttribute() schema.BoolAttribute {
+	return schema.BoolAttribute{
+		MarkdownDescription: "Enable domain (WHOIS) expiry notification, independent of TLS " +
+			"certificate expiry notification (`expiry_notification`)",
+		Optional: true,
+		Computed: true,
+		Default:  booldefault.StaticBool(false),
+	}
+}
+
 // handleMonitorActiveStateCreate pauses a newly-created monitor when the configured
 // active value is false. Uptime Kuma creates every monitor in the active state and
 // ignores the IsActive field of the editMonitor event, so the dedicated pauseMonitor

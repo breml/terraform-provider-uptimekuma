@@ -31,6 +31,7 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 					port,
 					60,
 					description,
+					true,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -64,6 +65,11 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -73,6 +79,7 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 					portUpdated,
 					120,
 					"",
+					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -100,6 +107,11 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_tcp_port.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -115,6 +127,7 @@ func testAccMonitorTCPPortResourceConfigWithDescription(
 	name string, hostname string,
 	port int64, interval int64,
 	description string,
+	domainExpiry bool,
 ) string {
 	descField := ""
 	if description != "" {
@@ -123,12 +136,13 @@ func testAccMonitorTCPPortResourceConfigWithDescription(
 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_tcp_port" "test" {
-  name     = %[1]q
-  hostname = %[2]q
-  port     = %[3]d
+  name                        = %[1]q
+  hostname                    = %[2]q
+  port                        = %[3]d
 %[4]s
-  interval = %[5]d
-  active   = true
+  interval                    = %[5]d
+  active                      = true
+  domain_expiry_notification  = %[6]t
 }
-`, name, hostname, port, descField, interval)
+`, name, hostname, port, descField, interval, domainExpiry)
 }

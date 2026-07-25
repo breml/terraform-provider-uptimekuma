@@ -23,7 +23,15 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorHTTPKeywordResourceConfig(name, url, keyword, false, 60, 48),
+				Config: testAccMonitorHTTPKeywordResourceConfigWithDomainExpiry(
+					name,
+					url,
+					keyword,
+					false,
+					60,
+					48,
+					true,
+				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -66,10 +74,17 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
-				Config: testAccMonitorHTTPKeywordResourceConfig(nameUpdated, url, keywordUpdated, false, 120, 60),
+				Config: testAccMonitorHTTPKeywordResourceConfigWithDomainExpiry(
+					nameUpdated, url, keywordUpdated, false, 120, 60, false,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_keyword.test",
@@ -106,6 +121,11 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http_keyword.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(false),
+					),
 				},
 			},
 			{
@@ -133,6 +153,26 @@ resource "uptimekuma_monitor_http_keyword" "test" {
   active         = true
 }
 `, name, url, keyword, invertKeyword, interval, timeout)
+}
+
+func testAccMonitorHTTPKeywordResourceConfigWithDomainExpiry(
+	name string, url string, keyword string,
+	invertKeyword bool,
+	interval int64, timeout int64,
+	domainExpiry bool,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_http_keyword" "test" {
+  name                        = %[1]q
+  url                         = %[2]q
+  keyword                     = %[3]q
+  invert_keyword              = %[4]t
+  interval                    = %[5]d
+  timeout                     = %[6]d
+  active                      = true
+  domain_expiry_notification  = %[7]t
+}
+`, name, url, keyword, invertKeyword, interval, timeout, domainExpiry)
 }
 
 func TestAccMonitorHTTPKeywordResourceWithInvert(t *testing.T) {

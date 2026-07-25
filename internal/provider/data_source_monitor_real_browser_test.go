@@ -27,6 +27,11 @@ func TestAccMonitorRealBrowserDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -37,6 +42,11 @@ func TestAccMonitorRealBrowserDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -46,8 +56,9 @@ func TestAccMonitorRealBrowserDataSource(t *testing.T) {
 func testAccMonitorRealBrowserDataSourceConfig(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
-  name = %[1]q
-  url  = %[2]q
+  name                       = %[1]q
+  url                        = %[2]q
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_real_browser" "test" {
@@ -59,8 +70,9 @@ data "uptimekuma_monitor_real_browser" "test" {
 func testAccMonitorRealBrowserDataSourceConfigByID(name string, url string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
-  name = %[1]q
-  url  = %[2]q
+  name                       = %[1]q
+  url                        = %[2]q
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_real_browser" "test" {

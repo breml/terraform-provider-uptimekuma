@@ -41,9 +41,10 @@ type MonitorSMTPResource struct {
 type MonitorSMTPResourceModel struct {
 	MonitorBaseModel
 
-	Hostname     types.String `tfsdk:"hostname"`      // SMTP server hostname or IP.
-	Port         types.Int64  `tfsdk:"port"`          // SMTP server port.
-	SMTPSecurity types.String `tfsdk:"smtp_security"` // SMTP security mode.
+	Hostname                 types.String `tfsdk:"hostname"`      // SMTP server hostname or IP.
+	Port                     types.Int64  `tfsdk:"port"`          // SMTP server port.
+	SMTPSecurity             types.String `tfsdk:"smtp_security"` // SMTP security mode.
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -82,6 +83,7 @@ func (*MonitorSMTPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					stringvalidator.OneOf("None", "STARTTLS", "TLS", "nostarttls"),
 				},
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -143,7 +145,8 @@ func buildSMTPMonitor(ctx context.Context, data *MonitorSMTPResourceModel, diags
 			IsActive:       data.Active.ValueBool(),
 		},
 		SMTPDetails: monitor.SMTPDetails{
-			Hostname: data.Hostname.ValueString(),
+			Hostname:                 data.Hostname.ValueString(),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -197,6 +200,7 @@ func populateSMTPMonitorFields(smtpMonitor *monitor.SMTP, m *MonitorSMTPResource
 	m.Active = types.BoolValue(smtpMonitor.IsActive)
 	m.Hostname = types.StringValue(smtpMonitor.Hostname)
 	m.SMTPSecurity = ptrToTypes(smtpMonitor.SMTPSecurity)
+	m.DomainExpiryNotification = types.BoolValue(smtpMonitor.DomainExpiryNotification)
 }
 
 // populateSMTPOptionalFields populates optional fields for SMTP monitor.

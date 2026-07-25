@@ -2,11 +2,12 @@
 
 # Basic Radius monitor with minimum required configuration
 resource "uptimekuma_monitor_radius" "basic" {
-  name            = "Radius Authentication Monitor"
-  hostname        = "radius.example.com"
-  radius_username = "monitor-user"
-  radius_password = "monitor-password"
-  radius_secret   = "shared-secret"
+  name                       = "Radius Authentication Monitor"
+  hostname                   = "radius.example.com"
+  radius_username            = "monitor-user"
+  radius_password            = "monitor-password"
+  radius_secret              = "shared-secret"
+  domain_expiry_notification = false
 }
 
 # Radius monitor with all available options

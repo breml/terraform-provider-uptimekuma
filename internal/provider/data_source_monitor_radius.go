@@ -25,10 +25,11 @@ type MonitorRadiusDataSource struct {
 
 // MonitorRadiusDataSourceModel describes the data model for Radius monitor data source.
 type MonitorRadiusDataSourceModel struct {
-	ID             types.Int64  `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	Hostname       types.String `tfsdk:"hostname"`
-	RadiusUsername types.String `tfsdk:"radius_username"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	RadiusUsername           types.String `tfsdk:"radius_username"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -65,6 +66,10 @@ func (*MonitorRadiusDataSource) Schema(
 			},
 			"radius_username": schema.StringAttribute{
 				MarkdownDescription: "Username for Radius authentication",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -121,6 +126,7 @@ func (d *MonitorRadiusDataSource) readByID(
 	data.Name = types.StringValue(radiusMonitor.Name)
 	data.Hostname = types.StringValue(radiusMonitor.Hostname)
 	data.RadiusUsername = types.StringValue(radiusMonitor.Username)
+	data.DomainExpiryNotification = types.BoolValue(radiusMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -145,5 +151,6 @@ func (d *MonitorRadiusDataSource) readByName(
 	data.ID = types.Int64Value(radiusMon.ID)
 	data.Hostname = types.StringValue(radiusMon.Hostname)
 	data.RadiusUsername = types.StringValue(radiusMon.Username)
+	data.DomainExpiryNotification = types.BoolValue(radiusMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

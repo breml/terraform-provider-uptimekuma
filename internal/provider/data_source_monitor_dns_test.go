@@ -26,6 +26,11 @@ func TestAccMonitorDNSDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_dns.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -36,6 +41,11 @@ func TestAccMonitorDNSDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_dns.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -45,8 +55,9 @@ func TestAccMonitorDNSDataSource(t *testing.T) {
 func testAccMonitorDNSDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
-  name     = %[1]q
-  hostname = "google.com"
+  name                       = %[1]q
+  hostname                   = "google.com"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_dns" "test" {
@@ -58,8 +69,9 @@ data "uptimekuma_monitor_dns" "test" {
 func testAccMonitorDNSDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_dns" "test" {
-  name     = %[1]q
-  hostname = "google.com"
+  name                       = %[1]q
+  hostname                   = "google.com"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_dns" "test" {

@@ -14,19 +14,20 @@ The HTTP JSON Query monitor allows you to monitor an HTTP endpoint by querying i
 
 ```terraform
 resource "uptimekuma_monitor_http_json_query" "example" {
-  name                = "API JSON Response Check"
-  url                 = "https://api.example.com/status"
-  json_path           = "$.status"
-  json_path_expected  = "ok"
-  interval            = 60
-  timeout             = 30
-  method              = "GET"
-  max_retries         = 2
-  upside_down         = false
-  active              = true
-  ignore_tls          = false
-  max_redirects       = 10
-  expiry_notification = false
+  name                       = "API JSON Response Check"
+  url                        = "https://api.example.com/status"
+  json_path                  = "$.status"
+  json_path_expected         = "ok"
+  interval                   = 60
+  timeout                    = 30
+  method                     = "GET"
+  max_retries                = 2
+  upside_down                = false
+  active                     = true
+  ignore_tls                 = false
+  max_redirects              = 10
+  expiry_notification        = false
+  domain_expiry_notification = false
 }
 ```
 
@@ -52,6 +53,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `body` (String) Request body
 - `cache_buster` (Boolean) Enable cache busting for HTTP requests
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `expiry_notification` (Boolean) Enable certificate expiry notification
 - `headers` (String) Request headers (JSON format)
 - `http_body_encoding` (String) HTTP body encoding

@@ -36,6 +36,11 @@ func TestAccMonitorRadiusDataSource(t *testing.T) {
 						tfjsonpath.New("radius_username"),
 						knownvalue.StringExact("testuser"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_radius.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 			{
@@ -56,6 +61,11 @@ func TestAccMonitorRadiusDataSource(t *testing.T) {
 						tfjsonpath.New("radius_username"),
 						knownvalue.StringExact("testuser"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_radius.test",
+						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
 				},
 			},
 		},
@@ -65,11 +75,12 @@ func TestAccMonitorRadiusDataSource(t *testing.T) {
 func testAccMonitorRadiusDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_radius" "test" {
-  name            = %[1]q
-  hostname        = "radius.example.com"
-  radius_username = "testuser"
-  radius_password = "testpass"
-  radius_secret   = "testsecret"
+  name                       = %[1]q
+  hostname                   = "radius.example.com"
+  radius_username            = "testuser"
+  radius_password            = "testpass"
+  radius_secret              = "testsecret"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_radius" "test" {
@@ -81,11 +92,12 @@ data "uptimekuma_monitor_radius" "test" {
 func testAccMonitorRadiusDataSourceConfigByID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_radius" "test" {
-  name            = %[1]q
-  hostname        = "radius.example.com"
-  radius_username = "testuser"
-  radius_password = "testpass"
-  radius_secret   = "testsecret"
+  name                       = %[1]q
+  hostname                   = "radius.example.com"
+  radius_username            = "testuser"
+  radius_password            = "testpass"
+  radius_secret              = "testsecret"
+  domain_expiry_notification = true
 }
 
 data "uptimekuma_monitor_radius" "test" {

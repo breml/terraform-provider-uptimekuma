@@ -39,11 +39,12 @@ type MonitorDNSResource struct {
 type MonitorDNSResourceModel struct {
 	MonitorBaseModel
 
-	Hostname         types.String `tfsdk:"hostname"`
-	DNSResolveServer types.String `tfsdk:"dns_resolve_server"`
-	DNSResolveType   types.String `tfsdk:"dns_resolve_type"`
-	Port             types.Int64  `tfsdk:"port"`
-	Conditions       types.List   `tfsdk:"conditions"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	DNSResolveServer         types.String `tfsdk:"dns_resolve_server"`
+	DNSResolveType           types.String `tfsdk:"dns_resolve_type"`
+	Port                     types.Int64  `tfsdk:"port"`
+	Conditions               types.List   `tfsdk:"conditions"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -89,7 +90,8 @@ func (*MonitorDNSResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					int64validator.Between(0, 65535),
 				},
 			},
-			"conditions": conditionsAttribute(),
+			"conditions":                 conditionsAttribute(),
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -124,11 +126,12 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 			IsActive:       data.Active.ValueBool(),
 		},
 		DNSDetails: monitor.DNSDetails{
-			Hostname:       data.Hostname.ValueString(),
-			ResolverServer: data.DNSResolveServer.ValueString(),
-			ResolveType:    monitor.DNSResolveType(data.DNSResolveType.ValueString()),
-			Port:           int(data.Port.ValueInt64()),
-			Conditions:     buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			Hostname:                 data.Hostname.ValueString(),
+			ResolverServer:           data.DNSResolveServer.ValueString(),
+			ResolveType:              monitor.DNSResolveType(data.DNSResolveType.ValueString()),
+			Port:                     int(data.Port.ValueInt64()),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -232,6 +235,7 @@ func (r *MonitorDNSResource) Read(ctx context.Context, req resource.ReadRequest,
 	data.DNSResolveServer = types.StringValue(dnsMonitor.ResolverServer)
 	data.DNSResolveType = types.StringValue(string(dnsMonitor.ResolveType))
 	data.Port = types.Int64Value(int64(dnsMonitor.Port))
+	data.DomainExpiryNotification = types.BoolValue(dnsMonitor.DomainExpiryNotification)
 
 	if dnsMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*dnsMonitor.Parent)
@@ -294,11 +298,12 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 			IsActive:       data.Active.ValueBool(),
 		},
 		DNSDetails: monitor.DNSDetails{
-			Hostname:       data.Hostname.ValueString(),
-			ResolverServer: data.DNSResolveServer.ValueString(),
-			ResolveType:    monitor.DNSResolveType(data.DNSResolveType.ValueString()),
-			Port:           int(data.Port.ValueInt64()),
-			Conditions:     buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			Hostname:                 data.Hostname.ValueString(),
+			ResolverServer:           data.DNSResolveServer.ValueString(),
+			ResolveType:              monitor.DNSResolveType(data.DNSResolveType.ValueString()),
+			Port:                     int(data.Port.ValueInt64()),
+			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 

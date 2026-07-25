@@ -25,8 +25,9 @@ type MonitorHTTPKeywordDataSource struct {
 
 // MonitorHTTPKeywordDataSourceModel describes the data model for HTTP Keyword monitor data source.
 type MonitorHTTPKeywordDataSourceModel struct {
-	ID   types.Int64  `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -55,6 +56,10 @@ func (*MonitorHTTPKeywordDataSource) Schema(
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Monitor name",
 				Optional:            true,
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -109,6 +114,7 @@ func (d *MonitorHTTPKeywordDataSource) readByID(
 	}
 
 	data.Name = types.StringValue(httpKeywordMonitor.Name)
+	data.DomainExpiryNotification = types.BoolValue(httpKeywordMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -131,5 +137,6 @@ func (d *MonitorHTTPKeywordDataSource) readByName(
 	}
 
 	data.ID = types.Int64Value(httpKeywordMon.ID)
+	data.DomainExpiryNotification = types.BoolValue(httpKeywordMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

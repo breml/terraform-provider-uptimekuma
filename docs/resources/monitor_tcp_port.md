@@ -14,14 +14,15 @@ TCP Port monitor resource
 
 ```terraform
 resource "uptimekuma_monitor_tcp_port" "example" {
-  name        = "Database TCP Port Monitoring"
-  hostname    = "db.example.com"
-  port        = 5432
-  interval    = 60
-  timeout     = 30
-  max_retries = 2
-  upside_down = false
-  active      = true
+  name                       = "Database TCP Port Monitoring"
+  hostname                   = "db.example.com"
+  port                       = 5432
+  interval                   = 60
+  timeout                    = 30
+  max_retries                = 2
+  upside_down                = false
+  active                     = true
+  domain_expiry_notification = false
 }
 ```
 
@@ -38,6 +39,7 @@ resource "uptimekuma_monitor_tcp_port" "example" {
 
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `interval` (Number) Heartbeat interval in seconds
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs

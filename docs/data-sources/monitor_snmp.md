@@ -52,5 +52,6 @@ resource "uptimekuma_monitor_snmp" "monitored" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) SNMP device hostname or IP address
 - `snmp_oid` (String) SNMP Object Identifier (OID) to query

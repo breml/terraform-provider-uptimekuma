@@ -25,9 +25,10 @@ type MonitorTailscalePingDataSource struct {
 
 // MonitorTailscalePingDataSourceModel describes the data model for Tailscale Ping monitor data source.
 type MonitorTailscalePingDataSourceModel struct {
-	ID       types.Int64  `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Hostname types.String `tfsdk:"hostname"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorTailscalePingDataSource) Schema(
 			},
 			"hostname": schema.StringAttribute{
 				MarkdownDescription: "Tailscale hostname or IP address to ping.",
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -115,6 +120,7 @@ func (d *MonitorTailscalePingDataSource) readByID(
 
 	data.Name = types.StringValue(tailscalePingMonitor.Name)
 	data.Hostname = types.StringValue(tailscalePingMonitor.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(tailscalePingMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -138,5 +144,6 @@ func (d *MonitorTailscalePingDataSource) readByName(
 
 	data.ID = types.Int64Value(tailscalePingMon.ID)
 	data.Hostname = types.StringValue(tailscalePingMon.Hostname)
+	data.DomainExpiryNotification = types.BoolValue(tailscalePingMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

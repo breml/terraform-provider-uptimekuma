@@ -45,6 +45,8 @@ type MonitorSteamResourceModel struct {
 	Port types.Int64 `tfsdk:"port"`
 	// Timeout is the query timeout in seconds.
 	Timeout types.Int64 `tfsdk:"timeout"`
+	// DomainExpiryNotification enables domain (WHOIS) expiry notification.
+	DomainExpiryNotification types.Bool `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -88,6 +90,7 @@ func (*MonitorSteamResource) Schema(
 					int64validator.Between(1, 3600),
 				},
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -286,8 +289,9 @@ func buildSteamMonitor(
 			IsActive:       data.Active.ValueBool(),
 		},
 		SteamDetails: monitor.SteamDetails{
-			Hostname: data.Hostname.ValueString(),
-			Port:     int(data.Port.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			Port:                     int(data.Port.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -336,6 +340,7 @@ func populateSteamModel(steamMonitor *monitor.Steam, data *MonitorSteamResourceM
 	data.Active = types.BoolValue(steamMonitor.IsActive)
 	data.Hostname = types.StringValue(steamMonitor.Hostname)
 	data.Port = types.Int64Value(int64(steamMonitor.Port))
+	data.DomainExpiryNotification = types.BoolValue(steamMonitor.DomainExpiryNotification)
 
 	if steamMonitor.Timeout != nil {
 		data.Timeout = types.Int64Value(*steamMonitor.Timeout)

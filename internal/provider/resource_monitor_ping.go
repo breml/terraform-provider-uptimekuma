@@ -37,9 +37,10 @@ type MonitorPingResource struct {
 type MonitorPingResourceModel struct {
 	MonitorBaseModel
 
-	Hostname   types.String `tfsdk:"hostname"`
-	PacketSize types.Int64  `tfsdk:"packet_size"`
-	Timeout    types.Int64  `tfsdk:"timeout"`
+	Hostname                 types.String `tfsdk:"hostname"`
+	PacketSize               types.Int64  `tfsdk:"packet_size"`
+	Timeout                  types.Int64  `tfsdk:"timeout"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -78,6 +79,7 @@ func (*MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					int64validator.Between(1, 3600),
 				},
 			},
+			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
 }
@@ -112,8 +114,9 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 			IsActive:       data.Active.ValueBool(),
 		},
 		PingDetails: monitor.PingDetails{
-			Hostname:   data.Hostname.ValueString(),
-			PacketSize: int(data.PacketSize.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			PacketSize:               int(data.PacketSize.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 
@@ -216,6 +219,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	data.Active = types.BoolValue(pingMonitor.IsActive)
 	data.Hostname = types.StringValue(pingMonitor.Hostname)
 	data.PacketSize = types.Int64Value(int64(pingMonitor.PacketSize))
+	data.DomainExpiryNotification = types.BoolValue(pingMonitor.DomainExpiryNotification)
 
 	if pingMonitor.Timeout != nil {
 		data.Timeout = types.Int64Value(*pingMonitor.Timeout)
@@ -279,8 +283,9 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 			IsActive:       data.Active.ValueBool(),
 		},
 		PingDetails: monitor.PingDetails{
-			Hostname:   data.Hostname.ValueString(),
-			PacketSize: int(data.PacketSize.ValueInt64()),
+			Hostname:                 data.Hostname.ValueString(),
+			PacketSize:               int(data.PacketSize.ValueInt64()),
+			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
 

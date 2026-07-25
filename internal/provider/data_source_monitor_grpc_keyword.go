@@ -25,8 +25,9 @@ type MonitorGrpcKeywordDataSource struct {
 
 // MonitorGrpcKeywordDataSourceModel describes the data model for gRPC Keyword monitor data source.
 type MonitorGrpcKeywordDataSourceModel struct {
-	ID   types.Int64  `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID                       types.Int64  `tfsdk:"id"`
+	Name                     types.String `tfsdk:"name"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -55,6 +56,10 @@ func (*MonitorGrpcKeywordDataSource) Schema(
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Monitor name",
 				Optional:            true,
+				Computed:            true,
+			},
+			"domain_expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
 				Computed:            true,
 			},
 		},
@@ -109,6 +114,7 @@ func (d *MonitorGrpcKeywordDataSource) readByID(
 	}
 
 	data.Name = types.StringValue(grpcKeywordMonitor.Name)
+	data.DomainExpiryNotification = types.BoolValue(grpcKeywordMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -131,5 +137,6 @@ func (d *MonitorGrpcKeywordDataSource) readByName(
 	}
 
 	data.ID = types.Int64Value(grpcKeywordMon.ID)
+	data.DomainExpiryNotification = types.BoolValue(grpcKeywordMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

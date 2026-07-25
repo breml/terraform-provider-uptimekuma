@@ -39,5 +39,6 @@ output "game_server_hostname" {
 
 ### Read-Only
 
+- `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
 - `hostname` (String) Steam game server IP address or hostname
 - `port` (Number) Steam game server port
