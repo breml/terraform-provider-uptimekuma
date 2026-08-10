@@ -6,7 +6,7 @@ require (
 	github.com/breml/go-uptime-kuma-client v0.4.2
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
-	github.com/hashicorp/terraform-plugin-log v0.10.0
+	github.com/hashicorp/terraform-plugin-log v0.11.0
 	github.com/ory/dockertest/v3 v3.12.0
 )
 
