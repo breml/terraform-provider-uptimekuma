@@ -109,7 +109,7 @@ func (r *MonitorSQLServerResource) Create(
 		},
 		SQLServerDetails: monitor.SQLServerDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            ptrString(data.DatabaseQuery.ValueString()),
+			DatabaseQuery:            new(data.DatabaseQuery.ValueString()),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
@@ -287,7 +287,7 @@ func (r *MonitorSQLServerResource) Update(
 		},
 		SQLServerDetails: monitor.SQLServerDetails{
 			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            ptrString(data.DatabaseQuery.ValueString()),
+			DatabaseQuery:            new(data.DatabaseQuery.ValueString()),
 			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
@@ -378,9 +378,4 @@ func (*MonitorSQLServerResource) ImportState(
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
-}
-
-// ptrString returns a pointer to a string.
-func ptrString(s string) *string {
-	return &s
 }
