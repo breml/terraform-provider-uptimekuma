@@ -35,11 +35,11 @@ resource "uptimekuma_notification_slack" "critical_alerts" {
 }
 
 resource "uptimekuma_notification_ntfy" "fallback" {
-  name      = "Ntfy Fallback"
-  topic     = "uptime_kuma_alerts"
-  priority  = "high"
-  server    = "https://ntfy.sh"
-  is_active = true
+  name       = "Ntfy Fallback"
+  topic      = "uptime_kuma_alerts"
+  priority   = 5
+  server_url = "https://ntfy.sh"
+  is_active  = true
 }
 
 # Production Monitors
