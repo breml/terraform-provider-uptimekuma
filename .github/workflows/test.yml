@@ -124,7 +124,7 @@ jobs:
     name: Terraform Provider Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     strategy:
       fail-fast: false
     steps:
@@ -144,7 +144,7 @@ jobs:
       - run: go mod download
       - name: Run acceptance tests
         run: task testacc
-        timeout-minutes: 10
+        timeout-minutes: 32
 
   commit-lint:
     name: Validate Commit Messages

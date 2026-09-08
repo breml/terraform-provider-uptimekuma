@@ -22,7 +22,7 @@ library.
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.25 (for development)
+- [Go](https://golang.org/doc/install) >= 1.26 (for development)
 - Uptime Kuma instance with API access
 - [Docker](https://www.docker.com/) (for running integration tests)
 

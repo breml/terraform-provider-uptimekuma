@@ -5,7 +5,7 @@ terraform-provider-uptimekuma codebase.
 
 ## Go Version & Basic Style
 
-- **Go version**: 1.25.2
+- **Go version**: 1.26.8
 - **Import grouping**: stdlib, then third-party, then local (enforced by goimports/gci)
 - **Local import prefix**: `github.com/breml/terraform-provider-uptimekuma`
 - **Client alias**: Use `kuma` for `github.com/breml/go-uptime-kuma-client`
