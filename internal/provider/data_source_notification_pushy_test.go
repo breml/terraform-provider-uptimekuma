@@ -22,17 +22,12 @@ func TestAccNotificationPushyDataSource(t *testing.T) {
 				Config: testAccNotificationPushyDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_pushy.test",
+						"data.uptimekuma_notification_pushy.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationPushyDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_pushy.test",
+						"data.uptimekuma_notification_pushy.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_pushy" "test" {
   token    = "test-device-token-abc123"
 }
 
-data "uptimekuma_notification_pushy" "test" {
+data "uptimekuma_notification_pushy" "by_name" {
   name = uptimekuma_notification_pushy.test.name
 }
-`, name)
-}
 
-func testAccNotificationPushyDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_pushy" "test" {
-  name     = %[1]q
-  is_active = true
-  api_key  = "test-api-key-123456789"
-  token    = "test-device-token-abc123"
-}
-
-data "uptimekuma_notification_pushy" "test" {
+data "uptimekuma_notification_pushy" "by_id" {
   id = uptimekuma_notification_pushy.test.id
 }
 `, name)

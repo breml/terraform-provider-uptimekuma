@@ -22,17 +22,12 @@ func TestAccDockerHostDataSource(t *testing.T) {
 				Config: testAccDockerHostDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_docker_host.test",
+						"data.uptimekuma_docker_host.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccDockerHostDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_docker_host.test",
+						"data.uptimekuma_docker_host.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_docker_host" "test" {
   docker_daemon = "/var/run/docker.sock"
 }
 
-data "uptimekuma_docker_host" "test" {
+data "uptimekuma_docker_host" "by_name" {
   name = uptimekuma_docker_host.test.name
 }
-`, name)
-}
 
-func testAccDockerHostDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_docker_host" "test" {
-  name        = %[1]q
-  docker_type = "socket"
-  docker_daemon = "/var/run/docker.sock"
-}
-
-data "uptimekuma_docker_host" "test" {
+data "uptimekuma_docker_host" "by_id" {
   id = uptimekuma_docker_host.test.id
 }
 `, name)

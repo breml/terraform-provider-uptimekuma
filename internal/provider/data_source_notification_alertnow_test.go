@@ -22,17 +22,12 @@ func TestAccNotificationAlertNowDataSource(t *testing.T) {
 				Config: testAccNotificationAlertNowDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_alertnow.test",
+						"data.uptimekuma_notification_alertnow.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationAlertNowDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_alertnow.test",
+						"data.uptimekuma_notification_alertnow.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_alertnow" "test" {
   webhook_url = "https://alertnow.example.com/webhook"
 }
 
-data "uptimekuma_notification_alertnow" "test" {
+data "uptimekuma_notification_alertnow" "by_name" {
   name = uptimekuma_notification_alertnow.test.name
 }
-`, name)
-}
 
-func testAccNotificationAlertNowDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_alertnow" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://alertnow.example.com/webhook"
-}
-
-data "uptimekuma_notification_alertnow" "test" {
+data "uptimekuma_notification_alertnow" "by_id" {
   id = uptimekuma_notification_alertnow.test.id
 }
 `, name)

@@ -22,17 +22,12 @@ func TestAccNotificationSevenioDataSource(t *testing.T) {
 				Config: testAccNotificationSevenioDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_sevenio.test",
+						"data.uptimekuma_notification_sevenio.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSevenioDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_sevenio.test",
+						"data.uptimekuma_notification_sevenio.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,23 +47,11 @@ resource "uptimekuma_notification_sevenio" "test" {
   to        = "+491111111111"
 }
 
-data "uptimekuma_notification_sevenio" "test" {
+data "uptimekuma_notification_sevenio" "by_name" {
   name = uptimekuma_notification_sevenio.test.name
 }
-`, name)
-}
 
-func testAccNotificationSevenioDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_sevenio" "test" {
-  name      = %[1]q
-  is_active = true
-  api_key   = "test-api-key-123"
-  sender    = "+491234567890"
-  to        = "+491111111111"
-}
-
-data "uptimekuma_notification_sevenio" "test" {
+data "uptimekuma_notification_sevenio" "by_id" {
   id = uptimekuma_notification_sevenio.test.id
 }
 `, name)

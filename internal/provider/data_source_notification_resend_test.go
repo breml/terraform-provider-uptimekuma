@@ -22,22 +22,17 @@ func TestAccNotificationResendDataSource(t *testing.T) {
 				Config: testAccNotificationResendDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_resend.test",
+						"data.uptimekuma_notification_resend.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_resend.test",
+						"data.uptimekuma_notification_resend.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationResendDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_resend.test",
+						"data.uptimekuma_notification_resend.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -57,23 +52,11 @@ resource "uptimekuma_notification_resend" "test" {
   to_email   = "alerts@example.com"
 }
 
-data "uptimekuma_notification_resend" "test" {
+data "uptimekuma_notification_resend" "by_name" {
   name = uptimekuma_notification_resend.test.name
 }
-`, name)
-}
 
-func testAccNotificationResendDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_resend" "test" {
-  name       = %[1]q
-  is_active  = true
-  api_key    = "re_test_apikey"
-  from_email = "monitoring@example.com"
-  to_email   = "alerts@example.com"
-}
-
-data "uptimekuma_notification_resend" "test" {
+data "uptimekuma_notification_resend" "by_id" {
   id = uptimekuma_notification_resend.test.id
 }
 `, name)

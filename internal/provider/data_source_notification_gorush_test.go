@@ -22,17 +22,12 @@ func TestAccNotificationGorushDataSource(t *testing.T) {
 				Config: testAccNotificationGorushDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_gorush.test",
+						"data.uptimekuma_notification_gorush.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationGorushDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_gorush.test",
+						"data.uptimekuma_notification_gorush.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,23 +47,11 @@ resource "uptimekuma_notification_gorush" "test" {
   platform     = "ios"
 }
 
-data "uptimekuma_notification_gorush" "test" {
+data "uptimekuma_notification_gorush" "by_name" {
   name = uptimekuma_notification_gorush.test.name
 }
-`, name)
-}
 
-func testAccNotificationGorushDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_gorush" "test" {
-  name         = %[1]q
-  is_active    = true
-  server_url   = "https://gorush.example.com"
-  device_token = "test-device-token"
-  platform     = "ios"
-}
-
-data "uptimekuma_notification_gorush" "test" {
+data "uptimekuma_notification_gorush" "by_id" {
   id = uptimekuma_notification_gorush.test.id
 }
 `, name)

@@ -22,22 +22,17 @@ func TestAccNotificationHaloPSADataSource(t *testing.T) {
 				Config: testAccNotificationHaloPSADataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_halopsa.test",
+						"data.uptimekuma_notification_halopsa.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_halopsa.test",
+						"data.uptimekuma_notification_halopsa.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationHaloPSADataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_halopsa.test",
+						"data.uptimekuma_notification_halopsa.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -57,23 +52,11 @@ resource "uptimekuma_notification_halopsa" "test" {
   password    = "testpassword"
 }
 
-data "uptimekuma_notification_halopsa" "test" {
+data "uptimekuma_notification_halopsa" "by_name" {
   name = uptimekuma_notification_halopsa.test.name
 }
-`, name)
-}
 
-func testAccNotificationHaloPSADataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_halopsa" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://halopsa.example.com/webhook/XXXXXXXX"
-  username    = "testuser"
-  password    = "testpassword"
-}
-
-data "uptimekuma_notification_halopsa" "test" {
+data "uptimekuma_notification_halopsa" "by_id" {
   id = uptimekuma_notification_halopsa.test.id
 }
 `, name)

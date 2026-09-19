@@ -22,17 +22,12 @@ func TestAccNotificationAliyunsmsDataSource(t *testing.T) {
 				Config: testAccNotificationAliyunsmsDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_aliyunsms.test",
+						"data.uptimekuma_notification_aliyunsms.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationAliyunsmsDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_aliyunsms.test",
+						"data.uptimekuma_notification_aliyunsms.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -54,25 +49,11 @@ resource "uptimekuma_notification_aliyunsms" "test" {
   template_code      = "SMS_001"
 }
 
-data "uptimekuma_notification_aliyunsms" "test" {
+data "uptimekuma_notification_aliyunsms" "by_name" {
   name = uptimekuma_notification_aliyunsms.test.name
 }
-`, name)
-}
 
-func testAccNotificationAliyunsmsDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_aliyunsms" "test" {
-  name               = %[1]q
-  is_active          = true
-  access_key_id      = "test-access-key-id"
-  secret_access_key  = "test-secret-access-key"
-  phone_number       = "+1234567890"
-  sign_name          = "TestSign"
-  template_code      = "SMS_001"
-}
-
-data "uptimekuma_notification_aliyunsms" "test" {
+data "uptimekuma_notification_aliyunsms" "by_id" {
   id = uptimekuma_notification_aliyunsms.test.id
 }
 `, name)

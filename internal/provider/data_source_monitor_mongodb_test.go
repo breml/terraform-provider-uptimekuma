@@ -22,17 +22,12 @@ func TestAccMonitorMongoDBDataSource(t *testing.T) {
 				Config: testAccMonitorMongoDBDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_mongodb.test",
+						"data.uptimekuma_monitor_mongodb.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorMongoDBDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_mongodb.test",
+						"data.uptimekuma_monitor_mongodb.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -49,20 +44,11 @@ resource "uptimekuma_monitor_mongodb" "test" {
   database_connection_string = "mongodb://user:password@localhost:27017/db"
 }
 
-data "uptimekuma_monitor_mongodb" "test" {
+data "uptimekuma_monitor_mongodb" "by_name" {
   name = uptimekuma_monitor_mongodb.test.name
 }
-`, name)
-}
 
-func testAccMonitorMongoDBDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_mongodb" "test" {
-  name                       = %[1]q
-  database_connection_string = "mongodb://user:password@localhost:27017/db"
-}
-
-data "uptimekuma_monitor_mongodb" "test" {
+data "uptimekuma_monitor_mongodb" "by_id" {
   id = uptimekuma_monitor_mongodb.test.id
 }
 `, name)

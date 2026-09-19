@@ -22,17 +22,12 @@ func TestAccNotificationLunaseaDataSource(t *testing.T) {
 				Config: testAccNotificationLunaseaDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_lunasea.test",
+						"data.uptimekuma_notification_lunasea.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationLunaseaDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_lunasea.test",
+						"data.uptimekuma_notification_lunasea.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_lunasea" "test" {
   lunasea_user_id = "test_user_123"
 }
 
-data "uptimekuma_notification_lunasea" "test" {
+data "uptimekuma_notification_lunasea" "by_name" {
   name = uptimekuma_notification_lunasea.test.name
 }
-`, name)
-}
 
-func testAccNotificationLunaseaDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_lunasea" "test" {
-  name            = %[1]q
-  is_active       = true
-  target          = "user"
-  lunasea_user_id = "test_user_123"
-}
-
-data "uptimekuma_notification_lunasea" "test" {
+data "uptimekuma_notification_lunasea" "by_id" {
   id = uptimekuma_notification_lunasea.test.id
 }
 `, name)

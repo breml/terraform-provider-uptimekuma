@@ -22,17 +22,12 @@ func TestAccMonitorOracleDBDataSource(t *testing.T) {
 				Config: testAccMonitorOracleDBDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_oracledb.test",
+						"data.uptimekuma_monitor_oracledb.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorOracleDBDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_oracledb.test",
+						"data.uptimekuma_monitor_oracledb.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -49,20 +44,11 @@ resource "uptimekuma_monitor_oracledb" "test" {
   database_connection_string = "localhost:1521/ORCL"
 }
 
-data "uptimekuma_monitor_oracledb" "test" {
+data "uptimekuma_monitor_oracledb" "by_name" {
   name = uptimekuma_monitor_oracledb.test.name
 }
-`, name)
-}
 
-func testAccMonitorOracleDBDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_oracledb" "test" {
-  name                       = %[1]q
-  database_connection_string = "localhost:1521/ORCL"
-}
-
-data "uptimekuma_monitor_oracledb" "test" {
+data "uptimekuma_monitor_oracledb" "by_id" {
   id = uptimekuma_monitor_oracledb.test.id
 }
 `, name)

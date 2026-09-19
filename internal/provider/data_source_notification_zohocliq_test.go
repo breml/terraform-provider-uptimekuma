@@ -22,17 +22,12 @@ func TestAccNotificationZohoCliqDataSource(t *testing.T) {
 				Config: testAccNotificationZohoCliqDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_zohocliq.test",
+						"data.uptimekuma_notification_zohocliq.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationZohoCliqDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_zohocliq.test",
+						"data.uptimekuma_notification_zohocliq.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_zohocliq" "test" {
   webhook_url = "https://cliq.zoho.com/company/api/v2/channelsbyname/general/message?zapikey=test-key"
 }
 
-data "uptimekuma_notification_zohocliq" "test" {
+data "uptimekuma_notification_zohocliq" "by_name" {
   name = uptimekuma_notification_zohocliq.test.name
 }
-`, name)
-}
 
-func testAccNotificationZohoCliqDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_zohocliq" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://cliq.zoho.com/company/api/v2/channelsbyname/general/message?zapikey=test-key"
-}
-
-data "uptimekuma_notification_zohocliq" "test" {
+data "uptimekuma_notification_zohocliq" "by_id" {
   id = uptimekuma_notification_zohocliq.test.id
 }
 `, name)

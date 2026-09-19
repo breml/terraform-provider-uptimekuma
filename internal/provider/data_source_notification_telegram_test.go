@@ -22,17 +22,12 @@ func TestAccNotificationTelegramDataSource(t *testing.T) {
 				Config: testAccNotificationTelegramDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_telegram.test",
+						"data.uptimekuma_notification_telegram.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationTelegramDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_telegram.test",
+						"data.uptimekuma_notification_telegram.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_telegram" "test" {
   chat_id   = "123456789"
 }
 
-data "uptimekuma_notification_telegram" "test" {
+data "uptimekuma_notification_telegram" "by_name" {
   name = uptimekuma_notification_telegram.test.name
 }
-`, name)
-}
 
-func testAccNotificationTelegramDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_telegram" "test" {
-  name      = %[1]q
-  is_active = true
-  bot_token = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
-  chat_id   = "123456789"
-}
-
-data "uptimekuma_notification_telegram" "test" {
+data "uptimekuma_notification_telegram" "by_id" {
   id = uptimekuma_notification_telegram.test.id
 }
 `, name)

@@ -32,28 +32,17 @@ func TestAccNotification46ElksDataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_46elks.test",
+						"data.uptimekuma_notification_46elks.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_46elks.test",
+						"data.uptimekuma_notification_46elks.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotification46ElksDataSourceConfigByID(
-					name,
-					username,
-					authToken,
-					fromNumber,
-					toNumber,
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_46elks.test",
+						"data.uptimekuma_notification_46elks.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -80,30 +69,11 @@ resource "uptimekuma_notification_46elks" "test" {
   to_number   = %[5]q
 }
 
-data "uptimekuma_notification_46elks" "test" {
+data "uptimekuma_notification_46elks" "by_name" {
   name = uptimekuma_notification_46elks.test.name
 }
-`, name, username, authToken, fromNumber, toNumber)
-}
 
-func testAccNotification46ElksDataSourceConfigByID(
-	name string,
-	username string,
-	authToken string,
-	fromNumber string,
-	toNumber string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_46elks" "test" {
-  name        = %[1]q
-  is_active   = true
-  username    = %[2]q
-  auth_token  = %[3]q
-  from_number = %[4]q
-  to_number   = %[5]q
-}
-
-data "uptimekuma_notification_46elks" "test" {
+data "uptimekuma_notification_46elks" "by_id" {
   id = uptimekuma_notification_46elks.test.id
 }
 `, name, username, authToken, fromNumber, toNumber)

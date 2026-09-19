@@ -22,17 +22,12 @@ func TestAccNotificationNtfyDataSource(t *testing.T) {
 				Config: testAccNotificationNtfyDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_ntfy.test",
+						"data.uptimekuma_notification_ntfy.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationNtfyDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_ntfy.test",
+						"data.uptimekuma_notification_ntfy.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -54,25 +49,11 @@ resource "uptimekuma_notification_ntfy" "test" {
   topic                 = %[1]q
 }
 
-data "uptimekuma_notification_ntfy" "test" {
+data "uptimekuma_notification_ntfy" "by_name" {
   name = uptimekuma_notification_ntfy.test.name
 }
-`, name)
-}
 
-func testAccNotificationNtfyDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_ntfy" "test" {
-  name      = %[1]q
-  is_active = true
-
-  authentication_method = "none"
-  server_url            = "https://ntfy.sh"
-  priority              = 5
-  topic                 = %[1]q
-}
-
-data "uptimekuma_notification_ntfy" "test" {
+data "uptimekuma_notification_ntfy" "by_id" {
   id = uptimekuma_notification_ntfy.test.id
 }
 `, name)

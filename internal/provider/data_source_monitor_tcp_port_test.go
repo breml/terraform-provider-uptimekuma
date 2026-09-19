@@ -22,27 +22,22 @@ func TestAccMonitorTCPPortDataSource(t *testing.T) {
 				Config: testAccMonitorTCPPortDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_tcp_port.test",
+						"data.uptimekuma_monitor_tcp_port.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_tcp_port.test",
+						"data.uptimekuma_monitor_tcp_port.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorTCPPortDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_tcp_port.test",
+						"data.uptimekuma_monitor_tcp_port.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_tcp_port.test",
+						"data.uptimekuma_monitor_tcp_port.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -61,22 +56,11 @@ resource "uptimekuma_monitor_tcp_port" "test" {
   domain_expiry_notification = true
 }
 
-data "uptimekuma_monitor_tcp_port" "test" {
+data "uptimekuma_monitor_tcp_port" "by_name" {
   name = uptimekuma_monitor_tcp_port.test.name
 }
-`, name)
-}
 
-func testAccMonitorTCPPortDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_tcp_port" "test" {
-  name                       = %[1]q
-  hostname                   = "google.com"
-  port                       = 443
-  domain_expiry_notification = true
-}
-
-data "uptimekuma_monitor_tcp_port" "test" {
+data "uptimekuma_monitor_tcp_port" "by_id" {
   id = uptimekuma_monitor_tcp_port.test.id
 }
 `, name)

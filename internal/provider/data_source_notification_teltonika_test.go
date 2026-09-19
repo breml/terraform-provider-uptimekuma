@@ -22,17 +22,12 @@ func TestAccNotificationTeltonikaDataSource(t *testing.T) {
 				Config: testAccNotificationTeltonikaDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_teltonika.test",
+						"data.uptimekuma_notification_teltonika.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationTeltonikaDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_teltonika.test",
+						"data.uptimekuma_notification_teltonika.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -53,24 +48,11 @@ resource "uptimekuma_notification_teltonika" "test" {
   phone_number = "+33600000000"
 }
 
-data "uptimekuma_notification_teltonika" "test" {
+data "uptimekuma_notification_teltonika" "by_name" {
   name = uptimekuma_notification_teltonika.test.name
 }
-`, name)
-}
 
-func testAccNotificationTeltonikaDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_teltonika" "test" {
-  name         = %[1]q
-  is_active    = true
-  url          = "https://192.168.1.1"
-  username     = "admin"
-  password     = "test-password-123"
-  phone_number = "+33600000000"
-}
-
-data "uptimekuma_notification_teltonika" "test" {
+data "uptimekuma_notification_teltonika" "by_id" {
   id = uptimekuma_notification_teltonika.test.id
 }
 `, name)

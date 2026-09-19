@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-func TestAccNotificationHeiiOnCallDataSourceByID(t *testing.T) {
+func TestAccNotificationHeiiOnCallDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHeiiOnCallDS")
 	apiKey := acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
 	triggerID := acctest.RandStringFromCharSet(16, acctest.CharSetAlphaNum)
@@ -21,7 +21,7 @@ func TestAccNotificationHeiiOnCallDataSourceByID(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationHeiiOnCallDataSourceByIDConfig(name, apiKey, triggerID),
+				Config: testAccNotificationHeiiOnCallDataSourceConfig(name, apiKey, triggerID),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_heiioncall.by_id",
@@ -33,13 +33,23 @@ func TestAccNotificationHeiiOnCallDataSourceByID(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_heiioncall.by_name",
+						tfjsonpath.New("id"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_heiioncall.by_name",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},
 	})
 }
 
-func testAccNotificationHeiiOnCallDataSourceByIDConfig(
+func testAccNotificationHeiiOnCallDataSourceConfig(
 	name string,
 	apiKey string,
 	triggerID string,
@@ -53,48 +63,6 @@ resource "uptimekuma_notification_heiioncall" "test" {
 
 data "uptimekuma_notification_heiioncall" "by_id" {
   id = uptimekuma_notification_heiioncall.test.id
-}
-`, name, apiKey, triggerID)
-}
-
-func TestAccNotificationHeiiOnCallDataSourceByName(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestHeiiOnCallDS")
-	apiKey := acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
-	triggerID := acctest.RandStringFromCharSet(16, acctest.CharSetAlphaNum)
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationHeiiOnCallDataSourceByNameConfig(name, apiKey, triggerID),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_heiioncall.by_name",
-						tfjsonpath.New("id"),
-						knownvalue.NotNull(),
-					),
-					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_heiioncall.by_name",
-						tfjsonpath.New("name"),
-						knownvalue.StringExact(name),
-					),
-				},
-			},
-		},
-	})
-}
-
-func testAccNotificationHeiiOnCallDataSourceByNameConfig(
-	name string,
-	apiKey string,
-	triggerID string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_heiioncall" "test" {
-  name       = %[1]q
-  api_key    = %[2]q
-  trigger_id = %[3]q
 }
 
 data "uptimekuma_notification_heiioncall" "by_name" {

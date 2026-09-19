@@ -22,17 +22,12 @@ func TestAccNotificationPromoSMSDataSource(t *testing.T) {
 				Config: testAccNotificationPromoSMSDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_promosms.test",
+						"data.uptimekuma_notification_promosms.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationPromoSMSDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_promosms.test",
+						"data.uptimekuma_notification_promosms.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -55,26 +50,11 @@ resource "uptimekuma_notification_promosms" "test" {
   allow_long_sms = false
 }
 
-data "uptimekuma_notification_promosms" "test" {
+data "uptimekuma_notification_promosms" "by_name" {
   name = uptimekuma_notification_promosms.test.name
 }
-`, name)
-}
 
-func testAccNotificationPromoSMSDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_promosms" "test" {
-  name           = %[1]q
-  is_active      = true
-  login          = "testuser"
-  password       = "testpass123"
-  phone_number   = "+48501234567"
-  sender_name    = "TestSender"
-  sms_type       = "1"
-  allow_long_sms = false
-}
-
-data "uptimekuma_notification_promosms" "test" {
+data "uptimekuma_notification_promosms" "by_id" {
   id = uptimekuma_notification_promosms.test.id
 }
 `, name)

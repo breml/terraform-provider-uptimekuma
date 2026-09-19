@@ -22,17 +22,12 @@ func TestAccNotificationEvolutionDataSource(t *testing.T) {
 				Config: testAccNotificationEvolutionDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_evolution.test",
+						"data.uptimekuma_notification_evolution.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationEvolutionDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_evolution.test",
+						"data.uptimekuma_notification_evolution.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -53,24 +48,11 @@ resource "uptimekuma_notification_evolution" "test" {
   recipient     = "+551198765432"
 }
 
-data "uptimekuma_notification_evolution" "test" {
+data "uptimekuma_notification_evolution" "by_name" {
   name = uptimekuma_notification_evolution.test.name
 }
-`, name)
-}
 
-func testAccNotificationEvolutionDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_evolution" "test" {
-  name          = %[1]q
-  is_active     = true
-  api_url       = "https://api.evolution.example.com"
-  instance_name = "testinstance"
-  auth_token    = "testAuthToken123"
-  recipient     = "+551198765432"
-}
-
-data "uptimekuma_notification_evolution" "test" {
+data "uptimekuma_notification_evolution" "by_id" {
   id = uptimekuma_notification_evolution.test.id
 }
 `, name)

@@ -22,17 +22,12 @@ func TestAccNotificationSignalDataSource(t *testing.T) {
 				Config: testAccNotificationSignalDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_signal.test",
+						"data.uptimekuma_notification_signal.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSignalDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_signal.test",
+						"data.uptimekuma_notification_signal.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,23 +47,11 @@ resource "uptimekuma_notification_signal" "test" {
   recipients = "+9876543210"
 }
 
-data "uptimekuma_notification_signal" "test" {
+data "uptimekuma_notification_signal" "by_name" {
   name = uptimekuma_notification_signal.test.name
 }
-`, name)
-}
 
-func testAccNotificationSignalDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_signal" "test" {
-  name       = %[1]q
-  is_active  = true
-  url        = "http://signal.example.com:8080"
-  number     = "+1234567890"
-  recipients = "+9876543210"
-}
-
-data "uptimekuma_notification_signal" "test" {
+data "uptimekuma_notification_signal" "by_id" {
   id = uptimekuma_notification_signal.test.id
 }
 `, name)

@@ -22,22 +22,17 @@ func TestAccNotificationMaxDataSource(t *testing.T) {
 				Config: testAccNotificationMaxDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_max.test",
+						"data.uptimekuma_notification_max.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_max.test",
+						"data.uptimekuma_notification_max.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationMaxDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_max.test",
+						"data.uptimekuma_notification_max.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -56,22 +51,11 @@ resource "uptimekuma_notification_max" "test" {
   chat_id   = "-12345"
 }
 
-data "uptimekuma_notification_max" "test" {
+data "uptimekuma_notification_max" "by_name" {
   name = uptimekuma_notification_max.test.name
 }
-`, name)
-}
 
-func testAccNotificationMaxDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_max" "test" {
-  name      = %[1]q
-  is_active = true
-  bot_token = "bot-token-123"
-  chat_id   = "-12345"
-}
-
-data "uptimekuma_notification_max" "test" {
+data "uptimekuma_notification_max" "by_id" {
   id = uptimekuma_notification_max.test.id
 }
 `, name)

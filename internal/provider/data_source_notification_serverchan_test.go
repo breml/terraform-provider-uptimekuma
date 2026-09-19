@@ -22,17 +22,12 @@ func TestAccNotificationServerChanDataSource(t *testing.T) {
 				Config: testAccNotificationServerChanDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_serverchan.test",
+						"data.uptimekuma_notification_serverchan.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationServerChanDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_serverchan.test",
+						"data.uptimekuma_notification_serverchan.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_serverchan" "test" {
   send_key = "test-send-key-12345"
 }
 
-data "uptimekuma_notification_serverchan" "test" {
+data "uptimekuma_notification_serverchan" "by_name" {
   name = uptimekuma_notification_serverchan.test.name
 }
-`, name)
-}
 
-func testAccNotificationServerChanDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_serverchan" "test" {
-  name     = %[1]q
-  is_active = true
-  send_key = "test-send-key-12345"
-}
-
-data "uptimekuma_notification_serverchan" "test" {
+data "uptimekuma_notification_serverchan" "by_id" {
   id = uptimekuma_notification_serverchan.test.id
 }
 `, name)

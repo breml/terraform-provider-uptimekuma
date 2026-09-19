@@ -22,17 +22,12 @@ func TestAccNotificationRocketChatDataSource(t *testing.T) {
 				Config: testAccNotificationRocketChatDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_rocketchat.test",
+						"data.uptimekuma_notification_rocketchat.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationRocketChatDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_rocketchat.test",
+						"data.uptimekuma_notification_rocketchat.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_rocketchat" "test" {
   webhook_url = "https://rocket.example.com/hooks/uid/token"
 }
 
-data "uptimekuma_notification_rocketchat" "test" {
+data "uptimekuma_notification_rocketchat" "by_name" {
   name = uptimekuma_notification_rocketchat.test.name
 }
-`, name)
-}
 
-func testAccNotificationRocketChatDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_rocketchat" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://rocket.example.com/hooks/uid/token"
-}
-
-data "uptimekuma_notification_rocketchat" "test" {
+data "uptimekuma_notification_rocketchat" "by_id" {
   id = uptimekuma_notification_rocketchat.test.id
 }
 `, name)

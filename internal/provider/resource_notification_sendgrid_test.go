@@ -120,36 +120,6 @@ func TestAccNotificationSendgridResource(t *testing.T) {
 	})
 }
 
-func TestAccNotificationSendgridDataSource(t *testing.T) {
-	name := acctest.RandomWithPrefix("NotificationSendgrid")
-	apiKey := "SG.test-api-key-" + acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccNotificationSendgridDataSourceConfig(
-					name,
-					apiKey,
-					"alerts@example.com",
-					"monitoring@example.com",
-					"Uptime Alert",
-					"",
-					"",
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_sendgrid.test",
-						tfjsonpath.New("name"),
-						knownvalue.StringExact(name),
-					),
-				},
-			},
-		},
-	})
-}
-
 func testAccNotificationSendgridResourceConfig(
 	name string, apiKey string, toEmail string, fromEmail string, subject string,
 	ccEmail string, bccEmail string,
@@ -173,36 +143,6 @@ resource "uptimekuma_notification_sendgrid" "test" {
   from_email = %[4]q
   subject    = %[5]q
 %[6]s%[7]s}
-`, name, apiKey, toEmail, fromEmail, subject, ccEmailLine, bccEmailLine)
-}
-
-func testAccNotificationSendgridDataSourceConfig(
-	name string, apiKey string, toEmail string, fromEmail string, subject string,
-	ccEmail string, bccEmail string,
-) string {
-	ccEmailLine := ""
-	if ccEmail != "" {
-		ccEmailLine = fmt.Sprintf("  cc_email   = %q\n", ccEmail)
-	}
-
-	bccEmailLine := ""
-	if bccEmail != "" {
-		bccEmailLine = fmt.Sprintf("  bcc_email  = %q\n", bccEmail)
-	}
-
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_sendgrid" "test" {
-  name       = %[1]q
-  is_active  = true
-  api_key    = %[2]q
-  to_email   = %[3]q
-  from_email = %[4]q
-  subject    = %[5]q
-%[6]s%[7]s}
-
-data "uptimekuma_notification_sendgrid" "test" {
-  name = uptimekuma_notification_sendgrid.test.name
-}
 `, name, apiKey, toEmail, fromEmail, subject, ccEmailLine, bccEmailLine)
 }
 

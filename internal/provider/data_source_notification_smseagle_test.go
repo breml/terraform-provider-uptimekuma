@@ -22,7 +22,7 @@ func TestAccNotificationSMSEagleDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationSMSEagleDataSourceByNameConfig(
+				Config: testAccNotificationSMSEagleDataSourceConfig(
 					name,
 					url,
 					token,
@@ -30,22 +30,12 @@ func TestAccNotificationSMSEagleDataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smseagle.test",
+						"data.uptimekuma_notification_smseagle.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSMSEagleDataSourceByIDConfig(
-					name,
-					url,
-					token,
-					recipientTo,
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smseagle.test",
+						"data.uptimekuma_notification_smseagle.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -55,7 +45,7 @@ func TestAccNotificationSMSEagleDataSource(t *testing.T) {
 	})
 }
 
-func testAccNotificationSMSEagleDataSourceByNameConfig(
+func testAccNotificationSMSEagleDataSourceConfig(
 	name string,
 	url string,
 	token string,
@@ -72,30 +62,11 @@ resource "uptimekuma_notification_smseagle" "test" {
   api_type       = "smseagle-apiv2"
 }
 
-data "uptimekuma_notification_smseagle" "test" {
+data "uptimekuma_notification_smseagle" "by_name" {
   name = uptimekuma_notification_smseagle.test.name
 }
-`, name, url, token, recipientTo)
-}
 
-func testAccNotificationSMSEagleDataSourceByIDConfig(
-	name string,
-	url string,
-	token string,
-	recipientTo string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_smseagle" "test" {
-  name           = %[1]q
-  is_active      = true
-  url            = %[2]q
-  token          = %[3]q
-  recipient_type = "smseagle-to"
-  recipient_to   = %[4]q
-  api_type       = "smseagle-apiv2"
-}
-
-data "uptimekuma_notification_smseagle" "test" {
+data "uptimekuma_notification_smseagle" "by_id" {
   id = uptimekuma_notification_smseagle.test.id
 }
 `, name, url, token, recipientTo)

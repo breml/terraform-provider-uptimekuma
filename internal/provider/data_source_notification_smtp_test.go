@@ -22,17 +22,12 @@ func TestAccNotificationSMTPDataSource(t *testing.T) {
 				Config: testAccNotificationSMTPDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smtp.test",
+						"data.uptimekuma_notification_smtp.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSMTPDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smtp.test",
+						"data.uptimekuma_notification_smtp.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -53,24 +48,11 @@ resource "uptimekuma_notification_smtp" "test" {
   is_active = true
 }
 
-data "uptimekuma_notification_smtp" "test" {
+data "uptimekuma_notification_smtp" "by_name" {
   name = uptimekuma_notification_smtp.test.name
 }
-`, name)
-}
 
-func testAccNotificationSMTPDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_smtp" "test" {
-  name  = %[1]q
-  host  = "smtp.example.com"
-  from  = "uptime-kuma@example.com"
-  to    = "admin@example.com"
-  port  = 587
-  is_active = true
-}
-
-data "uptimekuma_notification_smtp" "test" {
+data "uptimekuma_notification_smtp" "by_id" {
   id = uptimekuma_notification_smtp.test.id
 }
 `, name)

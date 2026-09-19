@@ -21,28 +21,19 @@ func TestAccNotificationWPushDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationWPushDataSourceByNameConfig(
+				Config: testAccNotificationWPushDataSourceConfig(
 					name,
 					apiKey,
 					channel,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_wpush.test",
+						"data.uptimekuma_notification_wpush.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationWPushDataSourceByIDConfig(
-					name,
-					apiKey,
-					channel,
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_wpush.test",
+						"data.uptimekuma_notification_wpush.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,7 +43,7 @@ func TestAccNotificationWPushDataSource(t *testing.T) {
 	})
 }
 
-func testAccNotificationWPushDataSourceByNameConfig(
+func testAccNotificationWPushDataSourceConfig(
 	name string,
 	apiKey string,
 	channel string,
@@ -65,26 +56,11 @@ resource "uptimekuma_notification_wpush" "test" {
   channel   = %[3]q
 }
 
-data "uptimekuma_notification_wpush" "test" {
+data "uptimekuma_notification_wpush" "by_name" {
   name = uptimekuma_notification_wpush.test.name
 }
-`, name, apiKey, channel)
-}
 
-func testAccNotificationWPushDataSourceByIDConfig(
-	name string,
-	apiKey string,
-	channel string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_wpush" "test" {
-  name      = %[1]q
-  is_active = true
-  api_key   = %[2]q
-  channel   = %[3]q
-}
-
-data "uptimekuma_notification_wpush" "test" {
+data "uptimekuma_notification_wpush" "by_id" {
   id = uptimekuma_notification_wpush.test.id
 }
 `, name, apiKey, channel)

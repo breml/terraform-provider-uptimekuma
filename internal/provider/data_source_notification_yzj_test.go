@@ -33,11 +33,6 @@ func TestAccNotificationYZJDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationYZJDataSourceConfig(name, webhookURL, token),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_yzj.by_name",
 						tfjsonpath.New("id"),

@@ -22,17 +22,12 @@ func TestAccTagDataSource(t *testing.T) {
 				Config: testAccTagDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_tag.test",
+						"data.uptimekuma_tag.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccTagDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_tag.test",
+						"data.uptimekuma_tag.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -49,20 +44,11 @@ resource "uptimekuma_tag" "test" {
   color = "#FF0000"
 }
 
-data "uptimekuma_tag" "test" {
+data "uptimekuma_tag" "by_name" {
   name = uptimekuma_tag.test.name
 }
-`, name)
-}
 
-func testAccTagDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_tag" "test" {
-  name  = %[1]q
-  color = "#FF0000"
-}
-
-data "uptimekuma_tag" "test" {
+data "uptimekuma_tag" "by_id" {
   id = uptimekuma_tag.test.id
 }
 `, name)

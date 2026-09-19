@@ -23,27 +23,22 @@ func TestAccMonitorHTTPKeywordDataSource(t *testing.T) {
 				Config: testAccMonitorHTTPKeywordDataSourceConfig(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_keyword.test",
+						"data.uptimekuma_monitor_http_keyword.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_keyword.test",
+						"data.uptimekuma_monitor_http_keyword.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorHTTPKeywordDataSourceConfigByID(name, url),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_keyword.test",
+						"data.uptimekuma_monitor_http_keyword.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_keyword.test",
+						"data.uptimekuma_monitor_http_keyword.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -62,22 +57,11 @@ resource "uptimekuma_monitor_http_keyword" "test" {
   domain_expiry_notification = true
 }
 
-data "uptimekuma_monitor_http_keyword" "test" {
+data "uptimekuma_monitor_http_keyword" "by_name" {
   name = uptimekuma_monitor_http_keyword.test.name
 }
-`, name, url)
-}
 
-func testAccMonitorHTTPKeywordDataSourceConfigByID(name string, url string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_http_keyword" "test" {
-  name                       = %[1]q
-  url                        = %[2]q
-  keyword                    = "html"
-  domain_expiry_notification = true
-}
-
-data "uptimekuma_monitor_http_keyword" "test" {
+data "uptimekuma_monitor_http_keyword" "by_id" {
   id = uptimekuma_monitor_http_keyword.test.id
 }
 `, name, url)

@@ -22,27 +22,22 @@ func TestAccNotificationGoogleSheetsDataSource(t *testing.T) {
 				Config: testAccNotificationGoogleSheetsDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_googlesheets.test",
+						"data.uptimekuma_notification_googlesheets.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_googlesheets.test",
+						"data.uptimekuma_notification_googlesheets.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationGoogleSheetsDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_googlesheets.test",
+						"data.uptimekuma_notification_googlesheets.by_id",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_googlesheets.test",
+						"data.uptimekuma_notification_googlesheets.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -60,21 +55,11 @@ resource "uptimekuma_notification_googlesheets" "test" {
   webhook_url = "https://script.google.com/macros/s/test/exec"
 }
 
-data "uptimekuma_notification_googlesheets" "test" {
+data "uptimekuma_notification_googlesheets" "by_name" {
   name = uptimekuma_notification_googlesheets.test.name
 }
-`, name)
-}
 
-func testAccNotificationGoogleSheetsDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_googlesheets" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://script.google.com/macros/s/test/exec"
-}
-
-data "uptimekuma_notification_googlesheets" "test" {
+data "uptimekuma_notification_googlesheets" "by_id" {
   id = uptimekuma_notification_googlesheets.test.id
 }
 `, name)

@@ -22,7 +22,7 @@ func TestAccNotificationWhapiDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationWhapiDataSourceByNameConfig(
+				Config: testAccNotificationWhapiDataSourceConfig(
 					name,
 					apiURL,
 					authToken,
@@ -30,22 +30,12 @@ func TestAccNotificationWhapiDataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_whapi.test",
+						"data.uptimekuma_notification_whapi.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationWhapiDataSourceByIDConfig(
-					name,
-					apiURL,
-					authToken,
-					recipient,
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_whapi.test",
+						"data.uptimekuma_notification_whapi.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -55,7 +45,7 @@ func TestAccNotificationWhapiDataSource(t *testing.T) {
 	})
 }
 
-func testAccNotificationWhapiDataSourceByNameConfig(
+func testAccNotificationWhapiDataSourceConfig(
 	name string,
 	apiURL string,
 	authToken string,
@@ -70,28 +60,11 @@ resource "uptimekuma_notification_whapi" "test" {
   recipient  = %[4]q
 }
 
-data "uptimekuma_notification_whapi" "test" {
+data "uptimekuma_notification_whapi" "by_name" {
   name = uptimekuma_notification_whapi.test.name
 }
-`, name, apiURL, authToken, recipient)
-}
 
-func testAccNotificationWhapiDataSourceByIDConfig(
-	name string,
-	apiURL string,
-	authToken string,
-	recipient string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_whapi" "test" {
-  name       = %[1]q
-  is_active  = true
-  api_url    = %[2]q
-  auth_token = %[3]q
-  recipient  = %[4]q
-}
-
-data "uptimekuma_notification_whapi" "test" {
+data "uptimekuma_notification_whapi" "by_id" {
   id = uptimekuma_notification_whapi.test.id
 }
 `, name, apiURL, authToken, recipient)

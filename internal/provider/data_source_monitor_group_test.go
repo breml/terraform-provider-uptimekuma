@@ -22,17 +22,12 @@ func TestAccMonitorGroupDataSource(t *testing.T) {
 				Config: testAccMonitorGroupDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_group.test",
+						"data.uptimekuma_monitor_group.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorGroupDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_group.test",
+						"data.uptimekuma_monitor_group.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -48,19 +43,11 @@ resource "uptimekuma_monitor_group" "test" {
   name = %[1]q
 }
 
-data "uptimekuma_monitor_group" "test" {
+data "uptimekuma_monitor_group" "by_name" {
   name = uptimekuma_monitor_group.test.name
 }
-`, name)
-}
 
-func testAccMonitorGroupDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_group" "test" {
-  name = %[1]q
-}
-
-data "uptimekuma_monitor_group" "test" {
+data "uptimekuma_monitor_group" "by_id" {
   id = uptimekuma_monitor_group.test.id
 }
 `, name)

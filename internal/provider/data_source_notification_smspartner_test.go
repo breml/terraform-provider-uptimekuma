@@ -22,17 +22,12 @@ func TestAccNotificationSMSPartnerDataSource(t *testing.T) {
 				Config: testAccNotificationSMSPartnerDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smspartner.test",
+						"data.uptimekuma_notification_smspartner.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSMSPartnerDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smspartner.test",
+						"data.uptimekuma_notification_smspartner.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_smspartner" "test" {
   phone_number = "+33612345678"
 }
 
-data "uptimekuma_notification_smspartner" "test" {
+data "uptimekuma_notification_smspartner" "by_name" {
   name = uptimekuma_notification_smspartner.test.name
 }
-`, name)
-}
 
-func testAccNotificationSMSPartnerDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_smspartner" "test" {
-  name         = %[1]q
-  is_active    = true
-  api_key      = "test_api_key"
-  phone_number = "+33612345678"
-}
-
-data "uptimekuma_notification_smspartner" "test" {
+data "uptimekuma_notification_smspartner" "by_id" {
   id = uptimekuma_notification_smspartner.test.id
 }
 `, name)

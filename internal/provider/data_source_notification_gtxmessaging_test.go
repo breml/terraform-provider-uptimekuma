@@ -22,17 +22,12 @@ func TestAccNotificationGTXMessagingDataSource(t *testing.T) {
 				Config: testAccNotificationGTXMessagingDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_gtxmessaging.test",
+						"data.uptimekuma_notification_gtxmessaging.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationGTXMessagingDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_gtxmessaging.test",
+						"data.uptimekuma_notification_gtxmessaging.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,23 +47,11 @@ resource "uptimekuma_notification_gtxmessaging" "test" {
   to        = "+1234567890"
 }
 
-data "uptimekuma_notification_gtxmessaging" "test" {
+data "uptimekuma_notification_gtxmessaging" "by_name" {
   name = uptimekuma_notification_gtxmessaging.test.name
 }
-`, name)
-}
 
-func testAccNotificationGTXMessagingDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_gtxmessaging" "test" {
-  name      = %[1]q
-  is_active = true
-  api_key   = "test-api-key-123"
-  from      = "SenderID"
-  to        = "+1234567890"
-}
-
-data "uptimekuma_notification_gtxmessaging" "test" {
+data "uptimekuma_notification_gtxmessaging" "by_id" {
   id = uptimekuma_notification_gtxmessaging.test.id
 }
 `, name)

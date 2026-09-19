@@ -19,18 +19,13 @@ func TestAccNotificationOctopushDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationOctopushDataSourceConfigByName(name),
+				Config: testAccNotificationOctopushDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_octopush.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationOctopushDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_octopush.by_id",
 						tfjsonpath.New("name"),
@@ -42,7 +37,7 @@ func TestAccNotificationOctopushDataSource(t *testing.T) {
 	})
 }
 
-func testAccNotificationOctopushDataSourceConfigByName(name string) string {
+func testAccNotificationOctopushDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_octopush" "test" {
   name         = %[1]q
@@ -55,19 +50,6 @@ resource "uptimekuma_notification_octopush" "test" {
 
 data "uptimekuma_notification_octopush" "by_name" {
   name = uptimekuma_notification_octopush.test.name
-}
-`, name)
-}
-
-func testAccNotificationOctopushDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_octopush" "test" {
-  name         = %[1]q
-  is_active    = true
-  version      = "2"
-  api_key      = "test-api-key"
-  login        = "test-login"
-  phone_number = "+1234567890"
 }
 
 data "uptimekuma_notification_octopush" "by_id" {

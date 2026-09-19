@@ -22,17 +22,12 @@ func TestAccNotificationKeepDataSource(t *testing.T) {
 				Config: testAccNotificationKeepDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_keep.test",
+						"data.uptimekuma_notification_keep.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationKeepDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_keep.test",
+						"data.uptimekuma_notification_keep.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_keep" "test" {
   api_key     = "test-api-key"
 }
 
-data "uptimekuma_notification_keep" "test" {
+data "uptimekuma_notification_keep" "by_name" {
   name = uptimekuma_notification_keep.test.name
 }
-`, name)
-}
 
-func testAccNotificationKeepDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_keep" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://api.keephq.dev/alerts/alert"
-  api_key     = "test-api-key"
-}
-
-data "uptimekuma_notification_keep" "test" {
+data "uptimekuma_notification_keep" "by_id" {
   id = uptimekuma_notification_keep.test.id
 }
 `, name)

@@ -22,17 +22,12 @@ func TestAccNotificationSMSCDataSource(t *testing.T) {
 				Config: testAccNotificationSMSCDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smsc.test",
+						"data.uptimekuma_notification_smsc.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSMSCDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smsc.test",
+						"data.uptimekuma_notification_smsc.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -54,25 +49,11 @@ resource "uptimekuma_notification_smsc" "test" {
   translit    = "0"
 }
 
-data "uptimekuma_notification_smsc" "test" {
+data "uptimekuma_notification_smsc" "by_name" {
   name = uptimekuma_notification_smsc.test.name
 }
-`, name)
-}
 
-func testAccNotificationSMSCDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_smsc" "test" {
-  name        = %[1]q
-  is_active   = true
-  login       = "testuser"
-  password    = "testpass123"
-  to_number   = "77123456789"
-  sender_name = "Uptime"
-  translit    = "0"
-}
-
-data "uptimekuma_notification_smsc" "test" {
+data "uptimekuma_notification_smsc" "by_id" {
   id = uptimekuma_notification_smsc.test.id
 }
 `, name)

@@ -22,17 +22,12 @@ func TestAccMonitorSQLServerDataSource(t *testing.T) {
 				Config: testAccMonitorSQLServerDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sqlserver.test",
+						"data.uptimekuma_monitor_sqlserver.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorSQLServerDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sqlserver.test",
+						"data.uptimekuma_monitor_sqlserver.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_monitor_sqlserver" "test" {
   active                     = true
 }
 
-data "uptimekuma_monitor_sqlserver" "test" {
+data "uptimekuma_monitor_sqlserver" "by_name" {
   name = uptimekuma_monitor_sqlserver.test.name
 }
-`, name)
-}
 
-func testAccMonitorSQLServerDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_sqlserver" "test" {
-  name                       = %[1]q
-  database_connection_string = "Server=localhost;User=sa;Password=MyPassword123;TrustServerCertificate=true"
-  active                     = true
-}
-
-data "uptimekuma_monitor_sqlserver" "test" {
+data "uptimekuma_monitor_sqlserver" "by_id" {
   id = uptimekuma_monitor_sqlserver.test.id
 }
 `, name)

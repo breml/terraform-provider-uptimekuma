@@ -19,25 +19,20 @@ func TestAccNotificationGrafanaOncallDataSource(t *testing.T) {
 				Config: testAccNotificationGrafanaOncallDataSourceConfig(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
-						"data.uptimekuma_notification_grafanaoncall.test",
+						"data.uptimekuma_notification_grafanaoncall.by_name",
 						"id",
 					),
 					resource.TestCheckResourceAttr(
-						"data.uptimekuma_notification_grafanaoncall.test",
+						"data.uptimekuma_notification_grafanaoncall.by_name",
 						"name",
 						name,
 					),
-				),
-			},
-			{
-				Config: testAccNotificationGrafanaOncallDataSourceConfigByID(name),
-				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
-						"data.uptimekuma_notification_grafanaoncall.test",
+						"data.uptimekuma_notification_grafanaoncall.by_id",
 						"id",
 					),
 					resource.TestCheckResourceAttr(
-						"data.uptimekuma_notification_grafanaoncall.test",
+						"data.uptimekuma_notification_grafanaoncall.by_id",
 						"name",
 						name,
 					),
@@ -55,21 +50,11 @@ resource "uptimekuma_notification_grafanaoncall" "test" {
   grafana_oncall_url = "https://grafana-oncall.example.com/integrations/v1/webhook/abc123/"
 }
 
-data "uptimekuma_notification_grafanaoncall" "test" {
+data "uptimekuma_notification_grafanaoncall" "by_name" {
   name = uptimekuma_notification_grafanaoncall.test.name
 }
-`, name)
-}
 
-func testAccNotificationGrafanaOncallDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_grafanaoncall" "test" {
-  name               = %[1]q
-  is_active          = true
-  grafana_oncall_url = "https://grafana-oncall.example.com/integrations/v1/webhook/abc123/"
-}
-
-data "uptimekuma_notification_grafanaoncall" "test" {
+data "uptimekuma_notification_grafanaoncall" "by_id" {
   id = uptimekuma_notification_grafanaoncall.test.id
 }
 `, name)
