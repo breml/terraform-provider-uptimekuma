@@ -180,7 +180,10 @@ func (r *NotificationTechulusPushResource) Read(
 	err = base.As(&techulusPush)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "PushByTechulus"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.TechulusPushDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -191,7 +191,10 @@ func (r *NotificationBrevoResource) Read(ctx context.Context, req resource.ReadR
 	err = base.As(&brevo)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "brevo"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.BrevoDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -180,7 +180,10 @@ func (r *NotificationAlertaResource) Read(
 	err = base.As(&alerta)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "alerta"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.AlertaDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

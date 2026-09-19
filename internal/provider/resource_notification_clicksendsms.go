@@ -181,7 +181,10 @@ func (r *NotificationClicksendSmsResource) Read(
 	err = base.As(&clicksendSms)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "clicksendsms"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.ClickSendSMSDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

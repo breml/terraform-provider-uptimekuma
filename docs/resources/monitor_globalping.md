@@ -53,7 +53,7 @@ resource "uptimekuma_monitor_globalping" "example" {
 - `hostname` (String) Target hostname for DNS or port checks.
 - `http_body_encoding` (String) HTTP body encoding
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `invert_keyword` (Boolean) Invert the keyword match logic. When true, the monitor is UP when the keyword is NOT found.
 - `ip_family` (String) IP protocol version to use. One of `""` (auto), `ipv4`, `ipv6`.
 - `json_path` (String) JSON path expression to evaluate in the response.
@@ -76,9 +76,9 @@ resource "uptimekuma_monitor_globalping" "example" {
 - `protocol` (String) Protocol used for ping or traceroute checks (e.g. `ICMP`, `TCP`).
 - `proxy_id` (Number) Proxy ID
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Request timeout in seconds
+- `timeout` (Number) Request timeout in seconds. Fractional values are supported and round-trip unchanged, because Uptime Kuma stores the timeout in a floating point column. The column is `NOT NULL` and has no unset representation: a value of `0` is stored verbatim and the check falls back to 80% of `interval` per heartbeat, so that fallback never round-trips.
 - `tls_ca` (String) TLS CA certificate
 - `tls_cert` (String, Sensitive) TLS client certificate
 - `tls_key` (String, Sensitive) TLS client key

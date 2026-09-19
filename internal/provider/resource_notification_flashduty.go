@@ -165,7 +165,10 @@ func (r *NotificationFlashDutyResource) Read(
 	err = base.As(&flashduty)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "flashduty"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.FlashDutyDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

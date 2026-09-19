@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationBarkDataSource{}
@@ -101,18 +102,18 @@ func (d *NotificationBarkDataSource) readByID(
 	data *NotificationBarkDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "bark" {
+	if notif.Type() != (notification.BarkDetails{}).Type() {
 		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Bark notification")
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -121,7 +122,13 @@ func (d *NotificationBarkDataSource) readByName(
 	data *NotificationBarkDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "bark", &resp.Diagnostics)
+	id, ok := findNotificationByName(
+		ctx,
+		d.client,
+		data.Name.ValueString(),
+		notification.BarkDetails{}.Type(),
+		&resp.Diagnostics,
+	)
 	if !ok {
 		return
 	}

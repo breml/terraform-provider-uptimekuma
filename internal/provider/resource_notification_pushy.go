@@ -159,7 +159,10 @@ func (r *NotificationPushyResource) Read(ctx context.Context, req resource.ReadR
 	err = base.As(&pushy)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "pushy"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.PushyDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

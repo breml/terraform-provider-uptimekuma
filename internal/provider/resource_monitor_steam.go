@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -44,7 +45,7 @@ type MonitorSteamResourceModel struct {
 	// Port is the Steam game server query port.
 	Port types.Int64 `tfsdk:"port"`
 	// Timeout is the query timeout in seconds.
-	Timeout types.Int64 `tfsdk:"timeout"`
+	Timeout types.Float64 `tfsdk:"timeout"`
 	// DomainExpiryNotification enables domain (WHOIS) expiry notification.
 	DomainExpiryNotification types.Bool `tfsdk:"domain_expiry_notification"`
 }
@@ -81,13 +82,14 @@ func (*MonitorSteamResource) Schema(
 					int64validator.Between(1, 65535),
 				},
 			},
-			"timeout": schema.Int64Attribute{
-				MarkdownDescription: "Request timeout in seconds",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(48),
-				Validators: []validator.Int64{
-					int64validator.Between(1, 3600),
+			"timeout": schema.Float64Attribute{
+				MarkdownDescription: "Request timeout in seconds. Uptime Kuma stores the timeout in a " +
+					"floating point column, so fractional values round-trip unchanged.",
+				Optional: true,
+				Computed: true,
+				Default:  float64default.StaticFloat64(48),
+				Validators: []validator.Float64{
+					float64validator.Between(1, 3600),
 				},
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
@@ -296,7 +298,7 @@ func buildSteamMonitor(
 	}
 
 	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
-		timeout := data.Timeout.ValueInt64()
+		timeout := data.Timeout.ValueFloat64()
 		steamMonitor.Timeout = &timeout
 	}
 
@@ -343,9 +345,9 @@ func populateSteamModel(steamMonitor *monitor.Steam, data *MonitorSteamResourceM
 	data.DomainExpiryNotification = types.BoolValue(steamMonitor.DomainExpiryNotification)
 
 	if steamMonitor.Timeout != nil {
-		data.Timeout = types.Int64Value(*steamMonitor.Timeout)
+		data.Timeout = types.Float64Value(*steamMonitor.Timeout)
 	} else {
-		data.Timeout = types.Int64Null()
+		data.Timeout = types.Float64Null()
 	}
 }
 

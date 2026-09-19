@@ -177,7 +177,10 @@ func (r *NotificationMattermostResource) Read(
 	err = base.As(&mattermost)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "mattermost"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.MattermostDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

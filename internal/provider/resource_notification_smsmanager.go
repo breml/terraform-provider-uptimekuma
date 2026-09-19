@@ -171,7 +171,10 @@ func (r *NotificationSMSManagerResource) Read(
 	err = base.As(&smsmanager)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "SMSManager"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SMSManagerDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

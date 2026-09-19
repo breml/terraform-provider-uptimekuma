@@ -161,7 +161,10 @@ func (r *NotificationVKResource) Read(ctx context.Context, req resource.ReadRequ
 	err = base.As(&vk)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "vk"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.VKDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

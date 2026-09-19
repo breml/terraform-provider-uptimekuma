@@ -114,7 +114,7 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `expected_value` (String) Expected value to match
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `json_path` (String) JSON path for extracting value from SNMP response
 - `json_path_operator` (String) Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`
 - `max_retries` (Number) Maximum number of retries
@@ -122,7 +122,7 @@ resource "uptimekuma_monitor_snmp" "uptime" {
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `port` (Number) SNMP device port
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `snmp_v3_username` (String) SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import. Removing this field from configuration requires a `terraform apply` to synchronize state; `terraform plan` will always show a diff after removal until apply is run.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)

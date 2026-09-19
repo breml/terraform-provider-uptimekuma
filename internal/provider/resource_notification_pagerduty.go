@@ -175,7 +175,10 @@ func (r *NotificationPagerDutyResource) Read(
 	err = base.As(&pagerduty)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "pagerduty"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.PagerDutyDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

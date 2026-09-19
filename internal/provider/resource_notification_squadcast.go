@@ -153,7 +153,10 @@ func (r *NotificationSquadcastResource) Read(
 	err = base.As(&squadcast)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "squadcast"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SquadcastDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

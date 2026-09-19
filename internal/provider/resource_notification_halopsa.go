@@ -156,7 +156,10 @@ func (r *NotificationHaloPSAResource) Read(ctx context.Context, req resource.Rea
 	err = base.As(&haloPSA)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "HaloPSA"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.HaloPSADetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

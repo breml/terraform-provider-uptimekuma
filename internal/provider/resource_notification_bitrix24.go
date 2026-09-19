@@ -159,7 +159,10 @@ func (r *NotificationBitrix24Resource) Read(
 	err = base.As(&bitrix24)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "bitrix24"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.Bitrix24Details{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

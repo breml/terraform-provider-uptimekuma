@@ -166,7 +166,10 @@ func (r *NotificationGTXMessagingResource) Read(
 	gtxmessaging := notification.GTXMessaging{}
 	err = base.As(&gtxmessaging)
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "gtxmessaging"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.GTXMessagingDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

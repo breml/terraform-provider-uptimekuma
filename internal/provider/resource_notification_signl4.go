@@ -153,7 +153,10 @@ func (r *NotificationSIGNL4Resource) Read(
 	err = base.As(&signl4)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "SIGNL4"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SIGNL4Details{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

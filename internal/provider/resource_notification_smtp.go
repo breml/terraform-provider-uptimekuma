@@ -278,7 +278,10 @@ func (r *NotificationSMTPResource) Read(
 	err = base.As(&smtp)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "smtp"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SMTPDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

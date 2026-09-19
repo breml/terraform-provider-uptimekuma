@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationPagerDutyDataSource{}
@@ -101,18 +102,18 @@ func (d *NotificationPagerDutyDataSource) readByID(
 	data *NotificationPagerDutyDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "PagerDuty" {
+	if notif.Type() != (notification.PagerDutyDetails{}).Type() {
 		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a PagerDuty notification")
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -121,7 +122,13 @@ func (d *NotificationPagerDutyDataSource) readByName(
 	data *NotificationPagerDutyDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "PagerDuty", &resp.Diagnostics)
+	id, ok := findNotificationByName(
+		ctx,
+		d.client,
+		data.Name.ValueString(),
+		notification.PagerDutyDetails{}.Type(),
+		&resp.Diagnostics,
+	)
 	if !ok {
 		return
 	}

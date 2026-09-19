@@ -1,11 +1,13 @@
 package provider
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
@@ -18,32 +20,32 @@ import (
 // MonitorHTTPBaseModel describes the base data model for HTTP-based monitor types.
 // This includes network config, authentication (Basic, NTLM, OAuth), and TLS settings.
 type MonitorHTTPBaseModel struct {
-	URL                 types.String `tfsdk:"url"`                   // HTTP(S) endpoint URL to monitor.
-	Timeout             types.Int64  `tfsdk:"timeout"`               // Request timeout in seconds.
-	Method              types.String `tfsdk:"method"`                // HTTP method (GET, POST, etc).
-	ExpiryNotification  types.Bool   `tfsdk:"expiry_notification"`   // Notify on certificate expiry.
-	IgnoreTLS           types.Bool   `tfsdk:"ignore_tls"`            // Skip TLS/SSL certificate validation.
-	MaxRedirects        types.Int64  `tfsdk:"max_redirects"`         // Maximum HTTP redirects to follow.
-	AcceptedStatusCodes types.List   `tfsdk:"accepted_status_codes"` // HTTP status codes to treat as success.
-	ProxyID             types.Int64  `tfsdk:"proxy_id"`              // Optional proxy ID for routing requests.
-	HTTPBodyEncoding    types.String `tfsdk:"http_body_encoding"`    // Encoding for request body.
-	Body                types.String `tfsdk:"body"`                  // Request body for POST/PUT methods.
-	Headers             types.String `tfsdk:"headers"`               // Custom HTTP headers as JSON.
-	AuthMethod          types.String `tfsdk:"auth_method"`           // Authentication method (basic, digest, ntlm, oauth).
-	BasicAuthUser       types.String `tfsdk:"basic_auth_user"`       // Basic auth username.
-	BasicAuthPass       types.String `tfsdk:"basic_auth_pass"`       // Basic auth password.
-	AuthDomain          types.String `tfsdk:"auth_domain"`           // Domain for NTLM authentication.
-	AuthWorkstation     types.String `tfsdk:"auth_workstation"`      // Workstation for NTLM authentication.
-	TLSCert             types.String `tfsdk:"tls_cert"`              // Client TLS certificate in PEM format.
-	TLSKey              types.String `tfsdk:"tls_key"`               // Client TLS key in PEM format.
-	TLSCa               types.String `tfsdk:"tls_ca"`                // CA certificate for server verification.
-	OAuthAuthMethod     types.String `tfsdk:"oauth_auth_method"`     // OAuth authentication method.
-	OAuthTokenURL       types.String `tfsdk:"oauth_token_url"`       // OAuth token endpoint URL.
-	OAuthClientID       types.String `tfsdk:"oauth_client_id"`       // OAuth client ID.
-	OAuthClientSecret   types.String `tfsdk:"oauth_client_secret"`   // OAuth client secret.
-	OAuthScopes         types.String `tfsdk:"oauth_scopes"`          // OAuth scopes to request.
-	OAuthAudience       types.String `tfsdk:"oauth_audience"`        // OAuth audience to request.
-	CacheBust           types.Bool   `tfsdk:"cache_buster"`          // Enable cache busting.
+	URL                 types.String  `tfsdk:"url"`                   // HTTP(S) endpoint URL to monitor.
+	Timeout             types.Float64 `tfsdk:"timeout"`               // Request timeout in seconds.
+	Method              types.String  `tfsdk:"method"`                // HTTP method (GET, POST, etc).
+	ExpiryNotification  types.Bool    `tfsdk:"expiry_notification"`   // Notify on certificate expiry.
+	IgnoreTLS           types.Bool    `tfsdk:"ignore_tls"`            // Skip TLS/SSL certificate validation.
+	MaxRedirects        types.Int64   `tfsdk:"max_redirects"`         // Maximum HTTP redirects to follow.
+	AcceptedStatusCodes types.List    `tfsdk:"accepted_status_codes"` // HTTP status codes to treat as success.
+	ProxyID             types.Int64   `tfsdk:"proxy_id"`              // Optional proxy ID for routing requests.
+	HTTPBodyEncoding    types.String  `tfsdk:"http_body_encoding"`    // Encoding for request body.
+	Body                types.String  `tfsdk:"body"`                  // Request body for POST/PUT methods.
+	Headers             types.String  `tfsdk:"headers"`               // Custom HTTP headers as JSON.
+	AuthMethod          types.String  `tfsdk:"auth_method"`           // Authentication method (basic, digest, ntlm, oauth).
+	BasicAuthUser       types.String  `tfsdk:"basic_auth_user"`       // Basic auth username.
+	BasicAuthPass       types.String  `tfsdk:"basic_auth_pass"`       // Basic auth password.
+	AuthDomain          types.String  `tfsdk:"auth_domain"`           // Domain for NTLM authentication.
+	AuthWorkstation     types.String  `tfsdk:"auth_workstation"`      // Workstation for NTLM authentication.
+	TLSCert             types.String  `tfsdk:"tls_cert"`              // Client TLS certificate in PEM format.
+	TLSKey              types.String  `tfsdk:"tls_key"`               // Client TLS key in PEM format.
+	TLSCa               types.String  `tfsdk:"tls_ca"`                // CA certificate for server verification.
+	OAuthAuthMethod     types.String  `tfsdk:"oauth_auth_method"`     // OAuth authentication method.
+	OAuthTokenURL       types.String  `tfsdk:"oauth_token_url"`       // OAuth token endpoint URL.
+	OAuthClientID       types.String  `tfsdk:"oauth_client_id"`       // OAuth client ID.
+	OAuthClientSecret   types.String  `tfsdk:"oauth_client_secret"`   // OAuth client secret.
+	OAuthScopes         types.String  `tfsdk:"oauth_scopes"`          // OAuth scopes to request.
+	OAuthAudience       types.String  `tfsdk:"oauth_audience"`        // OAuth audience to request.
+	CacheBust           types.Bool    `tfsdk:"cache_buster"`          // Enable cache busting.
 }
 
 // withHTTPMonitorBaseAttributes adds HTTP-specific schema attributes to the provided attribute map.
@@ -85,14 +87,17 @@ func httpURLAttribute() schema.StringAttribute {
 	}
 }
 
-func httpTimeoutAttribute() schema.Int64Attribute {
-	return schema.Int64Attribute{
-		MarkdownDescription: "Request timeout in seconds",
-		Optional:            true,
-		Computed:            true,
-		Default:             int64default.StaticInt64(48),
-		Validators: []validator.Int64{
-			int64validator.Between(1, 3600),
+func httpTimeoutAttribute() schema.Float64Attribute {
+	return schema.Float64Attribute{
+		MarkdownDescription: "Request timeout in seconds. Fractional values are supported and round-trip " +
+			"unchanged, because Uptime Kuma stores the timeout in a floating point column. The column is " +
+			"`NOT NULL` and has no unset representation: a value of `0` is stored verbatim and the check " +
+			"falls back to 80% of `interval` per heartbeat, so that fallback never round-trips.",
+		Optional: true,
+		Computed: true,
+		Default:  float64default.StaticFloat64(48),
+		Validators: []validator.Float64{
+			float64validator.Between(1, 3600),
 		},
 	}
 }

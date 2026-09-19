@@ -171,7 +171,10 @@ func (r *NotificationMatrixResource) Read(
 	err = base.As(&matrix)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "matrix"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.MatrixDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

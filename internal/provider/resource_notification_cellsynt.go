@@ -202,7 +202,10 @@ func (r *NotificationCellsyntResource) Read(
 	err = base.As(&cellsynt)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "cellsynt"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.CellsyntDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

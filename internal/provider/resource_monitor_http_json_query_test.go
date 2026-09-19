@@ -66,7 +66,7 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_json_query.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_json_query.test",
@@ -125,7 +125,7 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_json_query.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(60),
+						knownvalue.Float64Exact(60),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_json_query.test",
@@ -150,7 +150,7 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 
 func testAccMonitorHTTPJSONQueryResourceConfig(
 	name string, url string, jsonPath string, expectedValue string, operator string,
-	interval int64, timeout int64,
+	interval int64, timeout float64,
 	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
@@ -161,7 +161,7 @@ resource "uptimekuma_monitor_http_json_query" "test" {
   expected_value              = %[4]q
   json_path_operator          = %[5]q
   interval                    = %[6]d
-  timeout                     = %[7]d
+  timeout                     = %[7]v
   active                      = true
   domain_expiry_notification  = %[8]t
 }

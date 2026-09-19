@@ -180,7 +180,10 @@ func (r *NotificationLunaseaResource) Read(ctx context.Context, req resource.Rea
 	err = base.As(&lunasea)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "lunasea"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.LunaSeaDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

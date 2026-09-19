@@ -147,7 +147,10 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 	err = base.As(&teams)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "teams"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.TeamsDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

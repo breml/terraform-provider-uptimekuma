@@ -181,7 +181,10 @@ func (r *NotificationOnesenderResource) Read(
 	err = base.As(&onesender)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "onesender"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.OneSenderDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

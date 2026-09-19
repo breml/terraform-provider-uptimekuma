@@ -178,7 +178,10 @@ func (r *NotificationWAHAResource) Read(
 	err = base.As(&waha)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "waha"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.WAHADetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

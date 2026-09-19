@@ -178,7 +178,10 @@ func (r *NotificationSerwersmsResource) Read(
 	err = base.As(&serwersms)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "serwersms"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SerwerSMSDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

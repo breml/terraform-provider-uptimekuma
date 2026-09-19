@@ -188,7 +188,10 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	err = base.As(&discord)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "discord"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.DiscordDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

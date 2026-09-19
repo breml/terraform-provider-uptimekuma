@@ -181,7 +181,10 @@ func (r *NotificationThreemaResource) Read(
 	err = base.As(&threema)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "threema"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.ThreemaDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

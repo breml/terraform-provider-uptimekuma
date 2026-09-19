@@ -159,7 +159,10 @@ func (r *NotificationWPushResource) Read(
 	err = base.As(&wpush)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "WPush"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.WPushDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

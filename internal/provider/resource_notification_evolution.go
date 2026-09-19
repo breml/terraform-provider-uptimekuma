@@ -181,7 +181,10 @@ func (r *NotificationEvolutionResource) Read(
 	err = base.As(&evolution)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "EvolutionApi"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.EvolutionDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

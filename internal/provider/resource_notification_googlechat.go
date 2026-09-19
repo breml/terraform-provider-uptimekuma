@@ -168,7 +168,10 @@ func (r *NotificationGoogleChatResource) Read(
 	err = base.As(&googleChat)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "GoogleChat"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.GoogleChatDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

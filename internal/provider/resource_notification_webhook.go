@@ -183,7 +183,10 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	err = base.As(&webhook)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "webhook"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.WebhookDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

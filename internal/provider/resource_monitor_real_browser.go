@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
@@ -43,15 +45,15 @@ type MonitorRealBrowserResource struct {
 type MonitorRealBrowserResourceModel struct {
 	MonitorBaseModel
 
-	URL                      types.String `tfsdk:"url"`
-	Timeout                  types.Int64  `tfsdk:"timeout"`
-	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
-	MaxRedirects             types.Int64  `tfsdk:"max_redirects"`
-	AcceptedStatusCodes      types.List   `tfsdk:"accepted_status_codes"`
-	ProxyID                  types.Int64  `tfsdk:"proxy_id"`
-	RemoteBrowser            types.Int64  `tfsdk:"remote_browser"`
-	ScreenshotDelay          types.Int64  `tfsdk:"screenshot_delay"`
-	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	URL                      types.String  `tfsdk:"url"`
+	Timeout                  types.Float64 `tfsdk:"timeout"`
+	IgnoreTLS                types.Bool    `tfsdk:"ignore_tls"`
+	MaxRedirects             types.Int64   `tfsdk:"max_redirects"`
+	AcceptedStatusCodes      types.List    `tfsdk:"accepted_status_codes"`
+	ProxyID                  types.Int64   `tfsdk:"proxy_id"`
+	RemoteBrowser            types.Int64   `tfsdk:"remote_browser"`
+	ScreenshotDelay          types.Int64   `tfsdk:"screenshot_delay"`
+	DomainExpiryNotification types.Bool    `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -82,13 +84,15 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 		Required:            true,
 	}
 
-	attrs["timeout"] = schema.Int64Attribute{
-		MarkdownDescription: "Request timeout in seconds",
-		Optional:            true,
-		Computed:            true,
-		Default:             int64default.StaticInt64(48),
-		Validators: []validator.Int64{
-			int64validator.Between(1, 3600),
+	attrs["timeout"] = schema.Float64Attribute{
+		MarkdownDescription: "Request timeout in seconds. Uptime Kuma stores the timeout in a floating " +
+			"point column, so fractional values round-trip unchanged, but the real browser check never " +
+			"reads the column: it derives its timeout from 80% of `interval` instead.",
+		Optional: true,
+		Computed: true,
+		Default:  float64default.StaticFloat64(48),
+		Validators: []validator.Float64{
+			float64validator.Between(1, 3600),
 		},
 	}
 
@@ -133,11 +137,17 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	}
 
 	attrs["screenshot_delay"] = schema.Int64Attribute{
-		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 " +
-			"stores this value but does not return it on read, so it cannot be detected as drift or " +
-			"recovered on import. Removing this field from configuration requires a `terraform apply` " +
-			"to synchronize state; `terraform plan` will always show a diff after removal until apply is run.",
+		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Uptime Kuma only returns " +
+			"this value since 2.5.0; earlier versions store it on create and apply it to the check, but " +
+			"never echo it back and silently ignore it on update, so against those versions it cannot be " +
+			"detected as drift or recovered on import. Since 2.5.0 the server rejects negative values and " +
+			"values greater than or equal to `interval * 500`, that is half the interval converted to " +
+			"milliseconds. Removing this field from configuration leaves the previously stored delay " +
+			"untouched; the delay cannot be cleared through the API.",
 		Optional: true,
+		Validators: []validator.Int64{
+			int64validator.AtLeast(0),
+		},
 	}
 
 	attrs["domain_expiry_notification"] = domainExpiryNotificationAttribute()
@@ -172,7 +182,7 @@ func buildRealBrowserMonitor(
 		},
 		RealBrowserDetails: monitor.RealBrowserDetails{
 			URL:                      data.URL.ValueString(),
-			Timeout:                  data.Timeout.ValueInt64(),
+			Timeout:                  data.Timeout.ValueFloat64(),
 			IgnoreTLS:                data.IgnoreTLS.ValueBool(),
 			MaxRedirects:             int(data.MaxRedirects.ValueInt64()),
 			AcceptedStatusCodes:      []string{},
@@ -293,7 +303,7 @@ func populateRealBrowserMonitorBaseFields(m *monitor.RealBrowser, data *MonitorR
 	data.UpsideDown = types.BoolValue(m.UpsideDown)
 	data.Active = types.BoolValue(m.IsActive)
 	data.URL = types.StringValue(m.URL)
-	data.Timeout = types.Int64Value(m.Timeout)
+	data.Timeout = types.Float64Value(m.Timeout)
 	data.IgnoreTLS = types.BoolValue(m.IgnoreTLS)
 	data.MaxRedirects = types.Int64Value(int64(m.MaxRedirects))
 	data.DomainExpiryNotification = types.BoolValue(m.DomainExpiryNotification)
@@ -326,10 +336,11 @@ func populateOptionalFieldsForRealBrowser(
 		data.RemoteBrowser = types.Int64Null()
 	}
 
-	// screenshot_delay is write-only on Uptime Kuma 2.3.2: the server stores it
-	// but does not echo it back on read. Preserve the configured value when the
-	// server omits it to avoid a perpetual diff.
-	if m.ScreenshotDelay != nil {
+	// Uptime Kuma only echoes screenshot_delay back since 2.5.0, and reports an
+	// unset delay as 0. Keep the attribute null in that case, so an absent
+	// configuration does not produce a perpetual diff. Older servers omit the
+	// field entirely, so the configured value is preserved as before.
+	if m.ScreenshotDelay != nil && (*m.ScreenshotDelay != 0 || !data.ScreenshotDelay.IsNull()) {
 		data.ScreenshotDelay = types.Int64Value(int64(*m.ScreenshotDelay))
 	}
 

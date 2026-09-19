@@ -29,18 +29,18 @@ resource "uptimekuma_monitor_system_service" "example" {
 ### Required
 
 - `name` (String) Friendly name
-- `system_service_name` (String) Name of the service to check. On Linux (systemd), this is the unit name (e.g. `nginx.service`, `sshd@0.service`); on Windows, this is the SCM service name (e.g. `Spooler`).
+- `system_service_name` (String) Name of the service to check. On Linux (systemd), this is the unit name (e.g. `nginx.service`, `sshd@0.service`); on Windows, this is the SCM service name (e.g. `Spooler`). Since Uptime Kuma 2.5.0 the server trims surrounding whitespace on write and rejects names that do not match `^[a-zA-Z0-9._\-@]+$`. That regular expression is platform independent; the narrower per-platform character sets are only enforced when the check runs.
 
 ### Optional
 
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 

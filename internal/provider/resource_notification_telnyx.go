@@ -160,7 +160,10 @@ func (r *NotificationTelnyxResource) Read(ctx context.Context, req resource.Read
 	err = base.As(&telnyx)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "telnyx"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.TelnyxDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

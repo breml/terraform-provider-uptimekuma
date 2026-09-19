@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -61,10 +62,17 @@ func (*MonitorSystemServiceResource) Schema(
 			"system_service_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the service to check. On Linux (systemd), this is the unit " +
 					"name (e.g. `nginx.service`, `sshd@0.service`); on Windows, this is the SCM service " +
-					"name (e.g. `Spooler`).",
+					"name (e.g. `Spooler`). Since Uptime Kuma 2.5.0 the server trims surrounding " +
+					"whitespace on write and rejects names that do not match `^[a-zA-Z0-9._\\-@]+$`. " +
+					"That regular expression is platform independent; the narrower per-platform " +
+					"character sets are only enforced when the check runs.",
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[a-zA-Z0-9._\-@]+$`),
+						"must only contain alphanumeric characters, '.', '_', '-' and '@'",
+					),
 				},
 			},
 		}),

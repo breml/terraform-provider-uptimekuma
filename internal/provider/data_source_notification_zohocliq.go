@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationZohoCliqDataSource{}
@@ -101,18 +102,18 @@ func (d *NotificationZohoCliqDataSource) readByID(
 	data *NotificationZohoCliqDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "ZohoCliq" {
+	if notif.Type() != (notification.ZohoCliqDetails{}).Type() {
 		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Zoho Cliq notification")
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -121,7 +122,13 @@ func (d *NotificationZohoCliqDataSource) readByName(
 	data *NotificationZohoCliqDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "ZohoCliq", &resp.Diagnostics)
+	id, ok := findNotificationByName(
+		ctx,
+		d.client,
+		data.Name.ValueString(),
+		notification.ZohoCliqDetails{}.Type(),
+		&resp.Diagnostics,
+	)
 	if !ok {
 		return
 	}

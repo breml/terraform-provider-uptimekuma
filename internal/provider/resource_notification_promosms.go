@@ -198,7 +198,10 @@ func (r *NotificationPromoSMSResource) Read(
 	err = base.As(&promosms)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "promosms"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.PromoSMSDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -161,7 +161,10 @@ func (r *NotificationPushDeerResource) Read(
 	pushDeer := notification.PushDeer{}
 	err = base.As(&pushDeer)
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "pushdeer"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.PushDeerDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

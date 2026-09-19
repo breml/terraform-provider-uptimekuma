@@ -168,7 +168,10 @@ func (r *NotificationSMSPartnerResource) Read(
 	err = base.As(&smspartner)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "SMSPartner"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SMSPartnerDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

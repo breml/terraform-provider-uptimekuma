@@ -158,7 +158,10 @@ func (r *NotificationBaleResource) Read(ctx context.Context, req resource.ReadRe
 	err = base.As(&bale)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "bale"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.BaleDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

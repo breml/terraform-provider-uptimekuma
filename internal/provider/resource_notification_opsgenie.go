@@ -176,7 +176,10 @@ func (r *NotificationOpsgenieResource) Read(
 	err = base.As(&opsgenie)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "opsgenie"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.OpsgenieDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

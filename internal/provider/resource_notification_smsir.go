@@ -156,7 +156,10 @@ func (r *NotificationSMSIRResource) Read(ctx context.Context, req resource.ReadR
 	err = base.As(&smsir)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "SMSIR"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SMSIRDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -165,7 +165,10 @@ func (r *NotificationNotiferyResource) Read(
 	err = base.As(&notifery)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "notifery"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.NotiferyDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

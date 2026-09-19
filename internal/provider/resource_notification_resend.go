@@ -166,7 +166,10 @@ func (r *NotificationResendResource) Read(ctx context.Context, req resource.Read
 	err = base.As(&resend)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "Resend"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.ResendDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

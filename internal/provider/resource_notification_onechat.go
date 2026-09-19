@@ -167,7 +167,10 @@ func (r *NotificationOneChatResource) Read(ctx context.Context, req resource.Rea
 	err = base.As(&onechat)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "OneChat"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.OneChatDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -168,7 +168,10 @@ func (r *NotificationSMSPlanetResource) Read(
 	err = base.As(&smsplanet)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "SMSPlanet"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SMSPlanetDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

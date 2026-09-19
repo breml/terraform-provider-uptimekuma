@@ -186,7 +186,11 @@ func (r *NotificationJiraServiceManagementResource) Read(
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
-			`failed to convert notification to type "jiraservicemanagement"`, err.Error(),
+			fmt.Sprintf(
+				"failed to convert notification to type %q",
+				notification.JiraServiceManagementDetails{}.Type(),
+			),
+			err.Error(),
 		)
 		return
 	}

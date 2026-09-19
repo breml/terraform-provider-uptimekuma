@@ -444,7 +444,10 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	ntfy := notification.Ntfy{}
 	err = base.As(&ntfy)
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "ntfy"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.NtfyDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

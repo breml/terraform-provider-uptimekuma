@@ -164,7 +164,7 @@ func (r *NotificationHeiiOnCallResource) Read(
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(
-			`failed to convert notification to type "heiioncall"`,
+			fmt.Sprintf("failed to convert notification to type %q", notification.HeiiOnCallDetails{}.Type()),
 			err.Error(),
 		)
 		return

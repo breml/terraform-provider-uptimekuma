@@ -153,7 +153,10 @@ func (r *NotificationStackfieldResource) Read(
 	err = base.As(&stackfield)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "stackfield"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.StackfieldDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

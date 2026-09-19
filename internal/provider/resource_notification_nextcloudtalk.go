@@ -184,7 +184,10 @@ func (r *NotificationNextcloudTalkResource) Read(
 	nextcloudTalk := notification.NextcloudTalk{}
 	err = base.As(&nextcloudTalk)
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "NextcloudTalk"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.NextcloudTalkDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

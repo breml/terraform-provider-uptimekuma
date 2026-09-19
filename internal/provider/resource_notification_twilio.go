@@ -188,7 +188,10 @@ func (r *NotificationTwilioResource) Read(
 	err = base.As(&twilio)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "twilio"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.TwilioDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

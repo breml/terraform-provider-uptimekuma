@@ -184,7 +184,10 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	err = base.As(&slack)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "slack"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SlackDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

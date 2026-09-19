@@ -82,13 +82,13 @@ resource "uptimekuma_monitor_radius" "accounting" {
 - `calling_station_id` (String) Optional Calling-Station-Id attribute
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `port` (Number) Radius server port
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 

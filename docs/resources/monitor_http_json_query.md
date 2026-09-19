@@ -58,7 +58,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `headers` (String) Request headers (JSON format)
 - `http_body_encoding` (String) HTTP body encoding
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `json_path_operator` (String) Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`
 - `max_redirects` (Number) Maximum number of redirects to follow
 - `max_retries` (Number) Maximum number of retries
@@ -73,9 +73,9 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `proxy_id` (Number) Proxy ID
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Request timeout in seconds
+- `timeout` (Number) Request timeout in seconds. Fractional values are supported and round-trip unchanged, because Uptime Kuma stores the timeout in a floating point column. The column is `NOT NULL` and has no unset representation: a value of `0` is stored verbatim and the check falls back to 80% of `interval` per heartbeat, so that fallback never round-trips.
 - `tls_ca` (String) TLS CA certificate
 - `tls_cert` (String, Sensitive) TLS client certificate
 - `tls_key` (String, Sensitive) TLS client key

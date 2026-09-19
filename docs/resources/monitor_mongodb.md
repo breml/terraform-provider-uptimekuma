@@ -116,13 +116,13 @@ resource "uptimekuma_monitor_mongodb" "example_with_notification" {
 - `database_query` (String) MongoDB command as JSON (e.g., {"ping": 1})
 - `description` (String) Description
 - `expected_value` (String) Expected value when using json_path
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `json_path` (String) JSONata expression for result validation
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 

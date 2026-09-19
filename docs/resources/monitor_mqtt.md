@@ -102,7 +102,7 @@ resource "uptimekuma_monitor_group" "mqtt_monitors" {
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `expected_value` (String) Expected value for json-query check
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `json_path` (String) JSON path for json-query check
 - `max_retries` (Number) Maximum number of retries
 - `mqtt_check_type` (String) Check type: keyword or json-query
@@ -114,7 +114,7 @@ resource "uptimekuma_monitor_group" "mqtt_monitors" {
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `port` (Number) MQTT broker port
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 

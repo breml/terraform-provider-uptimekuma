@@ -153,7 +153,10 @@ func (r *NotificationPushbulletResource) Read(
 	err = base.As(&pushbullet)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "pushbullet"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.PushbulletDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

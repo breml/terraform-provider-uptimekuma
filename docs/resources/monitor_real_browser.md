@@ -41,7 +41,7 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former 24 day maximum, so only a minimum is enforced.
 - `max_redirects` (Number) Maximum number of redirects to follow
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
@@ -49,10 +49,10 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `proxy_id` (Number) Proxy ID
 - `remote_browser` (Number) Remote Browser ID (if using a remote browser for monitoring)
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
-- `screenshot_delay` (Number) Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import. Removing this field from configuration requires a `terraform apply` to synchronize state; `terraform plan` will always show a diff after removal until apply is run.
+- `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
+- `screenshot_delay` (Number) Delay in milliseconds before taking a screenshot. Uptime Kuma only returns this value since 2.5.0; earlier versions store it on create and apply it to the check, but never echo it back and silently ignore it on update, so against those versions it cannot be detected as drift or recovered on import. Since 2.5.0 the server rejects negative values and values greater than or equal to `interval * 500`, that is half the interval converted to milliseconds. Removing this field from configuration leaves the previously stored delay untouched; the delay cannot be cleared through the API.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Request timeout in seconds
+- `timeout` (Number) Request timeout in seconds. Uptime Kuma stores the timeout in a floating point column, so fractional values round-trip unchanged, but the real browser check never reads the column: it derives its timeout from 80% of `interval` instead.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

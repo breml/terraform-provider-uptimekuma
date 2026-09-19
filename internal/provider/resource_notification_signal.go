@@ -165,7 +165,10 @@ func (r *NotificationSignalResource) Read(
 	err = base.As(&signal)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "signal"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SignalDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

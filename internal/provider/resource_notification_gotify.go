@@ -176,7 +176,10 @@ func (r *NotificationGotifyResource) Read(
 	err = base.As(&gotify)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "gotify"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.GotifyDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

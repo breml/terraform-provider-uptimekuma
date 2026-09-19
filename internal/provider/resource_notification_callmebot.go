@@ -153,7 +153,10 @@ func (r *NotificationCallMeBotResource) Read(
 	err = base.As(&callmebot)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "callmebot"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.CallMeBotDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

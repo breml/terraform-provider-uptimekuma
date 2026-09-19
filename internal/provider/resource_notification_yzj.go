@@ -163,7 +163,10 @@ func (r *NotificationYZJResource) Read(
 	err = base.As(&yzj)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "YZJ"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.YZJDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

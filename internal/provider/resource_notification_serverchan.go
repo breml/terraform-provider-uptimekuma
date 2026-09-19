@@ -153,7 +153,10 @@ func (r *NotificationServerChanResource) Read(
 	err = base.As(&serverchan)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "serverchan"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.ServerChanDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

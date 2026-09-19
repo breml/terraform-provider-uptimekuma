@@ -48,7 +48,7 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
@@ -88,7 +88,7 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(60),
+						knownvalue.Float64Exact(60),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http.test",
@@ -111,21 +111,21 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 	})
 }
 
-func testAccMonitorHTTPResourceConfig(name string, url string, method string, interval int64, timeout int64) string {
+func testAccMonitorHTTPResourceConfig(name string, url string, method string, interval int64, timeout float64) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
   name     = %[1]q
   url      = %[2]q
   method   = %[3]q
   interval = %[4]d
-  timeout  = %[5]d
+  timeout  = %[5]v
   active   = true
 }
 `, name, url, method, interval, timeout)
 }
 
 func testAccMonitorHTTPResourceConfigWithDomainExpiry(
-	name string, url string, method string, interval int64, timeout int64, domainExpiry bool,
+	name string, url string, method string, interval int64, timeout float64, domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http" "test" {
@@ -133,7 +133,7 @@ resource "uptimekuma_monitor_http" "test" {
   url                         = %[2]q
   method                      = %[3]q
   interval                    = %[4]d
-  timeout                     = %[5]d
+  timeout                     = %[5]v
   active                      = true
   domain_expiry_notification  = %[6]t
 }

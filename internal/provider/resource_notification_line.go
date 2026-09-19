@@ -162,7 +162,10 @@ func (r *NotificationLineResource) Read(
 	err = base.As(&line)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "line"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.LineDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

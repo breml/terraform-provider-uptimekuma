@@ -162,7 +162,10 @@ func (r *NotificationFreemobileResource) Read(
 	err = base.As(&freemobile)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "freemobile"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.FreeMobileDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

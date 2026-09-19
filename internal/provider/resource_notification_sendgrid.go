@@ -192,7 +192,10 @@ func (r *NotificationSendgridResource) Read(
 	err = base.As(&sendgrid)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "sendgrid"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SendGridDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

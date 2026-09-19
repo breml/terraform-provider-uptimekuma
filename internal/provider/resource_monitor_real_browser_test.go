@@ -43,7 +43,7 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_real_browser.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_real_browser.test",
@@ -78,7 +78,7 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_real_browser.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(60),
+						knownvalue.Float64Exact(60),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_real_browser.test",
@@ -97,14 +97,14 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 }
 
 func testAccMonitorRealBrowserResourceConfig(
-	name string, url string, interval int64, timeout int64, domainExpiry bool,
+	name string, url string, interval int64, timeout float64, domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_real_browser" "test" {
   name                        = %[1]q
   url                         = %[2]q
   interval                    = %[3]d
-  timeout                     = %[4]d
+  timeout                     = %[4]v
   active                      = true
   domain_expiry_notification  = %[5]t
 }

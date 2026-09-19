@@ -162,7 +162,10 @@ func (r *NotificationGoAlertResource) Read(
 	err = base.As(&goalert)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "goalert"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.GoAlertDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

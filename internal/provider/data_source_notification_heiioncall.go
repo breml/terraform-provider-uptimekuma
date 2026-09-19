@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationHeiiOnCallDataSource{}
@@ -103,13 +104,13 @@ func (d *NotificationHeiiOnCallDataSource) readByID(
 	data *NotificationHeiiOnCallDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "HeiiOnCall" {
+	if notif.Type() != (notification.HeiiOnCallDetails{}).Type() {
 		resp.Diagnostics.AddError(
 			"Incorrect notification type",
 			"Notification is not a Heii On-Call notification",
@@ -117,7 +118,7 @@ func (d *NotificationHeiiOnCallDataSource) readByID(
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -130,7 +131,7 @@ func (d *NotificationHeiiOnCallDataSource) readByName(
 		ctx,
 		d.client,
 		data.Name.ValueString(),
-		"HeiiOnCall",
+		notification.HeiiOnCallDetails{}.Type(),
 		&resp.Diagnostics,
 	)
 	if !ok {

@@ -181,7 +181,10 @@ func (r *Notification46ElksResource) Read(
 	err = base.As(&elks)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "46elks"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.FortySixElksDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

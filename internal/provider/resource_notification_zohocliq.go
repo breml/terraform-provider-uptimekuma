@@ -153,7 +153,10 @@ func (r *NotificationZohoCliqResource) Read(
 	err = base.As(&zohoCliq)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "ZohoCliq"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.ZohoCliqDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

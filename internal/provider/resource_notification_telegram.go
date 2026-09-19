@@ -224,7 +224,10 @@ func (r *NotificationTelegramResource) Read(
 	err = base.As(&telegram)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "telegram"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.TelegramDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -199,7 +199,10 @@ func (r *NotificationPushoverResource) Read(
 	err = base.As(&pushover)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "pushover"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.PushoverDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

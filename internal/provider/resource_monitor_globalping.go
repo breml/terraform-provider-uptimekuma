@@ -366,7 +366,7 @@ func buildGlobalpingMonitor(
 		},
 		HTTPDetails: monitor.HTTPDetails{
 			URL:                 data.URL.ValueString(),
-			Timeout:             data.Timeout.ValueInt64(),
+			Timeout:             data.Timeout.ValueFloat64(),
 			Method:              data.Method.ValueString(),
 			ExpiryNotification:  data.ExpiryNotification.ValueBool(),
 			IgnoreTLS:           data.IgnoreTLS.ValueBool(),
@@ -462,7 +462,7 @@ func populateGlobalpingModel(globalpingMonitor *monitor.Globalping, data *Monito
 	data.Active = types.BoolValue(globalpingMonitor.IsActive)
 
 	data.URL = types.StringValue(globalpingMonitor.URL)
-	data.Timeout = types.Int64Value(globalpingMonitor.Timeout)
+	data.Timeout = types.Float64Value(globalpingMonitor.Timeout)
 	data.Method = types.StringValue(globalpingMonitor.Method)
 	data.ExpiryNotification = types.BoolValue(globalpingMonitor.ExpiryNotification)
 	data.IgnoreTLS = types.BoolValue(globalpingMonitor.IgnoreTLS)

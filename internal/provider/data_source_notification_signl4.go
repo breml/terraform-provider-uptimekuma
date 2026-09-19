@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationSIGNL4DataSource{}
@@ -101,18 +102,18 @@ func (d *NotificationSIGNL4DataSource) readByID(
 	data *NotificationSIGNL4DataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "SIGNL4" {
+	if notif.Type() != (notification.SIGNL4Details{}).Type() {
 		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a SIGNL4 notification")
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -121,7 +122,13 @@ func (d *NotificationSIGNL4DataSource) readByName(
 	data *NotificationSIGNL4DataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "SIGNL4", &resp.Diagnostics)
+	id, ok := findNotificationByName(
+		ctx,
+		d.client,
+		data.Name.ValueString(),
+		notification.SIGNL4Details{}.Type(),
+		&resp.Diagnostics,
+	)
 	if !ok {
 		return
 	}

@@ -173,7 +173,10 @@ func (r *NotificationOneBotResource) Read(ctx context.Context, req resource.Read
 	err = base.As(&onebot)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "OneBot"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.OneBotDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -192,7 +192,10 @@ func (r *NotificationSMSCResource) Read(
 	err = base.As(&smsc)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "smsc"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SMSCDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

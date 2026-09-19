@@ -199,7 +199,10 @@ func (r *NotificationGorushResource) Read(ctx context.Context, req resource.Read
 	err = base.As(&gorush)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "gorush"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.GorushDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

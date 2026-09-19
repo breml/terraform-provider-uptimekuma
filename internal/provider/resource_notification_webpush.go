@@ -201,7 +201,10 @@ func (r *NotificationWebpushResource) Read(
 	err = base.As(&webpush)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "webpush"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.WebpushDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

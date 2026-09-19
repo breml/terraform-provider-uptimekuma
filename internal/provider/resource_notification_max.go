@@ -175,7 +175,10 @@ func (r *NotificationMaxResource) Read(ctx context.Context, req resource.ReadReq
 	err = base.As(&maxNotification)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "max"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.MaxDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

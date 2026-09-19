@@ -177,7 +177,10 @@ func (r *NotificationRocketChatResource) Read(
 	err = base.As(&rocketChat)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "rocketchat"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.RocketChatDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

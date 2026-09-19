@@ -48,7 +48,7 @@ func TestAccMonitorRabbitMQResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_rabbitmq.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_rabbitmq.test",
@@ -139,7 +139,7 @@ func TestAccMonitorRabbitMQResourceWithOptionalFields(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_rabbitmq.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(30),
+						knownvalue.Float64Exact(30),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_rabbitmq.test",
@@ -279,4 +279,56 @@ func TestAccMonitorRabbitMQResourceImport(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestAccMonitorRabbitMQResourceFractionalTimeout verifies that a fractional
+// timeout round-trips unchanged. Uptime Kuma stores the timeout in a floating
+// point column, so RabbitMQ monitors return exactly what was configured.
+func TestAccMonitorRabbitMQResourceFractionalTimeout(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestRabbitMQMonitorFractionalTimeout")
+	nodes := `["http://rabbitmq.example.com:15672/"]`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorRabbitMQResourceConfigWithTimeout(name, nodes, 2.5),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_rabbitmq.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(2.5),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorRabbitMQResourceConfigWithTimeout(name, nodes, 12.75),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_rabbitmq.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(12.75),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_rabbitmq.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorRabbitMQResourceConfigWithTimeout(name string, nodes string, timeout float64) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_rabbitmq" "test" {
+  name     = %[1]q
+  nodes    = %[2]q
+  timeout  = %[3]v
+  interval = 60
+  active   = true
+}
+`, name, nodes, timeout)
 }

@@ -181,7 +181,10 @@ func (r *NotificationSplunkResource) Read(
 	err = base.As(&splunk)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "splunk"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SplunkDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

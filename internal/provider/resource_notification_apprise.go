@@ -154,7 +154,10 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 	err = base.As(&apprise)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "apprise"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.AppriseDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -159,7 +159,10 @@ func (r *NotificationKeepResource) Read(ctx context.Context, req resource.ReadRe
 	err = base.As(&keep)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "keep"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.KeepDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

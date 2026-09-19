@@ -171,7 +171,10 @@ func (r *NotificationNostrResource) Read(
 	err = base.As(&nostr)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "nostr"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.NostrDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

@@ -184,7 +184,10 @@ func (r *NotificationTeltonikaResource) Read(
 	err = base.As(&teltonika)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "Teltonika"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.TeltonikaDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

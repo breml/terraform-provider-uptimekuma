@@ -171,7 +171,10 @@ func (r *NotificationSevenioResource) Read(
 	err = base.As(&sevenio)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "sevenio"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.SevenIODetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 
