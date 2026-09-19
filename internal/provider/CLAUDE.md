@@ -66,7 +66,7 @@ Terraform's context cancels after `Configure()` completes. Socket.IO connection 
 
 ## Resource Categories
 
-### Monitor Resources (31 types)
+### Monitor Resources (32 types)
 
 #### HTTP-Based Monitors
 
@@ -103,6 +103,7 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_real_browser` - Real browser automation (Puppeteer/Playwright)
 - `uptimekuma_monitor_docker` - Docker container health monitoring
 - `uptimekuma_monitor_steam` - Steam game server monitoring
+- `uptimekuma_monitor_pm2` - PM2 process monitoring via `pm2 jlist` on the Uptime Kuma host
 
 #### Organization
 

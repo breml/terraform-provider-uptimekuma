@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
@@ -60,4 +61,53 @@ func (v wholeNumberValidator) ValidateFloat64(
 // wholeNumber returns a validator that rejects fractional float64 values.
 func wholeNumber() validator.Float64 {
 	return wholeNumberValidator{}
+}
+
+// nonBlankValidator rejects strings that are empty once surrounding whitespace
+// is removed.
+//
+// Uptime Kuma trims such values before storing them and then rejects the empty
+// result. Catching it at plan time reports the problem on the attribute instead
+// of as an opaque API error during apply.
+type nonBlankValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (nonBlankValidator) Description(_ context.Context) string {
+	return "value must not be empty or consist only of whitespace"
+}
+
+// MarkdownDescription returns a markdown description of the validator's behavior.
+func (v nonBlankValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// ValidateString reports an error if the configured value is blank.
+func (v nonBlankValidator) ValidateString(
+	ctx context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	if strings.TrimSpace(req.ConfigValue.ValueString()) != "" {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		req.Path,
+		"Invalid Attribute Value",
+		fmt.Sprintf(
+			"Attribute %s %s, got: %q.",
+			req.Path,
+			v.Description(ctx),
+			req.ConfigValue.ValueString(),
+		),
+	)
+}
+
+// nonBlank returns a validator that rejects blank strings.
+func nonBlank() validator.String {
+	return nonBlankValidator{}
 }

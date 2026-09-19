@@ -79,7 +79,7 @@ terraform-provider-uptimekuma/
 
 The provider manages 85+ resource types across multiple categories:
 
-**Monitors** (31 types): HTTP, ping, DNS, TCP, databases (PostgreSQL, MySQL, MongoDB, Redis, SQL Server),
+**Monitors** (32 types): HTTP, ping, DNS, TCP, databases (PostgreSQL, MySQL, MongoDB, Redis, SQL Server),
 MQTT, Docker, real browser, SNMP, push, gRPC, Steam, and monitor groups.
 
 **Notifications** (51 types): Webhook, Slack, Teams, Discord, email (SMTP), push services (Pushover, Telegram,
