@@ -19,7 +19,7 @@ func TestAccMonitorPingResource(t *testing.T) {
 	hostnameUpdated := "1.1.1.1"
 	description := "Test ping monitor with description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -189,7 +189,7 @@ resource "uptimekuma_monitor_ping" "test" {
 func TestAccMonitorPingResourceFractionalTimeout(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPingMonitorFractionalTimeout")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

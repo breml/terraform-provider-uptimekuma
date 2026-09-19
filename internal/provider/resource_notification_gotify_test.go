@@ -19,7 +19,7 @@ func TestAccNotificationGotifyResource(t *testing.T) {
 	token := "AGe0Ks4WV5fEJkX"
 	tokenUpdated := "AGe0Ks4WV5fEJkY"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

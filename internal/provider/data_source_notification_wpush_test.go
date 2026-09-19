@@ -16,7 +16,7 @@ func TestAccNotificationWPushDataSource(t *testing.T) {
 	apiKey := "test-wpush-api-key-123"
 	channel := "test-channel"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

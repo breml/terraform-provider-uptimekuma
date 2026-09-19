@@ -16,7 +16,7 @@ func TestAccMaintenanceMonitorsDataSource(t *testing.T) {
 	monitorName1 := acctest.RandomWithPrefix("TestMonitor1")
 	monitorName2 := acctest.RandomWithPrefix("TestMonitor2")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

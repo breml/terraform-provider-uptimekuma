@@ -20,7 +20,7 @@ func TestAccMonitorTCPPortResource(t *testing.T) {
 	portUpdated := int64(80)
 	description := "Test TCP port monitor with description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

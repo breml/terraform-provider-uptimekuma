@@ -17,7 +17,7 @@ func TestAccMaintenanceMonitorsResource(t *testing.T) {
 	monitorName1 := acctest.RandomWithPrefix("TestMonitor1")
 	monitorName2 := acctest.RandomWithPrefix("TestMonitor2")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -96,7 +96,7 @@ func TestAccMaintenanceMonitorsResource_Update(t *testing.T) {
 	monitorName2 := acctest.RandomWithPrefix("TestMonitor2")
 	monitorName3 := acctest.RandomWithPrefix("TestMonitor3")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -196,7 +196,7 @@ resource "uptimekuma_maintenance_monitors" "test" {
 func TestAccMaintenanceMonitorsResource_Empty(t *testing.T) {
 	maintenanceTitle := acctest.RandomWithPrefix("TestMaintenance")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -230,7 +230,7 @@ func TestAccMaintenanceMonitorsResource_WithScheduledMaintenance(t *testing.T) {
 	maintenanceTitle := acctest.RandomWithPrefix("TestScheduledMaintenance")
 	monitorName := acctest.RandomWithPrefix("TestMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -294,7 +294,7 @@ func TestAccMaintenanceMonitorsResource_ImportBasic(t *testing.T) {
 	maintenanceTitle := acctest.RandomWithPrefix("TestMaintenance")
 	monitorName := acctest.RandomWithPrefix("TestMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

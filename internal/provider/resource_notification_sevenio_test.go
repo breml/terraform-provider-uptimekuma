@@ -21,7 +21,7 @@ func TestAccNotificationSevenioResource(t *testing.T) {
 	to := "+491111111111"
 	toUpdated := "+492222222222"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

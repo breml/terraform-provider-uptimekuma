@@ -15,7 +15,7 @@ func TestAccNotificationFlashDutyDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationFlashDuty")
 	integrationKey := "https://api.flashduty.com/webhook/events/12345678901234567890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

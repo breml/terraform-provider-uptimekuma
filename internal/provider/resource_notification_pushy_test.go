@@ -19,7 +19,7 @@ func TestAccNotificationPushyResource(t *testing.T) {
 	token := "test-device-token-abc123"
 	tokenUpdated := "test-device-token-xyz789"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -15,7 +15,7 @@ import (
 func TestAccMaintenanceDataSource(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenance")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -90,7 +90,7 @@ data "uptimekuma_maintenance" "test" {
 }
 
 func TestAccMaintenanceDataSource_NotFoundByName(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -113,7 +113,7 @@ data "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceDataSource_MultipleSameName(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenance")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -158,7 +158,7 @@ data "uptimekuma_maintenance" "test" {
 }
 
 func TestAccMaintenanceDataSource_MissingParameters(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

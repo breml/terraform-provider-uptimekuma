@@ -21,7 +21,7 @@ func TestAccNotificationHomeAssistantResource(t *testing.T) {
 	service := "notify.mobile_app"
 	serviceUpdated := "notify.email"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

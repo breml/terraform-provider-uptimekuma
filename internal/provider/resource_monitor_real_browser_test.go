@@ -18,7 +18,7 @@ func TestAccMonitorRealBrowserResource(t *testing.T) {
 	url := "https://example.com"
 	urlUpdated := "https://example.org"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -116,7 +116,7 @@ func TestAccMonitorRealBrowserResourceWithStatusCodes(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRealBrowserMonitorWithStatusCodes")
 	url := "https://example.com"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -160,7 +160,7 @@ resource "uptimekuma_monitor_real_browser" "test" {
 func TestAccMonitorRealBrowserResourceWithScreenshotDelay(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRealBrowserScreenshotDelay")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -210,7 +210,7 @@ resource "uptimekuma_monitor_real_browser" "test" {
 func TestAccMonitorRealBrowserResourceScreenshotDelayRemoval(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRealBrowserScreenshotDelayRemoval")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -258,7 +258,7 @@ func TestAccMonitorRealBrowserResourceScreenshotDelayRemoval(t *testing.T) {
 func TestAccMonitorRealBrowserResourceScreenshotDelayTooLarge(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRealBrowserScreenshotDelayTooLarge")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

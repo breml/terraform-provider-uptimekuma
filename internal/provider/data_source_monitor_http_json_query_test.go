@@ -15,7 +15,7 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitor")
 	url := "https://httpbin.org/json"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

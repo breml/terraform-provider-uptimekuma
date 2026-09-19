@@ -18,7 +18,7 @@ func TestAccNotificationWeComResource(t *testing.T) {
 	botKey := "bot_key_placeholder"
 	botKeyUpdated := "bot_key_updated_placeholder"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

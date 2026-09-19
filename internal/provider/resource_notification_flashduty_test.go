@@ -17,7 +17,7 @@ func TestAccNotificationFlashDutyResource(t *testing.T) {
 	integrationKey := "https://api.flashduty.com/webhook/events/12345678901234567890"
 	integrationKeyUpdated := "https://api.flashduty.com/webhook/events/09876543210987654321"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

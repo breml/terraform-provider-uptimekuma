@@ -17,7 +17,7 @@ func TestAccMonitorSNMPResource(t *testing.T) {
 	description := "Test SNMP monitor description"
 	descriptionUpdated := "Updated test SNMP monitor description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -162,7 +162,7 @@ resource "uptimekuma_monitor_snmp" "test" {
 func TestAccMonitorSNMPResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSNMPMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -248,7 +248,7 @@ func TestAccMonitorSNMPResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSNMPMonitorFull")
 	description := "Full test SNMP monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -338,7 +338,7 @@ resource "uptimekuma_monitor_snmp" "test" {
 func TestAccMonitorSNMPResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSNMPMonitorConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

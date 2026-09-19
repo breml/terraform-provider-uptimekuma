@@ -18,7 +18,7 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 	keyword := "Herman"
 	keywordUpdated := "Moby"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -180,7 +180,7 @@ func TestAccMonitorHTTPKeywordResourceWithInvert(t *testing.T) {
 	url := "https://httpbin.org/html"
 	keyword := "NonExistentKeyword"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -218,7 +218,7 @@ func TestAccMonitorHTTPKeywordResourceWithAuth(t *testing.T) {
 	url := "https://httpbin.org/basic-auth/user/pass"
 	keyword := "authenticated"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -285,7 +285,7 @@ func TestAccMonitorHTTPKeywordResourceWithStatusCodes(t *testing.T) {
 	url := "https://httpbin.org/html"
 	keyword := "Herman"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -337,7 +337,7 @@ func TestAccMonitorHTTPKeywordResourceWithCacheBust(t *testing.T) {
 	url := "https://httpbin.org/html"
 	keyword := "Herman"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -399,7 +399,7 @@ resource "uptimekuma_monitor_http_keyword" "test" {
 func TestAccMonitorHTTPKeywordResourceWithOAuthAudience(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPKeywordOAuthAudience")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

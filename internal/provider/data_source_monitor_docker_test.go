@@ -16,7 +16,7 @@ func TestAccMonitorDockerDataSource(t *testing.T) {
 	container := "test-container"
 	dockerHost := "unix:///var/run/docker.sock"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

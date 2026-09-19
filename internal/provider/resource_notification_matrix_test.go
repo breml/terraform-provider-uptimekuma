@@ -22,7 +22,7 @@ func TestAccNotificationMatrixResource(t *testing.T) {
 	accessToken := "syt_access_token_example_123"
 	accessTokenUpdated := "syt_access_token_updated_456"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -18,7 +18,7 @@ func TestAccMonitorHTTPResource(t *testing.T) {
 	url := "https://httpbin.org/status/200"
 	urlUpdated := "https://httpbin.org/status/201"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -145,7 +145,7 @@ func TestAccMonitorHTTPResourceWithAuth(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorWithAuth")
 	url := "https://httpbin.org/basic-auth/user/pass"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -199,7 +199,7 @@ func TestAccMonitorHTTPResourceWithStatusCodes(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorWithStatusCodes")
 	url := "https://httpbin.org/status/201"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -241,7 +241,7 @@ func TestAccMonitorHTTPResourceWithCacheBust(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorWithCacheBust")
 	url := "https://httpbin.org/status/200"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -292,7 +292,7 @@ resource "uptimekuma_monitor_http" "test" {
 func TestAccMonitorHTTPResourceActiveToggle(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorActiveToggle")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -341,7 +341,7 @@ func TestAccMonitorHTTPResourceActiveToggle(t *testing.T) {
 func TestAccMonitorHTTPResourceCreateInactive(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorCreateInactive")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -379,7 +379,7 @@ resource "uptimekuma_monitor_http" "test" {
 func TestAccMonitorHTTPResourceWithOAuthAudience(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorOAuthAudience")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -425,7 +425,7 @@ resource "uptimekuma_monitor_http" "test" {
 func TestAccMonitorHTTPResourceFractionalTimeout(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPMonitorFractionalTimeout")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -466,7 +466,7 @@ func TestAccMonitorHTTPResourceIntervalBeyondFormerMaximum(t *testing.T) {
 
 	const beyondFormerMaximum = 3000000 // The former maximum was 2073600, i.e. 24 days.
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -16,7 +16,7 @@ func TestAccMonitorMongoDBResource(t *testing.T) {
 	nameUpdated := acctest.RandomWithPrefix("TestMongoDBMonitorUpdated")
 	connectionString := "mongodb://user:password@localhost:27017/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -97,7 +97,7 @@ func TestAccMonitorMongoDBResourceWithOptionalFields(t *testing.T) {
 	description := "Test MongoDB monitor with optional fields"
 	connectionString := "mongodb://user:password@localhost:27017/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -185,7 +185,7 @@ func TestAccMonitorMongoDBResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestMongoDBMonitorWithParent")
 	connectionString := "mongodb://user:password@localhost:27017/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -240,7 +240,7 @@ func TestAccMonitorMongoDBResourceWithJSONPath(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestMongoDBMonitorWithJSONPath")
 	connectionString := "mongodb://user:password@localhost:27017/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -288,7 +288,7 @@ func TestAccMonitorMongoDBResourceImport(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestMongoDBMonitorImport")
 	connectionString := "mongodb://user:password@localhost:27017/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -314,7 +314,7 @@ func TestAccMonitorMongoDBResourceImport(t *testing.T) {
 func TestAccMonitorMongoDBResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestMongoDBConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

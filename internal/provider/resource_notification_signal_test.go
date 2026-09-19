@@ -18,7 +18,7 @@ func TestAccNotificationSignalResource(t *testing.T) {
 	url := "http://signal.example.com:8080"
 	urlUpdated := "http://signal.example.com:8081"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

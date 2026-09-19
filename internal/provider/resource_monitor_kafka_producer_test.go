@@ -17,7 +17,7 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 	description := "Test Kafka Producer monitor description"
 	descriptionUpdated := "Updated test Kafka Producer monitor description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -152,7 +152,7 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
 func TestAccMonitorKafkaProducerResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestKafkaProducerMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -232,7 +232,7 @@ func TestAccMonitorKafkaProducerResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestKafkaProducerMonitorFull")
 	description := "Full test Kafka Producer monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -332,7 +332,7 @@ func TestAccMonitorKafkaProducerResourceWithParent(t *testing.T) {
 	groupName := acctest.RandomWithPrefix("TestKafkaProducerGroup")
 	monitorName := acctest.RandomWithPrefix("TestKafkaProducerMonitorWithParent")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

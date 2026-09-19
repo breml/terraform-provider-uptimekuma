@@ -20,7 +20,7 @@ func TestAccNotificationBitrix24Resource(t *testing.T) {
 	userID := "123"
 	userIDUpdated := "456"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -15,7 +15,7 @@ func TestAccNotificationFeishuResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationFeishu")
 	nameUpdated := acctest.RandomWithPrefix("NotificationFeishuUpdated")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

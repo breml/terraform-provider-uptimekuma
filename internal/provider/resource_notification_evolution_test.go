@@ -23,7 +23,7 @@ func TestAccNotificationEvolutionResource(t *testing.T) {
 	recipient := "+551198765432"
 	recipientUpdated := "+551234567890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

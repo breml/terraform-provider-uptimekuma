@@ -17,7 +17,7 @@ func TestAccNotificationSpugPushResource(t *testing.T) {
 	templateKey := "test-template-key-xxxxx"
 	templateKeyUpdated := "test-template-key-yyyyy"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

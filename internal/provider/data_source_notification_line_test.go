@@ -16,7 +16,7 @@ func TestAccNotificationLineDataSource(t *testing.T) {
 	channelAccessToken := "channel_access_token_123456789abcdef"
 	userID := "U1234567890abcdef1234567890abcdef"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

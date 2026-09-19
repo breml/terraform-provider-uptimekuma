@@ -18,7 +18,7 @@ func TestAccNotificationMattermostResource(t *testing.T) {
 	webhookURL := "https://mattermost.example.com/hooks/xxx"
 	webhookURLUpdated := "https://mattermost.example.com/hooks/yyy"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

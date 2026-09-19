@@ -17,7 +17,7 @@ func TestAccStatusPageIncidentResource(t *testing.T) {
 	incidentTitle := "Test Incident"
 	incidentContent := "This is a test incident"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -78,7 +78,7 @@ func TestAccStatusPageIncidentResourceWithStyle(t *testing.T) {
 	incidentTitle := "Maintenance Window"
 	incidentContent := "Scheduled maintenance"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -144,7 +144,7 @@ func TestAccStatusPageIncidentResourceUpdate(t *testing.T) {
 	incidentContent := "Initial content"
 	incidentContentUpdated := "Updated content"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

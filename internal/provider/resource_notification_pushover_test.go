@@ -20,7 +20,7 @@ func TestAccNotificationPushoverResource(t *testing.T) {
 	appToken := "test-app-token-789"
 	appTokenUpdated := "test-app-token-012"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

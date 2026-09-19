@@ -14,7 +14,7 @@ import (
 func TestAccNotificationPushoverDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationPushover")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

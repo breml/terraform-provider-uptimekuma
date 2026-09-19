@@ -902,6 +902,35 @@ provider "uptimekuma" {
 }
 ```
 
+### Test Parallelism
+
+Acceptance tests run concurrently. Their cost is dominated by Terraform CLI process
+overhead (`init`/`plan`/`apply`/`destroy` cycles), not by Uptime Kuma, so they scale
+well past the number of available cores. `task testacc` passes `-parallel 8`; override
+with `task testacc PARALLEL=4`.
+
+**Use `resource.ParallelTest` for new tests.** This is safe as long as every resource
+the test creates is uniquely named via `acctest.RandomWithPrefix`, and the test only
+asserts on resources it created itself.
+
+**Four test files must keep using `resource.Test`**, because they touch state shared by
+the whole Uptime Kuma instance:
+
+| File | Reason |
+| ------ | -------- |
+| [resource_settings_test.go](resource_settings_test.go) | Settings are a singleton |
+| [data_source_settings_test.go](data_source_settings_test.go) | Reads the settings singleton |
+| [data_source_maintenances_test.go](data_source_maintenances_test.go) | Asserts an exact count over *all* maintenances |
+| [resource_proxy_test.go](resource_proxy_test.go) | `default` and `apply_existing` rewrite every other proxy and monitor |
+
+Go's `testing` package runs all non-parallel top-level tests to completion *before*
+releasing any parallel ones, so these four files are automatically isolated from the
+concurrent tests -- no extra synchronisation is required.
+
+When adding a test that asserts on a list data source (e.g. `uptimekuma_maintenances`)
+or on a resource that mutates instance-wide state, use `resource.Test` and add it to the
+table above.
+
 ### Acceptance Test Pattern
 
 ```go
@@ -909,7 +938,7 @@ func TestAcc{Type}Resource(t *testing.T) {
     name := acctest.RandomWithPrefix("Test{Type}")
     nameUpdated := acctest.RandomWithPrefix("Test{Type}Updated")
 
-    resource.Test(t, resource.TestCase{
+    resource.ParallelTest(t, resource.TestCase{
         PreCheck: func() { testAccPreCheck(t) },
         ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
         Steps: []resource.TestStep{
@@ -983,7 +1012,7 @@ Similar pattern but typically:
 func TestAcc{Type}DataSource(t *testing.T) {
     name := acctest.RandomWithPrefix("Test{Type}")
 
-    resource.Test(t, resource.TestCase{
+    resource.ParallelTest(t, resource.TestCase{
         PreCheck: func() { testAccPreCheck(t) },
         ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
         Steps: []resource.TestStep{

@@ -17,7 +17,7 @@ func TestAccNotificationCallMeBotResource(t *testing.T) {
 	endpointURL := "https://api.callmebot.com/whatsapp.php?phone=1234567890&text="
 	endpointURLUpdated := "https://api.callmebot.com/telegram.php?token=123456&chat_id=789&text="
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

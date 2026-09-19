@@ -17,7 +17,7 @@ func TestAccNotificationTechulusPushResource(t *testing.T) {
 	apiKey := "test-api-key-12345"
 	apiKeyUpdated := "test-api-key-67890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

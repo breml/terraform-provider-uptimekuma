@@ -17,7 +17,7 @@ func TestAccMonitorGroupResource(t *testing.T) {
 	description := "Test group monitor description"
 	descriptionUpdated := "Updated test group monitor description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -90,7 +90,7 @@ resource "uptimekuma_monitor_group" "test" {
 func TestAccMonitorGroupResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGroupMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -140,7 +140,7 @@ func TestAccMonitorGroupResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGroupMonitorFull")
 	description := "Full test group monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

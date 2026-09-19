@@ -17,7 +17,7 @@ func TestAccMonitorRadiusResource(t *testing.T) {
 	description := "Test Radius monitor description"
 	descriptionUpdated := "Updated test Radius monitor description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -165,7 +165,7 @@ resource "uptimekuma_monitor_radius" "test" {
 func TestAccMonitorRadiusResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRadiusMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -246,7 +246,7 @@ func TestAccMonitorRadiusResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRadiusMonitorFull")
 	description := "Full test Radius monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -344,7 +344,7 @@ func TestAccMonitorRadiusResourceWithParent(t *testing.T) {
 	groupName := acctest.RandomWithPrefix("TestRadiusGroup")
 	monitorName := acctest.RandomWithPrefix("TestRadiusMonitorWithParent")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

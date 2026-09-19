@@ -15,7 +15,7 @@ func TestAccNotificationCallMeBotDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationCallMeBot")
 	endpoint := "https://api.callmebot.com/whatsapp.php?phone=1234567890&text="
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

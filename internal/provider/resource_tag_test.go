@@ -17,7 +17,7 @@ func TestAccTagResource(t *testing.T) {
 	color := "#3498db"
 	colorUpdated := "#2ecc71"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -70,7 +70,7 @@ func TestAccTagResourceDelete(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestTagDelete")
 	color := "#9b59b6"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

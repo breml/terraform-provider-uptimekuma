@@ -19,7 +19,7 @@ func TestAccNotificationKookResource(t *testing.T) {
 	guildID := "382941547624206336"
 	guildIDUpdated := "382941547624206337"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

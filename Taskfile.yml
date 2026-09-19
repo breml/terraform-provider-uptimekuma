@@ -41,8 +41,13 @@ tasks:
     desc: "Run acceptance tests"
     env:
       TF_ACC: "1"
+    vars:
+      # Acceptance tests are dominated by Terraform CLI process overhead, not by
+      # Uptime Kuma, so they scale well beyond the number of available cores.
+      # Override with: task testacc PARALLEL=4
+      PARALLEL: '{{.PARALLEL | default "8"}}'
     cmds:
-      - go test -v -shuffle on -coverprofile coverage.out -timeout 1800s ./...
+      - go test -v -shuffle on -coverprofile coverage.out -timeout 1800s -parallel {{.PARALLEL}} ./...
 
   testacc-cover-report:
     desc: "Generate acceptance tests coverage report"

@@ -15,7 +15,7 @@ func TestAccNotificationGoogleChatDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationGoogleChat")
 	webhookURL := "https://chat.googleapis.com/v1/spaces/SPACE_ID/messages?key=KEY&token=TOKEN"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

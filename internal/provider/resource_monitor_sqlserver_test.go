@@ -18,7 +18,7 @@ func TestAccMonitorSQLServerResource(t *testing.T) {
 	nameUpdated := acctest.RandomWithPrefix("TestSQLServerMonitorUpdated")
 	connectionString := "Server=localhost;User=sa;Password=MyPassword123;TrustServerCertificate=true"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -106,7 +106,7 @@ func TestAccMonitorSQLServerResourceWithOptionalFields(t *testing.T) {
 	description := "Test SQL Server monitor with optional fields"
 	connectionString := "Server=localhost;User=sa;Password=MyPassword123;TrustServerCertificate=true"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -194,7 +194,7 @@ func TestAccMonitorSQLServerResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestSQLServerMonitorWithParent")
 	connectionString := "Server=localhost;User=sa;Password=MyPassword123;TrustServerCertificate=true"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -253,7 +253,7 @@ func testAccMonitorSQLServerImportStateID(s *terraform.State) (string, error) {
 func TestAccMonitorSQLServerResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSQLServerConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

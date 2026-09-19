@@ -20,7 +20,7 @@ func TestAccMonitorSIPOptionsResource(t *testing.T) {
 	portUpdated := int64(5061)
 	description := "Test SIP Options monitor with description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -155,7 +155,7 @@ resource "uptimekuma_monitor_sip_options" "test" {
 func TestAccMonitorSIPOptionsResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSIPOptionsMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -217,7 +217,7 @@ func TestAccMonitorSIPOptionsResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSIPOptionsMonitorFull")
 	description := "Full SIP Options monitor test"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

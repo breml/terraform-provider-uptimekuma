@@ -20,7 +20,7 @@ func TestAccMonitorSteamResource(t *testing.T) {
 	portUpdated := int64(27016)
 	description := "Test Steam game server monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -158,7 +158,7 @@ resource "uptimekuma_monitor_steam" "test" {
 func TestAccMonitorSteamResourceFractionalTimeout(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSteamMonitorFractionalTimeout")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

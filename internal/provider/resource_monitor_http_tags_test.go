@@ -17,7 +17,7 @@ func TestAccMonitorHTTPResourceWithTags(t *testing.T) {
 	tagName2 := acctest.RandomWithPrefix("TestTag2")
 	url := "https://httpbin.org/status/200"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -81,7 +81,7 @@ func TestAccMonitorHTTPResourceWithTagsImport(t *testing.T) {
 	tagName := acctest.RandomWithPrefix("TestTag")
 	url := "https://httpbin.org/status/200"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

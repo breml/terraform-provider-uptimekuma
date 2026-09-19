@@ -17,7 +17,7 @@ func TestAccMonitorDNSResource(t *testing.T) {
 	description := "Test DNS monitor description"
 	descriptionUpdated := "Updated test DNS monitor description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -158,7 +158,7 @@ resource "uptimekuma_monitor_dns" "test" {
 func TestAccMonitorDNSResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestDNSMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -229,7 +229,7 @@ func TestAccMonitorDNSResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestDNSMonitorFull")
 	description := "Full test DNS monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -328,7 +328,7 @@ func TestAccMonitorDNSResourceDifferentRecordTypes(t *testing.T) {
 		t.Run(recordType, func(t *testing.T) {
 			name := acctest.RandomWithPrefix(fmt.Sprintf("TestDNS%s", recordType))
 
-			resource.Test(t, resource.TestCase{
+			resource.ParallelTest(t, resource.TestCase{
 				PreCheck:                 func() { testAccPreCheck(t) },
 				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
@@ -371,7 +371,7 @@ resource "uptimekuma_monitor_dns" "test" {
 func TestAccMonitorDNSResourceMultiResolverAndConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestDNSMultiResolver")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

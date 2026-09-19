@@ -19,7 +19,7 @@ func TestAccNotificationHeiiOnCallResource(t *testing.T) {
 	triggerID := acctest.RandStringFromCharSet(16, acctest.CharSetAlphaNum)
 	triggerIDUpdated := acctest.RandStringFromCharSet(16, acctest.CharSetAlphaNum)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -104,7 +104,7 @@ func TestAccNotificationHeiiOnCallDataSource(t *testing.T) {
 	apiKey := acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
 	triggerID := acctest.RandStringFromCharSet(16, acctest.CharSetAlphaNum)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

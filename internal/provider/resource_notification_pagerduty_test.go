@@ -20,7 +20,7 @@ func TestAccNotificationPagerDutyResource(t *testing.T) {
 	integrationKey := "test-key-123456789"
 	integrationKeyUpdated := "updated-key-987654321"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

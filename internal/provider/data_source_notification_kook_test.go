@@ -16,7 +16,7 @@ func TestAccNotificationKookDataSource(t *testing.T) {
 	botToken := "1/MzAxMjk5NzA1OTMzMDAwMA=="
 	guildID := "382941547624206336"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

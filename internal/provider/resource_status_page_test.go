@@ -18,7 +18,7 @@ func TestAccStatusPageResource(t *testing.T) {
 	description := "Test status page description"
 	descriptionUpdated := "Updated test status page description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -92,7 +92,7 @@ func TestAccStatusPageResourceMinimal(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-minimal")
 	title := "Minimal Status Page"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -149,7 +149,7 @@ func TestAccStatusPageResourceWithAllOptions(t *testing.T) {
 	title := "Full Status Page"
 	description := "Full test status page"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -223,7 +223,7 @@ func TestAccStatusPageResourceWithAnalytics(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-analytics")
 	title := "Analytics Status Page"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -261,7 +261,7 @@ func TestAccStatusPageResourceWithDeprecatedGoogleAnalyticsID(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-ga-compat")
 	title := "GA Compat Status Page"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -297,7 +297,7 @@ func TestAccStatusPageResourceWithIcon(t *testing.T) {
 	// 1x1 pixel transparent PNG as data URI.
 	icon := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIHWNgAAIABAABAN4TIQAAAABJRU5ErkJggg=="
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -356,7 +356,7 @@ func TestAccStatusPageResourceWithIconPath(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-icon-path")
 	title := "Status Page with Icon Path"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -380,7 +380,7 @@ func TestAccStatusPageResourceWithMonitors(t *testing.T) {
 	title := "Status Page with Monitors"
 	monitorName := acctest.RandomWithPrefix("test-monitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

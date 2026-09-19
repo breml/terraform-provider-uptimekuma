@@ -17,7 +17,7 @@ func TestAccNotificationStackfieldResource(t *testing.T) {
 	webhookURL := "https://api.stackfield.com/hooks/XXXXXXXXXXXXXXXXXXXXXXXX"
 	webhookURLUpdated := "https://api.stackfield.com/hooks/YYYYYYYYYYYYYYYYYYYYYYYY"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

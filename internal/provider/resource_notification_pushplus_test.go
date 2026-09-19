@@ -17,7 +17,7 @@ func TestAccNotificationPushPlusResource(t *testing.T) {
 	sendKey := "test-send-key-123456789"
 	sendKeyUpdated := "updated-send-key-987654321"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -69,7 +69,7 @@ func TestAccNotificationPushPlusResourceImport(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationPushPlus")
 	sendKey := "test-send-key-import-123456"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

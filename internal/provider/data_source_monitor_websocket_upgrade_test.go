@@ -15,7 +15,7 @@ func TestAccMonitorWebsocketUpgradeDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestWebsocketUpgradeMonitor")
 	url := "wss://echo.websocket.org"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -19,7 +19,7 @@ func TestAccNotificationVKResource(t *testing.T) {
 	peerID := "12345"
 	peerIDUpdated := "2000000001"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

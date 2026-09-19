@@ -373,7 +373,7 @@ func TestAccProviderEnvironmentVariables(t *testing.T) {
 		t.Skip("UPTIMEKUMA_ENDPOINT not set - skipping environment variable provider test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -402,7 +402,7 @@ func TestAccProviderMixedConfiguration(t *testing.T) {
 	t.Setenv("UPTIMEKUMA_USERNAME", "env-user")
 	t.Setenv("UPTIMEKUMA_PASSWORD", "env-pass")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -532,7 +532,7 @@ func TestParseClientOptions_PerAttemptTimeoutExceedsTimeout(t *testing.T) {
 }
 
 func TestAccProviderInvalidTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -551,7 +551,7 @@ data "uptimekuma_tag" "test" {}
 }
 
 func TestAccProviderNegativeTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -570,7 +570,7 @@ data "uptimekuma_tag" "test" {}
 }
 
 func TestAccProviderInvalidPerAttemptTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -589,7 +589,7 @@ data "uptimekuma_tag" "test" {}
 }
 
 func TestAccProviderNegativePerAttemptTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -613,7 +613,7 @@ func TestAccProviderEmptyTimeout(t *testing.T) {
 		t.Skip("UPTIMEKUMA_ENDPOINT not set - skipping empty timeout provider test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},

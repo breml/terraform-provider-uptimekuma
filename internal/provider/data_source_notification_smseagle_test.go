@@ -17,7 +17,7 @@ func TestAccNotificationSMSEagleDataSource(t *testing.T) {
 	token := "test-api-token-123"
 	recipientTo := "+1234567890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

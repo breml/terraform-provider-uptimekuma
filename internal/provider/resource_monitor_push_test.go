@@ -19,7 +19,7 @@ func TestAccMonitorPushResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPushMonitor")
 	nameUpdated := acctest.RandomWithPrefix("TestPushMonitorUpdated")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -92,7 +92,7 @@ func TestAccMonitorPushResourceWithOptionalFields(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPushMonitorWithOptional")
 	description := "Test push monitor with optional fields"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -169,7 +169,7 @@ func TestAccMonitorPushResourceWithParent(t *testing.T) {
 	groupName := acctest.RandomWithPrefix("TestPushGroup")
 	monitorName := acctest.RandomWithPrefix("TestPushMonitorWithParent")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

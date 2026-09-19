@@ -21,7 +21,7 @@ func TestAccNotificationOneChatResource(t *testing.T) {
 	botID := "bot-001"
 	botIDUpdated := "bot-002"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

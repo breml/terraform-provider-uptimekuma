@@ -18,7 +18,7 @@ func TestAccNotificationPushbulletResource(t *testing.T) {
 	accessToken := "o.test1234567890abcdefghijklmnopqrst"
 	accessTokenUpdated := "o.updated1234567890abcdefghijklmnop"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -15,7 +15,7 @@ func TestAccNotificationSendgridDataSourceByID(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationSendgrid")
 	apiKey := "SG.test-api-key-" + acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -43,7 +43,7 @@ func TestAccNotificationSendgridDataSourceByName(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationSendgrid")
 	apiKey := "SG.test-api-key-" + acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

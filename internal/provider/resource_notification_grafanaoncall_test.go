@@ -17,7 +17,7 @@ func TestAccNotificationGrafanaOncallResource(t *testing.T) {
 	url := "https://grafana-oncall.example.com/integrations/v1/webhook/abc123/"
 	urlUpdated := "https://grafana-oncall.example.com/integrations/v1/webhook/def456/"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

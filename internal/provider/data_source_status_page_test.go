@@ -15,7 +15,7 @@ func TestAccStatusPageDataSource(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-status")
 	title := "Test Status Page"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

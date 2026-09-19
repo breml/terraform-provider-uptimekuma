@@ -17,7 +17,7 @@ func TestAccNotificationWhapiDataSource(t *testing.T) {
 	authToken := "test-auth-token-123"
 	recipient := "1234567890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

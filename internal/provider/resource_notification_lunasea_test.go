@@ -18,7 +18,7 @@ func TestAccNotificationLunaseaResource(t *testing.T) {
 	userID := "user123"
 	userIDUpdated := "user456"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -77,7 +77,7 @@ func TestAccNotificationLunaseaResourceDevice(t *testing.T) {
 	deviceID := "device123"
 	deviceIDUpdated := "device456"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -134,7 +134,7 @@ func TestAccNotificationLunaseaResourceImportState(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationLunasea")
 	userID := "user789"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -175,7 +175,7 @@ resource "uptimekuma_notification_lunasea" "test" {
 func TestAccNotificationLunaseaResourceValidation_MissingUserID(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationLunaseaValidation")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -190,7 +190,7 @@ func TestAccNotificationLunaseaResourceValidation_MissingUserID(t *testing.T) {
 func TestAccNotificationLunaseaResourceValidation_MissingDevice(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationLunaseaValidation")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

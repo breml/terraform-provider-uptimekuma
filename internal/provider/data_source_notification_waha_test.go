@@ -18,7 +18,7 @@ func TestAccNotificationWAHADataSource(t *testing.T) {
 	chatID := "120363101234567890@g.us"
 	apiKey := "test-api-key-123"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
