@@ -48,7 +48,7 @@ resource "uptimekuma_monitor_ping" "example" {
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds. Like `interval`, it is only bounded by a minimum since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Request timeout in seconds. Uptime Kuma stores the timeout in a floating point column, but rounds the value to whole seconds before storing it for ping monitors, so a fractional value does not round-trip unchanged. The server rejects values outside 1-300 seconds and values below the per-request ping timeout, which defaults to 2 seconds.
+- `timeout` (Number) Request timeout in seconds, between 1 and 300. Must be a whole number: Uptime Kuma rounds the value to whole seconds for ping monitors, so a fractional value would leave state permanently out of sync with the server and is rejected at plan time.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

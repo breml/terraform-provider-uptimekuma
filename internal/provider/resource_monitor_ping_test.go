@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -181,11 +182,10 @@ resource "uptimekuma_monitor_ping" "test" {
 `, name, hostname, interval, packetSize)
 }
 
-// TestAccMonitorPingResourceFractionalTimeout documents that ping monitors do
-// not round-trip a fractional timeout. Uptime Kuma stores the timeout in a
-// floating point column, but rounds the value to whole seconds before storing
-// it for ping monitors, so the state Terraform reads back never matches the
-// configured value.
+// TestAccMonitorPingResourceFractionalTimeout verifies that a fractional
+// timeout is rejected at plan time. Uptime Kuma rounds the timeout to whole
+// seconds for ping monitors, so accepting 2.5 would leave state permanently
+// out of sync with the server.
 func TestAccMonitorPingResourceFractionalTimeout(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPingMonitorFractionalTimeout")
 
@@ -194,10 +194,8 @@ func TestAccMonitorPingResourceFractionalTimeout(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				// The server rounds 2.5 to 3 before storing it, so the plan
-				// never converges and Terraform keeps proposing the change.
-				Config:             testAccMonitorPingResourceConfigWithTimeout(name, "8.8.8.8", 2.5),
-				ExpectNonEmptyPlan: true,
+				Config:      testAccMonitorPingResourceConfigWithTimeout(name, "8.8.8.8", 2.5),
+				ExpectError: regexp.MustCompile(`must be a whole number`),
 			},
 			{
 				Config: testAccMonitorPingResourceConfigWithTimeout(name, "8.8.8.8", 30),

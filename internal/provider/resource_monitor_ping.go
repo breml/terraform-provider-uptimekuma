@@ -73,16 +73,16 @@ func (*MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds. Uptime Kuma stores the timeout in a " +
-					"floating point column, but rounds the value to whole seconds before storing it for " +
-					"ping monitors, so a fractional value does not round-trip unchanged. The server " +
-					"rejects values outside 1-300 seconds and values below the per-request ping timeout, " +
-					"which defaults to 2 seconds.",
+				MarkdownDescription: "Request timeout in seconds, between 1 and 300. Must be a whole " +
+					"number: Uptime Kuma rounds the value to whole seconds for ping monitors, so a " +
+					"fractional value would leave state permanently out of sync with the server and is " +
+					"rejected at plan time.",
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(48),
 				Validators: []validator.Float64{
 					float64validator.Between(1, 300),
+					wholeNumber(),
 				},
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
