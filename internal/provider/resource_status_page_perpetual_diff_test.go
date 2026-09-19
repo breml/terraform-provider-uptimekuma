@@ -24,7 +24,7 @@ func TestAccStatusPageNoPerpetualDiff(t *testing.T) {
 
 	config := testAccStatusPageNoPerpetualDiffConfig(slug, title, monitorName1, monitorName2)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -93,7 +93,7 @@ func TestAccStatusPageNoPerpetualDiffEmptyDescription(t *testing.T) {
 
 	config := testAccStatusPageEmptyDescriptionConfig(slug, title)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

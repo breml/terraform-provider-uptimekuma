@@ -15,7 +15,7 @@ func TestAccNotificationOpsgenieDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationOpsgenie")
 	apiKey := "test-api-key-123"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

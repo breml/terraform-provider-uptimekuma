@@ -17,7 +17,7 @@ func TestAccNotificationMatrixDataSource(t *testing.T) {
 	internalRoomID := "!abc123:example.com"
 	accessToken := "syt_access_token_example_123"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

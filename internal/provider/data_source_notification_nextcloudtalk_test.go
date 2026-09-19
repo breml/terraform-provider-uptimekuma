@@ -14,7 +14,7 @@ import (
 func TestAccNotificationNextcloudTalkDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationNextcloudTalk")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationNextcloudTalkDataSource(t *testing.T) {
 				Config: testAccNotificationNextcloudTalkDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_nextcloudtalk.test",
+						"data.uptimekuma_notification_nextcloudtalk.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationNextcloudTalkDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_nextcloudtalk.test",
+						"data.uptimekuma_notification_nextcloudtalk.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,23 +47,11 @@ resource "uptimekuma_notification_nextcloudtalk" "test" {
   bot_secret         = "test-secret-456"
 }
 
-data "uptimekuma_notification_nextcloudtalk" "test" {
+data "uptimekuma_notification_nextcloudtalk" "by_name" {
   name = uptimekuma_notification_nextcloudtalk.test.name
 }
-`, name)
-}
 
-func testAccNotificationNextcloudTalkDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_nextcloudtalk" "test" {
-  name               = %[1]q
-  is_active          = true
-  host               = "https://nextcloud.example.com"
-  conversation_token = "test-token-123"
-  bot_secret         = "test-secret-456"
-}
-
-data "uptimekuma_notification_nextcloudtalk" "test" {
+data "uptimekuma_notification_nextcloudtalk" "by_id" {
   id = uptimekuma_notification_nextcloudtalk.test.id
 }
 `, name)

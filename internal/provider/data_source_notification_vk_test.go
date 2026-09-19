@@ -14,7 +14,7 @@ import (
 func TestAccNotificationVKDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationVK")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationVKDataSource(t *testing.T) {
 				Config: testAccNotificationVKDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_vk.test",
+						"data.uptimekuma_notification_vk.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationVKDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_vk.test",
+						"data.uptimekuma_notification_vk.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_vk" "test" {
   peer_id      = "12345"
 }
 
-data "uptimekuma_notification_vk" "test" {
+data "uptimekuma_notification_vk" "by_name" {
   name = uptimekuma_notification_vk.test.name
 }
-`, name)
-}
 
-func testAccNotificationVKDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_vk" "test" {
-  name         = %[1]q
-  is_active    = true
-  access_token = "vk1.a.abcdefghijklmnopqrstuvwxyz"
-  peer_id      = "12345"
-}
-
-data "uptimekuma_notification_vk" "test" {
+data "uptimekuma_notification_vk" "by_id" {
   id = uptimekuma_notification_vk.test.id
 }
 `, name)

@@ -16,7 +16,7 @@ func TestAccMonitorOracleDBResource(t *testing.T) {
 	nameUpdated := acctest.RandomWithPrefix("TestOracleDBMonitorUpdated")
 	connectionString := "localhost:1521/ORCL"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -99,7 +99,7 @@ func TestAccMonitorOracleDBResourceWithOptionalFields(t *testing.T) {
 	username := "monitoring_user"
 	password := "s3cr3t"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -202,7 +202,7 @@ func TestAccMonitorOracleDBResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestOracleDBMonitorWithParent")
 	connectionString := "localhost:1521/ORCL"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -256,7 +256,7 @@ resource "uptimekuma_monitor_oracledb" "test" {
 func TestAccMonitorOracleDBResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestOracleDBConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

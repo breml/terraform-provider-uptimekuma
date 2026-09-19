@@ -14,7 +14,7 @@ import (
 func TestAccMonitorSystemServiceDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSystemServiceMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,27 +22,22 @@ func TestAccMonitorSystemServiceDataSource(t *testing.T) {
 				Config: testAccMonitorSystemServiceDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_system_service.test",
+						"data.uptimekuma_monitor_system_service.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_system_service.test",
+						"data.uptimekuma_monitor_system_service.by_name",
 						tfjsonpath.New("system_service_name"),
 						knownvalue.StringExact("nginx.service"),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorSystemServiceDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_system_service.test",
+						"data.uptimekuma_monitor_system_service.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_system_service.test",
+						"data.uptimekuma_monitor_system_service.by_id",
 						tfjsonpath.New("system_service_name"),
 						knownvalue.StringExact("nginx.service"),
 					),
@@ -59,20 +54,11 @@ resource "uptimekuma_monitor_system_service" "test" {
   system_service_name = "nginx.service"
 }
 
-data "uptimekuma_monitor_system_service" "test" {
+data "uptimekuma_monitor_system_service" "by_name" {
   name = uptimekuma_monitor_system_service.test.name
 }
-`, name)
-}
 
-func testAccMonitorSystemServiceDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_system_service" "test" {
-  name                = %[1]q
-  system_service_name = "nginx.service"
-}
-
-data "uptimekuma_monitor_system_service" "test" {
+data "uptimekuma_monitor_system_service" "by_id" {
   id = uptimekuma_monitor_system_service.test.id
 }
 `, name)

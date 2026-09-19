@@ -17,7 +17,7 @@ func TestAccMonitorRedisResource(t *testing.T) {
 	connectionString := "redis://user:password@localhost:6379"
 	connectionStringUpdated := "redis://user:password@localhost:6380"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -98,7 +98,7 @@ func TestAccMonitorRedisResourceWithOptionalFields(t *testing.T) {
 	description := "Test Redis monitor with optional fields"
 	connectionString := "redis://user:password@localhost:6379"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -187,7 +187,7 @@ func TestAccMonitorRedisResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestRedisMonitorWithParent")
 	connectionString := "redis://user:password@localhost:6379"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -237,7 +237,7 @@ resource "uptimekuma_monitor_redis" "test" {
 func TestAccMonitorRedisResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRedisConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -21,7 +21,7 @@ func TestAccNotificationSMSEagleResource(t *testing.T) {
 	recipientTo := "+1234567890"
 	recipientToUpdated := "+0987654321"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

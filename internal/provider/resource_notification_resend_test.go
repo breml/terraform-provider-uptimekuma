@@ -17,7 +17,7 @@ func TestAccNotificationResendResource(t *testing.T) {
 	apiKey := "re_test_" + acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
 	apiKeyUpdated := "re_test_updated_" + acctest.RandStringFromCharSet(32, acctest.CharSetAlphaNum)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

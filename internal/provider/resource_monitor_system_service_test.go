@@ -18,7 +18,7 @@ func TestAccMonitorSystemServiceResource(t *testing.T) {
 	serviceNameUpdated := "sshd.service"
 	description := "Test System Service monitor with description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -125,7 +125,7 @@ resource "uptimekuma_monitor_system_service" "test" {
 func TestAccMonitorSystemServiceResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSystemServiceMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -181,7 +181,7 @@ func TestAccMonitorSystemServiceResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSystemServiceMonitorFull")
 	description := "Full System Service monitor test"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

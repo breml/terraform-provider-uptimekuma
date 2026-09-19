@@ -216,6 +216,51 @@ func TestPool_ConcurrentRelease(t *testing.T) {
 	}
 }
 
+func TestPool_CloseIfUnused_RefsOutstanding(t *testing.T) {
+	pool := &Pool{refs: 1}
+
+	err := pool.CloseIfUnused()
+	if err == nil {
+		t.Fatal("expected an error closing a pool with an outstanding reference")
+	}
+
+	if pool.RefCount() != 1 {
+		t.Errorf("expected the refused close to leave the ref count at 1, got %d", pool.RefCount())
+	}
+}
+
+// TestPool_ConcurrentReleaseAndClose exercises Release against CloseIfUnused,
+// the pairing that runs at the end of an acceptance run: the provider releases
+// from a detached goroutine while TestMain closes the pool. Both must observe
+// the reference count under the same lock, which only the race detector can
+// confirm, so this test is only meaningful under `go test -race`.
+func TestPool_ConcurrentReleaseAndClose(t *testing.T) {
+	const releases = 100
+
+	pool := &Pool{refs: releases}
+
+	var wg sync.WaitGroup
+
+	for range releases {
+		wg.Go(func() {
+			pool.Release()
+		})
+	}
+
+	wg.Go(func() {
+		// Racing the releases, this either refuses (refs outstanding) or
+		// closes an already drained pool. Both outcomes are fine; what must
+		// not happen is an unsynchronized read of refs.
+		_ = pool.CloseIfUnused()
+	})
+
+	wg.Wait()
+
+	if pool.RefCount() != 0 {
+		t.Errorf("expected ref count 0 after all releases, got %d", pool.RefCount())
+	}
+}
+
 func TestGetGlobalPool(t *testing.T) {
 	// Reset global pool for test isolation
 	ResetGlobalPool()

@@ -15,7 +15,7 @@ func TestAccNotificationWeComDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWeCom")
 	botKey := "bot_key_placeholder"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -32,11 +32,6 @@ func TestAccNotificationWeComDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationWeComDataSourceConfig(name, botKey),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_wecom.by_name",
 						tfjsonpath.New("id"),

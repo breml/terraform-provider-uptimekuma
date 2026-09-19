@@ -19,7 +19,7 @@ func TestAccNotificationFreemobileResource(t *testing.T) {
 	pass := "test_api_key_1"
 	passUpdated := "test_api_key_2"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -15,7 +15,7 @@ func TestAccMonitorWebsocketUpgradeDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestWebsocketUpgradeMonitor")
 	url := "wss://echo.websocket.org"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -23,57 +23,52 @@ func TestAccMonitorWebsocketUpgradeDataSource(t *testing.T) {
 				Config: testAccMonitorWebsocketUpgradeDataSourceConfig(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_name",
 						tfjsonpath.New("url"),
 						knownvalue.StringExact(url),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_name",
 						tfjsonpath.New("ws_subprotocol"),
 						knownvalue.StringExact("chat"),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_name",
 						tfjsonpath.New("ws_ignore_sec_websocket_accept_header"),
 						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorWebsocketUpgradeDataSourceConfigByID(name, url),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_id",
 						tfjsonpath.New("url"),
 						knownvalue.StringExact(url),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_id",
 						tfjsonpath.New("ws_subprotocol"),
 						knownvalue.StringExact("chat"),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_id",
 						tfjsonpath.New("ws_ignore_sec_websocket_accept_header"),
 						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_websocket_upgrade.test",
+						"data.uptimekuma_monitor_websocket_upgrade.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -93,23 +88,11 @@ resource "uptimekuma_monitor_websocket_upgrade" "test" {
   domain_expiry_notification             = true
 }
 
-data "uptimekuma_monitor_websocket_upgrade" "test" {
+data "uptimekuma_monitor_websocket_upgrade" "by_name" {
   name = uptimekuma_monitor_websocket_upgrade.test.name
 }
-`, name, url)
-}
 
-func testAccMonitorWebsocketUpgradeDataSourceConfigByID(name string, url string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_websocket_upgrade" "test" {
-  name                                   = %[1]q
-  url                                    = %[2]q
-  ws_subprotocol                         = "chat"
-  ws_ignore_sec_websocket_accept_header  = true
-  domain_expiry_notification             = true
-}
-
-data "uptimekuma_monitor_websocket_upgrade" "test" {
+data "uptimekuma_monitor_websocket_upgrade" "by_id" {
   id = uptimekuma_monitor_websocket_upgrade.test.id
 }
 `, name, url)

@@ -15,7 +15,7 @@ import (
 func TestAccMaintenanceDataSource(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenance")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -23,27 +23,22 @@ func TestAccMaintenanceDataSource(t *testing.T) {
 				Config: testAccMaintenanceDataSourceConfig(title),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_maintenance.test",
+						"data.uptimekuma_maintenance.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(title),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_maintenance.test",
+						"data.uptimekuma_maintenance.by_name",
 						tfjsonpath.New("title"),
 						knownvalue.StringExact(title),
 					),
-				},
-			},
-			{
-				Config: testAccMaintenanceDataSourceConfigByID(title),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_maintenance.test",
+						"data.uptimekuma_maintenance.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(title),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_maintenance.test",
+						"data.uptimekuma_maintenance.by_id",
 						tfjsonpath.New("title"),
 						knownvalue.StringExact(title),
 					),
@@ -65,32 +60,18 @@ resource "uptimekuma_maintenance" "test" {
   timezone    = "UTC"
 }
 
-data "uptimekuma_maintenance" "test" {
+data "uptimekuma_maintenance" "by_name" {
   name = uptimekuma_maintenance.test.title
 }
-`, title)
-}
 
-func testAccMaintenanceDataSourceConfigByID(title string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_maintenance" "test" {
-  title       = %[1]q
-  description = "Test maintenance"
-  strategy    = "single"
-  active      = true
-  start_date  = "2025-12-31T10:00:00Z"
-  end_date    = "2025-12-31T12:00:00Z"
-  timezone    = "UTC"
-}
-
-data "uptimekuma_maintenance" "test" {
+data "uptimekuma_maintenance" "by_id" {
   id = uptimekuma_maintenance.test.id
 }
 `, title)
 }
 
 func TestAccMaintenanceDataSource_NotFoundByName(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -113,7 +94,7 @@ data "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceDataSource_MultipleSameName(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenance")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -158,7 +139,7 @@ data "uptimekuma_maintenance" "test" {
 }
 
 func TestAccMaintenanceDataSource_MissingParameters(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

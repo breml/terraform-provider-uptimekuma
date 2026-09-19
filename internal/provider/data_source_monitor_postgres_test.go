@@ -14,7 +14,7 @@ import (
 func TestAccMonitorPostgresDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPostgresMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccMonitorPostgresDataSource(t *testing.T) {
 				Config: testAccMonitorPostgresDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_postgres.test",
+						"data.uptimekuma_monitor_postgres.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorPostgresDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_postgres.test",
+						"data.uptimekuma_monitor_postgres.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -49,20 +44,11 @@ resource "uptimekuma_monitor_postgres" "test" {
   database_connection_string = "postgres://user:password@localhost:5432/db"
 }
 
-data "uptimekuma_monitor_postgres" "test" {
+data "uptimekuma_monitor_postgres" "by_name" {
   name = uptimekuma_monitor_postgres.test.name
 }
-`, name)
-}
 
-func testAccMonitorPostgresDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_postgres" "test" {
-  name                       = %[1]q
-  database_connection_string = "postgres://user:password@localhost:5432/db"
-}
-
-data "uptimekuma_monitor_postgres" "test" {
+data "uptimekuma_monitor_postgres" "by_id" {
   id = uptimekuma_monitor_postgres.test.id
 }
 `, name)

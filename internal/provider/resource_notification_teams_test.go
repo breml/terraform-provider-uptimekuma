@@ -17,7 +17,7 @@ func TestAccNotificationTeamsResource(t *testing.T) {
 	webhookURL := "https://example.webhook.office.com/webhookb2/test"
 	webhookURLUpdated := "https://example.webhook.office.com/webhookb2/test-updated"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -18,12 +18,12 @@ func TestAccNotificationWAHADataSource(t *testing.T) {
 	chatID := "120363101234567890@g.us"
 	apiKey := "test-api-key-123"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationWAHADataSourceByNameConfig(
+				Config: testAccNotificationWAHADataSourceConfig(
 					name,
 					apiURL,
 					session,
@@ -32,23 +32,12 @@ func TestAccNotificationWAHADataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_waha.test",
+						"data.uptimekuma_notification_waha.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationWAHADataSourceByIDConfig(
-					name,
-					apiURL,
-					session,
-					chatID,
-					apiKey,
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_waha.test",
+						"data.uptimekuma_notification_waha.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -58,7 +47,7 @@ func TestAccNotificationWAHADataSource(t *testing.T) {
 	})
 }
 
-func testAccNotificationWAHADataSourceByNameConfig(
+func testAccNotificationWAHADataSourceConfig(
 	name string,
 	apiURL string,
 	session string,
@@ -75,30 +64,11 @@ resource "uptimekuma_notification_waha" "test" {
   api_key   = %[5]q
 }
 
-data "uptimekuma_notification_waha" "test" {
+data "uptimekuma_notification_waha" "by_name" {
   name = uptimekuma_notification_waha.test.name
 }
-`, name, apiURL, session, chatID, apiKey)
-}
 
-func testAccNotificationWAHADataSourceByIDConfig(
-	name string,
-	apiURL string,
-	session string,
-	chatID string,
-	apiKey string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_waha" "test" {
-  name      = %[1]q
-  is_active = true
-  api_url   = %[2]q
-  session   = %[3]q
-  chat_id   = %[4]q
-  api_key   = %[5]q
-}
-
-data "uptimekuma_notification_waha" "test" {
+data "uptimekuma_notification_waha" "by_id" {
   id = uptimekuma_notification_waha.test.id
 }
 `, name, apiURL, session, chatID, apiKey)

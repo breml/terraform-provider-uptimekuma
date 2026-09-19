@@ -16,7 +16,7 @@ func TestAccNotificationYZJDataSource(t *testing.T) {
 	webhookURL := "https://yzj.example.com/webhook/test"
 	token := "test-token-placeholder"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -33,11 +33,6 @@ func TestAccNotificationYZJDataSource(t *testing.T) {
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationYZJDataSourceConfig(name, webhookURL, token),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_notification_yzj.by_name",
 						tfjsonpath.New("id"),

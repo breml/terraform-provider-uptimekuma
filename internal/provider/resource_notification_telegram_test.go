@@ -20,7 +20,7 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 	chatID := "123456789"
 	chatIDUpdated := "987654321"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

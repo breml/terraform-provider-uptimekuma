@@ -24,7 +24,7 @@ func TestAccNotificationTwilioResource(t *testing.T) {
 	fromNumber := "+12025550789"
 	fromNumberUpdated := "+12025550999"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

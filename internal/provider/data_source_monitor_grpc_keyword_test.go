@@ -14,7 +14,7 @@ import (
 func TestAccMonitorGRPCKeywordDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGRPCKeywordMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,27 +22,22 @@ func TestAccMonitorGRPCKeywordDataSource(t *testing.T) {
 				Config: testAccMonitorGRPCKeywordDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_grpc_keyword.test",
+						"data.uptimekuma_monitor_grpc_keyword.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_grpc_keyword.test",
+						"data.uptimekuma_monitor_grpc_keyword.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorGRPCKeywordDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_grpc_keyword.test",
+						"data.uptimekuma_monitor_grpc_keyword.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_grpc_keyword.test",
+						"data.uptimekuma_monitor_grpc_keyword.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -64,25 +59,11 @@ resource "uptimekuma_monitor_grpc_keyword" "test" {
   domain_expiry_notification = true
 }
 
-data "uptimekuma_monitor_grpc_keyword" "test" {
+data "uptimekuma_monitor_grpc_keyword" "by_name" {
   name = uptimekuma_monitor_grpc_keyword.test.name
 }
-`, name)
-}
 
-func testAccMonitorGRPCKeywordDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_grpc_keyword" "test" {
-  name                       = %[1]q
-  grpc_url                   = "grpc.example.com:50051"
-  keyword                    = "success"
-  grpc_service_name          = "example.Service"
-  grpc_method                = "Check"
-  grpc_protobuf              = "syntax = \"proto3\";"
-  domain_expiry_notification = true
-}
-
-data "uptimekuma_monitor_grpc_keyword" "test" {
+data "uptimekuma_monitor_grpc_keyword" "by_id" {
   id = uptimekuma_monitor_grpc_keyword.test.id
 }
 `, name)

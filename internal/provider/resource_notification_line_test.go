@@ -19,7 +19,7 @@ func TestAccNotificationLineResource(t *testing.T) {
 	userID := "U1234567890abcdef1234567890abcdef"
 	userIDUpdated := "U0987654321fedcba0987654321fedcba"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

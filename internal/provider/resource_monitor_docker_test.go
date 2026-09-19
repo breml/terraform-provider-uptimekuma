@@ -18,7 +18,7 @@ func TestAccMonitorDockerResource(t *testing.T) {
 	containerUpdated := "updated-container"
 	dockerHost := "unix:///var/run/docker.sock"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -113,7 +113,7 @@ func TestAccMonitorDockerResourceWithDescription(t *testing.T) {
 	description := "Test Docker Monitor"
 	dockerHost := "unix:///var/run/docker.sock"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -14,7 +14,7 @@ import (
 func TestAccNotificationOnesenderDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationOnesender")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationOnesenderDataSource(t *testing.T) {
 				Config: testAccNotificationOnesenderDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_onesender.test",
+						"data.uptimekuma_notification_onesender.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationOnesenderDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_onesender.test",
+						"data.uptimekuma_notification_onesender.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -53,24 +48,11 @@ resource "uptimekuma_notification_onesender" "test" {
   type_receiver = "private"
 }
 
-data "uptimekuma_notification_onesender" "test" {
+data "uptimekuma_notification_onesender" "by_name" {
   name = uptimekuma_notification_onesender.test.name
 }
-`, name)
-}
 
-func testAccNotificationOnesenderDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_onesender" "test" {
-  name          = %[1]q
-  is_active     = true
-  url           = "https://onesender.example.com/api/v1/send"
-  token         = "test-token-abc123"
-  receiver      = "+6281234567890"
-  type_receiver = "private"
-}
-
-data "uptimekuma_notification_onesender" "test" {
+data "uptimekuma_notification_onesender" "by_id" {
   id = uptimekuma_notification_onesender.test.id
 }
 `, name)

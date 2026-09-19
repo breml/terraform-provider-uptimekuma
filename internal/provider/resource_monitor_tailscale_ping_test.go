@@ -18,7 +18,7 @@ func TestAccMonitorTailscalePingResource(t *testing.T) {
 	hostnameUpdated := "100.64.0.2"
 	description := "Test Tailscale Ping monitor with description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

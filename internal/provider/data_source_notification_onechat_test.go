@@ -14,7 +14,7 @@ import (
 func TestAccNotificationOneChatDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationOneChat")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationOneChatDataSource(t *testing.T) {
 				Config: testAccNotificationOneChatDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_onechat.test",
+						"data.uptimekuma_notification_onechat.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationOneChatDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_onechat.test",
+						"data.uptimekuma_notification_onechat.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -52,23 +47,11 @@ resource "uptimekuma_notification_onechat" "test" {
   bot_id       = "bot-001"
 }
 
-data "uptimekuma_notification_onechat" "test" {
+data "uptimekuma_notification_onechat" "by_name" {
   name = uptimekuma_notification_onechat.test.name
 }
-`, name)
-}
 
-func testAccNotificationOneChatDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_onechat" "test" {
-  name         = %[1]q
-  is_active    = true
-  access_token = "test-access-token"
-  receiver_id  = "user123"
-  bot_id       = "bot-001"
-}
-
-data "uptimekuma_notification_onechat" "test" {
+data "uptimekuma_notification_onechat" "by_id" {
   id = uptimekuma_notification_onechat.test.id
 }
 `, name)

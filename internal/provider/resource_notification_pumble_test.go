@@ -18,7 +18,7 @@ func TestAccNotificationPumbleResource(t *testing.T) {
 	webhookURL := "https://api.pumble.com/workspaces/WORKSPACE_ID/incomingWebhooks/WEBHOOK_ID"
 	webhookURLUpdated := "https://api.pumble.com/workspaces/WORKSPACE_ID/incomingWebhooks/WEBHOOK_ID_UPDATED"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

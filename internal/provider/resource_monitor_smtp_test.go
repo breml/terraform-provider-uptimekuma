@@ -17,7 +17,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 	description := "Test SMTP monitor description"
 	descriptionUpdated := "Updated test SMTP monitor description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -149,7 +149,7 @@ resource "uptimekuma_monitor_smtp" "test" {
 func TestAccMonitorSMTPResourceMinimal(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSMTPMonitorMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -215,7 +215,7 @@ func TestAccMonitorSMTPResourceWithAllOptions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSMTPMonitorFull")
 	description := "Full test SMTP monitor"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -308,7 +308,7 @@ func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			name := acctest.RandomWithPrefix(fmt.Sprintf("TestSMTP%s", mode))
 
-			resource.Test(t, resource.TestCase{
+			resource.ParallelTest(t, resource.TestCase{
 				PreCheck:                 func() { testAccPreCheck(t) },
 				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{

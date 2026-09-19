@@ -865,28 +865,37 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 
 **TestMain Lifecycle**:
 
-1. Check `TF_ACC` environment variable (only run acceptance tests if set)
+1. Check `TF_ACC` environment variable (the container is only started when it is set)
 2. Create Docker pool and ping daemon
-3. Run `louislam/uptime-kuma:2.5.0` container on port 3001
-4. Set 480-second expiration for auto-cleanup
-5. Wait for Kuma to be ready (exponential backoff, max 2 minutes)
-6. Create initial client and perform autosetup
-7. Close initial connection
-8. Run all tests (provider creates pooled connection, shared across tests)
-9. Cleanup: Close pool, purge container
+3. Run a `louislam/uptime-kuma:2.5.0` container with `AutoRemove`, publishing its port
+   3001 on a random host port
+4. Set a 1200-second container expiry, as a safety net for when cleanup does not run
+5. Register the cleanup before connecting, so the container is purged even if the
+   connection below never succeeds
+6. Connect with `pool.Retry` (exponential backoff, up to dockertest's default 1 minute).
+   This first connection runs autosetup, which creates the admin user
+7. Keep that connection as `outOfBandClient` rather than closing it, see below
+8. Run all tests (provider creates its own pooled connection, shared across tests)
+9. Cleanup: disconnect `outOfBandClient`, close the pool, purge the container
 
 **Global Variables** (used by all tests):
 
 ```go
 const (
     username = "admin"
-    password = "[REDACTED:password]"  // Set to "admin" for local testing
+    password = "admin1"  // throwaway credentials for the test container
 )
 
 var (
-    endpoint string  // e.g., "http://localhost:32768"
+    endpoint        string       // e.g., "http://localhost:32768"
+    outOfBandClient *kuma.Client // see below
 )
 ```
+
+`outOfBandClient` is deliberately separate from the provider's pooled connection: the
+disappears tests use it to delete a resource behind Terraform's back, which only
+simulates an external change if it does not go through the connection the provider
+uses. It is created once in `TestMain` because Uptime Kuma rate limits logins.
 
 ### Provider Configuration Helper
 
@@ -902,6 +911,48 @@ provider "uptimekuma" {
 }
 ```
 
+### Test Parallelism
+
+Acceptance tests run concurrently. Their cost is dominated by Terraform CLI process
+overhead (`init`/`plan`/`apply`/`destroy` cycles), not by Uptime Kuma, so they scale
+well past the number of available cores. `task testacc` passes `-parallel 8`; override
+with `task testacc PARALLEL=4`.
+
+**Use `resource.ParallelTest` for new tests.** This is safe as long as every resource
+the test creates is uniquely named via `acctest.RandomWithPrefix`, and the test only
+asserts on resources it created itself.
+
+**Four test files must keep using `resource.Test`**, because they touch state shared by
+the whole Uptime Kuma instance:
+
+| File | Reason |
+| ------ | -------- |
+| [resource_settings_test.go](resource_settings_test.go) | Settings are a singleton |
+| [data_source_settings_test.go](data_source_settings_test.go) | Reads the settings singleton |
+| [data_source_maintenances_test.go](data_source_maintenances_test.go) | Asserts an exact count over *all* maintenances |
+| [resource_proxy_test.go](resource_proxy_test.go) | `default` and `apply_existing` rewrite every other proxy and monitor |
+
+Go's `testing` package runs all non-parallel top-level tests to completion *before*
+releasing any parallel ones, so these four files are automatically isolated from the
+concurrent tests -- no extra synchronisation is required.
+
+When adding a test that asserts on a list data source (e.g. `uptimekuma_maintenances`)
+or on a resource that mutates instance-wide state, use `resource.Test` and add it to the
+table above.
+
+### CI Sharding
+
+CI splits the suite across four concurrent jobs, each with its own Uptime Kuma container:
+
+```shell
+task testacc SHARD=1 SHARDS=4
+```
+
+The shards are computed from `go test -list`, not from a hand-written name pattern, so a
+newly added test always lands in exactly one shard. Nothing has to be updated when tests
+are added or renamed. A sharded run reports partial coverage, because it only exercises
+the code its own tests reach; use an unsharded `task testacc` for a coverage figure.
+
 ### Acceptance Test Pattern
 
 ```go
@@ -909,7 +960,7 @@ func TestAcc{Type}Resource(t *testing.T) {
     name := acctest.RandomWithPrefix("Test{Type}")
     nameUpdated := acctest.RandomWithPrefix("Test{Type}Updated")
 
-    resource.Test(t, resource.TestCase{
+    resource.ParallelTest(t, resource.TestCase{
         PreCheck: func() { testAccPreCheck(t) },
         ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
         Steps: []resource.TestStep{
@@ -983,7 +1034,7 @@ Similar pattern but typically:
 func TestAcc{Type}DataSource(t *testing.T) {
     name := acctest.RandomWithPrefix("Test{Type}")
 
-    resource.Test(t, resource.TestCase{
+    resource.ParallelTest(t, resource.TestCase{
         PreCheck: func() { testAccPreCheck(t) },
         ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
         Steps: []resource.TestStep{

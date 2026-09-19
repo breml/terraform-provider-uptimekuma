@@ -14,7 +14,7 @@ import (
 func TestAccNotificationSIGNL4DataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationSIGNL4")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationSIGNL4DataSource(t *testing.T) {
 				Config: testAccNotificationSIGNL4DataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_signl4.test",
+						"data.uptimekuma_notification_signl4.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSIGNL4DataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_signl4.test",
+						"data.uptimekuma_notification_signl4.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_signl4" "test" {
   webhook_url = "https://connect.signl4.com/webhook/example"
 }
 
-data "uptimekuma_notification_signl4" "test" {
+data "uptimekuma_notification_signl4" "by_name" {
   name = uptimekuma_notification_signl4.test.name
 }
-`, name)
-}
 
-func testAccNotificationSIGNL4DataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_signl4" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://connect.signl4.com/webhook/example"
-}
-
-data "uptimekuma_notification_signl4" "test" {
+data "uptimekuma_notification_signl4" "by_id" {
   id = uptimekuma_notification_signl4.test.id
 }
 `, name)

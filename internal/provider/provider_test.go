@@ -10,7 +10,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // testAccProtoV6ProviderFactories is used to instantiate a provider during acceptance testing.
@@ -373,14 +377,23 @@ func TestAccProviderEnvironmentVariables(t *testing.T) {
 		t.Skip("UPTIMEKUMA_ENDPOINT not set - skipping environment variable provider test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	name := acctest.RandomWithPrefix("TestProviderEnv")
+
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccProviderWithEnvironmentVariables(),
+				Config: testAccProviderWithEnvironmentVariables(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
 			},
 		},
 	})
@@ -399,9 +412,14 @@ func TestAccProviderMixedConfiguration(t *testing.T) {
 		t.Skip("UPTIMEKUMA_USERNAME and UPTIMEKUMA_PASSWORD must be set - skipping mixed configuration test")
 	}
 
+	name := acctest.RandomWithPrefix("TestProviderMixed")
+
 	t.Setenv("UPTIMEKUMA_USERNAME", "env-user")
 	t.Setenv("UPTIMEKUMA_PASSWORD", "env-pass")
 
+	// Not resource.ParallelTest: t.Setenv above marks this test as one that
+	// cannot run in parallel, and t.Parallel would panic and take the whole
+	// test binary down with it.
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
@@ -416,8 +434,22 @@ provider "uptimekuma" {
   password = %[3]q
 }
 
-data "uptimekuma_tag" "test" {}
-`, configEndpoint, originalUsername, originalPassword),
+resource "uptimekuma_tag" "test" {
+  name  = %[4]q
+  color = "#FF0000"
+}
+
+data "uptimekuma_tag" "test" {
+  name = uptimekuma_tag.test.name
+}
+`, configEndpoint, originalUsername, originalPassword, name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
 			},
 		},
 	})
@@ -532,7 +564,7 @@ func TestParseClientOptions_PerAttemptTimeoutExceedsTimeout(t *testing.T) {
 }
 
 func TestAccProviderInvalidTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -551,7 +583,7 @@ data "uptimekuma_tag" "test" {}
 }
 
 func TestAccProviderNegativeTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -570,7 +602,7 @@ data "uptimekuma_tag" "test" {}
 }
 
 func TestAccProviderInvalidPerAttemptTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -589,7 +621,7 @@ data "uptimekuma_tag" "test" {}
 }
 
 func TestAccProviderNegativePerAttemptTimeout(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -613,7 +645,9 @@ func TestAccProviderEmptyTimeout(t *testing.T) {
 		t.Skip("UPTIMEKUMA_ENDPOINT not set - skipping empty timeout provider test")
 	}
 
-	resource.Test(t, resource.TestCase{
+	name := acctest.RandomWithPrefix("TestProviderEmptyTimeout")
+
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -628,18 +662,39 @@ provider "uptimekuma" {
   timeout  = ""
 }
 
-data "uptimekuma_tag" "test" {}
-`, configEndpoint, username, password),
+resource "uptimekuma_tag" "test" {
+  name  = %[4]q
+  color = "#FF0000"
+}
+
+data "uptimekuma_tag" "test" {
+  name = uptimekuma_tag.test.name
+}
+`, configEndpoint, username, password, name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_tag.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+				},
 			},
 		},
 	})
 }
 
-func testAccProviderWithEnvironmentVariables() string {
-	return `
+func testAccProviderWithEnvironmentVariables(name string) string {
+	return fmt.Sprintf(`
 provider "uptimekuma" {
 }
 
-data "uptimekuma_tag" "test" {}
-`
+resource "uptimekuma_tag" "test" {
+  name  = %[1]q
+  color = "#FF0000"
+}
+
+data "uptimekuma_tag" "test" {
+  name = uptimekuma_tag.test.name
+}
+`, name)
 }

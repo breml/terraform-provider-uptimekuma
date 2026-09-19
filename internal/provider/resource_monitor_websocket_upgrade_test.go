@@ -17,7 +17,7 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 	url := "wss://echo.websocket.org"
 	description := "Test Websocket Upgrade monitor with description"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -158,7 +158,7 @@ func TestAccMonitorWebsocketUpgradeResourceWithAuth(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestWebsocketUpgradeMonitorWithAuth")
 	url := "wss://echo.websocket.org"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -211,7 +211,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "test" {
 func TestAccMonitorWebsocketUpgradeResourceWithOAuthAudience(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestWebsocketUpgradeOAuthAudience")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -256,7 +256,7 @@ func TestAccMonitorWebsocketUpgradeResourceWithWSOptions(t *testing.T) {
 	url := "wss://echo.websocket.org"
 	subprotocol := "chat,superchat"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

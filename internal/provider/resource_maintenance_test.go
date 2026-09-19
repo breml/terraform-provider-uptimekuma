@@ -15,7 +15,7 @@ func TestAccMaintenanceResource_Single(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceSingle")
 	titleUpdated := acctest.RandomWithPrefix("TestMaintenanceSingleUpdated")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -91,7 +91,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_RecurringInterval(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceInterval")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -161,7 +161,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_RecurringWeekday(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceWeekday")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -222,7 +222,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_RecurringDayOfMonth(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceDayOfMonth")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -283,7 +283,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_Cron(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceCron")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -354,7 +354,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_Manual(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceManual")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -398,7 +398,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_WithTimezone(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceTimezone")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -449,7 +449,7 @@ resource "uptimekuma_maintenance" "test" {
 func TestAccMaintenanceResource_Minimal(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceMinimal")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

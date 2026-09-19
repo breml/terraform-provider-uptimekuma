@@ -11,7 +11,7 @@ import (
 func TestAccNotificationHomeAssistantDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationHomeAssistant")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -19,25 +19,20 @@ func TestAccNotificationHomeAssistantDataSource(t *testing.T) {
 				Config: testAccNotificationHomeAssistantDataSourceConfig(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
-						"data.uptimekuma_notification_homeassistant.test",
+						"data.uptimekuma_notification_homeassistant.by_name",
 						"id",
 					),
 					resource.TestCheckResourceAttr(
-						"data.uptimekuma_notification_homeassistant.test",
+						"data.uptimekuma_notification_homeassistant.by_name",
 						"name",
 						name,
 					),
-				),
-			},
-			{
-				Config: testAccNotificationHomeAssistantDataSourceConfigByID(name),
-				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
-						"data.uptimekuma_notification_homeassistant.test",
+						"data.uptimekuma_notification_homeassistant.by_id",
 						"id",
 					),
 					resource.TestCheckResourceAttr(
-						"data.uptimekuma_notification_homeassistant.test",
+						"data.uptimekuma_notification_homeassistant.by_id",
 						"name",
 						name,
 					),
@@ -57,23 +52,11 @@ resource "uptimekuma_notification_homeassistant" "test" {
   notification_service    = "notify.mobile_app"
 }
 
-data "uptimekuma_notification_homeassistant" "test" {
+data "uptimekuma_notification_homeassistant" "by_name" {
   name = uptimekuma_notification_homeassistant.test.name
 }
-`, name)
-}
 
-func testAccNotificationHomeAssistantDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_homeassistant" "test" {
-  name                    = %[1]q
-  is_active               = true
-  home_assistant_url      = "https://homeassistant.example.com"
-  long_lived_access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
-  notification_service    = "notify.mobile_app"
-}
-
-data "uptimekuma_notification_homeassistant" "test" {
+data "uptimekuma_notification_homeassistant" "by_id" {
   id = uptimekuma_notification_homeassistant.test.id
 }
 `, name)

@@ -21,7 +21,7 @@ func TestAccNotificationNostrResource(t *testing.T) {
 	relays := "wss://relay.example.com\nwss://relay2.example.com"
 	relaysUpdated := "wss://relay-updated.example.com"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

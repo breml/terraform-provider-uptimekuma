@@ -14,7 +14,7 @@ import (
 func TestAccNotificationFreemobileDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationFreemobile")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationFreemobileDataSource(t *testing.T) {
 				Config: testAccNotificationFreemobileDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_freemobile.test",
+						"data.uptimekuma_notification_freemobile.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationFreemobileDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_freemobile.test",
+						"data.uptimekuma_notification_freemobile.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_freemobile" "test" {
   pass      = "test_api_key"
 }
 
-data "uptimekuma_notification_freemobile" "test" {
+data "uptimekuma_notification_freemobile" "by_name" {
   name = uptimekuma_notification_freemobile.test.name
 }
-`, name)
-}
 
-func testAccNotificationFreemobileDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_freemobile" "test" {
-  name      = %[1]q
-  is_active = true
-  user      = "1234567890"
-  pass      = "test_api_key"
-}
-
-data "uptimekuma_notification_freemobile" "test" {
+data "uptimekuma_notification_freemobile" "by_id" {
   id = uptimekuma_notification_freemobile.test.id
 }
 `, name)

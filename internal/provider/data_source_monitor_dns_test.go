@@ -14,7 +14,7 @@ import (
 func TestAccMonitorDNSDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestDNSMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,27 +22,22 @@ func TestAccMonitorDNSDataSource(t *testing.T) {
 				Config: testAccMonitorDNSDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_dns.test",
+						"data.uptimekuma_monitor_dns.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_dns.test",
+						"data.uptimekuma_monitor_dns.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorDNSDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_dns.test",
+						"data.uptimekuma_monitor_dns.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_dns.test",
+						"data.uptimekuma_monitor_dns.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -60,21 +55,11 @@ resource "uptimekuma_monitor_dns" "test" {
   domain_expiry_notification = true
 }
 
-data "uptimekuma_monitor_dns" "test" {
+data "uptimekuma_monitor_dns" "by_name" {
   name = uptimekuma_monitor_dns.test.name
 }
-`, name)
-}
 
-func testAccMonitorDNSDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_dns" "test" {
-  name                       = %[1]q
-  hostname                   = "google.com"
-  domain_expiry_notification = true
-}
-
-data "uptimekuma_monitor_dns" "test" {
+data "uptimekuma_monitor_dns" "by_id" {
   id = uptimekuma_monitor_dns.test.id
 }
 `, name)

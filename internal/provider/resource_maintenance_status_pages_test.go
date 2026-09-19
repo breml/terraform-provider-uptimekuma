@@ -17,7 +17,7 @@ func TestAccMaintenanceStatusPagesResource(t *testing.T) {
 	statusPageSlug1 := acctest.RandomWithPrefix("test-status-1")
 	statusPageSlug2 := acctest.RandomWithPrefix("test-status-2")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -105,7 +105,7 @@ func TestAccMaintenanceStatusPagesResource_Import(t *testing.T) {
 	maintenanceTitle := acctest.RandomWithPrefix("TestMaintenance")
 	statusPageSlug := acctest.RandomWithPrefix("test-status")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -132,7 +132,7 @@ func TestAccMaintenanceStatusPagesResource_Update(t *testing.T) {
 	statusPageSlug2 := acctest.RandomWithPrefix("test-status-2")
 	statusPageSlug3 := acctest.RandomWithPrefix("test-status-3")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -236,7 +236,7 @@ resource "uptimekuma_maintenance_status_pages" "test" {
 func TestAccMaintenanceStatusPagesResource_Empty(t *testing.T) {
 	maintenanceTitle := acctest.RandomWithPrefix("TestMaintenance")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -273,7 +273,7 @@ func TestAccMaintenanceStatusPagesResource_WithScheduledMaintenance(t *testing.T
 	maintenanceTitle := acctest.RandomWithPrefix("TestScheduledMaintenance")
 	statusPageSlug := acctest.RandomWithPrefix("test-status")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -341,7 +341,7 @@ func TestAccMaintenanceStatusPagesResource_Combined(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestMonitor")
 	statusPageSlug := acctest.RandomWithPrefix("test-status")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -19,7 +19,7 @@ func TestAccDockerHostResource(t *testing.T) {
 	dockerType := "socket"
 	dockerTypeUpdated := "tcp"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -84,7 +84,7 @@ func TestAccDockerHostResourceDelete(t *testing.T) {
 	daemon := "unix:///var/run/docker.sock"
 	dockerType := "socket"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -23,7 +23,7 @@ func TestAccNotification46ElksResource(t *testing.T) {
 	toNumber := "+0987654321"
 	toNumberUpdated := "+0987654322"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

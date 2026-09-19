@@ -16,7 +16,7 @@ func TestAccMaintenanceStatusPagesDataSource(t *testing.T) {
 	statusPageSlug1 := acctest.RandomWithPrefix("test-status-1")
 	statusPageSlug2 := acctest.RandomWithPrefix("test-status-2")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

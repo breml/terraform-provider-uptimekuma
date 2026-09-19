@@ -19,7 +19,7 @@ func TestAccNotificationGorushResource(t *testing.T) {
 	deviceToken := "device-token-12345"
 	deviceTokenUpdated := "device-token-67890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

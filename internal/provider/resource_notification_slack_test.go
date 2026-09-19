@@ -17,7 +17,7 @@ func TestAccNotificationSlackResource(t *testing.T) {
 	webhookURL := "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX"
 	webhookURLUpdated := "https://hooks.slack.com/services/T00000000/B00000000/YYYYYYYYYYYYYYYYYYYY"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

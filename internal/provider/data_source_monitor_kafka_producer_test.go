@@ -14,7 +14,7 @@ import (
 func TestAccMonitorKafkaProducerDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestKafkaProducerMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,41 +22,36 @@ func TestAccMonitorKafkaProducerDataSource(t *testing.T) {
 				Config: testAccMonitorKafkaProducerDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_kafka_producer.test",
+						"data.uptimekuma_monitor_kafka_producer.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_kafka_producer.test",
+						"data.uptimekuma_monitor_kafka_producer.by_name",
 						tfjsonpath.New("brokers"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("kafka.example.com:9092"),
 						}),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_kafka_producer.test",
+						"data.uptimekuma_monitor_kafka_producer.by_name",
 						tfjsonpath.New("topic"),
 						knownvalue.StringExact("monitor-topic"),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorKafkaProducerDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_kafka_producer.test",
+						"data.uptimekuma_monitor_kafka_producer.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_kafka_producer.test",
+						"data.uptimekuma_monitor_kafka_producer.by_id",
 						tfjsonpath.New("brokers"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.StringExact("kafka.example.com:9092"),
 						}),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_kafka_producer.test",
+						"data.uptimekuma_monitor_kafka_producer.by_id",
 						tfjsonpath.New("topic"),
 						knownvalue.StringExact("monitor-topic"),
 					),
@@ -75,22 +70,11 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
   message = "ping"
 }
 
-data "uptimekuma_monitor_kafka_producer" "test" {
+data "uptimekuma_monitor_kafka_producer" "by_name" {
   name = uptimekuma_monitor_kafka_producer.test.name
 }
-`, name)
-}
 
-func testAccMonitorKafkaProducerDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_kafka_producer" "test" {
-  name    = %[1]q
-  brokers = ["kafka.example.com:9092"]
-  topic   = "monitor-topic"
-  message = "ping"
-}
-
-data "uptimekuma_monitor_kafka_producer" "test" {
+data "uptimekuma_monitor_kafka_producer" "by_id" {
   id = uptimekuma_monitor_kafka_producer.test.id
 }
 `, name)

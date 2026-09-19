@@ -14,7 +14,7 @@ import (
 func TestAccNotificationSlackDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationSlack")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationSlackDataSource(t *testing.T) {
 				Config: testAccNotificationSlackDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_slack.test",
+						"data.uptimekuma_notification_slack.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSlackDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_slack.test",
+						"data.uptimekuma_notification_slack.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_slack" "test" {
   webhook_url = "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX"
 }
 
-data "uptimekuma_notification_slack" "test" {
+data "uptimekuma_notification_slack" "by_name" {
   name = uptimekuma_notification_slack.test.name
 }
-`, name)
-}
 
-func testAccNotificationSlackDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_slack" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX"
-}
-
-data "uptimekuma_notification_slack" "test" {
+data "uptimekuma_notification_slack" "by_id" {
   id = uptimekuma_notification_slack.test.id
 }
 `, name)

@@ -17,7 +17,7 @@ func TestAccMonitorRabbitMQResource(t *testing.T) {
 	nodes := `["http://rabbitmq.example.com:15672/"]`
 	nodesUpdated := `["http://rabbitmq1.example.com:15672/","http://rabbitmq2.example.com:15672/"]`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -114,7 +114,7 @@ func TestAccMonitorRabbitMQResourceWithOptionalFields(t *testing.T) {
 	description := "Test RabbitMQ monitor with optional fields"
 	nodes := `["http://rabbitmq.example.com:15672/"]`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -203,7 +203,7 @@ func TestAccMonitorRabbitMQResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestRabbitMQMonitorWithParent")
 	nodes := `["http://rabbitmq.example.com:15672/"]`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -258,7 +258,7 @@ func TestAccMonitorRabbitMQResourceImport(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRabbitMQMonitorImport")
 	nodes := `["http://rabbitmq.example.com:15672/"]`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -288,7 +288,7 @@ func TestAccMonitorRabbitMQResourceFractionalTimeout(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRabbitMQMonitorFractionalTimeout")
 	nodes := `["http://rabbitmq.example.com:15672/"]`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

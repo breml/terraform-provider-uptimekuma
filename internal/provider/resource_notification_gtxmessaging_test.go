@@ -21,7 +21,7 @@ func TestAccNotificationGTXMessagingResource(t *testing.T) {
 	to := "+1234567890"
 	toUpdated := "+0987654321"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

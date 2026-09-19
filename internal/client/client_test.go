@@ -210,15 +210,35 @@ func TestNew_PoolDisabled(t *testing.T) {
 	}
 }
 
+// attemptsFromError reads the attempt count out of the error newTimeoutError
+// builds. Elapsed time alone cannot tell one long attempt from several short
+// ones, so tests that care about retry behaviour assert on this instead.
+func attemptsFromError(t *testing.T, err error) int {
+	t.Helper()
+
+	var attempts int
+
+	_, scanErr := fmt.Sscanf(err.Error(), "connection timed out after %d attempt(s)", &attempts)
+	if scanErr != nil {
+		t.Fatalf("could not read the attempt count from %q: %v", err, scanErr)
+	}
+
+	return attempts
+}
+
 func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// Use a local listener that accepts TCP connections but never
 	// completes the socket.io handshake. This is deterministic and
 	// independent of network configuration, unlike TEST-NET addresses.
-	// ConnectTimeout bounds the overall connection process across all
-	// retry attempts. The timer is separate from the context because
-	// the socket.io client stores it for the connection lifetime.
+	// The timer is separate from the context because the socket.io client
+	// stores it for the connection lifetime.
+	//
+	// With no PerAttemptTimeout the single attempt is capped at the whole
+	// remaining budget, so this pins the total wall-clock bound and no retry
+	// can start. TestNewClientDirect_PerAttemptTimeoutLimitsAttempts is the
+	// same budget with a per-attempt cap, and gets a retry out of it.
 	endpoint := startDeadEndListener(t)
-	connectTimeout := 3 * time.Second
+	connectTimeout := time.Second
 
 	config := &Config{
 		Endpoint:       endpoint,
@@ -242,9 +262,19 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// Overall deadline equals ConnectTimeout (total budget). Allow some
 	// slack for scheduling and for the in-flight kuma.New attempt to
 	// observe the deadline.
-	upperBound := connectTimeout + 2*time.Second
+	upperBound := connectTimeout + time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
+	}
+
+	// The budget has to be spent, not returned early, or the bound above
+	// would pass for a connection that never waited at all.
+	if elapsed < connectTimeout {
+		t.Errorf("expected the full %s budget to be used, took only %s", connectTimeout, elapsed)
+	}
+
+	if attempts := attemptsFromError(t, err); attempts != 1 {
+		t.Errorf("expected the uncapped attempt to consume the whole budget, got %d attempts", attempts)
 	}
 
 	if !strings.Contains(err.Error(), "timed out") && !strings.Contains(err.Error(), "failed after") {
@@ -253,19 +283,22 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 }
 
 func TestNewClientDirect_PerAttemptTimeoutLimitsAttempts(t *testing.T) {
-	// Verify that PerAttemptTimeout caps each individual attempt so that
-	// multiple retry attempts can be performed within the overall
-	// ConnectTimeout budget. With PerAttemptTimeout=500ms and overall
-	// ConnectTimeout=3s, the loop should perform several attempts and
-	// still finish within ~3s.
+	// Verify that PerAttemptTimeout caps each individual attempt so that a
+	// retry fits inside a budget one uncapped attempt would swallow whole.
+	//
+	// The budget has to clear the first backoff or the cap buys nothing:
+	// attempt 0 spends 100ms, the backoff is baseDelay (500ms) with up to
+	// +20% jitter, so a second attempt starts by 700ms at the latest. A 1s
+	// budget therefore always gets two attempts, and never a third, which
+	// would need another 800-1200ms of backoff.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{
 		Endpoint:          endpoint,
 		Username:          "admin",
 		Password:          "secret",
-		ConnectTimeout:    3 * time.Second,
-		PerAttemptTimeout: 500 * time.Millisecond,
+		ConnectTimeout:    time.Second,
+		PerAttemptTimeout: 100 * time.Millisecond,
 		MaxRetries:        5,
 		LogLevel:          kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
@@ -281,9 +314,13 @@ func TestNewClientDirect_PerAttemptTimeoutLimitsAttempts(t *testing.T) {
 	}
 
 	// Overall deadline equals ConnectTimeout. Allow some slack.
-	upperBound := config.ConnectTimeout + 2*time.Second
+	upperBound := config.ConnectTimeout + time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
+	}
+
+	if attempts := attemptsFromError(t, err); attempts < 2 {
+		t.Errorf("expected the per-attempt cap to allow a retry, got %d attempt(s)", attempts)
 	}
 
 	if !strings.Contains(err.Error(), "timed out") && !strings.Contains(err.Error(), "failed after") {

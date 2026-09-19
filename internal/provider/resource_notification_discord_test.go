@@ -17,7 +17,7 @@ func TestAccNotificationDiscordResource(t *testing.T) {
 	webhookURL := "https://discord.com/api/webhooks/123456789/abcdefghijklmnop"
 	webhookURLUpdated := "https://discord.com/api/webhooks/987654321/zyxwvutsrqponmlk"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -16,7 +16,7 @@ func TestAccMonitorHTTPJSONQueryResource(t *testing.T) {
 	nameUpdated := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorUpdated")
 	url := "https://httpbin.org/json"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -172,7 +172,7 @@ func TestAccMonitorHTTPJSONQueryResourceWithDefaultOperator(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorDefault")
 	url := "https://httpbin.org/json"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -237,7 +237,7 @@ func TestAccMonitorHTTPJSONQueryResourceWithAuth(t *testing.T) {
 	jsonPath := "$.authenticated"
 	expectedValue := "true"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -319,7 +319,7 @@ func TestAccMonitorHTTPJSONQueryResourceWithStatusCodes(t *testing.T) {
 	jsonPath := "$.slideshow.author"
 	expectedValue := "Yours Truly"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -383,7 +383,7 @@ func TestAccMonitorHTTPJSONQueryResourceWithCacheBust(t *testing.T) {
 	jsonPath := "$.slideshow.author"
 	expectedValue := "Yours Truly"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -464,7 +464,7 @@ resource "uptimekuma_monitor_http_json_query" "test" {
 func TestAccMonitorHTTPJSONQueryResourceWithOAuthAudience(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitorOAuthAudience")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

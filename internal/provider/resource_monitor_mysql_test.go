@@ -16,7 +16,7 @@ func TestAccMonitorMySQLResource(t *testing.T) {
 	nameUpdated := acctest.RandomWithPrefix("TestMySQLMonitorUpdated")
 	connectionString := "user:password@tcp(localhost:3306)/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -97,7 +97,7 @@ func TestAccMonitorMySQLResourceWithOptionalFields(t *testing.T) {
 	description := "Test MySQL monitor with optional fields"
 	connectionString := "user:password@tcp(localhost:3306)/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -185,7 +185,7 @@ func TestAccMonitorMySQLResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestMySQLMonitorWithParent")
 	connectionString := "user:password@tcp(localhost:3306)/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -240,7 +240,7 @@ func TestAccMonitorMySQLResourceImport(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestMySQLMonitorImport")
 	connectionString := "user:password@tcp(localhost:3306)/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -259,7 +259,7 @@ func TestAccMonitorMySQLResourceImport(t *testing.T) {
 func TestAccMonitorMySQLResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestMySQLConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

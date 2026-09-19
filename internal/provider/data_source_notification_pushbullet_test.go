@@ -14,7 +14,7 @@ import (
 func TestAccNotificationPushbulletDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationPushbullet")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationPushbulletDataSource(t *testing.T) {
 				Config: testAccNotificationPushbulletDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_pushbullet.test",
+						"data.uptimekuma_notification_pushbullet.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationPushbulletDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_pushbullet.test",
+						"data.uptimekuma_notification_pushbullet.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_pushbullet" "test" {
   access_token = "o.test1234567890abcdefghijklmnopqrst"
 }
 
-data "uptimekuma_notification_pushbullet" "test" {
+data "uptimekuma_notification_pushbullet" "by_name" {
   name = uptimekuma_notification_pushbullet.test.name
 }
-`, name)
-}
 
-func testAccNotificationPushbulletDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_pushbullet" "test" {
-  name         = %[1]q
-  is_active    = true
-  access_token = "o.test1234567890abcdefghijklmnopqrst"
-}
-
-data "uptimekuma_notification_pushbullet" "test" {
+data "uptimekuma_notification_pushbullet" "by_id" {
   id = uptimekuma_notification_pushbullet.test.id
 }
 `, name)

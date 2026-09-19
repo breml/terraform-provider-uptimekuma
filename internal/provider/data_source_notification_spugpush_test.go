@@ -15,7 +15,7 @@ func TestAccNotificationSpugPushDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationSpugPushDS")
 	templateKey := "test-template-key-xxxxx"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -23,22 +23,17 @@ func TestAccNotificationSpugPushDataSource(t *testing.T) {
 				Config: testAccNotificationSpugPushDataSourceConfig(name, templateKey),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_spugpush.test",
+						"data.uptimekuma_notification_spugpush.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_spugpush.test",
+						"data.uptimekuma_notification_spugpush.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSpugPushDataSourceConfigByID(name, templateKey),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_spugpush.test",
+						"data.uptimekuma_notification_spugpush.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -56,21 +51,11 @@ resource "uptimekuma_notification_spugpush" "test" {
   template_key = %[2]q
 }
 
-data "uptimekuma_notification_spugpush" "test" {
+data "uptimekuma_notification_spugpush" "by_name" {
   name = uptimekuma_notification_spugpush.test.name
 }
-`, name, templateKey)
-}
 
-func testAccNotificationSpugPushDataSourceConfigByID(name string, templateKey string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_spugpush" "test" {
-  name         = %[1]q
-  is_active    = true
-  template_key = %[2]q
-}
-
-data "uptimekuma_notification_spugpush" "test" {
+data "uptimekuma_notification_spugpush" "by_id" {
   id = uptimekuma_notification_spugpush.test.id
 }
 `, name, templateKey)

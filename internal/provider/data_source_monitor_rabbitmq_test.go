@@ -14,7 +14,7 @@ import (
 func TestAccMonitorRabbitMQDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRabbitMQMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccMonitorRabbitMQDataSource(t *testing.T) {
 				Config: testAccMonitorRabbitMQDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_rabbitmq.test",
+						"data.uptimekuma_monitor_rabbitmq.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorRabbitMQDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_rabbitmq.test",
+						"data.uptimekuma_monitor_rabbitmq.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -49,20 +44,11 @@ resource "uptimekuma_monitor_rabbitmq" "test" {
   nodes = "[\"http://rabbitmq.example.com:15672/\"]"
 }
 
-data "uptimekuma_monitor_rabbitmq" "test" {
+data "uptimekuma_monitor_rabbitmq" "by_name" {
   name = uptimekuma_monitor_rabbitmq.test.name
 }
-`, name)
-}
 
-func testAccMonitorRabbitMQDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_rabbitmq" "test" {
-  name  = %[1]q
-  nodes = "[\"http://rabbitmq.example.com:15672/\"]"
-}
-
-data "uptimekuma_monitor_rabbitmq" "test" {
+data "uptimekuma_monitor_rabbitmq" "by_id" {
   id = uptimekuma_monitor_rabbitmq.test.id
 }
 `, name)

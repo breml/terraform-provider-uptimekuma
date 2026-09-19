@@ -15,7 +15,7 @@ func TestAccMonitorGlobalpingResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGlobalpingMonitor")
 	nameUpdated := acctest.RandomWithPrefix("TestGlobalpingMonitorUpdated")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -111,7 +111,7 @@ func TestAccMonitorGlobalpingResourceHTTPSubtype(t *testing.T) {
 	keyword := "Example"
 	keywordUpdated := "Domain"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -169,7 +169,7 @@ resource "uptimekuma_monitor_globalping" "test" {
 func TestAccMonitorGlobalpingResourceDNSSubtype(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGlobalpingDNSMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -238,7 +238,7 @@ resource "uptimekuma_monitor_globalping" "test" {
 func TestAccMonitorGlobalpingResourceWithLocation(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGlobalpingLocationMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -280,7 +280,7 @@ resource "uptimekuma_monitor_globalping" "test" {
 func TestAccMonitorGlobalpingResourceWithStatusCodes(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestGlobalpingStatusCodesMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

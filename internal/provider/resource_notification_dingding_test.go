@@ -17,7 +17,7 @@ func TestAccNotificationDingDingResource(t *testing.T) {
 	secretKey := "test-secret-key-123"
 	mentioning := "@user1 @user2"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

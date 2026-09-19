@@ -14,7 +14,7 @@ import (
 func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSIPOptionsMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,47 +22,42 @@ func TestAccMonitorSIPOptionsDataSource(t *testing.T) {
 				Config: testAccMonitorSIPOptionsDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_name",
 						tfjsonpath.New("hostname"),
 						knownvalue.StringExact("sip.example.com"),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_name",
 						tfjsonpath.New("port"),
 						knownvalue.Int64Exact(5060),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorSIPOptionsDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_id",
 						tfjsonpath.New("hostname"),
 						knownvalue.StringExact("sip.example.com"),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_id",
 						tfjsonpath.New("port"),
 						knownvalue.Int64Exact(5060),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_sip_options.test",
+						"data.uptimekuma_monitor_sip_options.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -81,22 +76,11 @@ resource "uptimekuma_monitor_sip_options" "test" {
   domain_expiry_notification = true
 }
 
-data "uptimekuma_monitor_sip_options" "test" {
+data "uptimekuma_monitor_sip_options" "by_name" {
   name = uptimekuma_monitor_sip_options.test.name
 }
-`, name)
-}
 
-func testAccMonitorSIPOptionsDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_sip_options" "test" {
-  name                       = %[1]q
-  hostname                   = "sip.example.com"
-  port                       = 5060
-  domain_expiry_notification = true
-}
-
-data "uptimekuma_monitor_sip_options" "test" {
+data "uptimekuma_monitor_sip_options" "by_id" {
   id = uptimekuma_monitor_sip_options.test.id
 }
 `, name)

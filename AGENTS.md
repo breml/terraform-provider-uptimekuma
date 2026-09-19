@@ -7,9 +7,10 @@
 - **Build**: `go build -v ./...` or `task build`
 - **Format**: `task fmt` - runs gofumpt, goimports, golines, and newline-after-block formatters
 - **Lint**: `golangci-lint run` or `task lint` - runs 80+ linters with strict configuration
-- **Test (unit)**: `go test -v -cover -timeout=120s -parallel=10 ./...` or `task test`
+- **Test (unit)**: `task test` - runs with `-race`, shuffle and `-parallel=10`
 - **Test (single)**: `go test -v -timeout=120s ./internal/provider -run TestName`
-- **Test (acceptance)**: `TF_ACC=1 go test -v -cover -timeout 480s ./...` or `task testacc`
+- **Test (acceptance)**: `task testacc` - starts an Uptime Kuma container via Docker and
+  sets `TF_ACC=1` itself; `task testacc SHARD=1 SHARDS=4` runs one CI shard
 - **Generate docs**: `task generate-docs` - generates Terraform provider documentation
 - **Clean**: `task clean` - removes coverage files and build artifacts
 

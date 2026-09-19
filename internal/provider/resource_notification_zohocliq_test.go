@@ -18,7 +18,7 @@ func TestAccNotificationZohoCliqResource(t *testing.T) {
 	webhookURL := "https://cliq.zoho.com/company/api/v2/channelsbyname/general/message?zapikey=test-key"
 	webhookURLUpdated := "https://cliq.zoho.com/company/api/v2/channelsbyname/alerts/message?zapikey=updated-key"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

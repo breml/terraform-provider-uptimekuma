@@ -24,7 +24,7 @@ func TestAccNotificationSplunkResource(t *testing.T) {
 	integrationKey := "integration_key_12345"
 	integrationKeyUpdated := "integration_key_67890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -17,7 +17,7 @@ func TestAccNotificationWebhookResource(t *testing.T) {
 	webhookURL := "https://example.com/webhook"
 	webhookURLUpdated := "https://example.com/webhook-updated"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -74,7 +74,7 @@ func TestAccNotificationWebhookResource_WithHeaders(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWebhookHeaders")
 	webhookURL := "https://api.example.com/notify"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -106,7 +106,7 @@ func TestAccNotificationWebhookResource_CustomBody(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWebhookCustom")
 	webhookURL := "https://api.example.com/alerts"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

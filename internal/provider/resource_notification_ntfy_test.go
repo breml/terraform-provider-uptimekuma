@@ -18,7 +18,7 @@ func TestAccNotificationNtfyResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfy")
 	nameUpdated := acctest.RandomWithPrefix("NotificationNtfyUpdated")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -139,7 +139,7 @@ func TestAccNotificationNtfyResourceAccessToken(t *testing.T) {
 	topicUpdated := acctest.RandomWithPrefix("topic")
 	accessToken := "tk_abcdefghijklmnopqrstuvwxyz"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -192,7 +192,7 @@ func TestAccNotificationNtfyResourceUsernamePassword(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfyBasic")
 	topicUpdated := acctest.RandomWithPrefix("topic")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -251,7 +251,7 @@ func TestAccNotificationNtfyResourceUsernamePassword(t *testing.T) {
 func TestAccNotificationNtfyResourceTemplate(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfyTemplate")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -297,7 +297,7 @@ func TestAccNotificationNtfyResourceTemplate(t *testing.T) {
 func TestAccNotificationNtfyResourceMissingAccessToken(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfyValidation")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -314,7 +314,7 @@ func TestAccNotificationNtfyResourceMissingAccessToken(t *testing.T) {
 func TestAccNotificationNtfyResourceMissingUsernamePassword(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfyValidation")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -331,7 +331,7 @@ func TestAccNotificationNtfyResourceMissingUsernamePassword(t *testing.T) {
 func TestAccNotificationNtfyResourceConflictingCredentials(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfyValidation")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -352,7 +352,7 @@ func TestAccNotificationNtfyResourceConflictingCredentials(t *testing.T) {
 func TestAccNotificationNtfyResourceCredentialsWithoutMethod(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationNtfyValidation")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

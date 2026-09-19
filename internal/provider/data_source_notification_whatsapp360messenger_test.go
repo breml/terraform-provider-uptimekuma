@@ -14,7 +14,7 @@ import (
 func TestAccNotificationWhatsapp360messengerDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWhatsapp360messenger")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,22 +22,17 @@ func TestAccNotificationWhatsapp360messengerDataSource(t *testing.T) {
 				Config: testAccNotificationWhatsapp360messengerDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_whatsapp360messenger.test",
+						"data.uptimekuma_notification_whatsapp360messenger.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_whatsapp360messenger.test",
+						"data.uptimekuma_notification_whatsapp360messenger.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationWhatsapp360messengerDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_whatsapp360messenger.test",
+						"data.uptimekuma_notification_whatsapp360messenger.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -56,22 +51,11 @@ resource "uptimekuma_notification_whatsapp360messenger" "test" {
   recipient  = "+15551234567"
 }
 
-data "uptimekuma_notification_whatsapp360messenger" "test" {
+data "uptimekuma_notification_whatsapp360messenger" "by_name" {
   name = uptimekuma_notification_whatsapp360messenger.test.name
 }
-`, name)
-}
 
-func testAccNotificationWhatsapp360messengerDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_whatsapp360messenger" "test" {
-  name       = %[1]q
-  is_active  = true
-  auth_token = "auth-token-xxxxxxxx"
-  recipient  = "+15551234567"
-}
-
-data "uptimekuma_notification_whatsapp360messenger" "test" {
+data "uptimekuma_notification_whatsapp360messenger" "by_id" {
   id = uptimekuma_notification_whatsapp360messenger.test.id
 }
 `, name)

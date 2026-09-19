@@ -17,7 +17,7 @@ func TestAccNotificationFluxerResource(t *testing.T) {
 	webhookURL := "https://fluxer.example.com/webhook/XXXXXXXX"
 	webhookURLUpdated := "https://fluxer.example.com/webhook/YYYYYYYY"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

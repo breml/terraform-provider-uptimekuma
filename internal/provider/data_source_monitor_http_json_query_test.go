@@ -15,7 +15,7 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestHTTPJSONQueryMonitor")
 	url := "https://httpbin.org/json"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -23,27 +23,22 @@ func TestAccMonitorHTTPJSONQueryDataSource(t *testing.T) {
 				Config: testAccMonitorHTTPJSONQueryDataSourceConfig(name, url),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_json_query.test",
+						"data.uptimekuma_monitor_http_json_query.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_json_query.test",
+						"data.uptimekuma_monitor_http_json_query.by_name",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorHTTPJSONQueryDataSourceConfigByID(name, url),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_json_query.test",
+						"data.uptimekuma_monitor_http_json_query.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_http_json_query.test",
+						"data.uptimekuma_monitor_http_json_query.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
 						knownvalue.Bool(true),
 					),
@@ -63,23 +58,11 @@ resource "uptimekuma_monitor_http_json_query" "test" {
   domain_expiry_notification = true
 }
 
-data "uptimekuma_monitor_http_json_query" "test" {
+data "uptimekuma_monitor_http_json_query" "by_name" {
   name = uptimekuma_monitor_http_json_query.test.name
 }
-`, name, url)
-}
 
-func testAccMonitorHTTPJSONQueryDataSourceConfigByID(name string, url string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_http_json_query" "test" {
-  name                       = %[1]q
-  url                        = %[2]q
-  json_path                  = "$.slideshow"
-  expected_value             = ""
-  domain_expiry_notification = true
-}
-
-data "uptimekuma_monitor_http_json_query" "test" {
+data "uptimekuma_monitor_http_json_query" "by_id" {
   id = uptimekuma_monitor_http_json_query.test.id
 }
 `, name, url)

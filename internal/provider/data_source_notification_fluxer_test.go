@@ -14,7 +14,7 @@ import (
 func TestAccNotificationFluxerDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationFluxer")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationFluxerDataSource(t *testing.T) {
 				Config: testAccNotificationFluxerDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_fluxer.test",
+						"data.uptimekuma_notification_fluxer.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationFluxerDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_fluxer.test",
+						"data.uptimekuma_notification_fluxer.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_fluxer" "test" {
   webhook_url = "https://fluxer.example.com/webhook/XXXXXXXX"
 }
 
-data "uptimekuma_notification_fluxer" "test" {
+data "uptimekuma_notification_fluxer" "by_name" {
   name = uptimekuma_notification_fluxer.test.name
 }
-`, name)
-}
 
-func testAccNotificationFluxerDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_fluxer" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://fluxer.example.com/webhook/XXXXXXXX"
-}
-
-data "uptimekuma_notification_fluxer" "test" {
+data "uptimekuma_notification_fluxer" "by_id" {
   id = uptimekuma_notification_fluxer.test.id
 }
 `, name)

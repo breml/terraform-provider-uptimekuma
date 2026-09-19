@@ -19,7 +19,7 @@ func TestAccNotificationWhatsapp360messengerResource(t *testing.T) {
 	recipient := "+15551234567"
 	recipientUpdated := "+15557654321,+15551112222"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

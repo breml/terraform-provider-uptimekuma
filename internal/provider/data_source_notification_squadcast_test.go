@@ -14,7 +14,7 @@ import (
 func TestAccNotificationSquadcastDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationSquadcast")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationSquadcastDataSource(t *testing.T) {
 				Config: testAccNotificationSquadcastDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_squadcast.test",
+						"data.uptimekuma_notification_squadcast.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSquadcastDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_squadcast.test",
+						"data.uptimekuma_notification_squadcast.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_squadcast" "test" {
   webhook_url = "https://api.squadcast.com/v3/incidents/webhook/test"
 }
 
-data "uptimekuma_notification_squadcast" "test" {
+data "uptimekuma_notification_squadcast" "by_name" {
   name = uptimekuma_notification_squadcast.test.name
 }
-`, name)
-}
 
-func testAccNotificationSquadcastDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_squadcast" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://api.squadcast.com/v3/incidents/webhook/test"
-}
-
-data "uptimekuma_notification_squadcast" "test" {
+data "uptimekuma_notification_squadcast" "by_id" {
   id = uptimekuma_notification_squadcast.test.id
 }
 `, name)

@@ -14,7 +14,7 @@ import (
 func TestAccNotificationTeamsDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationTeams")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationTeamsDataSource(t *testing.T) {
 				Config: testAccNotificationTeamsDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_teams.test",
+						"data.uptimekuma_notification_teams.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationTeamsDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_teams.test",
+						"data.uptimekuma_notification_teams.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -50,21 +45,11 @@ resource "uptimekuma_notification_teams" "test" {
   webhook_url = "https://example.webhook.office.com/webhookb2/example"
 }
 
-data "uptimekuma_notification_teams" "test" {
+data "uptimekuma_notification_teams" "by_name" {
   name = uptimekuma_notification_teams.test.name
 }
-`, name)
-}
 
-func testAccNotificationTeamsDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_teams" "test" {
-  name        = %[1]q
-  is_active   = true
-  webhook_url = "https://example.webhook.office.com/webhookb2/example"
-}
-
-data "uptimekuma_notification_teams" "test" {
+data "uptimekuma_notification_teams" "by_id" {
   id = uptimekuma_notification_teams.test.id
 }
 `, name)

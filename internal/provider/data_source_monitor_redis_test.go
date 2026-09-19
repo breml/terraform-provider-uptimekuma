@@ -14,7 +14,7 @@ import (
 func TestAccMonitorRedisDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestRedisMonitor")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccMonitorRedisDataSource(t *testing.T) {
 				Config: testAccMonitorRedisDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_redis.test",
+						"data.uptimekuma_monitor_redis.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccMonitorRedisDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_monitor_redis.test",
+						"data.uptimekuma_monitor_redis.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -49,20 +44,11 @@ resource "uptimekuma_monitor_redis" "test" {
   database_connection_string = "redis://localhost:6379"
 }
 
-data "uptimekuma_monitor_redis" "test" {
+data "uptimekuma_monitor_redis" "by_name" {
   name = uptimekuma_monitor_redis.test.name
 }
-`, name)
-}
 
-func testAccMonitorRedisDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_redis" "test" {
-  name                       = %[1]q
-  database_connection_string = "redis://localhost:6379"
-}
-
-data "uptimekuma_monitor_redis" "test" {
+data "uptimekuma_monitor_redis" "by_id" {
   id = uptimekuma_monitor_redis.test.id
 }
 `, name)

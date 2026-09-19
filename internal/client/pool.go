@@ -83,11 +83,13 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 // This should be called when a client is no longer needed, but it does not
 // actually close the connection (connection remains pooled for reuse).
 //
-// Note: In the current acceptance test use case, Release is not called by
-// consumers because the pool is closed via CloseGlobalPool at the end of all
-// tests. The reference count is maintained for debugging purposes and to
-// support future use cases where automatic cleanup when refs reach zero
-// might be desired.
+// The provider releases from a goroutine watching the Configure RPC context,
+// which is cancelled as soon as Configure returns — long before the client
+// stops being used. The counter therefore tracks Configure calls, not live
+// users, and the refs check in CloseIfUnused is a leak assertion for TestMain,
+// not a use-after-close interlock. Because the release is asynchronous, a
+// caller that closes the pool right after its last Configure may still observe
+// a non-zero count.
 func (p *Pool) Release() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -111,14 +113,36 @@ func (p *Pool) Close() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if p.client != nil {
-		err := p.client.Disconnect()
-		p.client = nil
-		p.config = nil
-		p.refs = 0
-		if err != nil {
-			return fmt.Errorf("disconnect pooled client: %w", err)
-		}
+	return p.closeLocked()
+}
+
+// CloseIfUnused closes the pooled connection, but only when no reference is
+// outstanding. The reference check and the close happen in the same critical
+// section, so a concurrent Release cannot slip between them.
+func (p *Pool) CloseIfUnused() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.refs != 0 {
+		return fmt.Errorf("failed to close global pool, expected 0 refs, got: %d", p.refs)
+	}
+
+	return p.closeLocked()
+}
+
+// closeLocked disconnects and resets the pool. The caller must hold p.mu.
+func (p *Pool) closeLocked() error {
+	if p.client == nil {
+		return nil
+	}
+
+	err := p.client.Disconnect()
+	p.client = nil
+	p.config = nil
+	p.refs = 0
+
+	if err != nil {
+		return fmt.Errorf("disconnect pooled client: %w", err)
 	}
 
 	return nil
@@ -148,15 +172,11 @@ func CloseGlobalPool() error {
 	globalPoolMu.Lock()
 	defer globalPoolMu.Unlock()
 
-	if globalPool != nil {
-		if globalPool.refs != 0 {
-			return fmt.Errorf("failed to close global pool, expected 0 refs, got: %d", globalPool.refs)
-		}
-
-		return globalPool.Close()
+	if globalPool == nil {
+		return nil
 	}
 
-	return nil
+	return globalPool.CloseIfUnused()
 }
 
 // ResetGlobalPool resets the global pool singleton.

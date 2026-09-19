@@ -16,7 +16,7 @@ func TestAccMonitorPostgresResource(t *testing.T) {
 	nameUpdated := acctest.RandomWithPrefix("TestPostgresMonitorUpdated")
 	connectionString := "postgres://user:password@localhost:5432/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -97,7 +97,7 @@ func TestAccMonitorPostgresResourceWithOptionalFields(t *testing.T) {
 	description := "Test PostgreSQL monitor with optional fields"
 	connectionString := "postgres://user:password@localhost:5432/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -185,7 +185,7 @@ func TestAccMonitorPostgresResourceWithParent(t *testing.T) {
 	monitorName := acctest.RandomWithPrefix("TestPostgresMonitorWithParent")
 	connectionString := "postgres://user:password@localhost:5432/testdb"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -239,7 +239,7 @@ resource "uptimekuma_monitor_postgres" "test" {
 func TestAccMonitorPostgresResourceWithConditions(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPostgresConditions")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

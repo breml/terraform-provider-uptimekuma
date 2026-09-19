@@ -17,7 +17,7 @@ func TestAccNotificationBrevoDataSource(t *testing.T) {
 	toEmail := "alerts@example.com"
 	fromEmail := "monitoring@example.com"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -32,29 +32,17 @@ func TestAccNotificationBrevoDataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_brevo.test",
+						"data.uptimekuma_notification_brevo.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_brevo.test",
+						"data.uptimekuma_notification_brevo.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationBrevoDataSourceConfigByID(
-					name,
-					apiKey,
-					toEmail,
-					fromEmail,
-					"Alert Subject",
-					"",
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_brevo.test",
+						"data.uptimekuma_notification_brevo.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -87,36 +75,11 @@ resource "uptimekuma_notification_brevo" "test" {
   subject    = %[5]q
 %[6]s}
 
-data "uptimekuma_notification_brevo" "test" {
+data "uptimekuma_notification_brevo" "by_name" {
   name = uptimekuma_notification_brevo.test.name
 }
-`, name, apiKey, toEmail, fromEmail, subject, fromNameConfig)
-}
 
-func testAccNotificationBrevoDataSourceConfigByID(
-	name string,
-	apiKey string,
-	toEmail string,
-	fromEmail string,
-	subject string,
-	fromName string,
-) string {
-	fromNameConfig := ""
-	if fromName != "" {
-		fromNameConfig = fmt.Sprintf("  from_name = %q\n", fromName)
-	}
-
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_brevo" "test" {
-  name       = %[1]q
-  is_active  = true
-  api_key    = %[2]q
-  to_email   = %[3]q
-  from_email = %[4]q
-  subject    = %[5]q
-%[6]s}
-
-data "uptimekuma_notification_brevo" "test" {
+data "uptimekuma_notification_brevo" "by_id" {
   id = uptimekuma_notification_brevo.test.id
 }
 `, name, apiKey, toEmail, fromEmail, subject, fromNameConfig)

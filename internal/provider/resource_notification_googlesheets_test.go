@@ -17,7 +17,7 @@ func TestAccNotificationGoogleSheetsResource(t *testing.T) {
 	webhookURL := "https://script.google.com/macros/s/test/exec"
 	webhookURLUpdated := "https://script.google.com/macros/s/test2/exec"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

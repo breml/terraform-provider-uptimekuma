@@ -14,7 +14,7 @@ import (
 func TestAccNotificationWebpushDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestNotificationWebpush")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationWebpushDataSource(t *testing.T) {
 				Config: testAccNotificationWebpushDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_webpush.test",
+						"data.uptimekuma_notification_webpush.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationWebpushDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_webpush.test",
+						"data.uptimekuma_notification_webpush.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -57,28 +52,11 @@ resource "uptimekuma_notification_webpush" "test" {
   }
 }
 
-data "uptimekuma_notification_webpush" "test" {
+data "uptimekuma_notification_webpush" "by_name" {
   name = uptimekuma_notification_webpush.test.name
 }
-`, name)
-}
 
-func testAccNotificationWebpushDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_webpush" "test" {
-  name      = %[1]q
-  is_active = true
-
-  subscription = {
-    endpoint = "https://fcm.googleapis.com/fcm/send/abc123"
-    keys = {
-      p256dh = "BGxi5eHcCnFv1example"
-      auth   = "auth-secret-abc"
-    }
-  }
-}
-
-data "uptimekuma_notification_webpush" "test" {
+data "uptimekuma_notification_webpush" "by_id" {
   id = uptimekuma_notification_webpush.test.id
 }
 `, name)

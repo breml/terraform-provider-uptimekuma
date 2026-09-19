@@ -19,7 +19,7 @@ func TestAccNotificationServerChanResource(t *testing.T) {
 	sendKey := "test-send-key-12345"
 	sendKeyUpdated := "test-send-key-67890"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

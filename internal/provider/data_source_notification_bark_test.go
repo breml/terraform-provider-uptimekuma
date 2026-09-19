@@ -15,7 +15,7 @@ func TestAccNotificationBarkDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationBark")
 	endpointURL := "https://api.bark.com"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -29,28 +29,17 @@ func TestAccNotificationBarkDataSource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_bark.test",
+						"data.uptimekuma_notification_bark.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_bark.test",
+						"data.uptimekuma_notification_bark.by_name",
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationBarkDataSourceConfigByID(
-					name,
-					endpointURL,
-					"test-group",
-					"default",
-					"v1",
-				),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_bark.test",
+						"data.uptimekuma_notification_bark.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -77,30 +66,11 @@ resource "uptimekuma_notification_bark" "test" {
   api_version = %[5]q
 }
 
-data "uptimekuma_notification_bark" "test" {
+data "uptimekuma_notification_bark" "by_name" {
   name = uptimekuma_notification_bark.test.name
 }
-`, name, endpoint, group, sound, apiVersion)
-}
 
-func testAccNotificationBarkDataSourceConfigByID(
-	name string,
-	endpoint string,
-	group string,
-	sound string,
-	apiVersion string,
-) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_bark" "test" {
-  name        = %[1]q
-  is_active   = true
-  endpoint    = %[2]q
-  group       = %[3]q
-  sound       = %[4]q
-  api_version = %[5]q
-}
-
-data "uptimekuma_notification_bark" "test" {
+data "uptimekuma_notification_bark" "by_id" {
   id = uptimekuma_notification_bark.test.id
 }
 `, name, endpoint, group, sound, apiVersion)

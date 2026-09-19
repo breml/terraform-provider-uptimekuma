@@ -21,7 +21,7 @@ func TestAccNotificationBrevoResource(t *testing.T) {
 	fromEmail := "monitoring@example.com"
 	fromEmailUpdated := "uptime@example.com"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

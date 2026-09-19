@@ -26,7 +26,7 @@ func TestAccNotificationAliyunsmsResource(t *testing.T) {
 	templateCode := "SMS_001"
 	templateCodeUpdated := "SMS_002"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -14,7 +14,7 @@ import (
 func TestAccNotificationSMSManagerDataSource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationSMSManager")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -22,17 +22,12 @@ func TestAccNotificationSMSManagerDataSource(t *testing.T) {
 				Config: testAccNotificationSMSManagerDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smsmanager.test",
+						"data.uptimekuma_notification_smsmanager.by_name",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
-				},
-			},
-			{
-				Config: testAccNotificationSMSManagerDataSourceConfigByID(name),
-				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.uptimekuma_notification_smsmanager.test",
+						"data.uptimekuma_notification_smsmanager.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
 					),
@@ -51,22 +46,11 @@ resource "uptimekuma_notification_smsmanager" "test" {
   numbers   = "+1234567890"
 }
 
-data "uptimekuma_notification_smsmanager" "test" {
+data "uptimekuma_notification_smsmanager" "by_name" {
   name = uptimekuma_notification_smsmanager.test.name
 }
-`, name)
-}
 
-func testAccNotificationSMSManagerDataSourceConfigByID(name string) string {
-	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_notification_smsmanager" "test" {
-  name      = %[1]q
-  is_active = true
-  api_key   = "test-api-key-123"
-  numbers   = "+1234567890"
-}
-
-data "uptimekuma_notification_smsmanager" "test" {
+data "uptimekuma_notification_smsmanager" "by_id" {
   id = uptimekuma_notification_smsmanager.test.id
 }
 `, name)
