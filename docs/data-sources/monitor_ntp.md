@@ -44,4 +44,4 @@ output "ntp_hostname" {
 - `ntp_stratum_threshold` (Number) Stratum at which the monitor is considered down. Null while the check falls back to 5.
 - `ntp_time_offset_threshold` (Number) Absolute time offset in milliseconds at which the monitor is considered down. Null while the check falls back to 1000.
 - `port` (Number) UDP port of the NTP server. Null while the check falls back to 123.
-- `timeout` (Number) Query timeout in seconds
+- `timeout` (Number) Query timeout in seconds. The column is NOT NULL server-side, so this is normally the stored value; null would mean the server reported none, in which case the check falls back to 10.

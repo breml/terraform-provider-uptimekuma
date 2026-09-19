@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -126,6 +127,18 @@ func TestAccMonitorNTPDataSourceMinimal(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_monitor_ntp.by_name",
+						tfjsonpath.New("ntp_time_offset_threshold"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_ntp.by_name",
+						tfjsonpath.New("ntp_root_dispersion_threshold"),
+						knownvalue.Null(),
+					),
+					// The timeout column is NOT NULL, so the schema default the
+					// resource applied is what comes back, not null.
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_ntp.by_name",
 						tfjsonpath.New("timeout"),
 						knownvalue.Float64Exact(10),
 					),
@@ -145,6 +158,36 @@ resource "uptimekuma_monitor_ntp" "test" {
 
 data "uptimekuma_monitor_ntp" "by_name" {
   name = uptimekuma_monitor_ntp.test.name
+}
+`, name)
+}
+
+// TestAccMonitorNTPDataSourceWrongType verifies that looking up a monitor of
+// another type by ID is reported rather than decoded into empty NTP fields.
+func TestAccMonitorNTPDataSourceWrongType(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestNTPMonitorDSWrongType")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccMonitorNTPDataSourceConfigWrongType(name),
+				ExpectError: regexp.MustCompile(`Monitor type mismatch`),
+			},
+		},
+	})
+}
+
+func testAccMonitorNTPDataSourceConfigWrongType(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_ping" "test" {
+  name     = %[1]q
+  hostname = "127.0.0.1"
+}
+
+data "uptimekuma_monitor_ntp" "by_id" {
+  id = uptimekuma_monitor_ping.test.id
 }
 `, name)
 }

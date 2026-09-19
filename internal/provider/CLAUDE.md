@@ -66,7 +66,7 @@ Terraform's context cancels after `Configure()` completes. Socket.IO connection 
 
 ## Resource Categories
 
-### Monitor Resources (18 types)
+### Monitor Resources (31 types)
 
 #### HTTP-Based Monitors
 
@@ -406,7 +406,19 @@ func strToPtr(s types.String) *string
 
 // Convert Go *string to Terraform types.String (null if nil)
 func ptrToTypes(s *string) types.String
+
+// Same conversions for the other scalar types
+func float64ToPtr(v types.Float64) *float64
+func int64ToPtr(v types.Int64) *int64
+func int64PtrToTypes(v *int64) types.Int64
+func boolToPtr(v types.Bool) *bool
+func boolPtrToTypes(v *bool) types.Bool
 ```
+
+Nil means SQL NULL for nullable columns, which is how Uptime Kuma is told to
+apply a check's own fallback. Modelling such a fallback as a Terraform default
+instead causes a perpetual diff, because the server reads the column back as
+null rather than as the fallback value.
 
 **Usage**: Converting between Terraform's type system and Go's pointer-based optionals.
 

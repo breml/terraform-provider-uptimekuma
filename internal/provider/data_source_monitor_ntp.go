@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -72,8 +73,10 @@ func (*MonitorNTPDataSource) Schema(
 				Computed:            true,
 			},
 			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Query timeout in seconds",
-				Computed:            true,
+				MarkdownDescription: "Query timeout in seconds. The column is NOT NULL server-side, " +
+					"so this is normally the stored value; null would mean the server reported none, " +
+					"in which case the check falls back to 10.",
+				Computed: true,
 			},
 			"ntp_stratum_threshold": schema.Int64Attribute{
 				MarkdownDescription: "Stratum at which the monitor is considered down. Null while the " +
@@ -141,6 +144,20 @@ func (d *MonitorNTPDataSource) readByID(
 		return
 	}
 
+	// GetMonitorAs unmarshals into monitor.NTP without checking the type, so a
+	// monitor of another type would decode into plausible-looking empty values.
+	if actual := ntpMonitor.Base.Type(); actual != "" && actual != ntpMonitor.Type() {
+		resp.Diagnostics.AddError(
+			"Monitor type mismatch",
+			fmt.Sprintf(
+				"Monitor ID %d has type %q, expected %q.",
+				data.ID.ValueInt64(), actual, ntpMonitor.Type(),
+			),
+		)
+
+		return
+	}
+
 	data.Name = types.StringValue(ntpMonitor.Name)
 	populateNTPDataSourceDetails(&ntpMonitor, data)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -172,14 +189,16 @@ func (d *MonitorNTPDataSource) readByName(
 // populateNTPDataSourceDetails copies the NTP specific fields into the data source model.
 func populateNTPDataSourceDetails(ntpMonitor *monitor.NTP, data *MonitorNTPDataSourceModel) {
 	data.Hostname = types.StringValue(ntpMonitor.Hostname)
-	data.Port = optionalInt64Value(ntpMonitor.Port)
-	data.NTPStratumThreshold = optionalInt64Value(ntpMonitor.NTPStratumThreshold)
-	data.NTPTimeOffsetThreshold = optionalInt64Value(ntpMonitor.NTPTimeOffsetThreshold)
-	data.NTPRootDispersionThreshold = optionalInt64Value(ntpMonitor.NTPRootDispersionThreshold)
+	data.Port = int64PtrToTypes(ntpMonitor.Port)
+	data.NTPStratumThreshold = int64PtrToTypes(ntpMonitor.NTPStratumThreshold)
+	data.NTPTimeOffsetThreshold = int64PtrToTypes(ntpMonitor.NTPTimeOffsetThreshold)
+	data.NTPRootDispersionThreshold = int64PtrToTypes(ntpMonitor.NTPRootDispersionThreshold)
 
+	// Unlike the resource, nothing here forces a non-null value, so report the
+	// column as it is stored and keep null meaning "the check applies its fallback".
 	if ntpMonitor.Timeout != nil {
 		data.Timeout = types.Float64Value(*ntpMonitor.Timeout)
 	} else {
-		data.Timeout = types.Float64Value(defaultNTPTimeout)
+		data.Timeout = types.Float64Null()
 	}
 }
