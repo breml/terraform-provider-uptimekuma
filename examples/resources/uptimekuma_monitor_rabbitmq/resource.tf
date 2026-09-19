@@ -83,3 +83,15 @@ resource "uptimekuma_monitor_rabbitmq" "example_with_notification" {
 
   notification_ids = [uptimekuma_notification_slack.alerts.id]
 }
+
+# RabbitMQ monitor with a fractional timeout. Uptime Kuma stores the timeout in
+# a floating point column, so sub-second precision round-trips unchanged.
+resource "uptimekuma_monitor_rabbitmq" "example_fractional_timeout" {
+  name     = "RabbitMQ Fast Timeout"
+  nodes    = jsonencode(["http://rabbitmq.example.com:15672/"])
+  username = "guest"
+  password = "guest"
+  timeout  = 2.5
+  interval = 60
+  active   = true
+}

@@ -117,14 +117,16 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 	}
 
 	id, err := r.client.CreateMonitor(ctx, &httpJSONQueryMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create HTTP JSON Query monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create HTTP JSON Query monitor") {
 		return
 	}
 
 	data.ID = types.Int64Value(id)
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 
@@ -156,7 +158,7 @@ func buildHTTPJSONQueryMonitor(
 		},
 		HTTPDetails: monitor.HTTPDetails{
 			URL:                      data.URL.ValueString(),
-			Timeout:                  data.Timeout.ValueInt64(),
+			Timeout:                  data.Timeout.ValueFloat64(),
 			Method:                   data.Method.ValueString(),
 			ExpiryNotification:       data.ExpiryNotification.ValueBool(),
 			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
@@ -252,7 +254,7 @@ func populateHTTPBaseFieldsForJSONQuery(httpMonitor *monitor.HTTP, m *MonitorHTT
 	m.UpsideDown = types.BoolValue(httpMonitor.UpsideDown)
 	m.Active = types.BoolValue(httpMonitor.IsActive)
 	m.URL = types.StringValue(httpMonitor.URL)
-	m.Timeout = types.Int64Value(httpMonitor.Timeout)
+	m.Timeout = types.Float64Value(httpMonitor.Timeout)
 	m.Method = types.StringValue(httpMonitor.Method)
 	m.ExpiryNotification = types.BoolValue(httpMonitor.ExpiryNotification)
 	m.DomainExpiryNotification = types.BoolValue(httpMonitor.DomainExpiryNotification)

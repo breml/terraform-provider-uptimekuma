@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -12,7 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -43,15 +46,15 @@ type MonitorRealBrowserResource struct {
 type MonitorRealBrowserResourceModel struct {
 	MonitorBaseModel
 
-	URL                      types.String `tfsdk:"url"`
-	Timeout                  types.Int64  `tfsdk:"timeout"`
-	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
-	MaxRedirects             types.Int64  `tfsdk:"max_redirects"`
-	AcceptedStatusCodes      types.List   `tfsdk:"accepted_status_codes"`
-	ProxyID                  types.Int64  `tfsdk:"proxy_id"`
-	RemoteBrowser            types.Int64  `tfsdk:"remote_browser"`
-	ScreenshotDelay          types.Int64  `tfsdk:"screenshot_delay"`
-	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	URL                      types.String  `tfsdk:"url"`
+	Timeout                  types.Float64 `tfsdk:"timeout"`
+	IgnoreTLS                types.Bool    `tfsdk:"ignore_tls"`
+	MaxRedirects             types.Int64   `tfsdk:"max_redirects"`
+	AcceptedStatusCodes      types.List    `tfsdk:"accepted_status_codes"`
+	ProxyID                  types.Int64   `tfsdk:"proxy_id"`
+	RemoteBrowser            types.Int64   `tfsdk:"remote_browser"`
+	ScreenshotDelay          types.Int64   `tfsdk:"screenshot_delay"`
+	DomainExpiryNotification types.Bool    `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -82,13 +85,17 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 		Required:            true,
 	}
 
-	attrs["timeout"] = schema.Int64Attribute{
-		MarkdownDescription: "Request timeout in seconds",
-		Optional:            true,
-		Computed:            true,
-		Default:             int64default.StaticInt64(48),
-		Validators: []validator.Int64{
-			int64validator.Between(1, 3600),
+	attrs["timeout"] = schema.Float64Attribute{
+		MarkdownDescription: "Request timeout in seconds. Has no effect: the real browser check derives " +
+			"its timeout from 80% of `interval` and never reads this value. It is kept because Uptime " +
+			"Kuma stores it with every monitor.",
+		DeprecationMessage: "timeout has no effect on a real browser monitor; the check uses 80% of " +
+			"interval. Remove it from the configuration.",
+		Optional: true,
+		Computed: true,
+		Default:  float64default.StaticFloat64(48),
+		Validators: []validator.Float64{
+			float64validator.Between(1, 3600),
 		},
 	}
 
@@ -133,11 +140,21 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	}
 
 	attrs["screenshot_delay"] = schema.Int64Attribute{
-		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 " +
-			"stores this value but does not return it on read, so it cannot be detected as drift or " +
-			"recovered on import. Removing this field from configuration requires a `terraform apply` " +
-			"to synchronize state; `terraform plan` will always show a diff after removal until apply is run.",
+		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Must be less than " +
+			"`interval * 500`, that is half the interval converted to milliseconds; the server rejects " +
+			"larger values and negative ones. The delay cannot be cleared through the API, so this " +
+			"attribute is computed: removing it from configuration keeps the value the server already " +
+			"has rather than producing a plan that never converges. Set it to `0` to disable the delay. " +
+			"Uptime Kuma only returns the value since 2.5.0; against earlier versions it cannot be " +
+			"detected as drift or recovered on import.",
 		Optional: true,
+		Computed: true,
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.UseStateForUnknown(),
+		},
+		Validators: []validator.Int64{
+			int64validator.AtLeast(0),
+		},
 	}
 
 	attrs["domain_expiry_notification"] = domainExpiryNotificationAttribute()
@@ -172,7 +189,7 @@ func buildRealBrowserMonitor(
 		},
 		RealBrowserDetails: monitor.RealBrowserDetails{
 			URL:                      data.URL.ValueString(),
-			Timeout:                  data.Timeout.ValueInt64(),
+			Timeout:                  data.Timeout.ValueFloat64(),
 			IgnoreTLS:                data.IgnoreTLS.ValueBool(),
 			MaxRedirects:             int(data.MaxRedirects.ValueInt64()),
 			AcceptedStatusCodes:      []string{},
@@ -200,7 +217,7 @@ func buildRealBrowserMonitor(
 		realBrowserMonitor.RemoteBrowser = &remoteBrowser
 	}
 
-	if !data.ScreenshotDelay.IsNull() {
+	if !data.ScreenshotDelay.IsNull() && !data.ScreenshotDelay.IsUnknown() {
 		screenshotDelay := int(data.ScreenshotDelay.ValueInt64())
 		realBrowserMonitor.ScreenshotDelay = &screenshotDelay
 	}
@@ -254,14 +271,21 @@ func (r *MonitorRealBrowserResource) Create(
 	// Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, &realBrowserMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Real Browser monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Real Browser monitor") {
 		return
 	}
 
 	data.ID = types.Int64Value(id)
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+		return
+	}
+
+	resolveScreenshotDelay(ctx, r.client, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -275,6 +299,39 @@ func (r *MonitorRealBrowserResource) Create(
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// resolveScreenshotDelay gives the computed screenshot_delay a known value.
+//
+// The attribute is computed because Uptime Kuma cannot clear the delay, so an
+// absent configuration must keep whatever the server holds. On create, and on
+// update from a state written before the attribute became computed, there is
+// no prior value to carry over, so the server is asked for the current one.
+// Servers older than 2.5.0 do not echo it back; they report no delay.
+func resolveScreenshotDelay(
+	ctx context.Context,
+	client *kuma.Client,
+	data *MonitorRealBrowserResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if !data.ScreenshotDelay.IsUnknown() {
+		return
+	}
+
+	var current monitor.RealBrowser
+
+	err := client.GetMonitorAs(ctx, data.ID.ValueInt64(), &current)
+	if err != nil {
+		diags.AddError("failed to read back Real Browser monitor screenshot delay", err.Error())
+		return
+	}
+
+	if current.ScreenshotDelay != nil {
+		data.ScreenshotDelay = types.Int64Value(int64(*current.ScreenshotDelay))
+		return
+	}
+
+	data.ScreenshotDelay = types.Int64Value(0)
 }
 
 // populateRealBrowserMonitorBaseFields populates base fields for Real Browser monitor.
@@ -293,7 +350,7 @@ func populateRealBrowserMonitorBaseFields(m *monitor.RealBrowser, data *MonitorR
 	data.UpsideDown = types.BoolValue(m.UpsideDown)
 	data.Active = types.BoolValue(m.IsActive)
 	data.URL = types.StringValue(m.URL)
-	data.Timeout = types.Int64Value(m.Timeout)
+	data.Timeout = types.Float64Value(m.Timeout)
 	data.IgnoreTLS = types.BoolValue(m.IgnoreTLS)
 	data.MaxRedirects = types.Int64Value(int64(m.MaxRedirects))
 	data.DomainExpiryNotification = types.BoolValue(m.DomainExpiryNotification)
@@ -326,9 +383,9 @@ func populateOptionalFieldsForRealBrowser(
 		data.RemoteBrowser = types.Int64Null()
 	}
 
-	// screenshot_delay is write-only on Uptime Kuma 2.3.2: the server stores it
-	// but does not echo it back on read. Preserve the configured value when the
-	// server omits it to avoid a perpetual diff.
+	// screenshot_delay is computed, so state always mirrors the server once it
+	// is known. Uptime Kuma only echoes the value back since 2.5.0; older
+	// servers omit the field, so the value already in state is preserved.
 	if m.ScreenshotDelay != nil {
 		data.ScreenshotDelay = types.Int64Value(int64(*m.ScreenshotDelay))
 	}
@@ -438,6 +495,11 @@ func (r *MonitorRealBrowserResource) Update(
 	}
 
 	handleMonitorActiveStateUpdate(ctx, r.client, data.ID.ValueInt64(), state.Active, data.Active, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resolveScreenshotDelay(ctx, r.client, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

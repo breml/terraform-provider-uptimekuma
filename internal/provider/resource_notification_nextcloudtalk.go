@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -142,8 +141,7 @@ func (r *NotificationNextcloudTalkResource) Create(
 	}
 
 	id, err := r.client.CreateNotification(ctx, nextcloudTalk)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create notification") {
 		return
 	}
 
@@ -170,21 +168,24 @@ func (r *NotificationNextcloudTalkResource) Read(
 
 	id := data.ID.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, id)
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	base, found := readNotification(ctx, r.client, id, notification.NextcloudTalkDetails{}.Type(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 
 	nextcloudTalk := notification.NextcloudTalk{}
-	err = base.As(&nextcloudTalk)
+	err := base.As(&nextcloudTalk)
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "NextcloudTalk"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.NextcloudTalkDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

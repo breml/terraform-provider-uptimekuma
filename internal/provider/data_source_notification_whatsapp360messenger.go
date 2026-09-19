@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationWhatsapp360messengerDataSource{}
@@ -104,25 +105,26 @@ func (d *NotificationWhatsapp360messengerDataSource) readByID(
 	data *NotificationWhatsapp360messengerDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "Whatsapp360messenger" {
+	if notif.Type() != (notification.Whatsapp360messengerDetails{}).Type() {
 		resp.Diagnostics.AddError(
 			"incorrect notification type",
 			fmt.Sprintf(
-				"notification with ID %d has type %q, expected \"Whatsapp360messenger\"",
+				"notification with ID %d has type %q, expected %q",
 				data.ID.ValueInt64(),
-				notification.Type(),
+				notif.Type(),
+				notification.Whatsapp360messengerDetails{}.Type(),
 			),
 		)
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -131,7 +133,13 @@ func (d *NotificationWhatsapp360messengerDataSource) readByName(
 	data *NotificationWhatsapp360messengerDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "Whatsapp360messenger", &resp.Diagnostics)
+	id, ok := findNotificationByName(
+		ctx,
+		d.client,
+		data.Name.ValueString(),
+		notification.Whatsapp360messengerDetails{}.Type(),
+		&resp.Diagnostics,
+	)
 	if !ok {
 		return
 	}

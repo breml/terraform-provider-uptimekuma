@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationSMSIRDataSource{}
@@ -102,25 +103,26 @@ func (d *NotificationSMSIRDataSource) readByID(
 	data *NotificationSMSIRDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
+	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 		return
 	}
 
-	if notification.Type() != "smsir" {
+	if notif.Type() != (notification.SMSIRDetails{}).Type() {
 		resp.Diagnostics.AddError(
 			"incorrect notification type",
 			fmt.Sprintf(
-				"notification with ID %d has type %q, expected \"smsir\"",
+				"notification with ID %d has type %q, expected %q",
 				data.ID.ValueInt64(),
-				notification.Type(),
+				notif.Type(),
+				notification.SMSIRDetails{}.Type(),
 			),
 		)
 		return
 	}
 
-	data.Name = types.StringValue(notification.Name)
+	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -129,7 +131,13 @@ func (d *NotificationSMSIRDataSource) readByName(
 	data *NotificationSMSIRDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	id, ok := findNotificationByName(ctx, d.client, data.Name.ValueString(), "smsir", &resp.Diagnostics)
+	id, ok := findNotificationByName(
+		ctx,
+		d.client,
+		data.Name.ValueString(),
+		notification.SMSIRDetails{}.Type(),
+		&resp.Diagnostics,
+	)
 	if !ok {
 		return
 	}

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -37,10 +37,10 @@ type MonitorRabbitMQResource struct {
 type MonitorRabbitMQResourceModel struct {
 	MonitorBaseModel
 
-	Nodes    types.String `tfsdk:"nodes"`
-	Username types.String `tfsdk:"username"`
-	Password types.String `tfsdk:"password"`
-	Timeout  types.Int64  `tfsdk:"timeout"`
+	Nodes    types.String  `tfsdk:"nodes"`
+	Username types.String  `tfsdk:"username"`
+	Password types.String  `tfsdk:"password"`
+	Timeout  types.Float64 `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -75,13 +75,14 @@ func (*MonitorRabbitMQResource) Schema(
 				Optional:            true,
 				Sensitive:           true,
 			},
-			"timeout": schema.Int64Attribute{
-				MarkdownDescription: "Request timeout in seconds",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(48),
-				Validators: []validator.Int64{
-					int64validator.Between(1, 3600),
+			"timeout": schema.Float64Attribute{
+				MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional " +
+					"values are supported and round-trip unchanged.",
+				Optional: true,
+				Computed: true,
+				Default:  float64default.StaticFloat64(48),
+				Validators: []validator.Float64{
+					float64validator.Between(1, 3600),
 				},
 			},
 		}),
@@ -125,7 +126,7 @@ func (r *MonitorRabbitMQResource) Create(
 			Nodes:    data.Nodes.ValueString(),
 			Username: strToPtr(data.Username),
 			Password: strToPtr(data.Password),
-			Timeout:  int64ToPtr(data.Timeout),
+			Timeout:  float64ToPtr(data.Timeout),
 		},
 	}
 
@@ -151,8 +152,7 @@ func (r *MonitorRabbitMQResource) Create(
 
 	id, err := r.client.CreateMonitor(ctx, &rabbitMQMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create RabbitMQ monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create RabbitMQ monitor") {
 		return
 	}
 
@@ -160,6 +160,9 @@ func (r *MonitorRabbitMQResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 
@@ -229,9 +232,9 @@ func (r *MonitorRabbitMQResource) Read(
 	data.Password = ptrToTypes(rabbitMQMonitor.Password)
 
 	if rabbitMQMonitor.Timeout != nil {
-		data.Timeout = types.Int64Value(*rabbitMQMonitor.Timeout)
+		data.Timeout = types.Float64Value(*rabbitMQMonitor.Timeout)
 	} else {
-		data.Timeout = types.Int64Null()
+		data.Timeout = types.Float64Null()
 	}
 
 	if rabbitMQMonitor.Parent != nil {
@@ -297,7 +300,7 @@ func (r *MonitorRabbitMQResource) Update(
 			Nodes:    data.Nodes.ValueString(),
 			Username: strToPtr(data.Username),
 			Password: strToPtr(data.Password),
-			Timeout:  int64ToPtr(data.Timeout),
+			Timeout:  float64ToPtr(data.Timeout),
 		},
 	}
 

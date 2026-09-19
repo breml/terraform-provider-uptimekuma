@@ -68,7 +68,7 @@ func TestAccMonitorSteamResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_steam.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_steam.test",
@@ -150,4 +150,58 @@ resource "uptimekuma_monitor_steam" "test" {
   domain_expiry_notification  = %[6]t
 }
 `, name, hostname, port, descField, interval, domainExpiry)
+}
+
+// TestAccMonitorSteamResourceFractionalTimeout verifies that a fractional
+// timeout round-trips unchanged. Uptime Kuma stores the timeout in a floating
+// point column, so Steam monitors return exactly what was configured.
+func TestAccMonitorSteamResourceFractionalTimeout(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestSteamMonitorFractionalTimeout")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorSteamResourceConfigWithTimeout(name, "steam.example.com", 27015, 1.5),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_steam.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(1.5),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorSteamResourceConfigWithTimeout(name, "steam.example.com", 27015, 30.25),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_steam.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(30.25),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_steam.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorSteamResourceConfigWithTimeout(
+	name string, hostname string, port int64, timeout float64,
+) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_steam" "test" {
+  name     = %[1]q
+  hostname = %[2]q
+  port     = %[3]d
+  timeout  = %[4]v
+  interval = 60
+  active   = true
+}
+`, name, hostname, port, timeout)
 }

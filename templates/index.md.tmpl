@@ -41,6 +41,41 @@ provide:
 - `username` - Your Uptime Kuma username
 - `password` - Your Uptime Kuma password
 
+## Compatibility
+
+This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run against
+`louislam/uptime-kuma:2.5.0`. Against older servers some attributes behave differently:
+
+- `interval` and `retry_interval` lost their 24 day maximum in 2.5.0. The provider no longer
+  enforces an upper bound, so earlier servers reject large values at apply time.
+- `screenshot_delay` on `uptimekuma_monitor_real_browser` is only echoed back since 2.5.0.
+  Earlier servers cannot report drift on it or recover it on import.
+- `system_service_name` on `uptimekuma_monitor_system_service` is validated against
+  `^[a-zA-Z0-9._\-@]+$`, which matches the server side check added in 2.5.0. On Windows the
+  Service Control Manager does not accept `@`, so a name containing it is accepted here but
+  fails when the check runs.
+
+## Upgrading to Uptime Kuma 2.5.0
+
+Uptime Kuma 2.5.0 renamed eight notification type identifiers. Notifications created with an
+earlier version of this provider are stored under the old identifier:
+
+| Resource | Stored by provider <= 0.4.x | Uptime Kuma 2.5.0 |
+| --- | --- | --- |
+| `uptimekuma_notification_46elks` | `46elks` | `Elks` |
+| `uptimekuma_notification_bark` | `bark` | `Bark` |
+| `uptimekuma_notification_brevo` | `brevo` | `Brevo` |
+| `uptimekuma_notification_evolution` | `EvolutionApi` | `evolution` |
+| `uptimekuma_notification_nextcloudtalk` | `NextcloudTalk` | `nextcloudtalk` |
+| `uptimekuma_notification_onesender` | `onesender` | `Onesender` |
+| `uptimekuma_notification_pumble` | `Pumble` | `pumble` |
+| `uptimekuma_notification_sevenio` | `sevenio` | `SevenIO` |
+
+Data sources for these eight types no longer find such a notification, by ID or by name. The
+matching resource still reads it, but the stored identifier is only corrected once the resource
+is written again. To migrate, change any attribute of the resource and apply, or taint and
+recreate it. Notifications of the other types are unaffected.
+
 ## Supported Resources
 
 The provider supports managing the following resources:

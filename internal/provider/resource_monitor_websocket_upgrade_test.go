@@ -55,7 +55,7 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_websocket_upgrade.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_websocket_upgrade.test",
@@ -112,7 +112,7 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_websocket_upgrade.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(60),
+						knownvalue.Float64Exact(60),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_websocket_upgrade.test",
@@ -132,7 +132,7 @@ func TestAccMonitorWebsocketUpgradeResource(t *testing.T) {
 
 func testAccMonitorWebsocketUpgradeResourceConfigWithDescription(
 	name string, url string,
-	interval int64, timeout int64,
+	interval int64, timeout float64,
 	description string,
 	domainExpiry bool,
 ) string {
@@ -147,7 +147,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "test" {
   url                         = %[2]q
 %[3]s
   interval                    = %[4]d
-  timeout                     = %[5]d
+  timeout                     = %[5]v
   active                      = true
   domain_expiry_notification  = %[6]t
 }

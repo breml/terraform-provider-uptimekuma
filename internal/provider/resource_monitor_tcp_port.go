@@ -141,8 +141,7 @@ func (r *MonitorTCPPortResource) Create(
 
 	id, err := r.client.CreateMonitor(ctx, &tcpPortMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create TCP Port monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create TCP Port monitor") {
 		return
 	}
 
@@ -150,6 +149,9 @@ func (r *MonitorTCPPortResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

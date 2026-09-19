@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -134,8 +133,7 @@ func (r *NotificationAlertaResource) Create(
 
 	id, err := r.client.CreateNotification(ctx, alerta)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create notification") {
 		return
 	}
 
@@ -164,23 +162,25 @@ func (r *NotificationAlertaResource) Read(
 
 	id := data.ID.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, id)
-	// Handle error.
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	base, found := readNotification(ctx, r.client, id, notification.AlertaDetails{}.Type(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 
 	alerta := notification.Alerta{}
-	err = base.As(&alerta)
+	err := base.As(&alerta)
 	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError(`failed to convert notification to type "alerta"`, err.Error())
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("failed to convert notification to type %q", notification.AlertaDetails{}.Type()),
+			err.Error(),
+		)
 		return
 	}
 

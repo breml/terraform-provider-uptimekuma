@@ -268,12 +268,13 @@ type MonitorTagModel struct {
 
 ### MonitorHTTPBaseModel ([resource_monitor_http_base.go](resource_monitor_http_base.go))
 
-Shared HTTP configuration for HTTP/keyword/JSON query/gRPC monitors:
+Shared HTTP configuration for HTTP/keyword/JSON query/websocket upgrade/globalping monitors
+(gRPC keyword monitors do **not** embed it):
 
 ```go
 type MonitorHTTPBaseModel struct {
     URL                 types.String  // Required: Target URL
-    Timeout             types.Int64   // Request timeout (default: 48s)
+    Timeout             types.Float64 // Request timeout in seconds, fractional (default: 48)
     Method              types.String  // HTTP method (default: GET)
     ExpiryNotification  types.Bool    // Alert on SSL cert expiry
     IgnoreTLS           types.Bool    // Skip TLS verification
@@ -866,7 +867,7 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 
 1. Check `TF_ACC` environment variable (only run acceptance tests if set)
 2. Create Docker pool and ping daemon
-3. Run `louislam/uptime-kuma:2` container on port 3001
+3. Run `louislam/uptime-kuma:2.5.0` container on port 3001
 4. Set 480-second expiration for auto-cleanup
 5. Wait for Kuma to be ready (exponential backoff, max 2 minutes)
 6. Create initial client and perform autosetup

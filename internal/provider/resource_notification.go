@@ -136,8 +136,7 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	id, err := r.client.CreateNotification(ctx, genericNotification)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create notification") {
 		return
 	}
 

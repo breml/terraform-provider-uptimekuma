@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -104,8 +103,7 @@ func (r *DockerHostResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Call API to create Docker host.
 	id, err := r.client.CreateDockerHost(ctx, config)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create docker host", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create docker host") {
 		return
 	}
 
@@ -126,15 +124,21 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Fetch current Docker host configuration from API.
-	dh, err := r.client.GetDockerHost(ctx, data.ID.ValueInt64())
-	if err != nil {
-		// Handle resource not found error.
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	dh, found := readWithResync(
+		ctx,
+		r.client,
+		data.ID.ValueInt64(),
+		"failed to read docker host",
+		r.client.GetDockerHost,
+		&resp.Diagnostics,
+	)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read docker host", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 

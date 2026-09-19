@@ -41,7 +41,7 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
 - `max_redirects` (Number) Maximum number of redirects to follow
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
@@ -49,10 +49,10 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `proxy_id` (Number) Proxy ID
 - `remote_browser` (Number) Remote Browser ID (if using a remote browser for monitoring)
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
-- `screenshot_delay` (Number) Delay in milliseconds before taking a screenshot. Note: Uptime Kuma 2.3.2 stores this value but does not return it on read, so it cannot be detected as drift or recovered on import. Removing this field from configuration requires a `terraform apply` to synchronize state; `terraform plan` will always show a diff after removal until apply is run.
+- `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
+- `screenshot_delay` (Number) Delay in milliseconds before taking a screenshot. Must be less than `interval * 500`, that is half the interval converted to milliseconds; the server rejects larger values and negative ones. The delay cannot be cleared through the API, so this attribute is computed: removing it from configuration keeps the value the server already has rather than producing a plan that never converges. Set it to `0` to disable the delay. Uptime Kuma only returns the value since 2.5.0; against earlier versions it cannot be detected as drift or recovered on import.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Request timeout in seconds
+- `timeout` (Number, Deprecated) Request timeout in seconds. Has no effect: the real browser check derives its timeout from 80% of `interval` and never reads this value. It is kept because Uptime Kuma stores it with every monitor.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -37,10 +39,10 @@ type MonitorPingResource struct {
 type MonitorPingResourceModel struct {
 	MonitorBaseModel
 
-	Hostname                 types.String `tfsdk:"hostname"`
-	PacketSize               types.Int64  `tfsdk:"packet_size"`
-	Timeout                  types.Int64  `tfsdk:"timeout"`
-	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	Hostname                 types.String  `tfsdk:"hostname"`
+	PacketSize               types.Int64   `tfsdk:"packet_size"`
+	Timeout                  types.Float64 `tfsdk:"timeout"`
+	DomainExpiryNotification types.Bool    `tfsdk:"domain_expiry_notification"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -70,13 +72,17 @@ func (*MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					int64validator.Between(1, 65500),
 				},
 			},
-			"timeout": schema.Int64Attribute{
-				MarkdownDescription: "Request timeout in seconds",
-				Optional:            true,
-				Computed:            true,
-				Default:             int64default.StaticInt64(48),
-				Validators: []validator.Int64{
-					int64validator.Between(1, 3600),
+			"timeout": schema.Float64Attribute{
+				MarkdownDescription: "Request timeout in seconds, between 1 and 300. Must be a whole " +
+					"number: Uptime Kuma rounds the value to whole seconds for ping monitors, so a " +
+					"fractional value would leave state permanently out of sync with the server and is " +
+					"rejected at plan time.",
+				Optional: true,
+				Computed: true,
+				Default:  float64default.StaticFloat64(48),
+				Validators: []validator.Float64{
+					float64validator.Between(1, 300),
+					wholeNumber(),
 				},
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
@@ -121,7 +127,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
-		timeout := data.Timeout.ValueInt64()
+		timeout := data.Timeout.ValueFloat64()
 		pingMonitor.Timeout = &timeout
 	}
 
@@ -147,8 +153,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 
 	id, err := r.client.CreateMonitor(ctx, &pingMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Ping monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Ping monitor") {
 		return
 	}
 
@@ -156,6 +161,9 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 
@@ -222,9 +230,9 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	data.DomainExpiryNotification = types.BoolValue(pingMonitor.DomainExpiryNotification)
 
 	if pingMonitor.Timeout != nil {
-		data.Timeout = types.Int64Value(*pingMonitor.Timeout)
+		data.Timeout = types.Float64Value(*pingMonitor.Timeout)
 	} else {
-		data.Timeout = types.Int64Null()
+		data.Timeout = types.Float64Null()
 	}
 
 	if pingMonitor.Parent != nil {
@@ -290,7 +298,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
-		timeout := data.Timeout.ValueInt64()
+		timeout := data.Timeout.ValueFloat64()
 		pingMonitor.Timeout = &timeout
 	}
 

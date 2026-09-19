@@ -79,12 +79,12 @@ resource "uptimekuma_monitor_kafka_producer" "sasl" {
 - `active` (Boolean) Monitor is active
 - `allow_auto_topic_creation` (Boolean) Whether to allow automatic topic creation on the Kafka broker.
 - `description` (String) Description
-- `interval` (Number) Heartbeat interval in seconds
+- `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `resend_interval` (Number) Resend interval in seconds
-- `retry_interval` (Number) Retry interval in seconds
+- `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
 - `sasl_options` (String, Sensitive) SASL authentication options as a JSON-encoded object (e.g. `{"mechanism":"plain","username":"u","password":"p"}`).
 - `ssl` (Boolean) Whether to enable SSL/TLS for the Kafka connection.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))

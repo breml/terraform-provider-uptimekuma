@@ -1,11 +1,18 @@
 package provider
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 // NotificationBaseModel describes the base data model for all notification types.
@@ -58,4 +65,48 @@ func withNotificationBaseAttributes(attrs map[string]schema.Attribute) map[strin
 
 	// Return enriched attributes map.
 	return attrs
+}
+
+// readNotification fetches a notification for a resource read and verifies its
+// type.
+//
+// Client.GetNotification serves from the client's local state cache, which a
+// missed update event leaves stale: a notification that is alive on the server
+// is reported as not found until the next resync. Treating that as a deletion
+// would drop the resource from state and make the next apply create a
+// duplicate, so a resync is forced once before the miss is believed.
+//
+// The type check guards notification.Base.As, which unmarshals whatever it is
+// given. Without it, reading a notification of a different type into this
+// resource would fill state with zero values and the next apply would push
+// those values to the server.
+//
+// found reports whether the notification exists. The caller removes the
+// resource from state when it does not, after checking diags for errors.
+func readNotification(
+	ctx context.Context,
+	client *kuma.Client,
+	id int64,
+	wantType string,
+	diags *diag.Diagnostics,
+) (notification.Base, bool) {
+	base, found := readWithResync(ctx, client, id, "failed to read notification", client.GetNotification, diags)
+	if !found {
+		return base, false
+	}
+
+	if base.Type() != wantType {
+		diags.AddError(
+			"Incorrect notification type",
+			fmt.Sprintf(
+				"Notification with ID %d has type %q, expected %q. It is managed by a different "+
+					"notification resource type.",
+				id, base.Type(), wantType,
+			),
+		)
+
+		return base, false
+	}
+
+	return base, true
 }

@@ -67,7 +67,7 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_keyword.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(48),
+						knownvalue.Float64Exact(48),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_keyword.test",
@@ -114,7 +114,7 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_keyword.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Int64Exact(60),
+						knownvalue.Float64Exact(60),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_http_keyword.test",
@@ -140,7 +140,7 @@ func TestAccMonitorHTTPKeywordResource(t *testing.T) {
 func testAccMonitorHTTPKeywordResourceConfig(
 	name string, url string, keyword string,
 	invertKeyword bool,
-	interval int64, timeout int64,
+	interval int64, timeout float64,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_http_keyword" "test" {
@@ -149,7 +149,7 @@ resource "uptimekuma_monitor_http_keyword" "test" {
   keyword        = %[3]q
   invert_keyword = %[4]t
   interval       = %[5]d
-  timeout        = %[6]d
+  timeout        = %[6]v
   active         = true
 }
 `, name, url, keyword, invertKeyword, interval, timeout)
@@ -158,7 +158,7 @@ resource "uptimekuma_monitor_http_keyword" "test" {
 func testAccMonitorHTTPKeywordResourceConfigWithDomainExpiry(
 	name string, url string, keyword string,
 	invertKeyword bool,
-	interval int64, timeout int64,
+	interval int64, timeout float64,
 	domainExpiry bool,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
@@ -168,7 +168,7 @@ resource "uptimekuma_monitor_http_keyword" "test" {
   keyword                     = %[3]q
   invert_keyword              = %[4]t
   interval                    = %[5]d
-  timeout                     = %[6]d
+  timeout                     = %[6]v
   active                      = true
   domain_expiry_notification  = %[7]t
 }

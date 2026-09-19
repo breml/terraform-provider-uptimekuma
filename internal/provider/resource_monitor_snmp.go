@@ -94,10 +94,11 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Sensitive:           true,
 			},
 			"snmp_v3_username": schema.StringAttribute{
-				MarkdownDescription: "SNMP v3 username (for SNMP version 3). Note: Uptime Kuma 2.3.2 stores this " +
-					"value but does not return it on read, so it cannot be detected as drift or recovered on import. " +
-					"Removing this field from configuration requires a `terraform apply` to synchronize state; " +
-					"`terraform plan` will always show a diff after removal until apply is run.",
+				MarkdownDescription: "SNMP v3 username (for SNMP version 3). Note: up to and including " +
+					"Uptime Kuma 2.5.0 the server stores this value but does not return it on read, so it " +
+					"cannot be detected as drift or recovered on import. Removing this field from " +
+					"configuration requires a `terraform apply` to synchronize state; `terraform plan` " +
+					"will always show a diff after removal until apply is run.",
 				Optional: true,
 			},
 			"json_path": schema.StringAttribute{
@@ -144,14 +145,16 @@ func (r *MonitorSNMPResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	id, err := r.client.CreateMonitor(ctx, &snmpMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create SNMP monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create SNMP monitor") {
 		return
 	}
 
 	data.ID = types.Int64Value(id)
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 
