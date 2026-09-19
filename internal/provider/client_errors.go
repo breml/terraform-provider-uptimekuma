@@ -86,3 +86,39 @@ func readWithResync[T any](
 
 	return value, true
 }
+
+// findWithResync looks a cache-backed resource up by something other than its
+// ID, for a data source read.
+//
+// It is readWithResync for a lookup that has no ID to ask for. The same stale
+// cache is behind both: Uptime Kuma broadcasts a whole list and the client
+// matches those broadcasts by name, so with several writes in flight on the one
+// connection a provider holds - Terraform runs the operations of an apply
+// concurrently - a write can be released by a neighbour's broadcast and leave
+// the cache one list behind. A data source that believed the resulting miss
+// would fail the very apply that created the resource, so a resync is forced
+// once before it is believed.
+//
+// find reports whether it matched. The second return value repeats that answer
+// for the state the resync produced; the caller checks diags for errors first,
+// because a failed resync reports one and matches nothing.
+func findWithResync[T any](
+	ctx context.Context,
+	client *kuma.Client,
+	find func(context.Context) (T, bool),
+	diags *diag.Diagnostics,
+) (T, bool) {
+	value, found := find(ctx)
+	if found {
+		return value, true
+	}
+
+	err := client.Resync(ctx)
+	if err != nil {
+		diags.AddError("failed to resync with Uptime Kuma", err.Error())
+
+		return value, false
+	}
+
+	return find(ctx)
+}

@@ -102,14 +102,15 @@ func (d *NotificationWebpushDataSource) readByID(
 	data *NotificationWebpushDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.WebpushDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Web Push notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.WebpushDetails{}).Type(),
+		"a Web Push notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

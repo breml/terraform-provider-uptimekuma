@@ -81,65 +81,13 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		dockerHost, err := d.client.GetDockerHost(ctx, data.ID.ValueInt64())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read Docker host", err.Error())
-			return
-		}
-
-		// Populate name and set response state.
-		data.Name = types.StringValue(dockerHost.Name)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
 	// Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		dockerHosts := d.client.GetDockerHostList(ctx)
-
-		// Search for Docker host by name.
-		var found *struct {
-			ID   int64
-			Name string
-		}
-
-		for i := range dockerHosts {
-			if dockerHosts[i].Name == data.Name.ValueString() {
-				// Error if multiple hosts match name.
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple Docker hosts found",
-						fmt.Sprintf(
-							"Multiple Docker hosts with name '%s' found. Please use 'id' to specify the host uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				// Store matched host.
-				found = &struct {
-					ID   int64
-					Name string
-				}{
-					ID:   dockerHosts[i].ID,
-					Name: dockerHosts[i].Name,
-				}
-			}
-		}
-
-		// Error if no host found with given name.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Docker host not found",
-				fmt.Sprintf("No Docker host with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		// Populate ID and set response state.
-		data.ID = types.Int64Value(found.ID)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByName(ctx, &data, resp)
 		return
 	}
 
@@ -148,4 +96,84 @@ func (d *DockerHostDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)
+}
+
+func (d *DockerHostDataSource) readByID(
+	ctx context.Context,
+	data *DockerHostDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	// The Docker host getter serves from the state cache, so a resync is
+	// forced once before a miss is believed, see readWithResync.
+	dockerHost, found := readWithResync(
+		ctx, d.client, data.ID.ValueInt64(), "failed to read Docker host", d.client.GetDockerHost,
+		&resp.Diagnostics,
+	)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !found {
+		resp.Diagnostics.AddError(
+			"Docker host not found",
+			fmt.Sprintf("No Docker host with ID %d found.", data.ID.ValueInt64()),
+		)
+
+		return
+	}
+
+	// Populate name and set response state.
+	data.Name = types.StringValue(dockerHost.Name)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *DockerHostDataSource) readByName(
+	ctx context.Context,
+	data *DockerHostDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	// The list serves from the state cache, so a resync is forced once before
+	// a miss is believed, see findWithResync.
+	matches, found := findWithResync(ctx, d.client, func(ctx context.Context) ([]int64, bool) {
+		var ids []int64
+
+		dockerHosts := d.client.GetDockerHostList(ctx)
+		for i := range dockerHosts {
+			if dockerHosts[i].Name == data.Name.ValueString() {
+				ids = append(ids, dockerHosts[i].ID)
+			}
+		}
+
+		return ids, len(ids) > 0
+	}, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Error if no host found with given name.
+	if !found {
+		resp.Diagnostics.AddError(
+			"Docker host not found",
+			fmt.Sprintf("No Docker host with name '%s' found.", data.Name.ValueString()),
+		)
+
+		return
+	}
+
+	// Error if multiple hosts match name.
+	if len(matches) > 1 {
+		resp.Diagnostics.AddError(
+			"Multiple Docker hosts found",
+			fmt.Sprintf(
+				"Multiple Docker hosts with name '%s' found. Please use 'id' to specify the host uniquely.",
+				data.Name.ValueString(),
+			),
+		)
+
+		return
+	}
+
+	// Populate ID and set response state.
+	data.ID = types.Int64Value(matches[0])
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

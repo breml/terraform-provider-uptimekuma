@@ -58,6 +58,13 @@ rules:
     pattern: '(?im)(?:^Amp-Thread-ID:)'
     message: "Commit messages must not contain 'Amp-Thread-ID:' lines from agents"
 
+  # Enforce no Claude-Session lines from agents in commit messages
+  - name: no-claude-session-trailer
+    type: deny
+    scope: message
+    pattern: '(?im)(?:^Claude-Session:)'
+    message: "Commit messages must not contain 'Claude-Session:' lines from agents"
+
 # Additional example rules (uncomment to enable):
 
 #  # Prevent emoji in commit messages

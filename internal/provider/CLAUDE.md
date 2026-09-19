@@ -457,7 +457,22 @@ func validateMonitorDataSourceInput(data *DataSourceModel, diags *diag.Diagnosti
 Similar helpers exist for notifications:
 
 - `findNotificationByName()`
+- `readNotificationByID()` / `readNotificationWithResync()`
 - `validateNotificationDataSourceInput()`
+
+**Cache-backed lookups must resync before reporting a miss.** The notification,
+proxy, Docker host, maintenance-list and status-page-list getters all serve from
+the client's local state cache, which Uptime Kuma refreshes by broadcasting a
+whole list. Those broadcasts carry no reference to the write that caused them, so
+with several writes in flight over the one connection a provider holds the cache
+can briefly lack a resource the server already has. Use
+[client_errors.go](client_errors.go):
+
+- `readWithResync()` - lookup by ID
+- `findWithResync()` - lookup by anything else (name, title, slug)
+
+Both force one `client.Resync()` before a miss is believed. Monitor and tag
+lookups do not need them: their getters ask the server.
 
 ### Status Page Helpers
 

@@ -85,7 +85,11 @@ tasks:
           fi
           run="^($names)\$"
         fi
-        go test -v -shuffle on -coverprofile coverage.out -timeout 1800s \
+        # The timeout stays below the 12-minute step timeout the CI job
+        # applies, so that a hung run is killed by Go, with the goroutine dump
+        # that says where it hung, rather than by GitHub, which only reports an
+        # exit code.
+        go test -v -shuffle on -coverprofile coverage.out -timeout 600s \
           -parallel {{.PARALLEL}} -run "$run" ./...
 
   testacc-cover-report:

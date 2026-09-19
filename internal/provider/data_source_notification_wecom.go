@@ -102,14 +102,15 @@ func (d *NotificationWeComDataSource) readByID(
 	data *NotificationWeComDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.WeComDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a WeCom notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.WeComDetails{}).Type(),
+		"a WeCom notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 
