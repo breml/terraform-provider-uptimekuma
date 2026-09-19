@@ -26,18 +26,21 @@ func findNotificationByName(
 	notificationType string,
 	diags *diag.Diagnostics,
 ) (int64, bool) {
-	matches, found := findWithResync(ctx, client, func(ctx context.Context) ([]int64, bool) {
-		ids := matchNotificationsByName(ctx, client, name, notificationType)
+	matches, found, err := findWithResync(ctx, client, func(ctx context.Context) ([]int64, bool, error) {
+		ids := matchNotificationsByName(client.GetNotifications(ctx), name, notificationType)
 
-		return ids, len(ids) > 0
+		return ids, len(ids) > 0, nil
 	}, diags)
-	if diags.HasError() {
+	if err != nil {
+		diags.AddError("failed to read notifications", err.Error())
+
 		return 0, false
 	}
 
 	// Error if no matching item found.
 	if !found {
-		diags.AddError(
+		reportMiss(
+			diags, client, notificationListEvent,
 			"Notification not found",
 			fmt.Sprintf("No %s notification with name '%s' found.", notificationType, name),
 		)
@@ -66,14 +69,7 @@ func findNotificationByName(
 // type that carry name. It reports every match rather than the first, so that
 // the caller can tell an ambiguous name from a missing one and only the latter
 // is worth a resync.
-func matchNotificationsByName(
-	ctx context.Context,
-	client *kuma.Client,
-	name string,
-	notificationType string,
-) []int64 {
-	notifications := client.GetNotifications(ctx)
-
+func matchNotificationsByName(notifications []notification.Base, name string, notificationType string) []int64 {
 	var ids []int64
 
 	for i := range notifications {
@@ -91,21 +87,25 @@ func matchNotificationsByName(
 // the getter serves from the state cache. The second return value reports
 // whether the read succeeded; it is false only with an error in diags, because
 // a data source that cannot produce its resource has nothing else to say.
+//
+// It does not check the notification's type. A data source for one specific
+// type wants readNotificationByID, which does.
 func readNotificationWithResync(
 	ctx context.Context,
 	client *kuma.Client,
 	id int64,
 	diags *diag.Diagnostics,
 ) (notification.Base, bool) {
-	errorsBefore := diags.ErrorsCount()
+	notif, found, err := readWithResync(ctx, client, id, client.GetNotification, diags)
+	if err != nil {
+		diags.AddError("failed to read notification", err.Error())
 
-	notif, found := readWithResync(ctx, client, id, "failed to read notification", client.GetNotification, diags)
-	if diags.ErrorsCount() > errorsBefore {
 		return notif, false
 	}
 
 	if !found {
-		diags.AddError(
+		reportMiss(
+			diags, client, notificationListEvent,
 			"Notification not found",
 			fmt.Sprintf("No notification with ID %d found.", id),
 		)
@@ -119,8 +119,13 @@ func readNotificationWithResync(
 // readNotificationByID reads a notification of the given type by ID for a data
 // source.
 //
+// The type check guards notification.Base.As, which unmarshals whatever it is
+// given: without it a notification of another type would fill state with zero
+// values. See readNotification, which does the same for a resource read.
+//
 // wantDescription names the expected type the way the error reads it, e.g.
-// "a 46elks notification".
+// "a 46elks notification". It repeats what notificationType already says, so
+// keep the two in step when adding a type.
 func readNotificationByID(
 	ctx context.Context,
 	client *kuma.Client,

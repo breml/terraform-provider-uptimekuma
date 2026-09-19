@@ -159,21 +159,22 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 
 	// The getter serves from the state cache, so a resync is forced once
 	// before the miss is believed, see readWithResync.
-	base, found := readWithResync(ctx, r.client, id, "failed to read notification", r.client.GetNotification,
-		&resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	base, found, err := readWithResync(ctx, r.client, id, r.client.GetNotification, &resp.Diagnostics)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notification", err.Error())
+
 		return
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
 
 		return
 	}
 
 	genericNotification := notification.Generic{}
 
-	err := base.As(&genericNotification)
+	err = base.As(&genericNotification)
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "generic"`, err.Error())
 		return

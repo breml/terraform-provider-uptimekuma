@@ -181,20 +181,15 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	p, found := readWithResync(
-		ctx,
-		r.client,
-		data.ID.ValueInt64(),
-		"failed to read proxy",
-		r.client.GetProxy,
-		&resp.Diagnostics,
-	)
-	if resp.Diagnostics.HasError() {
+	p, found, err := readWithResync(ctx, r.client, data.ID.ValueInt64(), r.client.GetProxy, &resp.Diagnostics)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read proxy", err.Error())
+
 		return
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, proxyListEvent, "proxy", resp)
 
 		return
 	}

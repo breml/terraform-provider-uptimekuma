@@ -463,16 +463,47 @@ Similar helpers exist for notifications:
 **Cache-backed lookups must resync before reporting a miss.** The notification,
 proxy, Docker host, maintenance-list and status-page-list getters all serve from
 the client's local state cache, which Uptime Kuma refreshes by broadcasting a
-whole list. Those broadcasts carry no reference to the write that caused them, so
-with several writes in flight over the one connection a provider holds the cache
-can briefly lack a resource the server already has. Use
-[client_errors.go](client_errors.go):
+whole list. The client confirms creates and deletes against that cache, but an
+edit changes no property it can be checked against and so waits for the
+broadcast by name alone, a create whose broadcast never arrived is adopted by
+`createdWithoutEvent()` with the cache still lacking it, and a status page write
+waits for no broadcast at all. With several writes in flight over the one
+connection a provider holds, the cache can therefore briefly lack a resource the
+server already has. Use [client_errors.go](client_errors.go):
 
-- `readWithResync()` - lookup by ID
-- `findWithResync()` - lookup by anything else (name, title, slug)
+- `readWithResync()` - a getter of the form `func(ctx, id) (T, error)` that
+  reports a miss as `kuma.ErrNotFound`
+- `findWithResync()` - a whole-list getter, searched by whatever key suits the
+  caller, including an ID (see [data_source_status_page.go](data_source_status_page.go))
 
-Both force one `client.Resync()` before a miss is believed. Monitor and tag
-lookups do not need them: their getters ask the server.
+Both force one `client.Resync()` before a miss is believed. The `find` closure
+must report a failure as an error, never as a miss: only a miss is worth a
+resync, and only a miss may be shown to the user as a resource that does not
+exist.
+
+**Then report the miss with `reportMiss()`, or `removeOnMiss()` in a resource
+read.** A successful resync does not refresh every list. The client waits for
+`monitorList`, `notificationList` and `statusPageList`, but gives
+`maintenanceList`, `proxyList` and `dockerHostList` only a short grace period,
+and drops from that wait any list the server did not send when the connection
+was made. A miss in one of those can therefore mean the server never sent the
+list at all - a reverse proxy dropping the socket.io event, or a version that
+does not emit it - so both helpers take the list event behind the lookup and say
+so rather than flatly reporting the resource as absent. `removeOnMiss()` also
+refuses to drop the resource from state in that case, because doing so would
+make the next apply create a duplicate.
+
+The helpers take the `resyncer` interface rather than `*kuma.Client`, so they
+are unit-testable; see [client_errors_test.go](client_errors_test.go).
+
+Monitor lookups and `GetTag`/`GetTags` need none of this: those getters ask the
+server. `GetMonitorTags` and `GetTagMonitors` are cache-backed like the list
+above, but the provider does not use them today.
+
+List-all data sources (`uptimekuma_maintenances`) are deliberately exempt. A
+stale cache costs them a silently short list rather than a miss, so there is
+nothing to hang a resync on, and resyncing on every read would mean a login per
+read on the shared pooled connection.
 
 ### Status Page Helpers
 

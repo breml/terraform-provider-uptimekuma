@@ -105,16 +105,18 @@ func (d *DockerHostDataSource) readByID(
 ) {
 	// The Docker host getter serves from the state cache, so a resync is
 	// forced once before a miss is believed, see readWithResync.
-	dockerHost, found := readWithResync(
-		ctx, d.client, data.ID.ValueInt64(), "failed to read Docker host", d.client.GetDockerHost,
-		&resp.Diagnostics,
+	dockerHost, found, err := readWithResync(
+		ctx, d.client, data.ID.ValueInt64(), d.client.GetDockerHost, &resp.Diagnostics,
 	)
-	if resp.Diagnostics.HasError() {
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read Docker host", err.Error())
+
 		return
 	}
 
 	if !found {
-		resp.Diagnostics.AddError(
+		reportMiss(
+			&resp.Diagnostics, d.client, dockerHostListEvent,
 			"Docker host not found",
 			fmt.Sprintf("No Docker host with ID %d found.", data.ID.ValueInt64()),
 		)
@@ -134,7 +136,7 @@ func (d *DockerHostDataSource) readByName(
 ) {
 	// The list serves from the state cache, so a resync is forced once before
 	// a miss is believed, see findWithResync.
-	matches, found := findWithResync(ctx, d.client, func(ctx context.Context) ([]int64, bool) {
+	matches, found, err := findWithResync(ctx, d.client, func(ctx context.Context) ([]int64, bool, error) {
 		var ids []int64
 
 		dockerHosts := d.client.GetDockerHostList(ctx)
@@ -144,15 +146,18 @@ func (d *DockerHostDataSource) readByName(
 			}
 		}
 
-		return ids, len(ids) > 0
+		return ids, len(ids) > 0, nil
 	}, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read Docker hosts", err.Error())
+
 		return
 	}
 
 	// Error if no host found with given name.
 	if !found {
-		resp.Diagnostics.AddError(
+		reportMiss(
+			&resp.Diagnostics, d.client, dockerHostListEvent,
 			"Docker host not found",
 			fmt.Sprintf("No Docker host with name '%s' found.", data.Name.ValueString()),
 		)

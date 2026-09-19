@@ -126,7 +126,7 @@ func (d *NotificationDataSource) readByName(
 ) {
 	// The getter serves from the state cache, so a resync is forced once
 	// before a miss is believed, see findWithResync.
-	matches, found := findWithResync(ctx, d.client, func(ctx context.Context) ([]notification.Base, bool) {
+	matches, found, err := findWithResync(ctx, d.client, func(ctx context.Context) ([]notification.Base, bool, error) {
 		var matched []notification.Base
 
 		notifications := d.client.GetNotifications(ctx)
@@ -136,15 +136,18 @@ func (d *NotificationDataSource) readByName(
 			}
 		}
 
-		return matched, len(matched) > 0
+		return matched, len(matched) > 0, nil
 	}, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notifications", err.Error())
+
 		return
 	}
 
 	// Error if no matching item found.
 	if !found {
-		resp.Diagnostics.AddError(
+		reportMiss(
+			&resp.Diagnostics, d.client, notificationListEvent,
 			"Notification not found",
 			fmt.Sprintf("No notification with name '%s' found.", data.Name.ValueString()),
 		)

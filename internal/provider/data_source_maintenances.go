@@ -121,6 +121,11 @@ func (d *MaintenancesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+	// This list getter is cache-backed like the ones in client_errors.go, but
+	// deliberately does not resync: a stale cache costs a list-all a silently
+	// short list rather than a miss, so there is nothing to hang a resync on,
+	// and resyncing on every read would mean a login per read on the shared
+	// pooled connection.
 	maintenances, err := d.client.GetMaintenances(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read maintenances", err.Error())

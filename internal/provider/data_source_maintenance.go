@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -130,18 +129,25 @@ func (d *MaintenanceDataSource) readByName(
 ) {
 	// The list serves from the state cache, so a resync is forced once before
 	// a miss is believed, see findWithResync.
-	matches, found := findWithResync(ctx, d.client, func(ctx context.Context) ([]maintenance.Maintenance, bool) {
-		matched := d.matchMaintenancesByTitle(ctx, data.Name.ValueString(), &resp.Diagnostics)
+	matches, found, err := findWithResync(
+		ctx, d.client,
+		func(ctx context.Context) ([]maintenance.Maintenance, bool, error) {
+			matched, matchErr := d.matchMaintenancesByTitle(ctx, data.Name.ValueString())
 
-		return matched, len(matched) > 0
-	}, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+			return matched, len(matched) > 0, matchErr
+		},
+		&resp.Diagnostics,
+	)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read maintenances", err.Error())
+
 		return
 	}
 
 	// Error if no matching maintenance found.
 	if !found {
-		resp.Diagnostics.AddError(
+		reportMiss(
+			&resp.Diagnostics, d.client, maintenanceListEvent,
 			"Maintenance not found",
 			fmt.Sprintf("No maintenance window with title '%s' found.", data.Name.ValueString()),
 		)
@@ -171,16 +177,16 @@ func (d *MaintenanceDataSource) readByName(
 // matchMaintenancesByTitle returns the cached maintenance windows carrying
 // title. It reports every match rather than the first, so that the caller can
 // tell an ambiguous title from a missing one.
+//
+// A failure to read the list is returned as an error rather than as an empty
+// result, because findWithResync must not mistake it for a miss and resync.
 func (d *MaintenanceDataSource) matchMaintenancesByTitle(
 	ctx context.Context,
 	title string,
-	diags *diag.Diagnostics,
-) []maintenance.Maintenance {
+) ([]maintenance.Maintenance, error) {
 	maintenances, err := d.client.GetMaintenances(ctx)
 	if err != nil {
-		diags.AddError("failed to read maintenances", err.Error())
-
-		return nil
+		return nil, fmt.Errorf("get maintenances: %w", err)
 	}
 
 	var matched []maintenance.Maintenance
@@ -191,5 +197,5 @@ func (d *MaintenanceDataSource) matchMaintenancesByTitle(
 		}
 	}
 
-	return matched
+	return matched, nil
 }

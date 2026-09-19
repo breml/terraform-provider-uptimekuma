@@ -85,10 +85,11 @@ tasks:
           fi
           run="^($names)\$"
         fi
-        # The timeout stays below the 12-minute step timeout the CI job
-        # applies, so that a hung run is killed by Go, with the goroutine dump
-        # that says where it hung, rather than by GitHub, which only reports an
-        # exit code.
+        # The timeout stays below the 12-minute timeout-minutes on the "Run
+        # acceptance tests" step in .github/workflows/test.yml, which also
+        # covers the shard discovery above, so that a hung run is killed by Go,
+        # with the goroutine dump that says where it hung, rather than by
+        # GitHub, which only reports an exit code.
         go test -v -shuffle on -coverprofile coverage.out -timeout 600s \
           -parallel {{.PARALLEL}} -run "$run" ./...
 

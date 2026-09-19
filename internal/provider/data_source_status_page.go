@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -101,24 +102,29 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
 		// The list serves from the state cache, so a resync is forced once
 		// before a miss is believed, see findWithResync.
-		match, found := findWithResync(ctx, d.client, func(ctx context.Context) (statuspage.StatusPage, bool) {
+		match, found, err := findWithResync(ctx, d.client, func(ctx context.Context) (statuspage.StatusPage, bool, error) {
 			statusPages, listErr := d.client.GetStatusPages(ctx)
 			if listErr != nil {
-				resp.Diagnostics.AddError("failed to read status pages", listErr.Error())
-
-				return statuspage.StatusPage{}, false
+				return statuspage.StatusPage{}, false, fmt.Errorf("get status pages: %w", listErr)
 			}
 
 			sp, ok := statusPages[data.ID.ValueInt64()]
 
-			return sp, ok
+			return sp, ok, nil
 		}, &resp.Diagnostics)
-		if resp.Diagnostics.HasError() {
+		if err != nil {
+			resp.Diagnostics.AddError("failed to read status pages", err.Error())
+
 			return
 		}
 
 		if !found {
-			resp.Diagnostics.AddError("failed to read status page", "Status page not found")
+			reportMiss(
+				&resp.Diagnostics, d.client, statusPageListEvent,
+				"failed to read status page",
+				fmt.Sprintf("No status page with ID %d found.", data.ID.ValueInt64()),
+			)
+
 			return
 		}
 
