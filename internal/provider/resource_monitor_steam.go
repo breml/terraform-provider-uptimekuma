@@ -83,8 +83,8 @@ func (*MonitorSteamResource) Schema(
 				},
 			},
 			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds. Uptime Kuma stores the timeout in a " +
-					"floating point column, so fractional values round-trip unchanged.",
+				MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional " +
+					"values are supported and round-trip unchanged.",
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(48),
@@ -126,8 +126,7 @@ func (r *MonitorSteamResource) Create(
 	}
 
 	id, err := r.client.CreateMonitor(ctx, &steamMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Steam monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Steam monitor") {
 		return
 	}
 
@@ -135,6 +134,9 @@ func (r *MonitorSteamResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

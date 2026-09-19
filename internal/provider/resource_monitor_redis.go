@@ -132,8 +132,7 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 
 	id, err := r.client.CreateMonitor(ctx, &redisMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Redis monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Redis monitor") {
 		return
 	}
 
@@ -141,6 +140,9 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

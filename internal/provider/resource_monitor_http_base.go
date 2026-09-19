@@ -89,10 +89,9 @@ func httpURLAttribute() schema.StringAttribute {
 
 func httpTimeoutAttribute() schema.Float64Attribute {
 	return schema.Float64Attribute{
-		MarkdownDescription: "Request timeout in seconds. Fractional values are supported and round-trip " +
-			"unchanged, because Uptime Kuma stores the timeout in a floating point column. The column is " +
-			"`NOT NULL` and has no unset representation: a value of `0` is stored verbatim and the check " +
-			"falls back to 80% of `interval` per heartbeat, so that fallback never round-trips.",
+		MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional values are " +
+			"supported. Defaults to 48, which is what Uptime Kuma itself uses when no timeout is set: " +
+			"80% of the default 60 second `interval`.",
 		Optional: true,
 		Computed: true,
 		Default:  float64default.StaticFloat64(48),

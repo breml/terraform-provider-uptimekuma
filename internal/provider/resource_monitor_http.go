@@ -83,14 +83,16 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	id, err := r.client.CreateMonitor(ctx, &httpMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create HTTP monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create HTTP monitor") {
 		return
 	}
 
 	data.ID = types.Int64Value(id)
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

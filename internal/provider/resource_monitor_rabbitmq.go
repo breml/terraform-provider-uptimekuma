@@ -76,8 +76,8 @@ func (*MonitorRabbitMQResource) Schema(
 				Sensitive:           true,
 			},
 			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds. Uptime Kuma stores the timeout in a " +
-					"floating point column, so fractional values round-trip unchanged.",
+				MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional " +
+					"values are supported and round-trip unchanged.",
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(48),
@@ -152,8 +152,7 @@ func (r *MonitorRabbitMQResource) Create(
 
 	id, err := r.client.CreateMonitor(ctx, &rabbitMQMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create RabbitMQ monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create RabbitMQ monitor") {
 		return
 	}
 
@@ -161,6 +160,9 @@ func (r *MonitorRabbitMQResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

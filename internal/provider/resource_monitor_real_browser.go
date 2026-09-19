@@ -86,9 +86,11 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	}
 
 	attrs["timeout"] = schema.Float64Attribute{
-		MarkdownDescription: "Request timeout in seconds. Uptime Kuma stores the timeout in a floating " +
-			"point column, so fractional values round-trip unchanged, but the real browser check never " +
-			"reads the column: it derives its timeout from 80% of `interval` instead.",
+		MarkdownDescription: "Request timeout in seconds. Has no effect: the real browser check derives " +
+			"its timeout from 80% of `interval` and never reads this value. It is kept because Uptime " +
+			"Kuma stores it with every monitor.",
+		DeprecationMessage: "timeout has no effect on a real browser monitor; the check uses 80% of " +
+			"interval. Remove it from the configuration.",
 		Optional: true,
 		Computed: true,
 		Default:  float64default.StaticFloat64(48),
@@ -269,8 +271,7 @@ func (r *MonitorRealBrowserResource) Create(
 	// Create monitor via API.
 	id, err := r.client.CreateMonitor(ctx, &realBrowserMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Real Browser monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Real Browser monitor") {
 		return
 	}
 
@@ -278,6 +279,9 @@ func (r *MonitorRealBrowserResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

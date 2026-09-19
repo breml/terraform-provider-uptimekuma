@@ -153,8 +153,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 
 	id, err := r.client.CreateMonitor(ctx, &pingMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Ping monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Ping monitor") {
 		return
 	}
 
@@ -162,6 +161,9 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

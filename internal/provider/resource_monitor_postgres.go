@@ -140,8 +140,7 @@ func (r *MonitorPostgresResource) Create(
 
 	id, err := r.client.CreateMonitor(ctx, &postgresMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create PostgreSQL monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create PostgreSQL monitor") {
 		return
 	}
 
@@ -149,6 +148,9 @@ func (r *MonitorPostgresResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

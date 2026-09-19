@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -138,8 +137,7 @@ func (r *NotificationLunaseaResource) Create(
 
 	id, err := r.client.CreateNotification(ctx, lunasea)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create notification") {
 		return
 	}
 
@@ -164,20 +162,19 @@ func (r *NotificationLunaseaResource) Read(ctx context.Context, req resource.Rea
 
 	id := data.ID.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, id)
-	// Handle error.
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	base, found := readNotification(ctx, r.client, id, notification.LunaSeaDetails{}.Type(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 
 	lunasea := notification.LunaSea{}
-	err = base.As(&lunasea)
+	err := base.As(&lunasea)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(

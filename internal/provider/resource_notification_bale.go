@@ -116,8 +116,7 @@ func (r *NotificationBaleResource) Create(
 
 	id, err := r.client.CreateNotification(ctx, bale)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create notification") {
 		return
 	}
 
@@ -142,20 +141,19 @@ func (r *NotificationBaleResource) Read(ctx context.Context, req resource.ReadRe
 
 	id := data.ID.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, id)
-	// Handle error.
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	base, found := readNotification(ctx, r.client, id, notification.BaleDetails{}.Type(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 
 	bale := notification.Bale{}
-	err = base.As(&bale)
+	err := base.As(&bale)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(

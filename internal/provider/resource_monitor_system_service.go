@@ -61,14 +61,13 @@ func (*MonitorSystemServiceResource) Schema(
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
 			"system_service_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the service to check. On Linux (systemd), this is the unit " +
-					"name (e.g. `nginx.service`, `sshd@0.service`); on Windows, this is the SCM service " +
-					"name (e.g. `Spooler`). Since Uptime Kuma 2.5.0 the server trims surrounding " +
-					"whitespace on write and rejects names that do not match `^[a-zA-Z0-9._\\-@]+$`. " +
-					"That regular expression is platform independent; the narrower per-platform " +
-					"character sets are only enforced when the check runs.",
+					"name (e.g. `nginx.service`, `sshd@0.service`); on Windows, this is the Service " +
+					"Control Manager name (e.g. `Spooler`). Must match `^[a-zA-Z0-9._\\-@]+$`, which is " +
+					"what Uptime Kuma 2.5.0 accepts on write. That pattern is platform independent and " +
+					"wider than either platform: on Windows `@` is not a valid service name character, " +
+					"so a name containing it is accepted here but fails when the check runs.",
 				Required: true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`^[a-zA-Z0-9._\-@]+$`),
 						"must only contain alphanumeric characters, '.', '_', '-' and '@'",
@@ -139,8 +138,7 @@ func (r *MonitorSystemServiceResource) Create(
 
 	id, err := r.client.CreateMonitor(ctx, &systemServiceMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create System Service monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create System Service monitor") {
 		return
 	}
 
@@ -148,6 +146,9 @@ func (r *MonitorSystemServiceResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

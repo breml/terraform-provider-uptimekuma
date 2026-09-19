@@ -127,8 +127,7 @@ func (r *MonitorKafkaProducerResource) Create(
 	}
 
 	id, err := r.client.CreateMonitor(ctx, &kafkaMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create Kafka Producer monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create Kafka Producer monitor") {
 		return
 	}
 
@@ -136,6 +135,9 @@ func (r *MonitorKafkaProducerResource) Create(
 
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

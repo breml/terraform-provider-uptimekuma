@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -162,8 +161,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	id, err := r.client.CreateProxy(ctx, p)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create proxy", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create proxy") {
 		return
 	}
 
@@ -183,15 +181,21 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	p, err := r.client.GetProxy(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	p, found := readWithResync(
+		ctx,
+		r.client,
+		data.ID.ValueInt64(),
+		"failed to read proxy",
+		r.client.GetProxy,
+		&resp.Diagnostics,
+	)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read proxy", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 

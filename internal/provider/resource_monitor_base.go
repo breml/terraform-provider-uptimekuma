@@ -66,8 +66,8 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		Optional:            true,
 	}
 	attrs["interval"] = schema.Int64Attribute{
-		MarkdownDescription: "Heartbeat interval in seconds. Uptime Kuma 2.5.0 removed the former " +
-			"24 day maximum, so only a minimum is enforced.",
+		MarkdownDescription: "Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the " +
+			"former 24 day maximum, so no upper bound is enforced.",
 		Optional: true,
 		Computed: true,
 		Default:  int64default.StaticInt64(60),
@@ -76,8 +76,8 @@ func withMonitorBaseAttributes(attrs map[string]schema.Attribute) map[string]sch
 		},
 	}
 	attrs["retry_interval"] = schema.Int64Attribute{
-		MarkdownDescription: "Retry interval in seconds. Like `interval`, it is only bounded by a " +
-			"minimum since Uptime Kuma 2.5.0.",
+		MarkdownDescription: "Retry interval in seconds. Minimum 20, and like `interval` it has no " +
+			"upper bound since Uptime Kuma 2.5.0.",
 		Optional: true,
 		Computed: true,
 		Default:  int64default.StaticInt64(60),

@@ -107,8 +107,7 @@ func (r *NotificationGoogleSheetsResource) Create(
 
 	id, err := r.client.CreateNotification(ctx, googleSheets)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create notification") {
 		return
 	}
 
@@ -137,20 +136,19 @@ func (r *NotificationGoogleSheetsResource) Read(
 
 	id := data.ID.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, id)
-	// Handle error.
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+	base, found := readNotification(ctx, r.client, id, notification.GoogleSheetsDetails{}.Type(), &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
+	if !found {
+		resp.State.RemoveResource(ctx)
+
 		return
 	}
 
 	googleSheets := notification.GoogleSheets{}
-	err = base.As(&googleSheets)
+	err := base.As(&googleSheets)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError(

@@ -145,14 +145,16 @@ func (r *MonitorMQTTResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	id, err := r.client.CreateMonitor(ctx, &mqttMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create MQTT monitor", err.Error())
+	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create MQTT monitor") {
 		return
 	}
 
 	data.ID = types.Int64Value(id)
 	handleMonitorTagsCreate(ctx, r.client, id, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
+		// The monitor exists, so record it rather than leaving it unmanaged.
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

@@ -381,7 +381,8 @@ func TestAccMonitorSNMPResourceWithConditions(t *testing.T) {
 				ResourceName:      "uptimekuma_monitor_snmp.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// snmp_v3_username is write-only on Uptime Kuma 2.3.2 (not echoed on read).
+				// snmp_v3_username is write-only up to and including Uptime Kuma
+				// 2.5.0 (stored, but not echoed on read).
 				ImportStateVerifyIgnore: []string{"snmp_v3_username"},
 			},
 		},

@@ -286,10 +286,17 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	created, err := r.client.CreateMaintenance(ctx, m)
-	// Handle error.
+	// Handle error. The client returns the created maintenance alongside an
+	// update event timeout, so it can be adopted instead of being orphaned.
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create maintenance", err.Error())
-		return
+		var id int64
+		if created != nil {
+			id = created.ID
+		}
+
+		if !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create maintenance") {
+			return
+		}
 	}
 
 	data.ID = types.Int64Value(created.ID)
