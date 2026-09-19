@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/maintenance"
 )
 
 var _ datasource.DataSource = &MaintenanceDataSource{}
@@ -86,71 +87,13 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		maintenance, err := d.client.GetMaintenance(ctx, data.ID.ValueInt64())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read maintenance", err.Error())
-			return
-		}
-
-		// Populate name and title from API response.
-		data.Name = types.StringValue(maintenance.Title)
-		data.Title = types.StringValue(maintenance.Title)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
 	// Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		maintenances, err := d.client.GetMaintenances(ctx)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read maintenances", err.Error())
-			return
-		}
-
-		// Search for matching maintenance by title.
-		var found *struct {
-			ID    int64
-			Title string
-		}
-
-		for i := range maintenances {
-			if maintenances[i].Title == data.Name.ValueString() {
-				// Error if multiple matches found.
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple maintenances found",
-						fmt.Sprintf(
-							"Multiple maintenance windows with title '%s' found. Please use 'id' to specify the maintenance uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				// Store matched maintenance record.
-				found = &struct {
-					ID    int64
-					Title string
-				}{
-					ID:    maintenances[i].ID,
-					Title: maintenances[i].Title,
-				}
-			}
-		}
-
-		// Error if no matching maintenance found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Maintenance not found",
-				fmt.Sprintf("No maintenance window with title '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		// Populate ID and title from matched result.
-		data.ID = types.Int64Value(found.ID)
-		data.Title = types.StringValue(found.Title)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByName(ctx, &data, resp)
 		return
 	}
 
@@ -159,4 +102,100 @@ func (d *MaintenanceDataSource) Read(ctx context.Context, req datasource.ReadReq
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)
+}
+
+func (d *MaintenanceDataSource) readByID(
+	ctx context.Context,
+	data *MaintenanceDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	window, err := d.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
+
+		return
+	}
+
+	// Populate name and title from API response.
+	data.Name = types.StringValue(window.Title)
+	data.Title = types.StringValue(window.Title)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *MaintenanceDataSource) readByName(
+	ctx context.Context,
+	data *MaintenanceDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	// The list serves from the state cache, so a resync is forced once before
+	// a miss is believed, see findWithResync.
+	matches, found, err := findWithResync(
+		ctx, d.client,
+		func(ctx context.Context) ([]maintenance.Maintenance, bool, error) {
+			matched, matchErr := d.matchMaintenancesByTitle(ctx, data.Name.ValueString())
+
+			return matched, len(matched) > 0, matchErr
+		},
+		&resp.Diagnostics,
+	)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read maintenances", err.Error())
+
+		return
+	}
+
+	// Error if no matching maintenance found.
+	if !found {
+		reportMiss(
+			&resp.Diagnostics, d.client, maintenanceListEvent,
+			"Maintenance not found",
+			fmt.Sprintf("No maintenance window with title '%s' found.", data.Name.ValueString()),
+		)
+
+		return
+	}
+
+	// Error if multiple matches found.
+	if len(matches) > 1 {
+		resp.Diagnostics.AddError(
+			"Multiple maintenances found",
+			fmt.Sprintf(
+				"Multiple maintenance windows with title '%s' found. Please use 'id' to specify the maintenance uniquely.",
+				data.Name.ValueString(),
+			),
+		)
+
+		return
+	}
+
+	// Populate ID and title from matched result.
+	data.ID = types.Int64Value(matches[0].ID)
+	data.Title = types.StringValue(matches[0].Title)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// matchMaintenancesByTitle returns the cached maintenance windows carrying
+// title. It reports every match rather than the first, so that the caller can
+// tell an ambiguous title from a missing one.
+//
+// A failure to read the list is returned as an error rather than as an empty
+// result, because findWithResync must not mistake it for a miss and resync.
+func (d *MaintenanceDataSource) matchMaintenancesByTitle(
+	ctx context.Context,
+	title string,
+) ([]maintenance.Maintenance, error) {
+	maintenances, err := d.client.GetMaintenances(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get maintenances: %w", err)
+	}
+
+	var matched []maintenance.Maintenance
+
+	for i := range maintenances {
+		if maintenances[i].Title == title {
+			matched = append(matched, maintenances[i])
+		}
+	}
+
+	return matched, nil
 }

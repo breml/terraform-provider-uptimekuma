@@ -102,14 +102,15 @@ func (d *NotificationSIGNL4DataSource) readByID(
 	data *NotificationSIGNL4DataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.SIGNL4Details{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a SIGNL4 notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.SIGNL4Details{}).Type(),
+		"a SIGNL4 notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

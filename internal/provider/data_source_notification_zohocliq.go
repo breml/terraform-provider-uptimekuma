@@ -102,14 +102,15 @@ func (d *NotificationZohoCliqDataSource) readByID(
 	data *NotificationZohoCliqDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.ZohoCliqDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Zoho Cliq notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.ZohoCliqDetails{}).Type(),
+		"a Zoho Cliq notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

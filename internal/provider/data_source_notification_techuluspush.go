@@ -102,14 +102,15 @@ func (d *NotificationTechulusPushDataSource) readByID(
 	data *NotificationTechulusPushDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.TechulusPushDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a TechulusPush notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.TechulusPushDetails{}).Type(),
+		"a TechulusPush notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

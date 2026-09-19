@@ -102,14 +102,15 @@ func (d *NotificationMaxDataSource) readByID(
 	data *NotificationMaxDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.MaxDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a MAX messenger notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.MaxDetails{}).Type(),
+		"a MAX messenger notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

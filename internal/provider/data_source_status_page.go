@@ -2,12 +2,14 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/statuspage"
 )
 
 var _ datasource.DataSource = &StatusPageDataSource{}
@@ -98,22 +100,38 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		statusPages, err := d.client.GetStatusPages(ctx)
+		// The list serves from the state cache, so a resync is forced once
+		// before a miss is believed, see findWithResync.
+		match, found, err := findWithResync(ctx, d.client, func(ctx context.Context) (statuspage.StatusPage, bool, error) {
+			statusPages, listErr := d.client.GetStatusPages(ctx)
+			if listErr != nil {
+				return statuspage.StatusPage{}, false, fmt.Errorf("get status pages: %w", listErr)
+			}
+
+			sp, ok := statusPages[data.ID.ValueInt64()]
+
+			return sp, ok, nil
+		}, &resp.Diagnostics)
 		if err != nil {
 			resp.Diagnostics.AddError("failed to read status pages", err.Error())
+
 			return
 		}
 
-		for id, sp := range statusPages {
-			if id == data.ID.ValueInt64() {
-				data.Slug = types.StringValue(sp.Slug)
-				data.Title = types.StringValue(sp.Title)
-				resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-				return
-			}
+		if !found {
+			reportMiss(
+				&resp.Diagnostics, d.client, statusPageListEvent,
+				"failed to read status page",
+				fmt.Sprintf("No status page with ID %d found.", data.ID.ValueInt64()),
+			)
+
+			return
 		}
 
-		resp.Diagnostics.AddError("failed to read status page", "Status page not found")
+		data.Slug = types.StringValue(match.Slug)
+		data.Title = types.StringValue(match.Title)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 		return
 	}
 

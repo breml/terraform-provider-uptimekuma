@@ -124,20 +124,15 @@ func (r *DockerHostResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Fetch current Docker host configuration from API.
-	dh, found := readWithResync(
-		ctx,
-		r.client,
-		data.ID.ValueInt64(),
-		"failed to read docker host",
-		r.client.GetDockerHost,
-		&resp.Diagnostics,
-	)
-	if resp.Diagnostics.HasError() {
+	dh, found, err := readWithResync(ctx, r.client, data.ID.ValueInt64(), r.client.GetDockerHost, &resp.Diagnostics)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read docker host", err.Error())
+
 		return
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, dockerHostListEvent, "docker host", resp)
 
 		return
 	}

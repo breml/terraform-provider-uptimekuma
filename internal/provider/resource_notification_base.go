@@ -81,8 +81,9 @@ func withNotificationBaseAttributes(attrs map[string]schema.Attribute) map[strin
 // resource would fill state with zero values and the next apply would push
 // those values to the server.
 //
-// found reports whether the notification exists. The caller removes the
-// resource from state when it does not, after checking diags for errors.
+// found reports whether the notification exists. It is also false when the read
+// failed, so the caller must check diags for errors before treating a false as
+// a deletion - unlike readNotificationWithResync, whose false is never silent.
 func readNotification(
 	ctx context.Context,
 	client *kuma.Client,
@@ -90,7 +91,13 @@ func readNotification(
 	wantType string,
 	diags *diag.Diagnostics,
 ) (notification.Base, bool) {
-	base, found := readWithResync(ctx, client, id, "failed to read notification", client.GetNotification, diags)
+	base, found, err := readWithResync(ctx, client, id, client.GetNotification, diags)
+	if err != nil {
+		diags.AddError("failed to read notification", err.Error())
+
+		return base, false
+	}
+
 	if !found {
 		return base, false
 	}

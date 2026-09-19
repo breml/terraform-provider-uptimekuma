@@ -104,9 +104,8 @@ func (d *NotificationJiraServiceManagementDataSource) readByID(
 	data *NotificationJiraServiceManagementDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
+	notif, found := readNotificationWithResync(ctx, d.client, data.ID.ValueInt64(), &resp.Diagnostics)
+	if !found {
 		return
 	}
 

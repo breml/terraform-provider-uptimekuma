@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -82,9 +83,22 @@ func (d *ProxyDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	proxy, err := d.client.GetProxy(ctx, data.ID.ValueInt64())
+	// The proxy getter serves from the state cache, so a resync is forced once
+	// before a miss is believed, see readWithResync.
+	proxy, found, err := readWithResync(ctx, d.client, data.ID.ValueInt64(), d.client.GetProxy, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read proxy", err.Error())
+
+		return
+	}
+
+	if !found {
+		reportMiss(
+			&resp.Diagnostics, d.client, proxyListEvent,
+			"Proxy not found",
+			fmt.Sprintf("No proxy with ID %d found.", data.ID.ValueInt64()),
+		)
+
 		return
 	}
 

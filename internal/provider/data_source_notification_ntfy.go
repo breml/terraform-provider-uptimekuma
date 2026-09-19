@@ -102,14 +102,15 @@ func (d *NotificationNtfyDataSource) readByID(
 	data *NotificationNtfyDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.NtfyDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not an ntfy notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.NtfyDetails{}).Type(),
+		"an ntfy notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

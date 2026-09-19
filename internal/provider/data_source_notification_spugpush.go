@@ -102,14 +102,15 @@ func (d *NotificationSpugPushDataSource) readByID(
 	data *NotificationSpugPushDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.SpugPushDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a SpugPush notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.SpugPushDetails{}).Type(),
+		"a SpugPush notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

@@ -102,14 +102,15 @@ func (d *NotificationHomeAssistantDataSource) readByID(
 	data *NotificationHomeAssistantDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.HomeAssistantDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a Home Assistant notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.HomeAssistantDetails{}).Type(),
+		"a Home Assistant notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

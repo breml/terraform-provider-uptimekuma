@@ -102,14 +102,15 @@ func (d *NotificationPushPlusDataSource) readByID(
 	data *NotificationPushPlusDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.PushPlusDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not a PushPlus notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.PushPlusDetails{}).Type(),
+		"a PushPlus notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 var _ datasource.DataSource = &NotificationDataSource{}
@@ -86,67 +87,13 @@ func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	// Attempt to read by ID if provided.
 	if !data.ID.IsNull() && !data.ID.IsUnknown() {
-		notification, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to read notification", err.Error())
-			return
-		}
-
-		data.Name = types.StringValue(notification.Name)
-		data.Type = types.StringValue(notification.Type())
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByID(ctx, &data, resp)
 		return
 	}
 
 	// Attempt to read by name if ID not provided.
 	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		notifications := d.client.GetNotifications(ctx)
-
-		var found *struct {
-			ID   int64
-			Name string
-			Type string
-		}
-
-		for _, notif := range notifications {
-			if notif.Name == data.Name.ValueString() {
-				// Error if multiple matches found.
-				if found != nil {
-					resp.Diagnostics.AddError(
-						"Multiple notifications found",
-						fmt.Sprintf(
-							"Multiple notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
-							data.Name.ValueString(),
-						),
-					)
-					return
-				}
-
-				// Store matched item.
-				found = &struct {
-					ID   int64
-					Name string
-					Type string
-				}{
-					ID:   notif.GetID(),
-					Name: notif.Name,
-					Type: notif.Type(),
-				}
-			}
-		}
-
-		// Error if no matching item found.
-		if found == nil {
-			resp.Diagnostics.AddError(
-				"Notification not found",
-				fmt.Sprintf("No notification with name '%s' found.", data.Name.ValueString()),
-			)
-			return
-		}
-
-		data.ID = types.Int64Value(found.ID)
-		data.Type = types.StringValue(found.Type)
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		d.readByName(ctx, &data, resp)
 		return
 	}
 
@@ -155,4 +102,73 @@ func (d *NotificationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		"Missing query parameters",
 		"Either 'id' or 'name' must be specified.",
 	)
+}
+
+func (d *NotificationDataSource) readByID(
+	ctx context.Context,
+	data *NotificationDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	notif, found := readNotificationWithResync(ctx, d.client, data.ID.ValueInt64(), &resp.Diagnostics)
+	if !found {
+		return
+	}
+
+	data.Name = types.StringValue(notif.Name)
+	data.Type = types.StringValue(notif.Type())
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (d *NotificationDataSource) readByName(
+	ctx context.Context,
+	data *NotificationDataSourceModel,
+	resp *datasource.ReadResponse,
+) {
+	// The getter serves from the state cache, so a resync is forced once
+	// before a miss is believed, see findWithResync.
+	matches, found, err := findWithResync(ctx, d.client, func(ctx context.Context) ([]notification.Base, bool, error) {
+		var matched []notification.Base
+
+		notifications := d.client.GetNotifications(ctx)
+		for _, notif := range notifications {
+			if notif.Name == data.Name.ValueString() {
+				matched = append(matched, notif)
+			}
+		}
+
+		return matched, len(matched) > 0, nil
+	}, &resp.Diagnostics)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read notifications", err.Error())
+
+		return
+	}
+
+	// Error if no matching item found.
+	if !found {
+		reportMiss(
+			&resp.Diagnostics, d.client, notificationListEvent,
+			"Notification not found",
+			fmt.Sprintf("No notification with name '%s' found.", data.Name.ValueString()),
+		)
+
+		return
+	}
+
+	// Error if multiple matches found.
+	if len(matches) > 1 {
+		resp.Diagnostics.AddError(
+			"Multiple notifications found",
+			fmt.Sprintf(
+				"Multiple notifications with name '%s' found. Please use 'id' to specify the notification uniquely.",
+				data.Name.ValueString(),
+			),
+		)
+
+		return
+	}
+
+	data.ID = types.Int64Value(matches[0].GetID())
+	data.Type = types.StringValue(matches[0].Type())
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

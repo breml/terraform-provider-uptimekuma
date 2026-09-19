@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -158,18 +157,23 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 
 	id := data.ID.ValueInt64()
 
-	base, err := r.client.GetNotification(ctx, id)
+	// The getter serves from the state cache, so a resync is forced once
+	// before the miss is believed, see readWithResync.
+	base, found, err := readWithResync(ctx, r.client, id, r.client.GetNotification, &resp.Diagnostics)
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
+
+		return
+	}
+
+	if !found {
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
+
 		return
 	}
 
 	genericNotification := notification.Generic{}
+
 	err = base.As(&genericNotification)
 	if err != nil {
 		resp.Diagnostics.AddError(`failed to convert notification to type "generic"`, err.Error())

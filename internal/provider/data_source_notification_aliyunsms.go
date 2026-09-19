@@ -102,14 +102,15 @@ func (d *NotificationAliyunsmsDataSource) readByID(
 	data *NotificationAliyunsmsDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	notif, err := d.client.GetNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read notification", err.Error())
-		return
-	}
-
-	if notif.Type() != (notification.AliyunSMSDetails{}).Type() {
-		resp.Diagnostics.AddError("Incorrect notification type", "Notification is not an Aliyun SMS notification")
+	notif, found := readNotificationByID(
+		ctx,
+		d.client,
+		data.ID.ValueInt64(),
+		(notification.AliyunSMSDetails{}).Type(),
+		"an Aliyun SMS notification",
+		&resp.Diagnostics,
+	)
+	if !found {
 		return
 	}
 
