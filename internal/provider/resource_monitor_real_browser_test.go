@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -187,8 +188,6 @@ func TestAccMonitorRealBrowserResourceWithScreenshotDelay(t *testing.T) {
 				ResourceName:      "uptimekuma_monitor_real_browser.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// screenshot_delay is write-only on Uptime Kuma 2.3.2 (not echoed on read).
-				ImportStateVerifyIgnore: []string{"screenshot_delay"},
 			},
 		},
 	})
@@ -202,4 +201,85 @@ resource "uptimekuma_monitor_real_browser" "test" {
   screenshot_delay = %[2]d
 }
 `, name, screenshotDelay)
+}
+
+// TestAccMonitorRealBrowserResourceScreenshotDelayRemoval verifies that
+// dropping screenshot_delay from the configuration converges. Uptime Kuma
+// provides no way to clear the delay, so the attribute is computed and keeps
+// the value the server already has instead of proposing a change forever.
+func TestAccMonitorRealBrowserResourceScreenshotDelayRemoval(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestRealBrowserScreenshotDelayRemoval")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorRealBrowserResourceConfigScreenshotDelay(name, 3000),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("screenshot_delay"),
+						knownvalue.Int64Exact(3000),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorRealBrowserResourceConfigWithoutScreenshotDelay(name),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("screenshot_delay"),
+						knownvalue.Int64Exact(3000),
+					),
+				},
+			},
+			{
+				// A second apply of the same configuration must still converge.
+				Config: testAccMonitorRealBrowserResourceConfigWithoutScreenshotDelay(name),
+			},
+			{
+				// The delay is disabled by setting it to 0, not by removing it.
+				Config: testAccMonitorRealBrowserResourceConfigScreenshotDelay(name, 0),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_real_browser.test",
+						tfjsonpath.New("screenshot_delay"),
+						knownvalue.Int64Exact(0),
+					),
+				},
+			},
+		},
+	})
+}
+
+// TestAccMonitorRealBrowserResourceScreenshotDelayTooLarge verifies that the
+// server rejects a delay of at least half the interval.
+func TestAccMonitorRealBrowserResourceScreenshotDelayTooLarge(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestRealBrowserScreenshotDelayTooLarge")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// interval defaults to 60 seconds, so the limit is 30000 ms.
+				Config:      testAccMonitorRealBrowserResourceConfigScreenshotDelay(name, 40000),
+				ExpectError: regexp.MustCompile(`Screenshot delay must be less than`),
+			},
+			{
+				Config:      testAccMonitorRealBrowserResourceConfigScreenshotDelay(name, -1),
+				ExpectError: regexp.MustCompile(`must be at least 0`),
+			},
+		},
+	})
+}
+
+func testAccMonitorRealBrowserResourceConfigWithoutScreenshotDelay(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_real_browser" "test" {
+  name = %[1]q
+  url  = "https://example.com"
+}
+`, name)
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -137,14 +138,18 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	}
 
 	attrs["screenshot_delay"] = schema.Int64Attribute{
-		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Uptime Kuma only returns " +
-			"this value since 2.5.0; earlier versions store it on create and apply it to the check, but " +
-			"never echo it back and silently ignore it on update, so against those versions it cannot be " +
-			"detected as drift or recovered on import. Since 2.5.0 the server rejects negative values and " +
-			"values greater than or equal to `interval * 500`, that is half the interval converted to " +
-			"milliseconds. Removing this field from configuration leaves the previously stored delay " +
-			"untouched; the delay cannot be cleared through the API.",
+		MarkdownDescription: "Delay in milliseconds before taking a screenshot. Must be less than " +
+			"`interval * 500`, that is half the interval converted to milliseconds; the server rejects " +
+			"larger values and negative ones. The delay cannot be cleared through the API, so this " +
+			"attribute is computed: removing it from configuration keeps the value the server already " +
+			"has rather than producing a plan that never converges. Set it to `0` to disable the delay. " +
+			"Uptime Kuma only returns the value since 2.5.0; against earlier versions it cannot be " +
+			"detected as drift or recovered on import.",
 		Optional: true,
+		Computed: true,
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.UseStateForUnknown(),
+		},
 		Validators: []validator.Int64{
 			int64validator.AtLeast(0),
 		},
@@ -210,7 +215,7 @@ func buildRealBrowserMonitor(
 		realBrowserMonitor.RemoteBrowser = &remoteBrowser
 	}
 
-	if !data.ScreenshotDelay.IsNull() {
+	if !data.ScreenshotDelay.IsNull() && !data.ScreenshotDelay.IsUnknown() {
 		screenshotDelay := int(data.ScreenshotDelay.ValueInt64())
 		realBrowserMonitor.ScreenshotDelay = &screenshotDelay
 	}
@@ -276,6 +281,11 @@ func (r *MonitorRealBrowserResource) Create(
 		return
 	}
 
+	resolveScreenshotDelay(ctx, r.client, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -285,6 +295,39 @@ func (r *MonitorRealBrowserResource) Create(
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// resolveScreenshotDelay gives the computed screenshot_delay a known value.
+//
+// The attribute is computed because Uptime Kuma cannot clear the delay, so an
+// absent configuration must keep whatever the server holds. On create, and on
+// update from a state written before the attribute became computed, there is
+// no prior value to carry over, so the server is asked for the current one.
+// Servers older than 2.5.0 do not echo it back; they report no delay.
+func resolveScreenshotDelay(
+	ctx context.Context,
+	client *kuma.Client,
+	data *MonitorRealBrowserResourceModel,
+	diags *diag.Diagnostics,
+) {
+	if !data.ScreenshotDelay.IsUnknown() {
+		return
+	}
+
+	var current monitor.RealBrowser
+
+	err := client.GetMonitorAs(ctx, data.ID.ValueInt64(), &current)
+	if err != nil {
+		diags.AddError("failed to read back Real Browser monitor screenshot delay", err.Error())
+		return
+	}
+
+	if current.ScreenshotDelay != nil {
+		data.ScreenshotDelay = types.Int64Value(int64(*current.ScreenshotDelay))
+		return
+	}
+
+	data.ScreenshotDelay = types.Int64Value(0)
 }
 
 // populateRealBrowserMonitorBaseFields populates base fields for Real Browser monitor.
@@ -336,11 +379,10 @@ func populateOptionalFieldsForRealBrowser(
 		data.RemoteBrowser = types.Int64Null()
 	}
 
-	// Uptime Kuma only echoes screenshot_delay back since 2.5.0, and reports an
-	// unset delay as 0. Keep the attribute null in that case, so an absent
-	// configuration does not produce a perpetual diff. Older servers omit the
-	// field entirely, so the configured value is preserved as before.
-	if m.ScreenshotDelay != nil && (*m.ScreenshotDelay != 0 || !data.ScreenshotDelay.IsNull()) {
+	// screenshot_delay is computed, so state always mirrors the server once it
+	// is known. Uptime Kuma only echoes the value back since 2.5.0; older
+	// servers omit the field, so the value already in state is preserved.
+	if m.ScreenshotDelay != nil {
 		data.ScreenshotDelay = types.Int64Value(int64(*m.ScreenshotDelay))
 	}
 
@@ -449,6 +491,11 @@ func (r *MonitorRealBrowserResource) Update(
 	}
 
 	handleMonitorActiveStateUpdate(ctx, r.client, data.ID.ValueInt64(), state.Active, data.Active, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resolveScreenshotDelay(ctx, r.client, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
