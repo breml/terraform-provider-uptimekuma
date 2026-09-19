@@ -122,3 +122,97 @@ func TestMonitorSystemServiceNameValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestNonBlankValidator(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value     types.String
+		wantError bool
+	}{
+		"value":             {value: types.StringValue("api-server"), wantError: false},
+		"inner space":       {value: types.StringValue("worker 1"), wantError: false},
+		"surrounded by pad": {value: types.StringValue("  api-server  "), wantError: false},
+		"null":              {value: types.StringNull(), wantError: false},
+		"unknown":           {value: types.StringUnknown(), wantError: false},
+		"empty":             {value: types.StringValue(""), wantError: true},
+		"spaces only":       {value: types.StringValue("   "), wantError: true},
+		"tab only":          {value: types.StringValue("\t"), wantError: true},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := &validator.StringResponse{}
+			nonBlank().ValidateString(
+				t.Context(),
+				validator.StringRequest{ConfigValue: test.value},
+				resp,
+			)
+
+			if got := resp.Diagnostics.HasError(); got != test.wantError {
+				t.Errorf("HasError() = %v, want %v (%v)", got, test.wantError, resp.Diagnostics)
+			}
+		})
+	}
+}
+
+// pm2ProcessNameValidators returns the validators the PM2 monitor resource
+// declares for process_name.
+func pm2ProcessNameValidators(t *testing.T) []validator.String {
+	t.Helper()
+
+	resp := &resource.SchemaResponse{}
+	(&MonitorPM2Resource{}).Schema(t.Context(), resource.SchemaRequest{}, resp)
+
+	attr, ok := resp.Schema.Attributes["process_name"].(schema.StringAttribute)
+	if !ok {
+		t.Fatalf("process_name is %T, want schema.StringAttribute", resp.Schema.Attributes["process_name"])
+	}
+
+	return attr.Validators
+}
+
+func TestMonitorPM2ProcessNameValidation(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value     string
+		wantError bool
+	}{
+		"process name":     {value: "api-server", wantError: false},
+		"numeric pm2 id":   {value: "0", wantError: false},
+		"inner space":      {value: "worker 1", wantError: false},
+		"padded":           {value: "  api-server  ", wantError: false},
+		"unicode":          {value: "wörker", wantError: false},
+		"slash":            {value: "apps/api", wantError: false},
+		"empty":            {value: "", wantError: true},
+		"whitespace only":  {value: "   ", wantError: true},
+		"bell":             {value: "api\aserver", wantError: true},
+		"newline":          {value: "api\nserver", wantError: true},
+		"trailing newline": {value: "api-server\n", wantError: true},
+		"delete":           {value: "api\x7fserver", wantError: true},
+	}
+
+	validators := pm2ProcessNameValidators(t)
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := &validator.StringResponse{}
+			for _, v := range validators {
+				v.ValidateString(
+					t.Context(),
+					validator.StringRequest{ConfigValue: types.StringValue(test.value)},
+					resp,
+				)
+			}
+
+			if got := resp.Diagnostics.HasError(); got != test.wantError {
+				t.Errorf("HasError() = %v, want %v (%v)", got, test.wantError, resp.Diagnostics)
+			}
+		})
+	}
+}
