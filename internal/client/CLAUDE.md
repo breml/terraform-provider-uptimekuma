@@ -260,26 +260,23 @@ func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.Configu
 
 ### Resource Configure Method
 
-Resources receive the client via `ProviderData`:
+Resources receive the client via `ProviderData`, which carries a `*providerData`, not
+the client itself. `configureClient` unwraps it, so no resource repeats the type
+assertion:
 
 ```go
-func (r *MonitorHTTPResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-    if req.ProviderData == nil {
-        return
-    }
-
-    client, ok := req.ProviderData.(*kuma.Client)
-    if !ok {
-        resp.Diagnostics.AddError(
-            "Unexpected Resource Configure Type",
-            fmt.Sprintf("Expected *kuma.Client, got: %T", req.ProviderData),
-        )
-        return
-    }
-
-    r.client = client
+func (r *MonitorHTTPResource) Configure(
+    _ context.Context,
+    req resource.ConfigureRequest,
+    resp *resource.ConfigureResponse,
+) {
+    r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 ```
+
+`configureClient` ([../provider/provider_data.go](../provider/provider_data.go)) returns
+nil when `ProviderData` is nil, which is how the framework calls Configure before the
+provider itself is configured, and raises a diagnostic on any other type.
 
 ## Testing Considerations
 
@@ -288,37 +285,50 @@ func (r *MonitorHTTPResource) Configure(ctx context.Context, req resource.Config
 In [../provider/main_test.go](../provider/main_test.go):
 
 ```go
-func TestMain(m *testing.M) {
+func runTests(m *testing.M) (exitcode int) {
     // ... Docker setup
 
-    // Create initial client for autosetup
-    kumaClient, err := kuma.New(context.Background(), endpoint, username, password)
+    // Purge the container and close both connections however we leave.
+    defer func() {
+        outOfBandClient.Disconnect()
+        client.CloseGlobalPool()
+        pool.Purge(container)
+    }()
 
-    // Close initial connection
-    kumaClient.Disconnect()
+    // The first connection runs autosetup, which creates the admin user. It is
+    // kept as the out-of-band client for the disappears tests instead of being
+    // closed, because creating another one would hit Uptime Kuma's login rate
+    // limit.
+    pool.Retry(func() error {
+        var err error
+        outOfBandClient, err = kuma.New(
+            context.Background(), endpoint, username, password, kuma.WithAutosetup(),
+        )
 
-    // Enable pooling for actual tests
-    enableConnectionPool = true
+        return err
+    })
 
-    // Run tests (all will share pooled connection)
-    code := m.Run()
-
-    // Cleanup
-    CloseGlobalPool()
-    pool.Purge(resource)
+    // Run tests. The provider opens the pooled connection itself, from
+    // Configure, and every test shares it.
+    return m.Run()
 }
 ```
+
+Pooling is not switched on by the tests: the provider always passes
+`EnableConnectionPool: true` to `client.New`, so a single connection is shared no
+matter how many provider instances Terraform creates.
 
 **Global Variables** (used by all tests):
 
 ```go
 var (
-    endpoint string  // e.g., "http://localhost:32768"
+    endpoint        string       // e.g., "http://localhost:32768"
+    outOfBandClient *kuma.Client // deletes resources behind Terraform's back
 )
 
 const (
     username = "admin"
-    password = "password123"
+    password = "admin1"  // throwaway credentials for the test container
 )
 ```
 
@@ -331,10 +341,10 @@ const (
 
 ### Pool Lifecycle
 
-1. **Setup**: Initial client created for database autosetup, then closed
-2. **Tests Run**: `enableConnectionPool = true` set globally
-3. **First Test**: Creates pooled connection via `GetOrCreate()`
-4. **Subsequent Tests**: Reuse existing pooled connection
+1. **Setup**: Initial client created for autosetup, then kept as the out-of-band client
+2. **Tests Run**: The provider's `Configure` passes `EnableConnectionPool: true`
+3. **First Configure**: Creates the pooled connection via `GetOrCreate()`
+4. **Subsequent Configure calls**: Reuse the existing pooled connection, refs incremented
 5. **Cleanup**: `CloseGlobalPool()` called, validates refs=0, disconnects
 
 ### Test Isolation

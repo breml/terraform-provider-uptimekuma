@@ -83,11 +83,10 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 // This should be called when a client is no longer needed, but it does not
 // actually close the connection (connection remains pooled for reuse).
 //
-// Note: In the current acceptance test use case, Release is not called by
-// consumers because the pool is closed via CloseGlobalPool at the end of all
-// tests. The reference count is maintained for debugging purposes and to
-// support future use cases where automatic cleanup when refs reach zero
-// might be desired.
+// The provider calls it once the context it was configured with is done, which
+// pairs it with the GetOrCreate that configuration performed. The connection
+// itself outlives that and is closed by CloseGlobalPool, which refuses to run
+// while any reference is outstanding.
 func (p *Pool) Release() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
