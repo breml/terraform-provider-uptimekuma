@@ -61,6 +61,28 @@ func float64ToPtr(v types.Float64) *float64 {
 	return v.ValueFloat64Pointer()
 }
 
+// int64ToPtr converts a Terraform int64 type to a pointer to int64.
+// Returns nil if the value is null or unknown. For columns the Uptime Kuma
+// server stores as nullable, nil round-trips as SQL NULL, which is how the
+// check is told to apply its own fallback.
+func int64ToPtr(v types.Int64) *int64 {
+	if v.IsNull() || v.IsUnknown() {
+		return nil
+	}
+
+	return v.ValueInt64Pointer()
+}
+
+// int64PtrToTypes converts a pointer to int64 to a Terraform int64 type.
+// Returns Int64Null() if the pointer is nil.
+func int64PtrToTypes(v *int64) types.Int64 {
+	if v == nil {
+		return types.Int64Null()
+	}
+
+	return types.Int64Value(*v)
+}
+
 // boolToPtr converts a Terraform bool type to a pointer to bool.
 // Returns nil if the value is null or unknown.
 func boolToPtr(v types.Bool) *bool {
