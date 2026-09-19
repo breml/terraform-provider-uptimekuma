@@ -931,6 +931,19 @@ When adding a test that asserts on a list data source (e.g. `uptimekuma_maintena
 or on a resource that mutates instance-wide state, use `resource.Test` and add it to the
 table above.
 
+### CI Sharding
+
+CI splits the suite across four concurrent jobs, each with its own Uptime Kuma container:
+
+```shell
+task testacc SHARD=1 SHARDS=4
+```
+
+The shards are computed from `go test -list`, not from a hand-written name pattern, so a
+newly added test always lands in exactly one shard. Nothing has to be updated when tests
+are added or renamed. A sharded run reports partial coverage, because it only exercises
+the code its own tests reach; use an unsharded `task testacc` for a coverage figure.
+
 ### Acceptance Test Pattern
 
 ```go

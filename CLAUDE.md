@@ -24,7 +24,9 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 - **Lint**: `task lint` - runs markdown linting and golangci-lint with strict configuration
 - **Unit tests**: `task test` - runs with 120s timeout, parallel=10, shuffled execution
 - **Single test**: `go test -v -timeout=120s ./internal/provider -run TestName`
-- **Acceptance tests**: `task testacc` - requires `TF_ACC=1`, runs with 480s timeout
+- **Acceptance tests**: `task testacc` - starts an Uptime Kuma container via Docker and runs the suite
+  in parallel (`-parallel 8`). Run one shard with `task testacc SHARD=1 SHARDS=4`, which is how CI
+  splits it across four concurrent jobs.
 - **Generate docs**: `task generate-docs` - generates Terraform provider documentation
 - **Clean**: `task clean` - removes coverage files and build artifacts
 
@@ -35,7 +37,7 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 1. Install dependencies: `task install`
 2. Install git hooks: `task install-githooks`
 3. Run unit tests: `task test`
-4. Run acceptance tests: `TF_ACC=1 task testacc` (requires Docker)
+4. Run acceptance tests: `task testacc` (requires Docker; sets `TF_ACC=1` itself)
 
 ### Making Changes
 

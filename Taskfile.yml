@@ -39,15 +39,39 @@ tasks:
 
   testacc:
     desc: "Run acceptance tests"
+    summary: |
+      Run the acceptance test suite, or one shard of it.
+
+      Acceptance tests are dominated by Terraform CLI process overhead, not by
+      Uptime Kuma, so they scale well beyond the number of available cores.
+
+        task testacc                    # the whole suite
+        task testacc PARALLEL=4         # lower the -parallel value (default 8)
+        task testacc SHARD=1 SHARDS=4   # shard 1 of 4, as the CI matrix runs it
+
+      Shards are derived from the actual test list, so every test lands in
+      exactly one shard and a newly added test can never fall through a gap.
     env:
       TF_ACC: "1"
     vars:
-      # Acceptance tests are dominated by Terraform CLI process overhead, not by
-      # Uptime Kuma, so they scale well beyond the number of available cores.
-      # Override with: task testacc PARALLEL=4
       PARALLEL: '{{.PARALLEL | default "8"}}'
+      SHARD: '{{.SHARD | default "1"}}'
+      SHARDS: '{{.SHARDS | default "1"}}'
     cmds:
-      - go test -v -shuffle on -coverprofile coverage.out -timeout 1800s -parallel {{.PARALLEL}} ./...
+      - |
+        set -eu
+        run='.*'
+        if [ '{{.SHARDS}}' -gt 1 ]; then
+          names=$(go test -list '.*' ./... | grep '^Test' | sort | \
+            awk 'NR % {{.SHARDS}} == {{.SHARD}} % {{.SHARDS}}' | paste -sd '|')
+          if [ -z "$names" ]; then
+            echo "shard {{.SHARD}} of {{.SHARDS}} matches no tests" >&2
+            exit 1
+          fi
+          run="^($names)\$"
+        fi
+        go test -v -shuffle on -coverprofile coverage.out -timeout 1800s \
+          -parallel {{.PARALLEL}} -run "$run" ./...
 
   testacc-cover-report:
     desc: "Generate acceptance tests coverage report"

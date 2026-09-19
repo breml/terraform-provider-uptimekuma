@@ -119,14 +119,18 @@ jobs:
       - name: Run unit tests
         run: task test
 
-  # Run acceptance tests in a matrix with Terraform CLI versions
+  # Run the acceptance tests, split across shards that run concurrently.
+  # Each shard brings up its own Uptime Kuma container. `task testacc` derives
+  # the shards from the actual test list, so every test runs in exactly one.
   test:
-    name: Terraform Provider Acceptance Tests
+    name: Terraform Provider Acceptance Tests (${{ matrix.shard }}/4)
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -143,7 +147,9 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: go mod download
       - name: Run acceptance tests
-        run: task testacc
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: task testacc SHARD="$SHARD" SHARDS=4
         timeout-minutes: 12
 
   commit-lint:
