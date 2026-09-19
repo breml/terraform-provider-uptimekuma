@@ -35,7 +35,7 @@ tasks:
   test:
     desc: "Run tests"
     cmds:
-      - go test -v -shuffle=on -cover -timeout=120s -parallel=10 ./...
+      - go test -v -race -shuffle=on -cover -timeout=120s -parallel=10 ./...
 
   testacc:
     desc: "Run acceptance tests"
@@ -51,6 +51,8 @@ tasks:
 
       Shards are derived from the actual test list, so every test lands in
       exactly one shard and a newly added test can never fall through a gap.
+      This holds as long as test names are unique across packages; the
+      discovery step below fails the run if they are not.
     env:
       TF_ACC: "1"
     vars:
@@ -59,10 +61,23 @@ tasks:
       SHARDS: '{{.SHARDS | default "1"}}'
     cmds:
       - |
-        set -eu
+        set -euo pipefail
         run='.*'
         if [ '{{.SHARDS}}' -gt 1 ]; then
-          names=$(go test -list '.*' ./... | grep '^Test' | sort | \
+          # Discovery must not inherit TF_ACC: -list is handled inside
+          # m.Run(), so TestMain would boot a whole Uptime Kuma container
+          # just to print test names. Keep it in its own statement so a
+          # failing build fails the shard instead of silently shrinking it.
+          all=$(TF_ACC= go test -list '.*' ./...)
+          all=$(printf '%s\n' "$all" | grep '^Test' | sort)
+          dupes=$(printf '%s\n' "$all" | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "test names are not unique across packages, sharding would" \
+              "run these more than once:" >&2
+            printf '%s\n' "$dupes" >&2
+            exit 1
+          fi
+          names=$(printf '%s\n' "$all" | \
             awk 'NR % {{.SHARDS}} == {{.SHARD}} % {{.SHARDS}}' | paste -sd '|')
           if [ -z "$names" ]; then
             echo "shard {{.SHARD}} of {{.SHARDS}} matches no tests" >&2

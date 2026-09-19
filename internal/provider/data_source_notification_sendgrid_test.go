@@ -38,6 +38,11 @@ func TestAccNotificationSendgridDataSource(t *testing.T) {
 						tfjsonpath.New("id"),
 						knownvalue.NotNull(),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_notification_sendgrid.by_name",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
 				},
 			},
 		},
