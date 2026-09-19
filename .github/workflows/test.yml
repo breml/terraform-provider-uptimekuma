@@ -145,7 +145,24 @@ jobs:
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: go mod download
+      # TestMain pulls the Uptime Kuma image itself, which would otherwise
+      # happen inside the test timeout with nothing else running. Pull it
+      # while the modules download and the test binaries compile. The image
+      # is read out of main_test.go so there is only one place to update it.
+      - name: Pre-pull the Uptime Kuma image while the tests compile
+        run: |
+          set -euo pipefail
+          repo=$(sed -n 's/.*Repository: *"\([^"]*\)".*/\1/p' internal/provider/main_test.go)
+          tag=$(sed -n 's/.*Tag: *"\([^"]*\)".*/\1/p' internal/provider/main_test.go)
+          if [ -z "$repo" ] || [ -z "$tag" ]; then
+            echo "could not determine the Uptime Kuma image from main_test.go" >&2
+            exit 1
+          fi
+          docker pull --quiet "$repo:$tag" &
+          pull=$!
+          go mod download
+          go test -run '^$' ./... >/dev/null
+          wait "$pull"
       - name: Run acceptance tests
         env:
           SHARD: ${{ matrix.shard }}

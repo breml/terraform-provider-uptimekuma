@@ -218,7 +218,9 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// retry attempts. The timer is separate from the context because
 	// the socket.io client stores it for the connection lifetime.
 	endpoint := startDeadEndListener(t)
-	connectTimeout := 3 * time.Second
+	// The budget only has to be long enough to outlast scheduling noise; the
+	// listener never answers, so what is measured is the timer, not any I/O.
+	connectTimeout := 500 * time.Millisecond
 
 	config := &Config{
 		Endpoint:       endpoint,
@@ -242,7 +244,7 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 	// Overall deadline equals ConnectTimeout (total budget). Allow some
 	// slack for scheduling and for the in-flight kuma.New attempt to
 	// observe the deadline.
-	upperBound := connectTimeout + 2*time.Second
+	upperBound := connectTimeout + time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
@@ -255,17 +257,17 @@ func TestNewClientDirect_ConnectTimeoutLimitsOverallDuration(t *testing.T) {
 func TestNewClientDirect_PerAttemptTimeoutLimitsAttempts(t *testing.T) {
 	// Verify that PerAttemptTimeout caps each individual attempt so that
 	// multiple retry attempts can be performed within the overall
-	// ConnectTimeout budget. With PerAttemptTimeout=500ms and overall
-	// ConnectTimeout=3s, the loop should perform several attempts and
-	// still finish within ~3s.
+	// ConnectTimeout budget. With PerAttemptTimeout=100ms and overall
+	// ConnectTimeout=500ms, the loop should perform several attempts and
+	// still finish within ~500ms.
 	endpoint := startDeadEndListener(t)
 
 	config := &Config{
 		Endpoint:          endpoint,
 		Username:          "admin",
 		Password:          "secret",
-		ConnectTimeout:    3 * time.Second,
-		PerAttemptTimeout: 500 * time.Millisecond,
+		ConnectTimeout:    500 * time.Millisecond,
+		PerAttemptTimeout: 100 * time.Millisecond,
 		MaxRetries:        5,
 		LogLevel:          kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 	}
@@ -281,7 +283,7 @@ func TestNewClientDirect_PerAttemptTimeoutLimitsAttempts(t *testing.T) {
 	}
 
 	// Overall deadline equals ConnectTimeout. Allow some slack.
-	upperBound := config.ConnectTimeout + 2*time.Second
+	upperBound := config.ConnectTimeout + time.Second
 	if elapsed > upperBound {
 		t.Errorf("expected connection to fail within %s, took %s", upperBound, elapsed)
 	}
