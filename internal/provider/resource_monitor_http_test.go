@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -416,4 +417,76 @@ resource "uptimekuma_monitor_http" "test" {
   oauth_audience      = "https://api.example.com/resource"
 }
 `, name, url)
+}
+
+// TestAccMonitorHTTPResourceFractionalTimeout verifies that a fractional
+// timeout round-trips unchanged. Uptime Kuma stores the timeout in a floating
+// point column, so HTTP monitors return exactly what was configured.
+func TestAccMonitorHTTPResourceFractionalTimeout(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorFractionalTimeout")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorHTTPResourceConfig(name, "https://example.com", "GET", 60, 2.5),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(2.5),
+					),
+				},
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfig(name, "https://example.com", "GET", 60, 12.75),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(12.75),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+// TestAccMonitorHTTPResourceIntervalBeyondFormerMaximum verifies that an
+// interval above the 24 day maximum Uptime Kuma enforced before 2.5.0 is
+// accepted, which is why the provider no longer caps it.
+func TestAccMonitorHTTPResourceIntervalBeyondFormerMaximum(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorLongInterval")
+
+	const beyondFormerMaximum = 3000000 // The former maximum was 2073600, i.e. 24 days.
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// The minimum is still enforced.
+				Config:      testAccMonitorHTTPResourceConfig(name, "https://example.com", "HEAD", 19, 48),
+				ExpectError: regexp.MustCompile(`must be at least 20`),
+			},
+			{
+				Config: testAccMonitorHTTPResourceConfig(
+					name, "https://example.com", "GET", beyondFormerMaximum, 48,
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_http.test",
+						tfjsonpath.New("interval"),
+						knownvalue.Int64Exact(beyondFormerMaximum),
+					),
+				},
+			},
+		},
+	})
 }
