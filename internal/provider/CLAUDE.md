@@ -83,6 +83,7 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_dns` - DNS resolution monitoring
 - `uptimekuma_monitor_tcp_port` - TCP port connectivity
 - `uptimekuma_monitor_snmp` - SNMP device monitoring
+- `uptimekuma_monitor_ntp` - NTP (Network Time Protocol) server monitoring
 
 #### Database Monitors
 
