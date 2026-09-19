@@ -58,22 +58,24 @@ func (*MonitorPM2Resource) Schema(
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "PM2 monitor resource. The check runs `pm2 jlist` on the Uptime Kuma " +
-			"host and goes up while the named PM2 process reports status `online`.\n\n" +
-			"The `pm2` CLI must be installed on the Uptime Kuma host and must see the PM2 daemon " +
-			"that owns the process. The official `louislam/uptime-kuma` container image does not " +
-			"ship it, so this monitor stays down there even though it can be created and managed.",
+		MarkdownDescription: "PM2 monitor resource. As of Uptime Kuma 2.5.0 the check runs " +
+			"`pm2 jlist` on the Uptime Kuma host and goes up while the named PM2 process reports " +
+			"status `online`.\n\n" +
+			"The `pm2` CLI must be on the Uptime Kuma host's PATH and must see the PM2 daemon " +
+			"that owns the process, otherwise the check cannot succeed. The official " +
+			"`louislam/uptime-kuma` image did not ship it as of 2.5.0, so the monitor can be " +
+			"created and managed there but will not report up.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
 			"process_name": schema.StringAttribute{
-				MarkdownDescription: "PM2 process to check. The server matches the value against both " +
-					"the process name and the stringified numeric PM2 id reported by `pm2 jlist`, so " +
-					"either form works. Prefer the name: PM2 reassigns ids after a process is deleted " +
-					"and recreated.\n\n" +
+				MarkdownDescription: "PM2 process to check, given as either the process name or the " +
+					"numeric PM2 id as a string; Uptime Kuma 2.5.0 matches the value against both. " +
+					"Prefer the name: PM2 reassigns ids after a process is deleted and recreated. " +
 					"Spaces inside the name are allowed, unlike for the system-service monitor this " +
-					"type shares its wire field with. Leading and trailing spaces are ignored, " +
-					"because Uptime Kuma trims the value before storing it. ASCII control " +
-					"characters (U+0000..U+001F and U+007F, which includes tabs and newlines) are " +
-					"rejected: Uptime Kuma refuses them in the value it stores.",
+					"type shares its wire field with. Surrounding whitespace is not significant: the " +
+					"provider sends the trimmed value, so the resource keeps the configured value in " +
+					"state while the data source reports the trimmed value Uptime Kuma stored. The " +
+					"provider rejects ASCII control characters (U+0000..U+001F and U+007F, which " +
+					"includes tabs and newlines); Uptime Kuma 2.5.0 rejects them server-side as well.",
 				Required: true,
 				Validators: []validator.String{
 					nonBlank(),
@@ -96,6 +98,14 @@ func (r *MonitorPM2Resource) Configure(
 	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
+// normalizePM2ProcessName returns the process name in the form Uptime Kuma
+// stores it. Every comparison against a server value, and every write to the
+// server, goes through this function so that the plan-time nonBlank() check and
+// the values actually sent cannot drift apart.
+func normalizePM2ProcessName(processName string) string {
+	return strings.TrimSpace(processName)
+}
+
 // buildPM2Monitor assembles the client monitor from the resource model.
 func buildPM2Monitor(
 	ctx context.Context,
@@ -114,9 +124,9 @@ func buildPM2Monitor(
 			IsActive:       data.Active.ValueBool(),
 		},
 		PM2Details: monitor.PM2Details{
-			// Uptime Kuma trims the process name before storing it, so send the
-			// trimmed value to keep state and server in agreement.
-			ProcessName: strings.TrimSpace(data.ProcessName.ValueString()),
+			// Send the trimmed value so the stored process name is deterministic
+			// regardless of whether the server normalizes it.
+			ProcessName: normalizePM2ProcessName(data.ProcessName.ValueString()),
 		},
 	}
 
@@ -227,6 +237,15 @@ func (r *MonitorPM2Resource) Read(
 			"expected_type": pm2Monitor.Type(),
 			"actual_type":   actual,
 		})
+		resp.Diagnostics.AddWarning(
+			"Monitor type changed outside Terraform",
+			fmt.Sprintf(
+				"Monitor %d is of type %q but is managed as %q, so it was removed from state and "+
+					"Terraform will plan to create a replacement. Manage it with the resource type "+
+					"matching %q, or remove it from the configuration, to avoid a duplicate.",
+				data.ID.ValueInt64(), actual, pm2Monitor.Type(), actual,
+			),
+		)
 		resp.State.RemoveResource(ctx)
 
 		return
@@ -246,10 +265,13 @@ func (r *MonitorPM2Resource) Read(
 	data.UpsideDown = types.BoolValue(pm2Monitor.UpsideDown)
 	data.Active = types.BoolValue(pm2Monitor.IsActive)
 
-	// Both Terraform and Uptime Kuma see the trimmed process name, so padding in
-	// the configuration is not drift. Keep the configured value in that case,
-	// otherwise every plan would want to write the padding back.
-	if strings.TrimSpace(data.ProcessName.ValueString()) != pm2Monitor.ProcessName {
+	// Terraform keeps the configured value, padding included; Uptime Kuma stores
+	// it trimmed. Only overwrite state when the trimmed values actually differ,
+	// otherwise every plan would want to write the padding back. A null state
+	// value (import) always takes the server value, since its trimmed form would
+	// otherwise compare equal to an empty server value.
+	if data.ProcessName.IsNull() || data.ProcessName.IsUnknown() ||
+		normalizePM2ProcessName(data.ProcessName.ValueString()) != pm2Monitor.ProcessName {
 		data.ProcessName = types.StringValue(pm2Monitor.ProcessName)
 	}
 

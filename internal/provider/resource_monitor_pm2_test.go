@@ -15,8 +15,8 @@ import (
 // TestAccMonitorPM2Resource covers the create, import and update round-trip.
 //
 // The PM2 check shells out to the `pm2` CLI on the Uptime Kuma host, which the
-// official container image does not ship. The monitor therefore never goes up
-// against the test container, so these tests assert on the configuration
+// official container image did not ship as of 2.5.0. The monitor therefore never
+// goes up against the test container, so these tests assert on the configuration
 // round-trip only.
 func TestAccMonitorPM2Resource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPM2Monitor")
@@ -188,8 +188,17 @@ resource "uptimekuma_monitor_pm2" "test" {
 }
 
 // TestAccMonitorPM2ResourceWithAllOptions verifies every supported attribute,
-// including a numeric PM2 id as the process name.
+// including a numeric PM2 id as the process name and the base monitor fields
+// (parent, notification_ids, tags) that every monitor type copies into its own
+// build and populate helpers rather than sharing, so a slip here would silently
+// drop a monitor out of its group or leave it without notifications.
+//
+// The import step is what proves the server persisted active = false, which
+// state alone only reflects from the plan.
 func TestAccMonitorPM2ResourceWithAllOptions(t *testing.T) {
+	groupName := acctest.RandomWithPrefix("TestPM2MonitorGroup")
+	notificationName := acctest.RandomWithPrefix("TestPM2MonitorNotification")
+	tagName := acctest.RandomWithPrefix("TestPM2MonitorTag")
 	name := acctest.RandomWithPrefix("TestPM2MonitorFull")
 	description := "Full PM2 monitor test"
 
@@ -198,7 +207,9 @@ func TestAccMonitorPM2ResourceWithAllOptions(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorPM2ResourceConfigWithAllOptions(name, description),
+				Config: testAccMonitorPM2ResourceConfigWithAllOptions(
+					groupName, notificationName, tagName, name, description,
+				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
@@ -210,12 +221,32 @@ func TestAccMonitorPM2ResourceWithAllOptions(t *testing.T) {
 						tfjsonpath.New("description"),
 						knownvalue.StringExact(description),
 					),
-					// The server matches the numeric PM2 id as a string, just
-					// like the process name.
+					// A numeric PM2 id is carried as a string; whether the server
+					// matches it is not observable without pm2 on the host.
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
 						tfjsonpath.New("process_name"),
 						knownvalue.StringExact("0"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_pm2.test",
+						tfjsonpath.New("parent"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_pm2.test",
+						tfjsonpath.New("notification_ids"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_pm2.test",
+						tfjsonpath.New("tags"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_pm2.test",
+						tfjsonpath.New("tags").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("production"),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
@@ -230,7 +261,7 @@ func TestAccMonitorPM2ResourceWithAllOptions(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
 						tfjsonpath.New("resend_interval"),
-						knownvalue.Int64Exact(0),
+						knownvalue.Int64Exact(10),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
@@ -240,7 +271,7 @@ func TestAccMonitorPM2ResourceWithAllOptions(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
 						tfjsonpath.New("upside_down"),
-						knownvalue.Bool(false),
+						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_pm2.test",
@@ -249,30 +280,66 @@ func TestAccMonitorPM2ResourceWithAllOptions(t *testing.T) {
 					),
 				},
 			},
+			{
+				ResourceName:      "uptimekuma_monitor_pm2.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
 
-func testAccMonitorPM2ResourceConfigWithAllOptions(name string, description string) string {
+func testAccMonitorPM2ResourceConfigWithAllOptions(
+	groupName string,
+	notificationName string,
+	tagName string,
+	name string,
+	description string,
+) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "uptimekuma_monitor_pm2" "test" {
-  name            = %[1]q
-  description     = %[2]q
-  process_name    = "0"
-  interval        = 120
-  retry_interval  = 90
-  resend_interval = 0
-  max_retries     = 5
-  upside_down     = false
-  active          = false
+resource "uptimekuma_monitor_group" "test" {
+  name = %[1]q
 }
-`, name, description)
+
+resource "uptimekuma_notification_webhook" "test" {
+  name        = %[2]q
+  webhook_url = "https://example.com/webhook"
+  is_active   = true
+}
+
+resource "uptimekuma_tag" "test" {
+  name  = %[3]q
+  color = "#00ff00"
+}
+
+resource "uptimekuma_monitor_pm2" "test" {
+  name             = %[4]q
+  description      = %[5]q
+  process_name     = "0"
+  interval         = 120
+  retry_interval   = 90
+  resend_interval  = 10
+  max_retries      = 5
+  upside_down      = true
+  active           = false
+  parent           = uptimekuma_monitor_group.test.id
+  notification_ids = [uptimekuma_notification_webhook.test.id]
+
+  tags = [
+    {
+      tag_id = uptimekuma_tag.test.id
+      value  = "production"
+    },
+  ]
+}
+`, groupName, notificationName, tagName, name, description)
 }
 
 // TestAccMonitorPM2ResourcePaddedProcessName verifies that a process name with
 // surrounding whitespace applies cleanly and does not produce a perpetual diff.
-// Uptime Kuma trims the value before storing it, so the provider sends the
-// trimmed value and keeps the configured one in state.
+// The provider sends the trimmed value and keeps the configured one in state, so
+// the same monitor reads back padded from the resource and trimmed from the data
+// source.
 func TestAccMonitorPM2ResourcePaddedProcessName(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestPM2MonitorPadded")
 
@@ -319,10 +386,12 @@ data "uptimekuma_monitor_pm2" "test" {
 `, name)
 }
 
-// TestAccMonitorPM2ResourceBlankProcessName verifies that a process name that is
-// empty once trimmed is rejected at plan time, the way Uptime Kuma rejects it.
-func TestAccMonitorPM2ResourceBlankProcessName(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestPM2MonitorBlank")
+// TestAccMonitorPM2ResourceValidators pins the plan-time rejections end to end.
+// The rules themselves are covered exhaustively by
+// TestMonitorPM2ProcessNameValidation without a Terraform process; what this
+// adds is proof that the validators are wired into the schema.
+func TestAccMonitorPM2ResourceValidators(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestPM2MonitorValidators")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -333,19 +402,6 @@ func TestAccMonitorPM2ResourceBlankProcessName(t *testing.T) {
 				ExpectError: regexp.MustCompile(`must not be empty or consist only of whitespace`),
 				PlanOnly:    true,
 			},
-		},
-	})
-}
-
-// TestAccMonitorPM2ResourceControlCharacter verifies that the ASCII control
-// characters Uptime Kuma rejects are reported at plan time.
-func TestAccMonitorPM2ResourceControlCharacter(t *testing.T) {
-	name := acctest.RandomWithPrefix("TestPM2MonitorControlChar")
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
 			{
 				// \u0007 is BEL, which HCL turns into the control character itself.
 				Config:      testAccMonitorPM2ResourceConfigProcessName(name, `api\u0007server`),

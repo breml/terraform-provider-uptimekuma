@@ -3,15 +3,15 @@
 page_title: "uptimekuma_monitor_pm2 Resource - uptimekuma"
 subcategory: ""
 description: |-
-  PM2 monitor resource. The check runs pm2 jlist on the Uptime Kuma host and goes up while the named PM2 process reports status online.
-  The pm2 CLI must be installed on the Uptime Kuma host and must see the PM2 daemon that owns the process. The official louislam/uptime-kuma container image does not ship it, so this monitor stays down there even though it can be created and managed.
+  PM2 monitor resource. As of Uptime Kuma 2.5.0 the check runs pm2 jlist on the Uptime Kuma host and goes up while the named PM2 process reports status online.
+  The pm2 CLI must be on the Uptime Kuma host's PATH and must see the PM2 daemon that owns the process, otherwise the check cannot succeed. The official louislam/uptime-kuma image did not ship it as of 2.5.0, so the monitor can be created and managed there but will not report up.
 ---
 
 # uptimekuma_monitor_pm2 (Resource)
 
-PM2 monitor resource. The check runs `pm2 jlist` on the Uptime Kuma host and goes up while the named PM2 process reports status `online`.
+PM2 monitor resource. As of Uptime Kuma 2.5.0 the check runs `pm2 jlist` on the Uptime Kuma host and goes up while the named PM2 process reports status `online`.
 
-The `pm2` CLI must be installed on the Uptime Kuma host and must see the PM2 daemon that owns the process. The official `louislam/uptime-kuma` container image does not ship it, so this monitor stays down there even though it can be created and managed.
+The `pm2` CLI must be on the Uptime Kuma host's PATH and must see the PM2 daemon that owns the process, otherwise the check cannot succeed. The official `louislam/uptime-kuma` image did not ship it as of 2.5.0, so the monitor can be created and managed there but will not report up.
 
 ## Example Usage
 
@@ -40,9 +40,7 @@ resource "uptimekuma_monitor_pm2" "by_id" {
 ### Required
 
 - `name` (String) Friendly name
-- `process_name` (String) PM2 process to check. The server matches the value against both the process name and the stringified numeric PM2 id reported by `pm2 jlist`, so either form works. Prefer the name: PM2 reassigns ids after a process is deleted and recreated.
-
-Spaces inside the name are allowed, unlike for the system-service monitor this type shares its wire field with. Leading and trailing spaces are ignored, because Uptime Kuma trims the value before storing it. ASCII control characters (U+0000..U+001F and U+007F, which includes tabs and newlines) are rejected: Uptime Kuma refuses them in the value it stores.
+- `process_name` (String) PM2 process to check, given as either the process name or the numeric PM2 id as a string; Uptime Kuma 2.5.0 matches the value against both. Prefer the name: PM2 reassigns ids after a process is deleted and recreated. Spaces inside the name are allowed, unlike for the system-service monitor this type shares its wire field with. Surrounding whitespace is not significant: the provider sends the trimmed value, so the resource keeps the configured value in state while the data source reports the trimmed value Uptime Kuma stored. The provider rejects ASCII control characters (U+0000..U+001F and U+007F, which includes tabs and newlines); Uptime Kuma 2.5.0 rejects them server-side as well.
 
 ### Optional
 

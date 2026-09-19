@@ -66,9 +66,10 @@ func wholeNumber() validator.Float64 {
 // nonBlankValidator rejects strings that are empty once surrounding whitespace
 // is removed.
 //
-// Uptime Kuma trims such values before storing them and then rejects the empty
-// result. Catching it at plan time reports the problem on the attribute instead
-// of as an opaque API error during apply.
+// Some Uptime Kuma fields are stored trimmed, so a value consisting only of
+// whitespace is equivalent to an empty one. Catching it at plan time reports the
+// problem on the attribute instead of failing during apply with a marshal error
+// from the client library.
 type nonBlankValidator struct{}
 
 // Description returns a plain text description of the validator's behavior.
