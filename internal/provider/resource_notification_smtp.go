@@ -149,11 +149,13 @@ func (*NotificationSMTPResource) Schema(
 				Default:             booldefault.StaticBool(false),
 			},
 			"additional_headers": schema.StringAttribute{
-				MarkdownDescription: "Extra headers to merge into every mail Uptime Kuma sends " +
-					"through this notification, given as a JSON object encoded in a string, for " +
-					"example `jsonencode({ \"X-Custom-Header\" = \"Additional Header\" })`. Anything " +
-					"other than a JSON object is rejected at plan time. When null, the header set " +
-					"is left untouched and only the headers Uptime Kuma builds itself are sent.",
+				MarkdownDescription: "Extra headers to merge into the headers of every mail Uptime " +
+					"Kuma sends through this notification, given as a JSON object encoded in a " +
+					"string, for example `jsonencode({ \"X-Custom-Header\" = \"Additional Header\" })`. " +
+					"A value that is not a JSON object is rejected while it is known at plan time; " +
+					"a value still unknown then reaches the server unchecked. Omitting the " +
+					"attribute adds no headers and clears any value stored on the notification at " +
+					"the next apply.",
 				Optional: true,
 				Validators: []validator.String{
 					jsonObject(),
@@ -163,9 +165,11 @@ func (*NotificationSMTPResource) Schema(
 	}
 }
 
-// withSMTPDkimAttributes adds the DKIM signing attributes to the provided attribute map. Uptime
-// Kuma only signs a mail when a domain, a key selector and a private key are all set; the
-// remaining attributes tune a signature that is already being produced.
+// withSMTPDkimAttributes adds the DKIM signing attributes to the provided attribute map, which
+// keeps Schema inside the 100 lines the revive function-length rule allows. As of Uptime Kuma
+// 2.5.0 a non-empty dkim_domain alone makes the server build a nodemailer DKIM config, so a
+// domain without a key selector and a private key breaks sending rather than leaving the mail
+// unsigned.
 func withSMTPDkimAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
 	attrs["dkim_domain"] = schema.StringAttribute{
 		MarkdownDescription: "DKIM domain for email signing",

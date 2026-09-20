@@ -116,10 +116,12 @@ func nonBlank() validator.String {
 
 // jsonObjectValidator rejects strings that do not decode to a JSON object.
 //
-// Uptime Kuma parses such a value with `JSON.parse` and merges the result into
-// the outgoing request, so a scalar, an array or a syntax error is only
-// noticed when the notification actually fires. Rejecting it at plan time
-// reports the typo on the attribute instead.
+// The value is handed to a server that parses it and spreads the result into
+// an object of its own, which reports a syntax error at best and never
+// reports the rest: a scalar spreads to nothing and an array spreads to
+// index-keyed entries, both silently and both only once the value is
+// actually used. Rejecting a non-object while the configuration is validated
+// reports the mistake on the attribute instead.
 type jsonObjectValidator struct{}
 
 // Description returns a plain text description of the validator's behavior.
@@ -144,6 +146,8 @@ func (v jsonObjectValidator) ValidateString(
 
 	var object map[string]any
 
+	// The literal `null` decodes into a nil map without an error, so the map
+	// has to be checked as well: err alone would accept it.
 	err := json.Unmarshal([]byte(req.ConfigValue.ValueString()), &object)
 	if err == nil && object != nil {
 		return
