@@ -13,7 +13,8 @@ import (
 )
 
 // TestAccNotificationFlowtriqResource covers the minimal shape, where api_key stays unset and must
-// therefore round-trip as null rather than as the empty string.
+// therefore round-trip as null rather than as the empty string. It also covers an update of name
+// and webhook_url, and an import round-trip.
 func TestAccNotificationFlowtriqResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationFlowtriq")
 	nameUpdated := acctest.RandomWithPrefix("NotificationFlowtriqUpdated")
@@ -97,8 +98,9 @@ func TestAccNotificationFlowtriqResource(t *testing.T) {
 	})
 }
 
-// TestAccNotificationFlowtriqResourceAPIKey covers the authenticated shape, including clearing the
-// API key again, which has to fall back to null so Uptime Kuma omits the X-API-Key header.
+// TestAccNotificationFlowtriqResourceAPIKey covers the authenticated shape: setting an API key,
+// rotating it, importing it, and finally clearing it again, which has to fall back to null rather
+// than to the empty string.
 func TestAccNotificationFlowtriqResourceAPIKey(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationFlowtriqAPIKey")
 
@@ -150,7 +152,7 @@ func TestAccNotificationFlowtriqResourceAPIKey(t *testing.T) {
 	})
 }
 
-// TestAccNotificationFlowtriqResourceInvalidConfig covers the schema validation of the attributes.
+// TestAccNotificationFlowtriqResourceInvalidConfig covers the webhook_url and api_key validators.
 func TestAccNotificationFlowtriqResourceInvalidConfig(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationFlowtriqInvalid")
 

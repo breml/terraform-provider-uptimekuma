@@ -268,8 +268,8 @@ func (*NotificationFlowtriqResource) ImportState(
 
 // flowtriqFromModel builds a Flowtriq notification from the resource model.
 //
-// flowtriqApiKey is omitempty on the wire, so a null api_key maps to nil, which keeps it out of the
-// request entirely and lets Uptime Kuma omit the X-API-Key header.
+// flowtriqApiKey is omitempty on the wire, so a null api_key maps to nil, which keeps it out of
+// the request entirely rather than sending an empty string.
 func flowtriqFromModel(data *NotificationFlowtriqResourceModel) notification.Flowtriq {
 	return notification.Flowtriq{
 		Base: notification.Base{
