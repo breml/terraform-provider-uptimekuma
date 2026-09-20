@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -492,6 +493,128 @@ func TestApplyEnvironmentDefaults_PerAttemptTimeoutConfigOverridesEnv(t *testing
 	}
 }
 
+func TestApplyEnvironmentDefaults_OperationTimeout(t *testing.T) {
+	t.Setenv("UPTIMEKUMA_OPERATION_TIMEOUT", "45s")
+
+	model := UptimeKumaProviderModel{
+		Endpoint:         types.StringNull(),
+		Username:         types.StringNull(),
+		Password:         types.StringNull(),
+		OperationTimeout: types.StringNull(),
+	}
+
+	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+
+	if model.OperationTimeout.ValueString() != "45s" {
+		t.Errorf("expected operation_timeout %q from env, got %q", "45s", model.OperationTimeout.ValueString())
+	}
+}
+
+func TestApplyEnvironmentDefaults_OperationTimeoutConfigOverridesEnv(t *testing.T) {
+	t.Setenv("UPTIMEKUMA_OPERATION_TIMEOUT", "45s")
+
+	model := UptimeKumaProviderModel{
+		Endpoint:         types.StringNull(),
+		Username:         types.StringNull(),
+		Password:         types.StringNull(),
+		OperationTimeout: types.StringValue("90s"),
+	}
+
+	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+
+	if model.OperationTimeout.ValueString() != "90s" {
+		t.Errorf("expected config operation_timeout %q to take precedence, got %q",
+			"90s", model.OperationTimeout.ValueString())
+	}
+}
+
+// TestParseClientOptions_OperationTimeout pins that the attribute reaches the
+// client config, and that leaving it out means "use the default" rather than
+// "no bound". The bound is what keeps an unanswered command from blocking an
+// apply forever, so a zero here must never be passed on as a disabled timeout.
+func TestParseClientOptions_OperationTimeout(t *testing.T) {
+	tests := []struct {
+		name             string
+		operationTimeout types.String
+		want             time.Duration
+	}{
+		{
+			name:             "configured value is used",
+			operationTimeout: types.StringValue("90s"),
+			want:             90 * time.Second,
+		},
+		{
+			name:             "unset means not configured",
+			operationTimeout: types.StringNull(),
+			want:             0,
+		},
+		{
+			name:             "empty means not configured",
+			operationTimeout: types.StringValue(""),
+			want:             0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := UptimeKumaProviderModel{
+				Endpoint:         types.StringValue("http://localhost:3001"),
+				OperationTimeout: tc.operationTimeout,
+			}
+
+			resp := &provider.ConfigureResponse{}
+
+			opts := parseClientOptions(&model, resp)
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected error: %v", resp.Diagnostics.Errors())
+			}
+
+			if opts.operationTimeout != tc.want {
+				t.Errorf("expected operation timeout %s, got %s", tc.want, opts.operationTimeout)
+			}
+		})
+	}
+}
+
+// TestParseClientOptions_OperationTimeoutZeroWarns pins that an explicit `0s`
+// is not silently swallowed. Upstream documents zero as the opt-out that leaves
+// a command unbounded, so a user writing it means something the provider
+// deliberately does not do; the warning is what keeps the resolved default from
+// appearing out of nowhere.
+func TestParseClientOptions_OperationTimeoutZeroWarns(t *testing.T) {
+	tests := []struct {
+		name             string
+		operationTimeout types.String
+		wantWarning      bool
+	}{
+		{name: "explicit zero warns", operationTimeout: types.StringValue("0s"), wantWarning: true},
+		{name: "unset does not warn", operationTimeout: types.StringNull(), wantWarning: false},
+		{name: "empty does not warn", operationTimeout: types.StringValue(""), wantWarning: false},
+		{name: "non-zero does not warn", operationTimeout: types.StringValue("90s"), wantWarning: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := UptimeKumaProviderModel{
+				Endpoint:         types.StringValue("http://localhost:3001"),
+				OperationTimeout: tc.operationTimeout,
+			}
+
+			resp := &provider.ConfigureResponse{}
+
+			parseClientOptions(&model, resp)
+
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected error: %v", resp.Diagnostics.Errors())
+			}
+
+			if got := resp.Diagnostics.WarningsCount() > 0; got != tc.wantWarning {
+				t.Errorf("expected warning %t, got %t (%v)", tc.wantWarning, got, resp.Diagnostics.Warnings())
+			}
+		})
+	}
+}
+
 func TestParseClientOptions_PerAttemptTimeoutExceedsTimeout(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -634,6 +757,44 @@ provider "uptimekuma" {
 data "uptimekuma_tag" "test" {}
 `,
 				ExpectError: regexp.MustCompile(`per_attempt_timeout must be non-negative`),
+			},
+		},
+	})
+}
+
+func TestAccProviderInvalidOperationTimeout(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "uptimekuma" {
+  endpoint          = "http://localhost:3001"
+  operation_timeout = "notaduration"
+}
+
+data "uptimekuma_tag" "test" {}
+`,
+				ExpectError: regexp.MustCompile(`failed to parse operation_timeout`),
+			},
+		},
+	})
+}
+
+func TestAccProviderNegativeOperationTimeout(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "uptimekuma" {
+  endpoint          = "http://localhost:3001"
+  operation_timeout = "-5s"
+}
+
+data "uptimekuma_tag" "test" {}
+`,
+				ExpectError: regexp.MustCompile(`operation_timeout must be non-negative`),
 			},
 		},
 	})

@@ -32,6 +32,33 @@ whole connection process (across all retry attempts and backoff). Each individua
 `min(PerAttemptTimeout, remainingBudget)` via `kuma.WithConnectTimeout`. When `PerAttemptTimeout` is zero, each
 attempt may use the full remaining budget.
 
+### DefaultOperationTimeout
+
+```go
+const DefaultOperationTimeout = 60 * time.Second
+```
+
+Applied when no explicit `OperationTimeout` is configured (zero or negative), resolved by
+`effectiveOperationTimeout` and passed on as `kuma.WithOperationTimeout`. It bounds the round trip of a **single**
+command - the wait for the server's ack and for the update event confirming it. Without it an ack Uptime Kuma never
+sends blocks the operation for as long as the caller's context lives, and Terraform gives a provider no deadline of
+its own, so the apply would hang indefinitely.
+
+Two things it is easy to get wrong about the scope:
+
+- It is **not** limited to what happens after connecting. The login and setup that `ConnectTimeout` covers are
+  commands too, so this budget bounds them as well; while connecting, the effective bound is whichever of the two
+  expires first.
+- The bound is on the round trip, not on the whole call. A write that has to queue behind other writes to the list it
+  broadcasts spends no budget waiting its turn.
+
+Unlike `MaxRetries`, zero means "not configured" and never "no bound". That matters because
+`kuma.WithOperationTimeout` reads zero or less as an opt-out that leaves a command bounded only by the caller's
+context: passing a raw zero through would restore exactly the unbounded wait this exists to prevent. A caller that
+wants a very long bound configures it explicitly. The upstream client defaults to the same minute, so this constant
+is about making the provider's default explicit, documented and part of the pool identity rather than about
+supplying a bound that would otherwise be missing.
+
 ### defaultMaxRetries
 
 ```go
@@ -56,6 +83,7 @@ type Config struct {
     EnableConnectionPool bool           // For acceptance tests, enables pooling
     ConnectTimeout       time.Duration  // Overall timeout budget across all retry attempts (default: 30s)
     PerAttemptTimeout    time.Duration  // Optional per-attempt cap; defaults to remaining ConnectTimeout budget
+    OperationTimeout     time.Duration  // Bound on a single operation once connected (default: 60s)
     MaxRetries           int            // Max retry attempts (default: 3)
 }
 ```
@@ -69,6 +97,10 @@ type Config struct {
   connection process across all retry attempts and backoff
 - `PerAttemptTimeout` (when greater than zero) caps the time spent on each individual connection attempt; the effective
   per-attempt timeout is `min(PerAttemptTimeout, remainingBudget)`
+- `OperationTimeout` defaults to `DefaultOperationTimeout` (60s) when zero or negative; it bounds the round trip of
+  each command, including the login and setup performed while connecting, so a command Uptime Kuma never answers
+  fails instead of hanging. It is part of the pool's config identity, so a second provider configuration with a
+  different value is rejected rather than silently reusing the first connection
 
 ### Pool
 
@@ -97,6 +129,7 @@ config := &Config{
     LogLevel:             0,
     EnableConnectionPool: true,           // Always enabled by provider
     ConnectTimeout:       30 * time.Second, // overall budget; 0 uses defaultConnectTimeout
+    OperationTimeout:     60 * time.Second, // per-command bound; 0 or negative uses DefaultOperationTimeout
     MaxRetries:           defaultMaxRetries, // 0 means no retries; negative uses defaultMaxRetries
 }
 

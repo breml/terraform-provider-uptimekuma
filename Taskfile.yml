@@ -89,8 +89,10 @@ tasks:
         # acceptance tests" step in .github/workflows/test.yml, which also
         # covers the shard discovery above, so that a hung run is killed by Go,
         # with the goroutine dump that says where it hung, rather than by
-        # GitHub, which only reports an exit code.
-        go test -v -shuffle on -coverprofile coverage.out -timeout 600s \
+        # GitHub, which only reports an exit code. A shard normally finishes in
+        # under two minutes, so 5 minutes is ample headroom while keeping the
+        # cost of a hang well short of the CI budget.
+        go test -v -shuffle on -coverprofile coverage.out -timeout 300s \
           -parallel {{.PARALLEL}} -run "$run" ./...
 
   testacc-cover-report:

@@ -16,6 +16,19 @@ import (
 // prevent the provider from hanging indefinitely when Uptime Kuma is unreachable.
 const defaultConnectTimeout = 30 * time.Second
 
+// DefaultOperationTimeout is applied when no explicit OperationTimeout is
+// configured. It bounds the round trip of a single Uptime Kuma command, so that
+// an ack or update event the server never sends fails the operation instead of
+// blocking it for as long as the caller's context lives - and Terraform gives a
+// provider no deadline of its own.
+//
+// The upstream client already defaults to the same minute; this constant exists
+// so that the provider's own default is explicit, is rendered in the
+// `operation_timeout` schema description, and is part of the pool's config
+// identity. It is exported for that schema description, so the documented
+// default cannot drift from the runtime one.
+const DefaultOperationTimeout = 60 * time.Second
+
 // defaultMaxRetries is applied when no explicit MaxRetries is configured.
 // It is intentionally small so that the default overall ConnectTimeout budget
 // can be split across a few quick attempts without requiring a large total wait.
@@ -29,6 +42,21 @@ func effectiveTimeout(configured time.Duration) time.Duration {
 	}
 
 	return defaultConnectTimeout
+}
+
+// effectiveOperationTimeout returns the configured operation timeout, or
+// DefaultOperationTimeout if the configured value is zero or negative. Zero
+// means "not configured" here, as it does for ConnectTimeout, and never "no
+// bound": kuma.WithOperationTimeout treats a value of zero or less as an
+// opt-out that leaves every command bounded only by the caller's context, which
+// for a provider is not bounded at all. A caller that wants a very long bound
+// configures it explicitly.
+func effectiveOperationTimeout(configured time.Duration) time.Duration {
+	if configured > 0 {
+		return configured
+	}
+
+	return DefaultOperationTimeout
 }
 
 // effectiveMaxRetries returns the configured max retries, or defaultMaxRetries if
@@ -56,7 +84,19 @@ type Config struct {
 	// is min(PerAttemptTimeout, remainingBudget). When zero, each attempt
 	// is allowed to use the full remaining ConnectTimeout budget.
 	PerAttemptTimeout time.Duration
-	MaxRetries        int
+	// OperationTimeout bounds each individual command: the wait for the
+	// server's ack and for the update event confirming it. It defaults to
+	// DefaultOperationTimeout when zero or negative.
+	//
+	// It is not limited to the operations that follow a connection. The
+	// login and setup that ConnectTimeout covers are commands too, so this
+	// budget bounds them as well and the effective bound while connecting
+	// is whichever of the two expires first. The bound is also on the round
+	// trip rather than the whole call: a write that has to queue behind
+	// other writes to the list it broadcasts spends no budget waiting its
+	// turn.
+	OperationTimeout time.Duration
+	MaxRetries       int
 }
 
 // New creates a new Uptime Kuma client with optional connection pooling.
@@ -135,6 +175,7 @@ func newClientDirectWithRetry(
 		opts := []kuma.Option{
 			kuma.WithLogLevel(config.LogLevel),
 			kuma.WithConnectTimeout(attemptTimeout),
+			kuma.WithOperationTimeout(effectiveOperationTimeout(config.OperationTimeout)),
 		}
 
 		kumaClient, err = kuma.New(

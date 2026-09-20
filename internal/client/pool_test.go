@@ -113,6 +113,28 @@ func TestPool_ConfigMatches(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "different operation timeout",
+			config: &Config{
+				Endpoint:         "http://localhost:3001",
+				Username:         "admin",
+				Password:         "secret",
+				OperationTimeout: 5 * time.Second,
+			},
+			expected: false,
+		},
+		{
+			// An unset operation timeout resolves to the same default the
+			// pooled connection was built with, so it is not a mismatch.
+			name: "unset operation timeout matches the default",
+			config: &Config{
+				Endpoint:         "http://localhost:3001",
+				Username:         "admin",
+				Password:         "secret",
+				OperationTimeout: DefaultOperationTimeout,
+			},
+			expected: true,
+		},
 	}
 
 	for _, tc := range tests {
