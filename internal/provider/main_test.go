@@ -67,15 +67,21 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Fatalf("Could not start resource: %v", err)
 		}
 
-		// No container.Expire here, on purpose. dockertest implements Expire as
-		// an immediate StopContainer(id, seconds), which is a `docker stop` with
-		// a grace period: Uptime Kuma is sent SIGTERM right away and SIGKILLed
-		// `seconds` later, rather than being stopped once the period has passed.
-		// Uptime Kuma installs a SIGTERM handler that stops the monitors, closes
-		// the database and exits the process, so the only reason a run survived
-		// the call was that the signal landed during container boot and was
-		// dropped. The deferred purge below is the real cleanup, and the job's
-		// timeout-minutes in .github/workflows/test.yml is the outer backstop.
+		// No container.Expire here, on purpose. dockertest implements it as
+		// `go StopContainer(id, seconds)`, an immediate
+		// POST /containers/{id}/stop?t=seconds, where `seconds` is only the
+		// SIGTERM-to-SIGKILL grace and not a delay before stopping. Nothing
+		// about it schedules a stop `seconds` from now, so it was never the
+		// safety net it looked like: what it asks for is a `docker stop` right
+		// now, which for a suite that needs the container for the whole run is
+		// the opposite of what was wanted. (Why it never actually killed a run
+		// is unclear - a direct probe against the image showed the container
+		// still up and its shutdown handler never entered - so this is about
+		// dropping a call that cannot do the job, not about fixing a failure.)
+		//
+		// The deferred purge below is the real cleanup, and the timeout-minutes
+		// on the "Run acceptance tests" step in .github/workflows/test.yml is
+		// the outer backstop.
 
 		// Register container cleanup immediately so the container is always
 		// purged, even if the connection retry below fails.

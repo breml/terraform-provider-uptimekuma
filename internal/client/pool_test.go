@@ -131,7 +131,7 @@ func TestPool_ConfigMatches(t *testing.T) {
 				Endpoint:         "http://localhost:3001",
 				Username:         "admin",
 				Password:         "secret",
-				OperationTimeout: defaultOperationTimeout,
+				OperationTimeout: DefaultOperationTimeout,
 			},
 			expected: true,
 		},

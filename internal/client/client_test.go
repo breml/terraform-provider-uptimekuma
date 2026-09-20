@@ -79,8 +79,8 @@ func TestEffectiveOperationTimeout(t *testing.T) {
 		configured time.Duration
 		want       time.Duration
 	}{
-		{name: "unset falls back to the default", configured: 0, want: defaultOperationTimeout},
-		{name: "negative falls back to the default", configured: -5 * time.Second, want: defaultOperationTimeout},
+		{name: "unset falls back to the default", configured: 0, want: DefaultOperationTimeout},
+		{name: "negative falls back to the default", configured: -5 * time.Second, want: DefaultOperationTimeout},
 		{name: "explicit value is kept", configured: 90 * time.Second, want: 90 * time.Second},
 	}
 

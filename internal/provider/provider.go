@@ -88,16 +88,21 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 			},
 			"operation_timeout": schema.StringAttribute{
 				MarkdownDescription: fmt.Sprintf(
-					"Timeout for a single Uptime Kuma operation as a Go duration string "+
-						"(e.g. `30s`, `2m`), applied once the connection is established (default: `%s`). "+
-						"Bounds how long the provider waits for the server to acknowledge and confirm one "+
-						"create, read, update or delete. Unlike `timeout`, which covers connecting, this "+
-						"guards against an Uptime Kuma instance that accepts a command and never answers it, "+
-						"which would otherwise block the apply indefinitely. "+
+					"Timeout for a single Uptime Kuma command as a Go duration string "+
+						"(e.g. `30s`, `2m`) (default: `%s`). Bounds how long the provider waits for the "+
+						"server to acknowledge one create, read, update or delete and to confirm it, so "+
+						"an instance that accepts a command and never answers it fails the operation "+
+						"instead of blocking the apply indefinitely. It also bounds the login and setup "+
+						"performed while connecting, so during connect the effective bound is whichever "+
+						"of `timeout` and `operation_timeout` expires first. The bound is on the round "+
+						"trip and not on the whole call: a write that has to queue behind other writes "+
+						"to the same list waits its turn outside this budget. A value of `0s` means "+
+						"\"not configured\" and falls back to the default; the bound cannot be disabled, "+
+						"so set a large value instead. "+
 						"Can be set via `UPTIMEKUMA_OPERATION_TIMEOUT` environment variable.",
 					// Rendered in seconds rather than via Duration.String, which
 					// would print a minute as "1m0s" next to the other timeouts.
-					fmt.Sprintf("%ds", int64(defaultOperationTimeout/time.Second)),
+					fmt.Sprintf("%ds", int64(client.DefaultOperationTimeout/time.Second)),
 				),
 				Optional: true,
 			},
@@ -244,6 +249,8 @@ func parseClientOptions(
 		return opts
 	}
 
+	warnUnusedOperationTimeout(data, opts.operationTimeout, resp)
+
 	if opts.perAttemptTimeout > 0 && opts.connectTimeout > 0 && opts.perAttemptTimeout >= opts.connectTimeout {
 		resp.Diagnostics.AddWarning(
 			"per_attempt_timeout has no effect",
@@ -274,17 +281,42 @@ func parseClientOptions(
 	return opts
 }
 
-// defaultOperationTimeout mirrors the client package default, for the same
-// reason as defaultMaxRetries: it renders the documented default of the
-// `operation_timeout` schema description, so it cannot drift from the runtime
-// one.
-const defaultOperationTimeout = 60 * time.Second
-
 // defaultMaxRetries mirrors the client package default. It is used both as
 // the fallback in parseClientOptions when the user does not provide an
 // explicit value, and to render the value in the `max_retries` schema
 // description so the documented default cannot drift from the runtime one.
 const defaultMaxRetries = 3
+
+// warnUnusedOperationTimeout warns when operation_timeout is set to an explicit
+// zero. kuma.WithOperationTimeout documents zero as the opt-out that leaves a
+// command bounded only by the caller's context, so a user who writes `0s` most
+// likely means "no bound" - but the provider resolves zero to
+// client.DefaultOperationTimeout instead, because Terraform gives a provider no
+// deadline and an unbounded command would block the apply for good. Saying so
+// beats silently applying a duration that appears nowhere in the configuration.
+func warnUnusedOperationTimeout(
+	data *UptimeKumaProviderModel,
+	parsed time.Duration,
+	resp *provider.ConfigureResponse,
+) {
+	if parsed != 0 || data.OperationTimeout.IsNull() {
+		return
+	}
+
+	if strings.TrimSpace(data.OperationTimeout.ValueString()) == "" {
+		return
+	}
+
+	resp.Diagnostics.AddWarning(
+		"operation_timeout does not disable the bound",
+		fmt.Sprintf(
+			"operation_timeout is set to %q, which the provider treats as \"not configured\" and "+
+				"resolves to the default of %s rather than leaving operations unbounded. "+
+				"Omit the attribute to use the default, or set a large explicit value such as \"30m\"",
+			data.OperationTimeout.ValueString(), client.DefaultOperationTimeout,
+		),
+	)
+}
 
 // parseDurationAttribute parses a Go duration string from a Terraform string
 // attribute. Empty/null values yield a zero duration (meaning "use the default").

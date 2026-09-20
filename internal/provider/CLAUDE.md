@@ -937,11 +937,10 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 7. Run all tests (provider creates its own pooled connection, shared across tests)
 8. Cleanup: disconnect `outOfBandClient`, close the pool, purge the container
 
-There is deliberately no `container.Expire`. dockertest implements it as an immediate
-`StopContainer(id, seconds)`, i.e. a `docker stop` that sends SIGTERM straight away and
-SIGKILLs after the grace period, rather than stopping the container once the period has
-passed. Uptime Kuma handles SIGTERM by closing the database and exiting, so the call was
-a race the suite happened to keep winning. The deferred purge is the real cleanup.
+There is deliberately no `container.Expire`: dockertest implements it as an immediate
+`docker stop` request rather than one that fires after the period has passed, so it was
+never the safety net it looked like. See the comment in
+[main_test.go](main_test.go) for the details. The deferred purge is the real cleanup.
 
 **Global Variables** (used by all tests):
 

@@ -16,12 +16,18 @@ import (
 // prevent the provider from hanging indefinitely when Uptime Kuma is unreachable.
 const defaultConnectTimeout = 30 * time.Second
 
-// defaultOperationTimeout is applied when no explicit OperationTimeout is
-// configured. It bounds a single Uptime Kuma operation once the connection is
-// up, so that an ack or update event the server never sends fails the operation
-// instead of blocking it forever: Terraform gives a provider no deadline of its
-// own, so without this bound there is nothing to end such a wait.
-const defaultOperationTimeout = 60 * time.Second
+// DefaultOperationTimeout is applied when no explicit OperationTimeout is
+// configured. It bounds the round trip of a single Uptime Kuma command, so that
+// an ack or update event the server never sends fails the operation instead of
+// blocking it for as long as the caller's context lives - and Terraform gives a
+// provider no deadline of its own.
+//
+// The upstream client already defaults to the same minute; this constant exists
+// so that the provider's own default is explicit, is rendered in the
+// `operation_timeout` schema description, and is part of the pool's config
+// identity. It is exported for that schema description, so the documented
+// default cannot drift from the runtime one.
+const DefaultOperationTimeout = 60 * time.Second
 
 // defaultMaxRetries is applied when no explicit MaxRetries is configured.
 // It is intentionally small so that the default overall ConnectTimeout budget
@@ -39,15 +45,18 @@ func effectiveTimeout(configured time.Duration) time.Duration {
 }
 
 // effectiveOperationTimeout returns the configured operation timeout, or
-// defaultOperationTimeout if the configured value is zero or negative. Zero
-// means "not configured" here, as it does for ConnectTimeout, so the bound is
-// never silently absent; a caller that wants a very long one configures it.
+// DefaultOperationTimeout if the configured value is zero or negative. Zero
+// means "not configured" here, as it does for ConnectTimeout, and never "no
+// bound": kuma.WithOperationTimeout treats a value of zero or less as an
+// opt-out that leaves every command bounded only by the caller's context, which
+// for a provider is not bounded at all. A caller that wants a very long bound
+// configures it explicitly.
 func effectiveOperationTimeout(configured time.Duration) time.Duration {
 	if configured > 0 {
 		return configured
 	}
 
-	return defaultOperationTimeout
+	return DefaultOperationTimeout
 }
 
 // effectiveMaxRetries returns the configured max retries, or defaultMaxRetries if
@@ -75,11 +84,17 @@ type Config struct {
 	// is min(PerAttemptTimeout, remainingBudget). When zero, each attempt
 	// is allowed to use the full remaining ConnectTimeout budget.
 	PerAttemptTimeout time.Duration
-	// OperationTimeout bounds each individual operation once the connection
-	// is established: the wait for the server's ack and for the update event
-	// confirming it. It defaults to defaultOperationTimeout when zero or
-	// negative. It is unrelated to ConnectTimeout, which only covers
-	// establishing the connection.
+	// OperationTimeout bounds each individual command: the wait for the
+	// server's ack and for the update event confirming it. It defaults to
+	// DefaultOperationTimeout when zero or negative.
+	//
+	// It is not limited to the operations that follow a connection. The
+	// login and setup that ConnectTimeout covers are commands too, so this
+	// budget bounds them as well and the effective bound while connecting
+	// is whichever of the two expires first. The bound is also on the round
+	// trip rather than the whole call: a write that has to queue behind
+	// other writes to the list it broadcasts spends no budget waiting its
+	// turn.
 	OperationTimeout time.Duration
 	MaxRetries       int
 }

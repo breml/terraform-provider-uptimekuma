@@ -576,6 +576,45 @@ func TestParseClientOptions_OperationTimeout(t *testing.T) {
 	}
 }
 
+// TestParseClientOptions_OperationTimeoutZeroWarns pins that an explicit `0s`
+// is not silently swallowed. Upstream documents zero as the opt-out that leaves
+// a command unbounded, so a user writing it means something the provider
+// deliberately does not do; the warning is what keeps the resolved default from
+// appearing out of nowhere.
+func TestParseClientOptions_OperationTimeoutZeroWarns(t *testing.T) {
+	tests := []struct {
+		name             string
+		operationTimeout types.String
+		wantWarning      bool
+	}{
+		{name: "explicit zero warns", operationTimeout: types.StringValue("0s"), wantWarning: true},
+		{name: "unset does not warn", operationTimeout: types.StringNull(), wantWarning: false},
+		{name: "empty does not warn", operationTimeout: types.StringValue(""), wantWarning: false},
+		{name: "non-zero does not warn", operationTimeout: types.StringValue("90s"), wantWarning: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := UptimeKumaProviderModel{
+				Endpoint:         types.StringValue("http://localhost:3001"),
+				OperationTimeout: tc.operationTimeout,
+			}
+
+			resp := &provider.ConfigureResponse{}
+
+			parseClientOptions(&model, resp)
+
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected error: %v", resp.Diagnostics.Errors())
+			}
+
+			if got := resp.Diagnostics.WarningsCount() > 0; got != tc.wantWarning {
+				t.Errorf("expected warning %t, got %t (%v)", tc.wantWarning, got, resp.Diagnostics.Warnings())
+			}
+		})
+	}
+}
+
 func TestParseClientOptions_PerAttemptTimeoutExceedsTimeout(t *testing.T) {
 	tests := []struct {
 		name              string
