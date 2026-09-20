@@ -82,8 +82,8 @@ func TestAccNotificationWxPusherResource(t *testing.T) {
 }
 
 // TestAccNotificationWxPusherResourceMultipleTokens asserts that a comma separated list of tokens
-// round-trips verbatim: the server splits and trims it only at send time, so the provider must not
-// normalize it.
+// round-trips verbatim through create, update and import: the server splits and trims it only at
+// send time, so the provider must not normalize it on either write path.
 func TestAccNotificationWxPusherResourceMultipleTokens(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWxPusherMulti")
 
@@ -105,6 +105,19 @@ func TestAccNotificationWxPusherResourceMultipleTokens(t *testing.T) {
 				},
 			},
 			{
+				Config: testAccNotificationWxPusherResourceConfig(
+					name,
+					"SPT_89abcdef0123 ,SPT_0123456789ab",
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_wxpusher.test",
+						tfjsonpath.New("spt"),
+						knownvalue.StringExact("SPT_89abcdef0123 ,SPT_0123456789ab"),
+					),
+				},
+			},
+			{
 				ResourceName:      "uptimekuma_notification_wxpusher.test",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -113,7 +126,8 @@ func TestAccNotificationWxPusherResourceMultipleTokens(t *testing.T) {
 	})
 }
 
-// TestAccNotificationWxPusherResourceInvalidConfig covers the spt validator.
+// TestAccNotificationWxPusherResourceInvalidConfig covers the spt length validator and the
+// required-argument error.
 func TestAccNotificationWxPusherResourceInvalidConfig(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWxPusherInvalid")
 

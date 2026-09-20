@@ -35,7 +35,7 @@ resource "uptimekuma_notification_wxpusher" "team" {
 ### Required
 
 - `name` (String) Notification name
-- `spt` (String, Sensitive) The WxPusher simple push token, for example `SPT_xxxxxxxxxxxx`. Multiple tokens are separated by commas: Uptime Kuma trims each one, discards the empty entries and delivers to all of them, batching at most 10 tokens per request.
+- `spt` (String, Sensitive) The WxPusher simple push token, for example `SPT_xxxxxxxxxxxx`. Multiple tokens are separated by commas: Uptime Kuma trims each one, discards the empty entries and delivers to them in batches of at most 10 tokens per request. The value is stored verbatim, the provider does not normalize it.
 
 ### Optional
 

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/notification"
@@ -60,7 +62,8 @@ func (*NotificationWxPusherResource) Schema(
 			"spt": schema.StringAttribute{
 				MarkdownDescription: "The WxPusher simple push token, for example `SPT_xxxxxxxxxxxx`. Multiple " +
 					"tokens are separated by commas: Uptime Kuma trims each one, discards the empty entries and " +
-					"delivers to all of them, batching at most 10 tokens per request.",
+					"delivers to them in batches of at most 10 tokens per request. The value is stored " +
+					"verbatim, the provider does not normalize it.",
 				Required:  true,
 				Sensitive: true,
 				Validators: []validator.String{
@@ -103,6 +106,8 @@ func (r *NotificationWxPusherResource) Create(
 	}
 
 	data.ID = types.Int64Value(id)
+
+	tflog.Info(ctx, "Got ID", map[string]any{"id": id})
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -215,6 +220,10 @@ func (r *NotificationWxPusherResource) Delete(
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
 	// Handle error.
 	if err != nil {
+		if errors.Is(err, kuma.ErrNotFound) {
+			return
+		}
+
 		resp.Diagnostics.AddError("failed to delete notification", err.Error())
 		return
 	}
