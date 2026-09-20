@@ -56,3 +56,6 @@ go.work.sum
 
 # env file
 .env
+
+# Claude Code local session data
+.claude/
