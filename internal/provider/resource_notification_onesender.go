@@ -231,7 +231,6 @@ func (r *NotificationOnesenderResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, onesender)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

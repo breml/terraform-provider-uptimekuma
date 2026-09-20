@@ -317,7 +317,6 @@ func (r *MonitorMySQLResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &mysqlMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update MySQL monitor") {
 		return
 	}
@@ -352,7 +351,6 @@ func (r *MonitorMySQLResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete MySQL monitor")
 }
 

@@ -521,3 +521,122 @@ func TestAccNotificationWebhookResource_typeDrift(t *testing.T) {
 		},
 	})
 }
+
+// testAccDeleteExternally deletes a resource by its state ID through the
+// out-of-band client, simulating a deletion made outside Terraform.
+func testAccDeleteExternally(
+	t *testing.T,
+	resourceAddr string,
+	del func(context.Context, int64) error,
+) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceAddr]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", resourceAddr)
+		}
+
+		id, err := strconv.ParseInt(rs.Primary.Attributes["id"], 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s id: %w", resourceAddr, err)
+		}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		err = del(ctx, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete %s externally: %w", resourceAddr, err)
+		}
+
+		return nil
+	}
+}
+
+// testAccDisappearsSteps builds the two steps every disappears test shares: an
+// apply that deletes the resource out of band, then a refresh that must plan a
+// create because the resource was dropped from state.
+func testAccDisappearsSteps(
+	config string,
+	resourceAddr string,
+	deleteExternally resource.TestCheckFunc,
+) []resource.TestStep {
+	return []resource.TestStep{
+		{
+			Config:             config,
+			ExpectNonEmptyPlan: true,
+			Check:              deleteExternally,
+		},
+		{
+			RefreshState:       true,
+			ExpectNonEmptyPlan: true,
+			RefreshPlanChecks: resource.RefreshPlanChecks{
+				PostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resourceAddr, plancheck.ResourceActionCreate),
+				},
+			},
+		},
+	}
+}
+
+// TestAccMaintenanceResource_disappears verifies that a maintenance window
+// deleted outside Terraform is dropped from state rather than failing the
+// refresh.
+//
+// GetMaintenance asks the server, so the miss arrives as the client's own "not
+// found in response" rather than as kuma.ErrNotFound. Read therefore has to go
+// through isNotFoundError; an errors.Is check never fires and turns this case
+// into a hard error no plan can get past.
+func TestAccMaintenanceResource_disappears(t *testing.T) {
+	title := acctest.RandomWithPrefix("TestMaintenanceDisappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: testAccDisappearsSteps(
+			testAccMaintenanceResourceConfigSingle(title, "disappears", true),
+			"uptimekuma_maintenance.test",
+			testAccDeleteExternally(t, "uptimekuma_maintenance.test", kumaClient.DeleteMaintenance),
+		),
+	})
+}
+
+// TestAccProxyResource_disappears covers removeOnMiss for a proxy.
+//
+// Proxies sit on proxyList, one of the best-effort ready events, so this is one
+// of only two resources where the MissingReadyEvents branch of removeOnMiss can
+// fire at all - the notification list is required, and Client.New fails without
+// it.
+func TestAccProxyResource_disappears(t *testing.T) {
+	host := acctest.RandomWithPrefix("proxy-disappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: testAccDisappearsSteps(
+			testAccProxyResourceConfig(host, "8080", "http"),
+			"uptimekuma_proxy.test",
+			testAccDeleteExternally(t, "uptimekuma_proxy.test", kumaClient.DeleteProxy),
+		),
+	})
+}
+
+// TestAccDockerHostResource_disappears covers removeOnMiss for a Docker host,
+// the other best-effort list; see TestAccProxyResource_disappears.
+func TestAccDockerHostResource_disappears(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestDockerHostDisappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: testAccDisappearsSteps(
+			testAccDockerHostResourceConfig(name, "unix:///var/run/docker.sock", "socket"),
+			"uptimekuma_docker_host.test",
+			testAccDeleteExternally(t, "uptimekuma_docker_host.test", kumaClient.DeleteDockerHost),
+		),
+	})
+}

@@ -151,6 +151,14 @@ func domainExpiryNotificationAttribute() schema.BoolAttribute {
 	}
 }
 
+// monitorPauser is the part of *kuma.Client the two active-state helpers need.
+// It exists so they can be exercised without a socket.io server, in the way the
+// resyncer interface serves the cache helpers; see resource_monitor_base_test.go.
+type monitorPauser interface {
+	PauseMonitor(ctx context.Context, monitorID int64) error
+	ResumeMonitor(ctx context.Context, monitorID int64) error
+}
+
 // handleMonitorActiveStateCreate pauses a newly-created monitor when the configured
 // active value is false. Uptime Kuma creates every monitor in the active state and
 // ignores the IsActive field of the editMonitor event, so the dedicated pauseMonitor
@@ -163,7 +171,7 @@ func domainExpiryNotificationAttribute() schema.BoolAttribute {
 // through diags and reported as a success.
 func handleMonitorActiveStateCreate(
 	ctx context.Context,
-	client *kuma.Client,
+	client monitorPauser,
 	monitorID int64,
 	active types.Bool,
 	diags *diag.Diagnostics,
@@ -184,9 +192,14 @@ func handleMonitorActiveStateCreate(
 // active value differs from the prior state. Uptime Kuma's editMonitor event ignores
 // the IsActive field; only pauseMonitor / resumeMonitor events actually change the
 // run state.
+//
+// A pause or resume the server applied without broadcasting the confirming event is
+// warned about rather than failed, as in the Create sibling. The bool that says so is
+// discarded because there is nothing further to do either way: the caller's own
+// resp.Diagnostics.HasError() check is what consumes the failing case.
 func handleMonitorActiveStateUpdate(
 	ctx context.Context,
-	client *kuma.Client,
+	client monitorPauser,
 	monitorID int64,
 	oldActive types.Bool,
 	newActive types.Bool,

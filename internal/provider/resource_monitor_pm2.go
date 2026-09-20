@@ -332,7 +332,6 @@ func (r *MonitorPM2Resource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, pm2Monitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update PM2 monitor") {
 		return
 	}
@@ -367,7 +366,6 @@ func (r *MonitorPM2Resource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete PM2 monitor")
 }
 

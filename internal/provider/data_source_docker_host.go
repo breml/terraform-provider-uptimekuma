@@ -106,7 +106,7 @@ func (d *DockerHostDataSource) readByID(
 	// The Docker host getter serves from the state cache, so a resync is
 	// forced once before a miss is believed, see readWithResync.
 	dockerHost, found, err := readWithResync(
-		ctx, d.client, data.ID.ValueInt64(), d.client.GetDockerHost, &resp.Diagnostics,
+		ctx, d.client, data.ID.ValueInt64(), d.client.GetDockerHost,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read Docker host", err.Error())
@@ -147,7 +147,7 @@ func (d *DockerHostDataSource) readByName(
 		}
 
 		return ids, len(ids) > 0, nil
-	}, &resp.Diagnostics)
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read Docker hosts", err.Error())
 

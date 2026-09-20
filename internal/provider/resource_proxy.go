@@ -181,7 +181,7 @@ func (r *ProxyResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	p, found, err := readWithResync(ctx, r.client, data.ID.ValueInt64(), r.client.GetProxy, &resp.Diagnostics)
+	p, found, err := readWithResync(ctx, r.client, data.ID.ValueInt64(), r.client.GetProxy)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read proxy", err.Error())
 
@@ -254,7 +254,6 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	err := r.client.UpdateProxy(ctx, p)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update proxy") {
 		return
 	}
@@ -274,6 +273,5 @@ func (r *ProxyResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 
 	err := r.client.DeleteProxy(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete proxy")
 }

@@ -119,7 +119,7 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 	genericDetails := make(map[string]any, 20)
 	err := json.Unmarshal([]byte(data.Config.ValueString()), &genericDetails)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+		resp.Diagnostics.AddError("failed to parse notification config", err.Error())
 		return
 	}
 
@@ -159,7 +159,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 
 	// The getter serves from the state cache, so a resync is forced once
 	// before the miss is believed, see readWithResync.
-	base, found, err := readWithResync(ctx, r.client, id, r.client.GetNotification, &resp.Diagnostics)
+	base, found, err := readWithResync(ctx, r.client, id, r.client.GetNotification)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notification", err.Error())
 
@@ -212,7 +212,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 	genericDetails := make(map[string]any, 20)
 	err := json.Unmarshal([]byte(data.Config.ValueString()), &genericDetails)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create notification", err.Error())
+		resp.Diagnostics.AddError("failed to parse notification config", err.Error())
 		return
 	}
 

@@ -231,7 +231,6 @@ func (r *NotificationBarkResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, bark)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

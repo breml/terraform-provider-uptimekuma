@@ -224,7 +224,6 @@ func (r *NotificationMaxResource) Update(
 	maxNotification.ID = data.ID.ValueInt64()
 
 	err := r.client.UpdateNotification(ctx, maxNotification)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

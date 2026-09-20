@@ -213,7 +213,6 @@ func (r *NotificationSignalResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, signal)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

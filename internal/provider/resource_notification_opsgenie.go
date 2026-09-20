@@ -224,7 +224,6 @@ func (r *NotificationOpsgenieResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, opsgenie)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

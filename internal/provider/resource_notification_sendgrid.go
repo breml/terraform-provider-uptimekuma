@@ -256,7 +256,6 @@ func (r *NotificationSendgridResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, sendgrid)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -429,7 +429,6 @@ func (r *MonitorWebsocketUpgradeResource) Delete(
 
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Websocket Upgrade monitor")
 }
 

@@ -256,7 +256,6 @@ func (r *NotificationCellsyntResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, cellsynt)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -258,7 +258,6 @@ func (r *NotificationWhatsapp360messengerResource) Update(
 	whatsapp360messenger.ID = id
 
 	err := r.client.UpdateNotification(ctx, whatsapp360messenger)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

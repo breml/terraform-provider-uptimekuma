@@ -223,7 +223,6 @@ func (r *NotificationNotiferyResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, notifery)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

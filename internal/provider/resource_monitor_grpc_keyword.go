@@ -346,7 +346,6 @@ func (r *MonitorGrpcKeywordResource) Update(
 
 	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, &grpcKeywordMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update gRPC Keyword monitor") {
 		return
 	}
@@ -396,7 +395,6 @@ func (r *MonitorGrpcKeywordResource) Delete(
 
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete gRPC Keyword monitor")
 }
 

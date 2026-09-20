@@ -483,7 +483,6 @@ func (r *MonitorRealBrowserResource) Update(
 
 	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, &realBrowserMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Real Browser monitor") {
 		return
 	}
@@ -524,7 +523,6 @@ func (r *MonitorRealBrowserResource) Delete(
 
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Real Browser monitor")
 }
 

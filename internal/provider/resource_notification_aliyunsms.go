@@ -242,7 +242,6 @@ func (r *NotificationAliyunsmsResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, aliyunsms)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

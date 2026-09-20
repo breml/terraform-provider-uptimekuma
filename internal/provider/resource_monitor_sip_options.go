@@ -306,7 +306,6 @@ func (r *MonitorSIPOptionsResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &sipOptionsMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update SIP Options monitor") {
 		return
 	}
@@ -341,7 +340,6 @@ func (r *MonitorSIPOptionsResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete SIP Options monitor")
 }
 

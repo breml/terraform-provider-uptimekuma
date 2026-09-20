@@ -282,7 +282,6 @@ func (r *MonitorDockerResource) Delete(ctx context.Context, req resource.DeleteR
 
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Docker monitor")
 }
 

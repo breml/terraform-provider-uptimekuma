@@ -207,7 +207,6 @@ func (r *NotificationTelnyxResource) Update(
 	telnyx.ID = id
 
 	err := r.client.UpdateNotification(ctx, telnyx)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

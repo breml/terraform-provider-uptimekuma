@@ -244,7 +244,6 @@ func (r *NotificationSMSCResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, smsc)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -325,7 +325,6 @@ func (r *MonitorRabbitMQResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &rabbitMQMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update RabbitMQ monitor") {
 		return
 	}
@@ -360,7 +359,6 @@ func (r *MonitorRabbitMQResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete RabbitMQ monitor")
 }
 

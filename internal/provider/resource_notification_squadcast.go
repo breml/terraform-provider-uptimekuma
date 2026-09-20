@@ -197,7 +197,6 @@ func (r *NotificationSquadcastResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, squadcast)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

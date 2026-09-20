@@ -91,7 +91,7 @@ func readNotification(
 	wantType string,
 	diags *diag.Diagnostics,
 ) (notification.Base, bool) {
-	base, found, err := readWithResync(ctx, client, id, client.GetNotification, diags)
+	base, found, err := readWithResync(ctx, client, id, client.GetNotification)
 	if err != nil {
 		diags.AddError("failed to read notification", err.Error())
 

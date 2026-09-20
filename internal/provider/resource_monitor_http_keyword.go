@@ -420,7 +420,6 @@ func (r *MonitorHTTPKeywordResource) Delete(
 
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete HTTP Keyword monitor")
 }
 

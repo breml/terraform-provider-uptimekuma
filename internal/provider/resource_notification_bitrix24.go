@@ -205,7 +205,6 @@ func (r *NotificationBitrix24Resource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, bitrix24)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

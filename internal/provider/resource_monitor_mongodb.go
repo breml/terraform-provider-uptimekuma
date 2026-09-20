@@ -335,7 +335,6 @@ func (r *MonitorMongoDBResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &mongoDBMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update MongoDB monitor") {
 		return
 	}
@@ -370,7 +369,6 @@ func (r *MonitorMongoDBResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete MongoDB monitor")
 }
 

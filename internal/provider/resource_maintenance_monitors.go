@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -123,14 +122,9 @@ func (r *MaintenanceMonitorsResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	monitorIDs, err := r.client.GetMonitorMaintenance(ctx, data.MaintenanceID.ValueInt64())
-	// Handle error.
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
 		resp.Diagnostics.AddError("failed to read monitor maintenance", err.Error())
+
 		return
 	}
 

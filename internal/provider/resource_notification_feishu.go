@@ -193,7 +193,6 @@ func (r *NotificationFeishuResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, feishu)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -325,7 +325,6 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	err := r.client.UpdateMonitor(ctx, &pushMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Push monitor") {
 		return
 	}
@@ -356,7 +355,6 @@ func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Push monitor")
 }
 

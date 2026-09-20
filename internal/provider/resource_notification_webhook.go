@@ -258,7 +258,6 @@ func (r *NotificationWebhookResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, webhook)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}
@@ -285,9 +284,7 @@ func (r *NotificationWebhookResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
-	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification")
-
-	if resp.Diagnostics.HasError() {
+	if !deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification") {
 		return
 	}
 

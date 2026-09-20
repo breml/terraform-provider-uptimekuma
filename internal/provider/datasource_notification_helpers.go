@@ -30,7 +30,7 @@ func findNotificationByName(
 		ids := matchNotificationsByName(client.GetNotifications(ctx), name, notificationType)
 
 		return ids, len(ids) > 0, nil
-	}, diags)
+	})
 	if err != nil {
 		diags.AddError("failed to read notifications", err.Error())
 
@@ -96,7 +96,7 @@ func readNotificationWithResync(
 	id int64,
 	diags *diag.Diagnostics,
 ) (notification.Base, bool) {
-	notif, found, err := readWithResync(ctx, client, id, client.GetNotification, diags)
+	notif, found, err := readWithResync(ctx, client, id, client.GetNotification)
 	if err != nil {
 		diags.AddError("failed to read notification", err.Error())
 

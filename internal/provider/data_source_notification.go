@@ -137,7 +137,7 @@ func (d *NotificationDataSource) readByName(
 		}
 
 		return matched, len(matched) > 0, nil
-	}, &resp.Diagnostics)
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read notifications", err.Error())
 

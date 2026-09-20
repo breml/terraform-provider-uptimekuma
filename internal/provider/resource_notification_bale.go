@@ -204,7 +204,6 @@ func (r *NotificationBaleResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, bale)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

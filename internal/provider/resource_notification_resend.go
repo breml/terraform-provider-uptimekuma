@@ -224,7 +224,6 @@ func (r *NotificationResendResource) Update(
 	resend.ID = id
 
 	err := r.client.UpdateNotification(ctx, resend)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

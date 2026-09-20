@@ -304,7 +304,6 @@ func (r *MonitorTCPPortResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &tcpPortMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update TCP Port monitor") {
 		return
 	}
@@ -339,7 +338,6 @@ func (r *MonitorTCPPortResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete TCP Port monitor")
 }
 

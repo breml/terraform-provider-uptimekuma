@@ -231,7 +231,6 @@ func (r *Notification46ElksResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, elks)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

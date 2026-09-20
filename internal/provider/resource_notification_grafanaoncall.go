@@ -197,7 +197,6 @@ func (r *NotificationGrafanaOncallResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, grafanaOncall)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

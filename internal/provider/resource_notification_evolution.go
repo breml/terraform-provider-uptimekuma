@@ -231,7 +231,6 @@ func (r *NotificationEvolutionResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, evolution)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -136,7 +136,6 @@ func (d *MaintenanceDataSource) readByName(
 
 			return matched, len(matched) > 0, matchErr
 		},
-		&resp.Diagnostics,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read maintenances", err.Error())

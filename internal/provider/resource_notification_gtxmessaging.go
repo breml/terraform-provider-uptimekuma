@@ -214,7 +214,6 @@ func (r *NotificationGTXMessagingResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, gtxmessaging)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

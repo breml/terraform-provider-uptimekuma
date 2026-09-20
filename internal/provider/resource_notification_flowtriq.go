@@ -208,7 +208,6 @@ func (r *NotificationFlowtriqResource) Update(
 	flowtriq.ID = id
 
 	err := r.client.UpdateNotification(ctx, flowtriq)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

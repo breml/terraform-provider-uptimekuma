@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -127,14 +126,9 @@ func (r *MaintenanceStatusPagesResource) Read(
 	}
 
 	statusPageIDs, err := r.client.GetMaintenanceStatusPage(ctx, data.MaintenanceID.ValueInt64())
-	// Handle error.
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
 		resp.Diagnostics.AddError("failed to read maintenance status pages", err.Error())
+
 		return
 	}
 

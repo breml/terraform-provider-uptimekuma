@@ -227,7 +227,6 @@ func (r *NotificationPagerTreeResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, pagertree)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -424,7 +424,6 @@ func (r *NotificationOctopushResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, octopush)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

@@ -256,7 +256,6 @@ func (r *MonitorGroupResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	err := r.client.UpdateMonitor(ctx, &groupMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update group monitor") {
 		return
 	}
@@ -287,7 +286,6 @@ func (r *MonitorGroupResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete group monitor")
 }
 

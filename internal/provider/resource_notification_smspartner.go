@@ -224,7 +224,6 @@ func (r *NotificationSMSPartnerResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, smspartner)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

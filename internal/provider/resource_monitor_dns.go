@@ -334,7 +334,6 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	err := r.client.UpdateMonitor(ctx, &dnsMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update DNS monitor") {
 		return
 	}
@@ -365,7 +364,6 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete DNS monitor")
 }
 

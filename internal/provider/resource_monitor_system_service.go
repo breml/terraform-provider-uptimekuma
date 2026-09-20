@@ -303,7 +303,6 @@ func (r *MonitorSystemServiceResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &systemServiceMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update System Service monitor") {
 		return
 	}
@@ -338,7 +337,6 @@ func (r *MonitorSystemServiceResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete System Service monitor")
 }
 

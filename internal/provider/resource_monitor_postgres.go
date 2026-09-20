@@ -313,7 +313,6 @@ func (r *MonitorPostgresResource) Update(
 	}
 
 	err := r.client.UpdateMonitor(ctx, &postgresMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update PostgreSQL monitor") {
 		return
 	}
@@ -348,7 +347,6 @@ func (r *MonitorPostgresResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete PostgreSQL monitor")
 }
 

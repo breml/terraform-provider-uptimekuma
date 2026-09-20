@@ -197,7 +197,6 @@ func (r *NotificationSIGNL4Resource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, signl4)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}

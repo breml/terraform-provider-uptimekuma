@@ -323,7 +323,6 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	err := r.client.UpdateMonitor(ctx, &pingMonitor)
-	// Handle error.
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Ping monitor") {
 		return
 	}
@@ -354,7 +353,6 @@ func (r *MonitorPingResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
 	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Ping monitor")
 }
 
