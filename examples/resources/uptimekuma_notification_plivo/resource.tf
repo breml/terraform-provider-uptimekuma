@@ -9,7 +9,8 @@ resource "uptimekuma_notification_plivo" "example" {
 }
 
 # Deliver the alert as a voice call. Plivo fetches answer_url with an HTTP GET to obtain the
-# Plivo XML driving the call, with the alert text appended as the "message" query parameter.
+# Plivo XML driving the call, with the alert text set as the "message" query parameter,
+# replacing any "message" parameter already present.
 resource "uptimekuma_notification_plivo" "voice_call" {
   name         = "Plivo Voice Call"
   auth_id      = "MA0123456789ABCDEFGH"

@@ -110,7 +110,7 @@ func (*NotificationPlivoResource) Schema(
 				MarkdownDescription: "The absolute URL Plivo fetches with an HTTP GET to obtain the Plivo XML " +
 					"driving the call. It is only used and only required when `message_type` is `call`. " +
 					"Uptime Kuma sets the alert text as the `message` query parameter, replacing any `message` " +
-					"parameter already present.",
+					"parameter already present. Must use the `http://` or `https://` scheme.",
 				Optional: true,
 				Validators: []validator.String{
 					validateURL(),
@@ -273,7 +273,14 @@ func (r *NotificationPlivoResource) Read(ctx context.Context, req resource.ReadR
 		data.MessageType = types.StringValue(plivo.MessageType.String())
 	}
 
-	data.AnswerURL = ptrToTypes(plivo.AnswerURL)
+	// plivoAnswerUrl is a *string, so omitempty drops it only when it is nil, not when it points
+	// at the empty string. A notification whose answer URL was cleared in the Uptime Kuma UI comes
+	// back as "", and keeping that in state against a null configuration would be a perpetual diff.
+	if plivo.AnswerURL == nil || *plivo.AnswerURL == "" {
+		data.AnswerURL = types.StringNull()
+	} else {
+		data.AnswerURL = types.StringValue(*plivo.AnswerURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
