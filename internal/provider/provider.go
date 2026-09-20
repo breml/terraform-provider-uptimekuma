@@ -548,6 +548,7 @@ func notificationResources() []func() resource.Resource {
 		NewNotificationWebhookResource,
 		NewNotificationWebpushResource,
 		NewNotificationWeComResource,
+		NewNotificationWxPusherResource,
 		NewNotificationYZJResource,
 		NewNotificationZohoCliqResource,
 	}
@@ -596,8 +597,10 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewMaintenanceDataSource,
 		NewMaintenanceMonitorsDataSource,
 		NewMaintenanceStatusPagesDataSource,
+		NewMaintenancesDataSource,
 		NewSettingsDataSource,
 		NewStatusPageDataSource,
+		NewTagDataSource,
 	)
 
 	return dataSources
@@ -605,8 +608,6 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 
 func notificationDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewMaintenancesDataSource,
-		NewTagDataSource,
 		NewNotificationDataSource,
 		NewNotification46ElksDataSource,
 		NewNotificationAlertaDataSource,
@@ -701,6 +702,7 @@ func notificationDataSources() []func() datasource.DataSource {
 		NewNotificationWebhookDataSource,
 		NewNotificationWebpushDataSource,
 		NewNotificationWeComDataSource,
+		NewNotificationWxPusherDataSource,
 		NewNotificationYZJDataSource,
 		NewNotificationZohoCliqDataSource,
 	}
