@@ -39,6 +39,12 @@ resource "uptimekuma_notification_smtp" "example" {
   custom_body    = "Service {{ serviceName }} is {{ status }}"
   html_body      = false
 
+  # Optional: extra headers merged into every outgoing mail, as a JSON object
+  additional_headers = jsonencode({
+    "X-Custom-Header" = "Additional Header"
+    "X-Environment"   = "production"
+  })
+
   is_active  = true
   is_default = false
 }
@@ -79,6 +85,7 @@ resource "uptimekuma_notification_smtp" "with_dkim" {
 
 ### Optional
 
+- `additional_headers` (String) Extra headers to merge into every mail Uptime Kuma sends through this notification, given as a JSON object encoded in a string, for example `jsonencode({ "X-Custom-Header" = "Additional Header" })`. Anything other than a JSON object is rejected at plan time. When null, the header set is left untouched and only the headers Uptime Kuma builds itself are sent.
 - `apply_existing` (Boolean)
 - `bcc` (String) BCC email addresses (comma-separated)
 - `cc` (String) CC email addresses (comma-separated)

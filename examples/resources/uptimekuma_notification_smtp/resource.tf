@@ -24,6 +24,12 @@ resource "uptimekuma_notification_smtp" "example" {
   custom_body    = "Service {{ serviceName }} is {{ status }}"
   html_body      = false
 
+  # Optional: extra headers merged into every outgoing mail, as a JSON object
+  additional_headers = jsonencode({
+    "X-Custom-Header" = "Additional Header"
+    "X-Environment"   = "production"
+  })
+
   is_active  = true
   is_default = false
 }

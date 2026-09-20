@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -111,4 +112,57 @@ func (v nonBlankValidator) ValidateString(
 // nonBlank returns a validator that rejects blank strings.
 func nonBlank() validator.String {
 	return nonBlankValidator{}
+}
+
+// jsonObjectValidator rejects strings that do not decode to a JSON object.
+//
+// Uptime Kuma parses such a value with `JSON.parse` and merges the result into
+// the outgoing request, so a scalar, an array or a syntax error is only
+// noticed when the notification actually fires. Rejecting it at plan time
+// reports the typo on the attribute instead.
+type jsonObjectValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (jsonObjectValidator) Description(_ context.Context) string {
+	return "value must be a JSON object"
+}
+
+// MarkdownDescription returns a markdown description of the validator's behavior.
+func (v jsonObjectValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// ValidateString reports an error if the configured value is not a JSON object.
+func (v jsonObjectValidator) ValidateString(
+	ctx context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	var object map[string]any
+
+	err := json.Unmarshal([]byte(req.ConfigValue.ValueString()), &object)
+	if err == nil && object != nil {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		req.Path,
+		"Invalid Attribute Value",
+		fmt.Sprintf(
+			"Attribute %s %s, got: %q.",
+			req.Path,
+			v.Description(ctx),
+			req.ConfigValue.ValueString(),
+		),
+	)
+}
+
+// jsonObject returns a validator that rejects strings which do not decode to a
+// JSON object.
+func jsonObject() validator.String {
+	return jsonObjectValidator{}
 }

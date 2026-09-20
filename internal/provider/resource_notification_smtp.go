@@ -57,6 +57,7 @@ type NotificationSMTPResourceModel struct {
 	CustomSubject        types.String `tfsdk:"custom_subject"`
 	CustomBody           types.String `tfsdk:"custom_body"`
 	HTMLBody             types.Bool   `tfsdk:"html_body"`
+	AdditionalHeaders    types.String `tfsdk:"additional_headers"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -76,7 +77,7 @@ func (*NotificationSMTPResource) Schema(
 ) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "SMTP notification resource",
-		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
+		Attributes: withNotificationBaseAttributes(withSMTPDkimAttributes(map[string]schema.Attribute{
 			"host": schema.StringAttribute{
 				MarkdownDescription: "SMTP server hostname",
 				Required:            true,
@@ -101,31 +102,6 @@ func (*NotificationSMTPResource) Schema(
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
-			},
-			"dkim_domain": schema.StringAttribute{
-				MarkdownDescription: "DKIM domain for email signing",
-				Optional:            true,
-			},
-			"dkim_key_selector": schema.StringAttribute{
-				MarkdownDescription: "DKIM key selector",
-				Optional:            true,
-			},
-			"dkim_private_key": schema.StringAttribute{
-				MarkdownDescription: "DKIM private key for email signing",
-				Optional:            true,
-				Sensitive:           true,
-			},
-			"dkim_hash_algo": schema.StringAttribute{
-				MarkdownDescription: "DKIM hash algorithm (sha1, sha256)",
-				Optional:            true,
-			},
-			"dkim_header_field_names": schema.StringAttribute{
-				MarkdownDescription: "DKIM header field names to sign",
-				Optional:            true,
-			},
-			"dkim_skip_fields": schema.StringAttribute{
-				MarkdownDescription: "DKIM fields to skip",
-				Optional:            true,
 			},
 			"username": schema.StringAttribute{
 				MarkdownDescription: "SMTP username for authentication",
@@ -172,8 +148,57 @@ func (*NotificationSMTPResource) Schema(
 				Computed:            true,
 				Default:             booldefault.StaticBool(false),
 			},
-		}),
+			"additional_headers": schema.StringAttribute{
+				MarkdownDescription: "Extra headers to merge into every mail Uptime Kuma sends " +
+					"through this notification, given as a JSON object encoded in a string, for " +
+					"example `jsonencode({ \"X-Custom-Header\" = \"Additional Header\" })`. Anything " +
+					"other than a JSON object is rejected at plan time. When null, the header set " +
+					"is left untouched and only the headers Uptime Kuma builds itself are sent.",
+				Optional: true,
+				Validators: []validator.String{
+					jsonObject(),
+				},
+			},
+		})),
 	}
+}
+
+// withSMTPDkimAttributes adds the DKIM signing attributes to the provided attribute map. Uptime
+// Kuma only signs a mail when a domain, a key selector and a private key are all set; the
+// remaining attributes tune a signature that is already being produced.
+func withSMTPDkimAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	attrs["dkim_domain"] = schema.StringAttribute{
+		MarkdownDescription: "DKIM domain for email signing",
+		Optional:            true,
+	}
+
+	attrs["dkim_key_selector"] = schema.StringAttribute{
+		MarkdownDescription: "DKIM key selector",
+		Optional:            true,
+	}
+
+	attrs["dkim_private_key"] = schema.StringAttribute{
+		MarkdownDescription: "DKIM private key for email signing",
+		Optional:            true,
+		Sensitive:           true,
+	}
+
+	attrs["dkim_hash_algo"] = schema.StringAttribute{
+		MarkdownDescription: "DKIM hash algorithm (sha1, sha256)",
+		Optional:            true,
+	}
+
+	attrs["dkim_header_field_names"] = schema.StringAttribute{
+		MarkdownDescription: "DKIM header field names to sign",
+		Optional:            true,
+	}
+
+	attrs["dkim_skip_fields"] = schema.StringAttribute{
+		MarkdownDescription: "DKIM fields to skip",
+		Optional:            true,
+	}
+
+	return attrs
 }
 
 // Configure configures the SMTP notification resource with the API client.
@@ -226,6 +251,7 @@ func (r *NotificationSMTPResource) Create(
 			CustomSubject:        data.CustomSubject.ValueString(),
 			CustomBody:           data.CustomBody.ValueString(),
 			HTMLBody:             data.HTMLBody.ValueBool(),
+			AdditionalHeaders:    strToPtr(data.AdditionalHeaders),
 		},
 	}
 
@@ -330,6 +356,7 @@ func (r *NotificationSMTPResource) Update(
 			CustomSubject:        data.CustomSubject.ValueString(),
 			CustomBody:           data.CustomBody.ValueString(),
 			HTMLBody:             data.HTMLBody.ValueBool(),
+			AdditionalHeaders:    strToPtr(data.AdditionalHeaders),
 		},
 	}
 
@@ -450,4 +477,14 @@ func populateSMTPModelFromAPI(
 	}
 
 	data.HTMLBody = types.BoolValue(smtp.HTMLBody)
+
+	// smtpAdditionalHeaders is a *string, so omitempty drops it only when it is nil, not when it
+	// points at the empty string. A notification whose headers were cleared in the Uptime Kuma UI
+	// comes back as "", and keeping that in state against a null configuration would be a
+	// perpetual diff.
+	if smtp.AdditionalHeaders == nil || *smtp.AdditionalHeaders == "" {
+		data.AdditionalHeaders = types.StringNull()
+	} else {
+		data.AdditionalHeaders = types.StringValue(*smtp.AdditionalHeaders)
+	}
 }
