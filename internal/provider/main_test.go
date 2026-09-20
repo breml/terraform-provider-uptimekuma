@@ -67,10 +67,15 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Fatalf("Could not start resource: %v", err)
 		}
 
-		err = container.Expire(1200)
-		if err != nil {
-			log.Fatalf("Could not set expire on container: %v", err)
-		}
+		// No container.Expire here, on purpose. dockertest implements Expire as
+		// an immediate StopContainer(id, seconds), which is a `docker stop` with
+		// a grace period: Uptime Kuma is sent SIGTERM right away and SIGKILLed
+		// `seconds` later, rather than being stopped once the period has passed.
+		// Uptime Kuma installs a SIGTERM handler that stops the monitors, closes
+		// the database and exits the process, so the only reason a run survived
+		// the call was that the signal landed during container boot and was
+		// dropped. The deferred purge below is the real cleanup, and the job's
+		// timeout-minutes in .github/workflows/test.yml is the outer backstop.
 
 		// Register container cleanup immediately so the container is always
 		// purged, even if the connection retry below fails.

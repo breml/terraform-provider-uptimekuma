@@ -68,6 +68,32 @@ func TestEffectiveTimeout_Negative(t *testing.T) {
 	}
 }
 
+// TestEffectiveOperationTimeout covers the bound on a single Uptime Kuma
+// operation. Unlike max retries, zero here is "not configured" and not "no
+// bound": an unset attribute must still leave a command bounded, because an
+// unbounded one blocks an apply for as long as Terraform lets it, which is
+// forever.
+func TestEffectiveOperationTimeout(t *testing.T) {
+	tests := []struct {
+		name       string
+		configured time.Duration
+		want       time.Duration
+	}{
+		{name: "unset falls back to the default", configured: 0, want: defaultOperationTimeout},
+		{name: "negative falls back to the default", configured: -5 * time.Second, want: defaultOperationTimeout},
+		{name: "explicit value is kept", configured: 90 * time.Second, want: 90 * time.Second},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := effectiveOperationTimeout(tc.configured)
+			if got != tc.want {
+				t.Errorf("expected %s, got %s", tc.want, got)
+			}
+		})
+	}
+}
+
 func TestEffectiveMaxRetries_Default(t *testing.T) {
 	got := effectiveMaxRetries(-1)
 	if got != defaultMaxRetries {

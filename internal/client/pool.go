@@ -48,17 +48,19 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
 				"pool config mismatch: existing endpoint=%q username=%q timeout=%s per_attempt_timeout=%s"+
-					" max_retries=%d, requested endpoint=%q username=%q timeout=%s per_attempt_timeout=%s"+
-					" max_retries=%d",
+					" operation_timeout=%s max_retries=%d, requested endpoint=%q username=%q timeout=%s"+
+					" per_attempt_timeout=%s operation_timeout=%s max_retries=%d",
 				p.config.Endpoint,
 				p.config.Username,
 				effectiveTimeout(p.config.ConnectTimeout),
 				p.config.PerAttemptTimeout,
+				effectiveOperationTimeout(p.config.OperationTimeout),
 				effectiveMaxRetries(p.config.MaxRetries),
 				config.Endpoint,
 				config.Username,
 				effectiveTimeout(config.ConnectTimeout),
 				config.PerAttemptTimeout,
+				effectiveOperationTimeout(config.OperationTimeout),
 				effectiveMaxRetries(config.MaxRetries),
 			)
 		}
@@ -163,6 +165,8 @@ func (p *Pool) configMatches(config *Config) bool {
 		p.config.Password == config.Password &&
 		effectiveTimeout(p.config.ConnectTimeout) == effectiveTimeout(config.ConnectTimeout) &&
 		p.config.PerAttemptTimeout == config.PerAttemptTimeout &&
+		effectiveOperationTimeout(p.config.OperationTimeout) ==
+			effectiveOperationTimeout(config.OperationTimeout) &&
 		effectiveMaxRetries(p.config.MaxRetries) == effectiveMaxRetries(config.MaxRetries)
 }
 

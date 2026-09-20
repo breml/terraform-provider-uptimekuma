@@ -929,14 +929,19 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 2. Create Docker pool and ping daemon
 3. Run a `louislam/uptime-kuma:2.5.0` container with `AutoRemove`, publishing its port
    3001 on a random host port
-4. Set a 1200-second container expiry, as a safety net for when cleanup does not run
-5. Register the cleanup before connecting, so the container is purged even if the
+4. Register the cleanup before connecting, so the container is purged even if the
    connection below never succeeds
-6. Connect with `pool.Retry` (exponential backoff, up to dockertest's default 1 minute).
+5. Connect with `pool.Retry` (exponential backoff, up to dockertest's default 1 minute).
    This first connection runs autosetup, which creates the admin user
-7. Keep that connection as `outOfBandClient` rather than closing it, see below
-8. Run all tests (provider creates its own pooled connection, shared across tests)
-9. Cleanup: disconnect `outOfBandClient`, close the pool, purge the container
+6. Keep that connection as `outOfBandClient` rather than closing it, see below
+7. Run all tests (provider creates its own pooled connection, shared across tests)
+8. Cleanup: disconnect `outOfBandClient`, close the pool, purge the container
+
+There is deliberately no `container.Expire`. dockertest implements it as an immediate
+`StopContainer(id, seconds)`, i.e. a `docker stop` that sends SIGTERM straight away and
+SIGKILLs after the grace period, rather than stopping the container once the period has
+passed. Uptime Kuma handles SIGTERM by closing the database and exiting, so the call was
+a race the suite happened to keep winning. The deferred purge is the real cleanup.
 
 **Global Variables** (used by all tests):
 

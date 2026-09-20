@@ -32,6 +32,20 @@ whole connection process (across all retry attempts and backoff). Each individua
 `min(PerAttemptTimeout, remainingBudget)` via `kuma.WithConnectTimeout`. When `PerAttemptTimeout` is zero, each
 attempt may use the full remaining budget.
 
+### defaultOperationTimeout
+
+```go
+const defaultOperationTimeout = 60 * time.Second
+```
+
+Applied when no explicit `OperationTimeout` is configured (zero or negative), resolved by
+`effectiveOperationTimeout` and passed on as `kuma.WithOperationTimeout`. It bounds a **single** operation once the
+connection is up - the wait for the server's ack and for the update event confirming it - and is unrelated to
+`ConnectTimeout`, which only covers establishing the connection. Without it an ack Uptime Kuma never sends blocks the
+operation for as long as the caller's context lives, and Terraform gives a provider no deadline of its own, so the
+apply would hang indefinitely. Unlike `MaxRetries`, zero means "not configured" and never "no bound": a caller that
+wants a very long one configures it explicitly.
+
 ### defaultMaxRetries
 
 ```go
@@ -56,6 +70,7 @@ type Config struct {
     EnableConnectionPool bool           // For acceptance tests, enables pooling
     ConnectTimeout       time.Duration  // Overall timeout budget across all retry attempts (default: 30s)
     PerAttemptTimeout    time.Duration  // Optional per-attempt cap; defaults to remaining ConnectTimeout budget
+    OperationTimeout     time.Duration  // Bound on a single operation once connected (default: 60s)
     MaxRetries           int            // Max retry attempts (default: 3)
 }
 ```
@@ -69,6 +84,10 @@ type Config struct {
   connection process across all retry attempts and backoff
 - `PerAttemptTimeout` (when greater than zero) caps the time spent on each individual connection attempt; the effective
   per-attempt timeout is `min(PerAttemptTimeout, remainingBudget)`
+- `OperationTimeout` defaults to `defaultOperationTimeout` (60s) when zero or negative; it bounds each create, read,
+  update or delete after the connection is established, so a command Uptime Kuma never answers fails instead of
+  hanging. It is part of the pool's config identity, so a second provider configuration with a different value is
+  rejected rather than silently reusing the first connection
 
 ### Pool
 
@@ -97,6 +116,7 @@ config := &Config{
     LogLevel:             0,
     EnableConnectionPool: true,           // Always enabled by provider
     ConnectTimeout:       30 * time.Second, // overall budget; 0 uses defaultConnectTimeout
+    OperationTimeout:     60 * time.Second, // per-operation bound; 0 uses defaultOperationTimeout
     MaxRetries:           defaultMaxRetries, // 0 means no retries; negative uses defaultMaxRetries
 }
 
