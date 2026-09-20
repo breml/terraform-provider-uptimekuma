@@ -165,8 +165,7 @@ func (r *DockerHostResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Call API to update Docker host.
 	err := r.client.UpdateDockerHost(ctx, config)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update docker host", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update docker host") {
 		return
 	}
 
@@ -186,8 +185,5 @@ func (r *DockerHostResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	// Call API to delete Docker host.
 	err := r.client.DeleteDockerHost(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete docker host", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete docker host")
 }

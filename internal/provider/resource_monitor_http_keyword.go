@@ -122,7 +122,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -386,8 +386,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 	httpKeywordMonitor.ID = data.ID.ValueInt64()
 
 	err := r.client.UpdateMonitor(ctx, &httpKeywordMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update HTTP Keyword monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update HTTP Keyword monitor") {
 		return
 	}
 
@@ -422,10 +421,7 @@ func (r *MonitorHTTPKeywordResource) Delete(
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete HTTP Keyword monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete HTTP Keyword monitor")
 }
 
 // ImportState imports an existing resource by ID.

@@ -146,7 +146,7 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -300,8 +300,7 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 
 	err := r.client.UpdateMonitor(ctx, &redisMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update Redis monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Redis monitor") {
 		return
 	}
 
@@ -332,10 +331,7 @@ func (r *MonitorRedisResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete Redis monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Redis monitor")
 }
 
 // ImportState imports an existing resource by ID.

@@ -175,7 +175,7 @@ func (r *MonitorDNSResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -335,8 +335,7 @@ func (r *MonitorDNSResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	err := r.client.UpdateMonitor(ctx, &dnsMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update DNS monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update DNS monitor") {
 		return
 	}
 
@@ -367,10 +366,7 @@ func (r *MonitorDNSResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete DNS monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete DNS monitor")
 }
 
 // ImportState imports an existing resource by ID.

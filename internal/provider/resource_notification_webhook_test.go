@@ -22,7 +22,7 @@ func TestAccNotificationWebhookResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNotificationWebhookResourceConfig(name, webhookURL, "json", ""),
+				Config: testAccNotificationWebhookResourceConfig(name, webhookURL, "json"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_webhook.test",
@@ -47,7 +47,7 @@ func TestAccNotificationWebhookResource(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccNotificationWebhookResourceConfig(nameUpdated, webhookURLUpdated, "form-data", ""),
+				Config: testAccNotificationWebhookResourceConfig(nameUpdated, webhookURLUpdated, "form-data"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_webhook.test",
@@ -138,9 +138,8 @@ func testAccNotificationWebhookResourceConfig(
 	name string,
 	webhookURL string,
 	contentType string,
-	customBody string,
 ) string {
-	config := fmt.Sprintf(`
+	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name                 = %[1]q
   webhook_url          = %[2]q
@@ -148,20 +147,6 @@ resource "uptimekuma_notification_webhook" "test" {
   is_active            = true
 }
 `, name, webhookURL, contentType)
-
-	if customBody != "" {
-		config = fmt.Sprintf(`
-resource "uptimekuma_notification_webhook" "test" {
-  name                 = %[1]q
-  webhook_url          = %[2]q
-  webhook_content_type = %[3]q
-  webhook_custom_body  = %[4]q
-  is_active            = true
-}
-`, name, webhookURL, contentType, customBody)
-	}
-
-	return providerConfig() + config
 }
 
 func testAccNotificationWebhookResourceConfigWithHeaders(name string, webhookURL string) string {

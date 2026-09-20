@@ -158,19 +158,22 @@ func domainExpiryNotificationAttribute() schema.BoolAttribute {
 //
 // Returns an error if the pause call fails. Callers must persist state with the new
 // monitor ID before surfacing the error so a transient pause failure does not orphan
-// the just-created monitor.
+// the just-created monitor. A pause the server applied without broadcasting the event
+// that confirms it is not such a failure: the monitor is paused, so it is warned about
+// through diags and reported as a success.
 func handleMonitorActiveStateCreate(
 	ctx context.Context,
 	client *kuma.Client,
 	monitorID int64,
 	active types.Bool,
+	diags *diag.Diagnostics,
 ) error {
 	if active.IsNull() || active.IsUnknown() || active.ValueBool() {
 		return nil
 	}
 
 	err := client.PauseMonitor(ctx, monitorID)
-	if err != nil {
+	if err != nil && !updateLanded(diags, err) {
 		return fmt.Errorf("failed to pause monitor %d: %w", monitorID, err)
 	}
 
@@ -208,9 +211,9 @@ func handleMonitorActiveStateUpdate(
 	}
 
 	if err != nil {
-		diags.AddError(
+		updatedWithoutEvent(
+			diags, err,
 			fmt.Sprintf("failed to update active state for monitor %d", monitorID),
-			err.Error(),
 		)
 	}
 }

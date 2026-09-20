@@ -174,7 +174,7 @@ func (r *MonitorPushResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -326,8 +326,7 @@ func (r *MonitorPushResource) Update(ctx context.Context, req resource.UpdateReq
 
 	err := r.client.UpdateMonitor(ctx, &pushMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update Push monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Push monitor") {
 		return
 	}
 
@@ -358,10 +357,7 @@ func (r *MonitorPushResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete Push monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Push monitor")
 }
 
 // ImportState imports an existing resource by ID.

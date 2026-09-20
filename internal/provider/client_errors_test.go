@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -471,5 +472,128 @@ func TestRemoveOnMissKeepsStateWhenTheServerNeverSentTheList(t *testing.T) {
 
 	if got := resp.Diagnostics.Errors()[0].Detail(); !strings.Contains(got, proxyListEvent) {
 		t.Errorf("want the missing list named in %q", got)
+	}
+}
+
+func TestUpdatedWithoutEvent(t *testing.T) {
+	t.Parallel()
+
+	const summary = "failed to update notification"
+
+	t.Run("a genuine failure is reported and stops the caller", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		if updatedWithoutEvent(&diags, errors.New("server said no"), summary) {
+			t.Error("want false for a failed update, got true")
+		}
+
+		if diags.ErrorsCount() != 1 {
+			t.Fatalf("want 1 error, got %d", diags.ErrorsCount())
+		}
+
+		if got := diags.Errors()[0].Summary(); got != summary {
+			t.Errorf("want summary %q, got %q", summary, got)
+		}
+	})
+
+	t.Run("a lost update event is a success with a warning", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		err := fmt.Errorf("edit notification: %w", kuma.ErrUpdateEventTimeout)
+
+		// The server applied the write, so the caller must go on to write the
+		// planned values to state rather than leave the prior ones there.
+		if !updatedWithoutEvent(&diags, err, summary) {
+			t.Error("want true for an update that landed, got false")
+		}
+
+		if diags.HasError() {
+			t.Errorf("want no error diagnostic, got %v", diags.Errors())
+		}
+
+		if diags.WarningsCount() != 1 {
+			t.Fatalf("want 1 warning, got %d", diags.WarningsCount())
+		}
+	})
+}
+
+func TestDeletedWithoutEvent(t *testing.T) {
+	t.Parallel()
+
+	const summary = "failed to delete notification"
+
+	t.Run("a successful delete reports nothing", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		deletedWithoutEvent(&diags, nil, summary)
+
+		if len(diags) != 0 {
+			t.Errorf("want no diagnostics, got %v", diags)
+		}
+	})
+
+	t.Run("a genuine failure is reported as an error", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		deletedWithoutEvent(&diags, errors.New("server said no"), summary)
+
+		if diags.ErrorsCount() != 1 {
+			t.Fatalf("want 1 error, got %d", diags.ErrorsCount())
+		}
+
+		if got := diags.Errors()[0].Summary(); got != summary {
+			t.Errorf("want summary %q, got %q", summary, got)
+		}
+	})
+
+	t.Run("a lost update event leaves the delete a success", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		err := fmt.Errorf("delete notification: %w", kuma.ErrUpdateEventTimeout)
+
+		deletedWithoutEvent(&diags, err, summary)
+
+		// An error here would fail the apply and keep a resource in state that
+		// the server no longer has.
+		if diags.HasError() {
+			t.Errorf("want no error diagnostic, got %v", diags.Errors())
+		}
+
+		if diags.WarningsCount() != 1 {
+			t.Fatalf("want 1 warning, got %d", diags.WarningsCount())
+		}
+	})
+}
+
+func TestRemoveOnMissKeepsStateWithoutASessionToken(t *testing.T) {
+	t.Parallel()
+
+	resp := readResponse(t)
+	client := &fakeResyncer{token: ""}
+
+	removeOnMiss(t.Context(), client, notificationListEvent, "notification", resp)
+
+	// Without a token readWithResync could not resync, so the miss may be
+	// nothing more than a cache that is one broadcast behind.
+	if resp.State.Raw.IsNull() {
+		t.Error("want the resource left in state")
+	}
+
+	if resp.Diagnostics.ErrorsCount() != 1 {
+		t.Fatalf("want 1 error, got %d", resp.Diagnostics.ErrorsCount())
+	}
+
+	if got := resp.Diagnostics.Errors()[0].Detail(); !strings.Contains(got, "username and password") {
+		t.Errorf("want the fix named in %q", got)
 	}
 }

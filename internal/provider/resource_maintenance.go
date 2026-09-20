@@ -363,8 +363,7 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 
 	err = r.client.UpdateMaintenance(ctx, m)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update maintenance", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update maintenance") {
 		return
 	}
 
@@ -394,10 +393,7 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	err := r.client.DeleteMaintenance(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete maintenance", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete maintenance")
 }
 
 // ValidateConfig validates the resource configuration.

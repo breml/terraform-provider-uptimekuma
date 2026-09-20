@@ -434,7 +434,7 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
 
 		return
 	}
@@ -489,8 +489,8 @@ func (r *NotificationNtfyResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, ntfy)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update notification", err.Error())
+	// Handle error.
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}
 
@@ -514,10 +514,7 @@ func (r *NotificationNtfyResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete notification", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification")
 }
 
 // ImportState imports an existing resource by ID.

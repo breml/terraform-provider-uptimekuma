@@ -492,7 +492,30 @@ list at all - a reverse proxy dropping the socket.io event, or a version that
 does not emit it - so both helpers take the list event behind the lookup and say
 so rather than flatly reporting the resource as absent. `removeOnMiss()` also
 refuses to drop the resource from state in that case, because doing so would
-make the next apply create a duplicate.
+make the next apply create a duplicate. It refuses for the same reason when the
+provider holds no session token: `resyncCache()` then skips the resync, so the
+miss was never checked against fresh data and a live resource looks exactly like
+a deleted one.
+
+**A write that fails with `kuma.ErrUpdateEventTimeout` took effect.** The client
+acknowledges the command and then waits for the event that carries the change;
+when only the event is lost it says so with that sentinel, which its write
+methods document as "was created" / "was updated" / "was deleted". Reporting it
+as a plain error would leave a created resource out of state, keep the prior
+values for an update the server already applied, or fail a destroy that
+succeeded. Route every write through the helpers in
+[client_errors.go](client_errors.go) instead:
+
+- `createdWithoutEvent()` - adopts the ID the server assigned
+- `updatedWithoutEvent()` - tells the caller to carry on to `resp.State.Set()`
+- `deletedWithoutEvent()` - lets the framework drop the resource from state
+- `updateLanded()` - the same warning for a caller that reports the failure
+  itself, e.g. `handleMonitorActiveStateCreate()`
+
+Each one warns rather than errors when the write landed. Only
+`syncEmitWithUpdateEvent` / `syncEmitWithConfirmedUpdateEvent` writes can
+produce the sentinel; `AddTag`, `SetMonitorMaintenance` and the status page
+writes go out as a plain `syncEmit` and need none of this.
 
 The helpers take the `resyncer` interface rather than `*kuma.Client`, so they
 are unit-testable; see [client_errors_test.go](client_errors_test.go).
@@ -684,7 +707,9 @@ func (r *{Type}Resource) Read(ctx context.Context, req resource.ReadRequest, res
     // For notifications (type erasure)
     baseNotification, err := r.client.GetNotification(ctx, id)
 
-    // 3. Handle 404 (resource deleted externally)
+    // 3. Handle 404 (resource deleted externally). A cache-backed getter
+    //    reports the miss through readWithResync/findWithResync instead, and
+    //    the miss goes to removeOnMiss rather than to RemoveResource directly.
     if errors.Is(err, kuma.ErrNotFound) {
         resp.State.RemoveResource(ctx)
         return
@@ -721,10 +746,10 @@ func (r *{Type}Resource) Update(ctx context.Context, req resource.UpdateRequest,
         return
     }
 
-    // 3. Call API
+    // 3. Call API. A lost update event means the server applied the write, so
+    //    the caller must carry on to resp.State.Set rather than report it.
     err := r.client.UpdateResource(ctx, apiObject)
-    if err != nil {
-        resp.Diagnostics.AddError("Update failed", err.Error())
+    if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "Update failed") {
         return
     }
 
@@ -748,13 +773,11 @@ func (r *{Type}Resource) Delete(ctx context.Context, req resource.DeleteRequest,
         return
     }
 
-    // 2. Call API
+    // 2. Call API. deletedWithoutEvent reports nothing for a nil error, and
+    //    warns rather than fails when only the confirming event was lost.
     id := data.ID.ValueInt64()
     err := r.client.DeleteResource(ctx, id)
-    if err != nil {
-        resp.Diagnostics.AddError("Delete failed", err.Error())
-        return
-    }
+    deletedWithoutEvent(&resp.Diagnostics, err, "Delete failed")
 
     // 3. State automatically removed by Terraform
 }
@@ -827,6 +850,12 @@ if errors.Is(err, kuma.ErrNotFound) {
     return
 }
 ```
+
+Only the five cache getters produce `kuma.ErrNotFound`: `GetNotification`,
+`GetProxy`, `GetTag`, `GetMonitorTags` and `GetDockerHost`. A write never does -
+the server's rejection comes back as an unwrapped `fmt.Errorf("%s: %s", ...)` -
+so an `errors.Is(err, kuma.ErrNotFound)` branch on a delete is dead code that
+reads as an idempotency guarantee the provider does not have.
 
 ### List/Nested Object Handling
 

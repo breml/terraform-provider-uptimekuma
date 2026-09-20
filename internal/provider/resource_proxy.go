@@ -255,8 +255,7 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	err := r.client.UpdateProxy(ctx, p)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update proxy", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update proxy") {
 		return
 	}
 
@@ -276,8 +275,5 @@ func (r *ProxyResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	err := r.client.DeleteProxy(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete proxy", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete proxy")
 }

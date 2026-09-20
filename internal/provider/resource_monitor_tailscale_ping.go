@@ -140,7 +140,7 @@ func (r *MonitorTailscalePingResource) Create(
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -292,8 +292,7 @@ func (r *MonitorTailscalePingResource) Update(
 
 	err := r.client.UpdateMonitor(ctx, &tailscalePingMonitor)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update Tailscale Ping monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Tailscale Ping monitor") {
 		return
 	}
 
@@ -328,10 +327,7 @@ func (r *MonitorTailscalePingResource) Delete(
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete Tailscale Ping monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Tailscale Ping monitor")
 }
 
 // ImportState imports an existing resource by ID.

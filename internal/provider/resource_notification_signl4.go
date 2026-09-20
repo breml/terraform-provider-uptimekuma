@@ -141,7 +141,7 @@ func (r *NotificationSIGNL4Resource) Read(
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
 
 		return
 	}
@@ -198,8 +198,7 @@ func (r *NotificationSIGNL4Resource) Update(
 
 	err := r.client.UpdateNotification(ctx, signl4)
 	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update notification", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}
 
@@ -223,11 +222,7 @@ func (r *NotificationSIGNL4Resource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete notification", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification")
 }
 
 // ImportState imports an existing resource by ID.

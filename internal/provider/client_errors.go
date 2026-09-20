@@ -69,6 +69,84 @@ func createdWithoutEvent(diags *diag.Diagnostics, err error, id int64, summary s
 	return true
 }
 
+// updatedWithoutEvent reports a failed update and tells the caller whether the
+// server applied it nevertheless.
+//
+// It is createdWithoutEvent for an edit. The client acknowledges the command
+// and then waits for the update event that carries the change; when only the
+// event is lost it returns an error wrapping kuma.ErrUpdateEventTimeout, which
+// its write methods document as "was updated". Reporting that as a plain error
+// would leave Terraform holding the prior values while the server holds the
+// new ones, and say "failed to update" about a write that landed, so the
+// caller is told to carry on to resp.State.Set instead and the mismatch is
+// warned about.
+//
+// Unlike a create there is no ID to adopt: the resource is already in state.
+//
+// It returns false when the update genuinely failed. The error has then been
+// reported and the caller must return without touching state.
+func updatedWithoutEvent(diags *diag.Diagnostics, err error, summary string) bool {
+	if updateLanded(diags, err) {
+		return true
+	}
+
+	diags.AddError(summary, err.Error())
+
+	return false
+}
+
+// updateLanded reports whether a failed write nevertheless took effect on the
+// server, and warns about it when it did.
+//
+// It is updatedWithoutEvent for a caller that reports the failure itself, such
+// as one that wraps the error for a caller of its own, and is what keeps the
+// two paths saying the same thing about a lost event.
+func updateLanded(diags *diag.Diagnostics, err error) bool {
+	if !errors.Is(err, kuma.ErrUpdateEventTimeout) {
+		return false
+	}
+
+	diags.AddWarning(
+		"Updated without confirmation",
+		fmt.Sprintf(
+			"Uptime Kuma applied the update, but the event confirming it did not arrive: %s. The "+
+				"planned values have been written to state, because the server holds them. Run "+
+				"`terraform plan` to refresh them.",
+			err,
+		),
+	)
+
+	return true
+}
+
+// deletedWithoutEvent reports a failed delete, unless the resource is gone and
+// only the event confirming it was lost.
+//
+// The client's delete methods document an error wrapping
+// kuma.ErrUpdateEventTimeout as "was deleted". Reporting it would fail the
+// apply and keep the resource in state although the server no longer has it,
+// leaving a state entry whose only cure is another destroy. Warning instead
+// lets the framework drop it from state, which is what actually happened.
+//
+// It reports nothing when err is nil, so a caller can hand it every outcome.
+func deletedWithoutEvent(diags *diag.Diagnostics, err error, summary string) {
+	switch {
+	case err == nil:
+	case !errors.Is(err, kuma.ErrUpdateEventTimeout):
+		diags.AddError(summary, err.Error())
+
+	default:
+		diags.AddWarning(
+			"Deleted without confirmation",
+			fmt.Sprintf(
+				"Uptime Kuma deleted the resource, but the event confirming it did not arrive: "+
+					"%s. It has been removed from state, because the server no longer has it.",
+				err,
+			),
+		)
+	}
+}
+
 // resyncCache rebuilds the client's state cache, so that a lookup which matched
 // nothing can be retried against fresh data.
 //
@@ -227,12 +305,17 @@ func reportMiss(
 // nothing, which is how a resource read reports that it was deleted outside
 // Terraform.
 //
-// It refuses to do so when the list behind the lookup never arrived, for the
-// reason reportMiss explains: removing the resource would be a silent deletion
-// of state that a later apply recreates as a duplicate, on no better evidence
-// than a socket.io event the server never sent. It reports an error instead,
-// leaving state alone. name is the resource in the words of that error, e.g.
-// "proxy".
+// It refuses to do so whenever the miss is not evidence of a deletion, and
+// reports an error instead, leaving state alone. Removing the resource would
+// otherwise be a silent deletion of state that a later apply recreates as a
+// duplicate. name is the resource in the words of that error, e.g. "proxy".
+//
+// There are two such cases. The list behind the lookup may never have arrived,
+// for the reason reportMiss explains. Or the provider may hold no session
+// token, in which case readWithResync could not resync before believing the
+// miss: the cache is one list behind whenever a write's broadcast is
+// outstanding, and without the resync that refreshes it a live resource and a
+// deleted one look exactly alike.
 func removeOnMiss(
 	ctx context.Context,
 	client resyncer,
@@ -240,21 +323,37 @@ func removeOnMiss(
 	name string,
 	resp *resource.ReadResponse,
 ) {
-	if !slices.Contains(client.MissingReadyEvents(), listEvent) {
+	switch {
+	case slices.Contains(client.MissingReadyEvents(), listEvent):
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Could not determine whether the %s still exists", name),
+			fmt.Sprintf(
+				"Uptime Kuma never sent its %s to the provider, so the %s cannot be found in the "+
+					"provider's cache and the provider cannot tell whether it was deleted. It "+
+					"has been left in state rather than removed, because removing it would make "+
+					"the next apply create a duplicate. This is usually a reverse proxy dropping "+
+					"the socket.io event, or a server version that does not emit that list.",
+				listEvent, name,
+			),
+		)
+
+	case client.SessionToken() == "":
+		resp.Diagnostics.AddError(
+			fmt.Sprintf("Could not determine whether the %s still exists", name),
+			fmt.Sprintf(
+				"The %s is not in the provider's cache, but the provider is configured without "+
+					"credentials, holds no session token and therefore cannot ask Uptime Kuma to "+
+					"resend its %s. A cache that is one update behind reports a %s that is alive "+
+					"exactly like one that was deleted, so it has been left in state rather than "+
+					"removed, because removing it would make the next apply create a duplicate. "+
+					"Set username and password on the provider so the provider can tell the two "+
+					"apart, or remove the %s from state with `terraform state rm` if it really "+
+					"is gone.",
+				name, listEvent, name, name,
+			),
+		)
+
+	default:
 		resp.State.RemoveResource(ctx)
-
-		return
 	}
-
-	resp.Diagnostics.AddError(
-		fmt.Sprintf("Could not determine whether the %s still exists", name),
-		fmt.Sprintf(
-			"Uptime Kuma never sent its %s to the provider, so the %s cannot be found in the "+
-				"provider's cache and the provider cannot tell whether it was deleted. It has "+
-				"been left in state rather than removed, because removing it would make the next "+
-				"apply create a duplicate. This is usually a reverse proxy dropping the socket.io "+
-				"event, or a server version that does not emit that list.",
-			listEvent, name,
-		),
-	)
 }
