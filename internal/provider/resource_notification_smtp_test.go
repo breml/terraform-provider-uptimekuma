@@ -209,3 +209,78 @@ resource "uptimekuma_notification_smtp" "test" {
 	config += "}\n"
 	return config
 }
+
+func TestAccNotificationSMTPResourceAdditionalHeaders(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationSMTPHeaders")
+	headers := `{"X-Custom-Header":"Additional Header"}`
+	headersUpdated := `{"X-Custom-Header":"Changed Header","X-Environment":"production"}`
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNotificationSMTPAdditionalHeadersConfig(name, headers),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_smtp.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(name),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_smtp.test",
+						tfjsonpath.New("additional_headers"),
+						knownvalue.StringExact(headers),
+					),
+				},
+			},
+			{
+				Config: testAccNotificationSMTPAdditionalHeadersConfig(name, headersUpdated),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_smtp.test",
+						tfjsonpath.New("additional_headers"),
+						knownvalue.StringExact(headersUpdated),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_notification_smtp.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Removing the attribute must clear it on the server rather than leave the previous
+			// value behind, which would show up as a plan that never converges.
+			{
+				Config: testAccNotificationSMTPAdditionalHeadersConfig(name, ""),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_smtp.test",
+						tfjsonpath.New("additional_headers"),
+						knownvalue.Null(),
+					),
+				},
+			},
+		},
+	})
+}
+
+// testAccNotificationSMTPAdditionalHeadersConfig renders a minimal SMTP notification. An empty
+// headers argument omits additional_headers entirely, so the attribute is null rather than empty.
+func testAccNotificationSMTPAdditionalHeadersConfig(name string, headers string) string {
+	config := providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_smtp" "test" {
+  name = %[1]q
+  host = "smtp.example.com"
+  from = "uptime-kuma@example.com"
+  to   = "admin@example.com"
+`, name)
+
+	if headers != "" {
+		config += fmt.Sprintf("  additional_headers = %q\n", headers)
+	}
+
+	config += "}\n"
+
+	return config
+}

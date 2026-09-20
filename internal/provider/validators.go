@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -111,4 +112,61 @@ func (v nonBlankValidator) ValidateString(
 // nonBlank returns a validator that rejects blank strings.
 func nonBlank() validator.String {
 	return nonBlankValidator{}
+}
+
+// jsonObjectValidator rejects strings that do not decode to a JSON object.
+//
+// The value is handed to a server that parses it and spreads the result into
+// an object of its own, which reports a syntax error at best and never
+// reports the rest: a scalar spreads to nothing and an array spreads to
+// index-keyed entries, both silently and both only once the value is
+// actually used. Rejecting a non-object while the configuration is validated
+// reports the mistake on the attribute instead.
+type jsonObjectValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (jsonObjectValidator) Description(_ context.Context) string {
+	return "value must be a JSON object"
+}
+
+// MarkdownDescription returns a markdown description of the validator's behavior.
+func (v jsonObjectValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// ValidateString reports an error if the configured value is not a JSON object.
+func (v jsonObjectValidator) ValidateString(
+	ctx context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	var object map[string]any
+
+	// The literal `null` decodes into a nil map without an error, so the map
+	// has to be checked as well: err alone would accept it.
+	err := json.Unmarshal([]byte(req.ConfigValue.ValueString()), &object)
+	if err == nil && object != nil {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		req.Path,
+		"Invalid Attribute Value",
+		fmt.Sprintf(
+			"Attribute %s %s, got: %q.",
+			req.Path,
+			v.Description(ctx),
+			req.ConfigValue.ValueString(),
+		),
+	)
+}
+
+// jsonObject returns a validator that rejects strings which do not decode to a
+// JSON object.
+func jsonObject() validator.String {
+	return jsonObjectValidator{}
 }

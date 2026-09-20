@@ -216,3 +216,46 @@ func TestMonitorPM2ProcessNameValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestJSONObjectValidator(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value     types.String
+		wantError bool
+	}{
+		"object":            {value: types.StringValue(`{"X-Custom-Header": "Additional Header"}`), wantError: false},
+		"empty object":      {value: types.StringValue(`{}`), wantError: false},
+		"nested object":     {value: types.StringValue(`{"a": {"b": 1}}`), wantError: false},
+		"surrounded by ws":  {value: types.StringValue("  {\"a\": \"b\"}\n"), wantError: false},
+		"null":              {value: types.StringNull(), wantError: false},
+		"unknown":           {value: types.StringUnknown(), wantError: false},
+		"array":             {value: types.StringValue(`["a", "b"]`), wantError: true},
+		"string":            {value: types.StringValue(`"a"`), wantError: true},
+		"number":            {value: types.StringValue(`1`), wantError: true},
+		"json null":         {value: types.StringValue(`null`), wantError: true},
+		"empty":             {value: types.StringValue(``), wantError: true},
+		"trailing comma":    {value: types.StringValue(`{"a": "b",}`), wantError: true},
+		"unquoted key":      {value: types.StringValue(`{a: "b"}`), wantError: true},
+		"two objects":       {value: types.StringValue(`{"a": "b"}{"c": "d"}`), wantError: true},
+		"header list":       {value: types.StringValue("X-Custom-Header: Additional Header"), wantError: true},
+		"non-string values": {value: types.StringValue(`{"a": 1, "b": true}`), wantError: false},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := &validator.StringResponse{}
+			jsonObject().ValidateString(
+				t.Context(),
+				validator.StringRequest{ConfigValue: test.value},
+				resp,
+			)
+
+			if got := resp.Diagnostics.HasError(); got != test.wantError {
+				t.Errorf("HasError() = %v, want %v (%v)", got, test.wantError, resp.Diagnostics)
+			}
+		})
+	}
+}
