@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 // testAccOutOfBandClient returns the dedicated out-of-band kuma client for use
@@ -369,5 +371,272 @@ resource "uptimekuma_status_page" "test" {
 				},
 			},
 		},
+	})
+}
+
+// testAccDeleteNotificationExternally deletes a notification via the kuma API,
+// simulating an external deletion outside of Terraform.
+func testAccDeleteNotificationExternally(
+	t *testing.T,
+	kumaClient *kuma.Client,
+	resourceAddr string,
+) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(s *terraform.State) error {
+		id, err := testAccResourceID(s, resourceAddr)
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		deleteErr := kumaClient.DeleteNotification(ctx, id)
+		if deleteErr != nil {
+			return fmt.Errorf("failed to delete notification externally: %w", deleteErr)
+		}
+
+		return nil
+	}
+}
+
+// testAccChangeNotificationTypeToGotify rewrites a notification as a Gotify one,
+// keeping its ID and name, simulating a type change outside of Terraform.
+func testAccChangeNotificationTypeToGotify(
+	t *testing.T,
+	kumaClient *kuma.Client,
+	resourceAddr string,
+) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(s *terraform.State) error {
+		id, err := testAccResourceID(s, resourceAddr)
+		if err != nil {
+			return err
+		}
+
+		rs := s.RootModule().Resources[resourceAddr]
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		gotify := notification.Gotify{
+			Base: notification.Base{
+				ID:       id,
+				Name:     rs.Primary.Attributes["name"],
+				IsActive: true,
+			},
+			GotifyDetails: notification.GotifyDetails{
+				ServerURL:        "https://gotify.example.com",
+				ApplicationToken: "token",
+			},
+		}
+
+		updateErr := kumaClient.UpdateNotification(ctx, gotify)
+		if updateErr != nil {
+			return fmt.Errorf("failed to change notification type to gotify: %w", updateErr)
+		}
+
+		return nil
+	}
+}
+
+// testAccResourceID reads the numeric id attribute of a resource from state.
+func testAccResourceID(s *terraform.State, resourceAddr string) (int64, error) {
+	rs, ok := s.RootModule().Resources[resourceAddr]
+	if !ok {
+		return 0, fmt.Errorf("resource %s not found in state", resourceAddr)
+	}
+
+	id, err := strconv.ParseInt(rs.Primary.Attributes["id"], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse id of %s: %w", resourceAddr, err)
+	}
+
+	return id, nil
+}
+
+// TestAccNotificationWebhookResource_disappears verifies that a notification
+// deleted externally is removed from state and planned for re-creation. Every
+// typed notification resource shares this read path, so it stands in for all of
+// them.
+func TestAccNotificationWebhookResource_disappears(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestWebhookDisappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	config := testAccNotificationWebhookResourceConfig(name, "https://example.com/hook", "json")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             config,
+				Check:              testAccDeleteNotificationExternally(t, kumaClient, "uptimekuma_notification_webhook.test"),
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				RefreshPlanChecks: resource.RefreshPlanChecks{
+					PostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"uptimekuma_notification_webhook.test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccNotificationWebhookResource_typeDrift verifies that a notification whose
+// type was changed externally is reported rather than read into the wrong
+// resource type, which would fill state with zero values and push them back on
+// the next apply.
+func TestAccNotificationWebhookResource_typeDrift(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestWebhookTypeDrift")
+	kumaClient := testAccOutOfBandClient(t)
+
+	config := testAccNotificationWebhookResourceConfig(name, "https://example.com/hook", "json")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// The drift happens in the check, between the apply and the plan
+			// the framework runs right after it, so the refresh that reads the
+			// notification back belongs to this step and so does its error.
+			{
+				Config: config,
+				Check: testAccChangeNotificationTypeToGotify(
+					t,
+					kumaClient,
+					"uptimekuma_notification_webhook.test",
+				),
+				ExpectError: regexp.MustCompile(`Incorrect notification type`),
+			},
+		},
+	})
+}
+
+// testAccDeleteExternally deletes a resource by its state ID through the
+// out-of-band client, simulating a deletion made outside Terraform.
+func testAccDeleteExternally(
+	t *testing.T,
+	resourceAddr string,
+	del func(context.Context, int64) error,
+) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceAddr]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", resourceAddr)
+		}
+
+		id, err := strconv.ParseInt(rs.Primary.Attributes["id"], 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s id: %w", resourceAddr, err)
+		}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		err = del(ctx, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete %s externally: %w", resourceAddr, err)
+		}
+
+		return nil
+	}
+}
+
+// testAccDisappearsSteps builds the two steps every disappears test shares: an
+// apply that deletes the resource out of band, then a refresh that must plan a
+// create because the resource was dropped from state.
+func testAccDisappearsSteps(
+	config string,
+	resourceAddr string,
+	deleteExternally resource.TestCheckFunc,
+) []resource.TestStep {
+	return []resource.TestStep{
+		{
+			Config:             config,
+			ExpectNonEmptyPlan: true,
+			Check:              deleteExternally,
+		},
+		{
+			RefreshState:       true,
+			ExpectNonEmptyPlan: true,
+			RefreshPlanChecks: resource.RefreshPlanChecks{
+				PostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resourceAddr, plancheck.ResourceActionCreate),
+				},
+			},
+		},
+	}
+}
+
+// TestAccMaintenanceResource_disappears verifies that a maintenance window
+// deleted outside Terraform is dropped from state rather than failing the
+// refresh.
+//
+// GetMaintenance asks the server, so the miss arrives as the client's own "not
+// found in response" rather than as kuma.ErrNotFound. Read therefore has to go
+// through isNotFoundError; an errors.Is check never fires and turns this case
+// into a hard error no plan can get past.
+func TestAccMaintenanceResource_disappears(t *testing.T) {
+	title := acctest.RandomWithPrefix("TestMaintenanceDisappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: testAccDisappearsSteps(
+			testAccMaintenanceResourceConfigSingle(title, "disappears", true),
+			"uptimekuma_maintenance.test",
+			testAccDeleteExternally(t, "uptimekuma_maintenance.test", kumaClient.DeleteMaintenance),
+		),
+	})
+}
+
+// TestAccProxyResource_disappears covers removeOnMiss for a proxy.
+//
+// Proxies sit on proxyList, one of the best-effort ready events, so this is one
+// of only two resources where the MissingReadyEvents branch of removeOnMiss can
+// fire at all - the notification list is required, and Client.New fails without
+// it.
+func TestAccProxyResource_disappears(t *testing.T) {
+	host := acctest.RandomWithPrefix("proxy-disappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: testAccDisappearsSteps(
+			testAccProxyResourceConfig(host, "8080", "http"),
+			"uptimekuma_proxy.test",
+			testAccDeleteExternally(t, "uptimekuma_proxy.test", kumaClient.DeleteProxy),
+		),
+	})
+}
+
+// TestAccDockerHostResource_disappears covers removeOnMiss for a Docker host,
+// the other best-effort list; see TestAccProxyResource_disappears.
+func TestAccDockerHostResource_disappears(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestDockerHostDisappears")
+	kumaClient := testAccOutOfBandClient(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: testAccDisappearsSteps(
+			testAccDockerHostResourceConfig(name, "unix:///var/run/docker.sock", "socket"),
+			"uptimekuma_docker_host.test",
+			testAccDeleteExternally(t, "uptimekuma_docker_host.test", kumaClient.DeleteDockerHost),
+		),
 	})
 }

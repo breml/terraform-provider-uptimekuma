@@ -111,7 +111,7 @@ func (d *StatusPageDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			sp, ok := statusPages[data.ID.ValueInt64()]
 
 			return sp, ok, nil
-		}, &resp.Diagnostics)
+		})
 		if err != nil {
 			resp.Diagnostics.AddError("failed to read status pages", err.Error())
 

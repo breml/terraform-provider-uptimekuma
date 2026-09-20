@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -39,14 +40,12 @@ func (f *fakeResyncer) MissingReadyEvents() []string { return f.missing }
 // every list.
 func loggedIn() *fakeResyncer { return &fakeResyncer{token: "session-token"} }
 
-func TestResyncCacheWithoutSessionTokenWarnsRatherThanFails(t *testing.T) {
+func TestResyncCacheWithoutSessionTokenSkipsTheResyncInSilence(t *testing.T) {
 	t.Parallel()
-
-	var diags diag.Diagnostics
 
 	client := &fakeResyncer{token: ""}
 
-	retry, err := resyncCache(t.Context(), client, &diags)
+	retry, err := resyncCache(t.Context(), client)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -58,26 +57,14 @@ func TestResyncCacheWithoutSessionTokenWarnsRatherThanFails(t *testing.T) {
 	if client.resyncs != 0 {
 		t.Errorf("want no resync attempt, got %d", client.resyncs)
 	}
-
-	// The miss itself must still be reportable by the caller, so this may not
-	// be an error: it would mask the real "not found" message.
-	if diags.HasError() {
-		t.Errorf("want no error diagnostic, got %v", diags.Errors())
-	}
-
-	if diags.WarningsCount() != 1 {
-		t.Fatalf("want 1 warning, got %d", diags.WarningsCount())
-	}
 }
 
 func TestResyncCacheReportsAFailedResync(t *testing.T) {
 	t.Parallel()
 
-	var diags diag.Diagnostics
-
 	client := &fakeResyncer{token: "session-token", err: errors.New("socket closed")}
 
-	retry, err := resyncCache(t.Context(), client, &diags)
+	retry, err := resyncCache(t.Context(), client)
 
 	if err == nil {
 		t.Fatal("want an error, got nil")
@@ -89,11 +76,6 @@ func TestResyncCacheReportsAFailedResync(t *testing.T) {
 
 	if retry {
 		t.Error("want retry false, got true")
-	}
-
-	// The error is returned, not added: the caller gives it its own summary.
-	if diags.HasError() {
-		t.Errorf("want no error diagnostic, got %v", diags.Errors())
 	}
 }
 
@@ -130,7 +112,6 @@ func TestReadWithResync(t *testing.T) {
 		wantErr     bool
 		wantResyncs int
 		wantGets    int
-		wantWarns   int
 	}{
 		"a hit does not resync": {
 			client:      loggedIn(),
@@ -154,12 +135,11 @@ func TestReadWithResync(t *testing.T) {
 			wantResyncs: 1,
 			wantGets:    2,
 		},
-		"a miss without a session token warns and stays a miss": {
+		"a miss without a session token skips the resync and stays a miss": {
 			client:      &fakeResyncer{token: ""},
 			wantFound:   false,
 			wantResyncs: 0,
 			wantGets:    1,
-			wantWarns:   1,
 		},
 		"a failed resync is an error": {
 			client:      &fakeResyncer{token: "session-token", err: errors.New("socket closed")},
@@ -174,13 +154,10 @@ func TestReadWithResync(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				diags diag.Diagnostics
-				gets  int
-			)
+			var gets int
 
 			value, found, err := readWithResync(
-				t.Context(), test.client, 1, getter(&gets, test.has, test.appears), &diags,
+				t.Context(), test.client, 1, getter(&gets, test.has, test.appears),
 			)
 
 			if (err != nil) != test.wantErr {
@@ -202,16 +179,6 @@ func TestReadWithResync(t *testing.T) {
 			if gets != test.wantGets {
 				t.Errorf("want %d gets, got %d", test.wantGets, gets)
 			}
-
-			if diags.WarningsCount() != test.wantWarns {
-				t.Errorf("want %d warnings, got %d", test.wantWarns, diags.WarningsCount())
-			}
-
-			// Errors travel in the return value so the caller can phrase them;
-			// only the token warning is ever added here.
-			if diags.HasError() {
-				t.Errorf("want no error diagnostic, got %v", diags.Errors())
-			}
 		})
 	}
 }
@@ -219,15 +186,12 @@ func TestReadWithResync(t *testing.T) {
 func TestReadWithResyncDoesNotResyncOnATransportError(t *testing.T) {
 	t.Parallel()
 
-	var diags diag.Diagnostics
-
 	client := loggedIn()
 	transportErr := errors.New("connection reset")
 
 	_, found, err := readWithResync(
 		t.Context(), client, 1,
 		func(context.Context, int64) (string, error) { return "", transportErr },
-		&diags,
 	)
 
 	if !errors.Is(err, transportErr) {
@@ -258,7 +222,6 @@ func TestFindWithResync(t *testing.T) {
 		wantErr     bool
 		wantResyncs int
 		wantFinds   int
-		wantWarns   int
 	}{
 		"a hit does not resync": {
 			client:      loggedIn(),
@@ -287,12 +250,11 @@ func TestFindWithResync(t *testing.T) {
 			wantResyncs: 0,
 			wantFinds:   1,
 		},
-		"a miss without a session token warns and stays a miss": {
+		"a miss without a session token skips the resync and stays a miss": {
 			client:      &fakeResyncer{token: ""},
 			wantFound:   false,
 			wantResyncs: 0,
 			wantFinds:   1,
-			wantWarns:   1,
 		},
 		"a failed resync is an error": {
 			client:      &fakeResyncer{token: "session-token", err: errors.New("socket closed")},
@@ -306,10 +268,7 @@ func TestFindWithResync(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				diags diag.Diagnostics
-				finds int
-			)
+			var finds int
 
 			_, found, err := findWithResync(t.Context(), test.client, func(context.Context) (string, bool, error) {
 				finds++
@@ -319,7 +278,7 @@ func TestFindWithResync(t *testing.T) {
 				}
 
 				return "match", finds == test.matchOn, nil
-			}, &diags)
+			})
 
 			if (err != nil) != test.wantErr {
 				t.Fatalf("want error %v, got %v", test.wantErr, err)
@@ -335,14 +294,6 @@ func TestFindWithResync(t *testing.T) {
 
 			if finds != test.wantFinds {
 				t.Errorf("want %d finds, got %d", test.wantFinds, finds)
-			}
-
-			if diags.WarningsCount() != test.wantWarns {
-				t.Errorf("want %d warnings, got %d", test.wantWarns, diags.WarningsCount())
-			}
-
-			if diags.HasError() {
-				t.Errorf("want no error diagnostic, got %v", diags.Errors())
 			}
 		})
 	}
@@ -471,5 +422,354 @@ func TestRemoveOnMissKeepsStateWhenTheServerNeverSentTheList(t *testing.T) {
 
 	if got := resp.Diagnostics.Errors()[0].Detail(); !strings.Contains(got, proxyListEvent) {
 		t.Errorf("want the missing list named in %q", got)
+	}
+}
+
+func TestUpdatedWithoutEvent(t *testing.T) {
+	t.Parallel()
+
+	const summary = "failed to update notification"
+
+	t.Run("a genuine failure is reported and stops the caller", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		if updatedWithoutEvent(&diags, errors.New("server said no"), summary) {
+			t.Error("want false for a failed update, got true")
+		}
+
+		if diags.ErrorsCount() != 1 {
+			t.Fatalf("want 1 error, got %d", diags.ErrorsCount())
+		}
+
+		if got := diags.Errors()[0].Summary(); got != summary {
+			t.Errorf("want summary %q, got %q", summary, got)
+		}
+	})
+
+	t.Run("a lost update event is a success with a warning", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		err := fmt.Errorf("edit notification: %w", kuma.ErrUpdateEventTimeout)
+
+		// The server applied the write, so the caller must go on to write the
+		// planned values to state rather than leave the prior ones there.
+		if !updatedWithoutEvent(&diags, err, summary) {
+			t.Error("want true for an update that landed, got false")
+		}
+
+		if diags.HasError() {
+			t.Errorf("want no error diagnostic, got %v", diags.Errors())
+		}
+
+		if diags.WarningsCount() != 1 {
+			t.Fatalf("want 1 warning, got %d", diags.WarningsCount())
+		}
+	})
+}
+
+func TestDeletedWithoutEvent(t *testing.T) {
+	t.Parallel()
+
+	const summary = "failed to delete notification"
+
+	t.Run("a successful delete reports nothing", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		if !deletedWithoutEvent(&diags, nil, summary) {
+			t.Error("want true for a delete that succeeded, got false")
+		}
+
+		if len(diags) != 0 {
+			t.Errorf("want no diagnostics, got %v", diags)
+		}
+	})
+
+	t.Run("a genuine failure is reported as an error", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		if deletedWithoutEvent(&diags, errors.New("server said no"), summary) {
+			t.Error("want false for a delete that failed, got true")
+		}
+
+		if diags.ErrorsCount() != 1 {
+			t.Fatalf("want 1 error, got %d", diags.ErrorsCount())
+		}
+
+		if got := diags.Errors()[0].Summary(); got != summary {
+			t.Errorf("want summary %q, got %q", summary, got)
+		}
+	})
+
+	t.Run("a lost update event leaves the delete a success", func(t *testing.T) {
+		t.Parallel()
+
+		var diags diag.Diagnostics
+
+		err := fmt.Errorf("delete notification: %w", kuma.ErrUpdateEventTimeout)
+
+		if !deletedWithoutEvent(&diags, err, summary) {
+			t.Error("want true for a delete that landed, got false")
+		}
+
+		// An error here would fail the apply and keep a resource in state that
+		// the server no longer has.
+		if diags.HasError() {
+			t.Errorf("want no error diagnostic, got %v", diags.Errors())
+		}
+
+		if diags.WarningsCount() != 1 {
+			t.Fatalf("want 1 warning, got %d", diags.WarningsCount())
+		}
+
+		// The wording is the contract: it must say the resource is gone, not
+		// repeat what updateLanded says about an update.
+		if got := diags.Warnings()[0].Summary(); got != "Deleted without confirmation" {
+			t.Errorf("want the delete wording, got %q", got)
+		}
+	})
+}
+
+func TestRemoveOnMissKeepsStateWithoutASessionToken(t *testing.T) {
+	t.Parallel()
+
+	resp := readResponse(t)
+	client := &fakeResyncer{token: ""}
+
+	removeOnMiss(t.Context(), client, notificationListEvent, "notification", resp)
+
+	// Without a token readWithResync could not resync, so the miss may be
+	// nothing more than a cache that is one broadcast behind.
+	if resp.State.Raw.IsNull() {
+		t.Error("want the resource left in state")
+	}
+
+	if resp.Diagnostics.ErrorsCount() != 1 {
+		t.Fatalf("want 1 error, got %d", resp.Diagnostics.ErrorsCount())
+	}
+
+	if got := resp.Diagnostics.Errors()[0].Detail(); !strings.Contains(got, "username and password") {
+		t.Errorf("want the fix named in %q", got)
+	}
+}
+
+func TestCreatedWithoutEvent(t *testing.T) {
+	t.Parallel()
+
+	const summary = "failed to create notification"
+
+	timeout := fmt.Errorf("add notification: %w", kuma.ErrUpdateEventTimeout)
+
+	tests := map[string]struct {
+		err       error
+		id        int64
+		wantAdopt bool
+		wantErrs  int
+		wantWarns int
+	}{
+		"a successful create reports nothing": {
+			err:       nil,
+			id:        7,
+			wantAdopt: true,
+		},
+		"a genuine failure is an error": {
+			err:      errors.New("server said no"),
+			wantErrs: 1,
+		},
+		"a lost create event adopts the ID the server assigned": {
+			err:       timeout,
+			id:        7,
+			wantAdopt: true,
+			wantWarns: 1,
+		},
+		// Upstream reports this combination as impossible: the server does not
+		// omit the ID from an ack it calls successful. Guarded against anyway,
+		// because adopting ID 0 would write a resource Terraform can never read
+		// back.
+		"a lost create event with no ID cannot be adopted": {
+			err:      timeout,
+			id:       0,
+			wantErrs: 1,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			var diags diag.Diagnostics
+
+			if got := createdWithoutEvent(&diags, test.err, test.id, summary); got != test.wantAdopt {
+				t.Errorf("want adopt %v, got %v", test.wantAdopt, got)
+			}
+
+			if diags.ErrorsCount() != test.wantErrs {
+				t.Errorf("want %d errors, got %v", test.wantErrs, diags.Errors())
+			}
+
+			if diags.WarningsCount() != test.wantWarns {
+				t.Errorf("want %d warnings, got %v", test.wantWarns, diags.Warnings())
+			}
+		})
+	}
+}
+
+func TestUpdateLanded(t *testing.T) {
+	t.Parallel()
+
+	// updateLanded has a second caller of its own in
+	// handleMonitorActiveStateCreate, which acts on the bool alone. Its
+	// contract is therefore pinned here rather than only through
+	// updatedWithoutEvent.
+	tests := map[string]struct {
+		err       error
+		wantAdopt bool
+		wantWarns int
+	}{
+		"a nil error did not land, because nothing failed": {
+			err: nil,
+		},
+		"an ordinary failure did not land": {
+			err: errors.New("server said no"),
+		},
+		"a bare sentinel landed": {
+			err:       kuma.ErrUpdateEventTimeout,
+			wantAdopt: true,
+			wantWarns: 1,
+		},
+		"a wrapped sentinel landed": {
+			err:       fmt.Errorf("pause monitor 3: %w", kuma.ErrUpdateEventTimeout),
+			wantAdopt: true,
+			wantWarns: 1,
+		},
+		"a joined sentinel landed": {
+			err:       errors.Join(errors.New("and another thing"), kuma.ErrUpdateEventTimeout),
+			wantAdopt: true,
+			wantWarns: 1,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			var diags diag.Diagnostics
+
+			if got := updateLanded(&diags, test.err); got != test.wantAdopt {
+				t.Errorf("want landed %v, got %v", test.wantAdopt, got)
+			}
+
+			// It warns; it never errors. The caller owns the failing path.
+			if diags.HasError() {
+				t.Errorf("want no error diagnostic, got %v", diags.Errors())
+			}
+
+			if diags.WarningsCount() != test.wantWarns {
+				t.Fatalf("want %d warnings, got %v", test.wantWarns, diags.Warnings())
+			}
+
+			if test.wantWarns == 0 {
+				return
+			}
+
+			// The warning may not promise that state already holds the planned
+			// values: returning true only clears the caller to reach
+			// resp.State.Set, and several callers can still fail before it.
+			detail := diags.Warnings()[0].Detail()
+			if strings.Contains(detail, "have been written to state") {
+				t.Errorf("want no promise about state, got %q", detail)
+			}
+
+			if !strings.Contains(detail, "terraform plan") {
+				t.Errorf("want the remedy named in %q", detail)
+			}
+		})
+	}
+}
+
+func TestUpdatedWithoutEventTakesANilErrorAsSuccess(t *testing.T) {
+	t.Parallel()
+
+	var diags diag.Diagnostics
+
+	// Its sibling deletedWithoutEvent accepts every outcome, and the callers
+	// are clones of one another, so this may not be the one that panics.
+	if !updatedWithoutEvent(&diags, nil, "failed to update notification") {
+		t.Error("want true for an update that succeeded, got false")
+	}
+
+	if len(diags) != 0 {
+		t.Errorf("want no diagnostics, got %v", diags)
+	}
+}
+
+func TestReportMissNamesAMissingSessionToken(t *testing.T) {
+	t.Parallel()
+
+	const (
+		summary = "Notification not found"
+		detail  = "No notification with ID 3 found."
+	)
+
+	var diags diag.Diagnostics
+
+	reportMiss(&diags, &fakeResyncer{token: ""}, notificationListEvent, summary, detail)
+
+	if diags.ErrorsCount() != 1 {
+		t.Fatalf("want 1 error, got %d", diags.ErrorsCount())
+	}
+
+	// A data source has no state to protect, so this stays an error - but it
+	// must not flatly claim absence the provider could not establish, or it
+	// would contradict removeOnMiss about the very same lookup.
+	got := diags.Errors()[0].Detail()
+	if !strings.Contains(got, detail) {
+		t.Errorf("want the caller's detail kept in %q", got)
+	}
+
+	if !strings.Contains(got, "without credentials") {
+		t.Errorf("want the reason named in %q", got)
+	}
+}
+
+func TestReadWithResyncThenRemoveOnMissReportsTheTokenOnce(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeResyncer{token: ""}
+	resp := readResponse(t)
+
+	_, found, err := readWithResync(
+		t.Context(), client, 1,
+		func(context.Context, int64) (string, error) { return "", kuma.ErrNotFound },
+	)
+	if err != nil {
+		t.Fatalf("want no error, got %v", err)
+	}
+
+	if found {
+		t.Fatal("want found false, got true")
+	}
+
+	removeOnMiss(t.Context(), client, notificationListEvent, "notification", resp)
+
+	if resp.State.Raw.IsNull() {
+		t.Error("want the resource left in state")
+	}
+
+	// The two helpers sit on the same read. Exactly one diagnostic may describe
+	// the missing token, or the user reads the same paragraph twice.
+	if resp.Diagnostics.ErrorsCount() != 1 {
+		t.Fatalf("want 1 error, got %v", resp.Diagnostics.Errors())
+	}
+
+	if resp.Diagnostics.WarningsCount() != 0 {
+		t.Errorf("want no warnings, got %v", resp.Diagnostics.Warnings())
 	}
 }

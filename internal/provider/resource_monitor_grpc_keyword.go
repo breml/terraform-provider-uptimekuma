@@ -209,7 +209,7 @@ func (r *MonitorGrpcKeywordResource) Create(
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -346,9 +346,7 @@ func (r *MonitorGrpcKeywordResource) Update(
 
 	// Update monitor via API.
 	err := r.client.UpdateMonitor(ctx, &grpcKeywordMonitor)
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update gRPC Keyword monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update gRPC Keyword monitor") {
 		return
 	}
 
@@ -397,11 +395,7 @@ func (r *MonitorGrpcKeywordResource) Delete(
 
 	// Delete monitor via API.
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete gRPC Keyword monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete gRPC Keyword monitor")
 }
 
 // ImportState imports an existing resource by ID.

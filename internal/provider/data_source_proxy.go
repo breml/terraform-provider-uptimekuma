@@ -85,7 +85,7 @@ func (d *ProxyDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	// The proxy getter serves from the state cache, so a resync is forced once
 	// before a miss is believed, see readWithResync.
-	proxy, found, err := readWithResync(ctx, d.client, data.ID.ValueInt64(), d.client.GetProxy, &resp.Diagnostics)
+	proxy, found, err := readWithResync(ctx, d.client, data.ID.ValueInt64(), d.client.GetProxy)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read proxy", err.Error())
 

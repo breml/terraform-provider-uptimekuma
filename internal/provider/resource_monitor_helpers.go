@@ -20,6 +20,8 @@ import (
 // backend when the resource no longer exists.  Known patterns:
 //   - Monitors: "Cannot read properties of null (reading 'id')"
 //   - Status pages: "No slug?"
+//   - Maintenance: "maintenance not found in response", which the client
+//     builds itself when the server answers with no maintenance window
 func isNotFoundError(err error) bool {
 	if errors.Is(err, kuma.ErrNotFound) {
 		return true
@@ -28,7 +30,8 @@ func isNotFoundError(err error) bool {
 	msg := err.Error()
 
 	return strings.Contains(msg, "Cannot read properties of null") ||
-		strings.Contains(msg, "No slug?")
+		strings.Contains(msg, "No slug?") ||
+		strings.Contains(msg, "maintenance not found in response")
 }
 
 // strToPtr converts a Terraform string type to a pointer to string.

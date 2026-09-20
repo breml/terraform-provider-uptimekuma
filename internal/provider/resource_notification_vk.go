@@ -149,7 +149,7 @@ func (r *NotificationVKResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
 
 		return
 	}
@@ -208,9 +208,7 @@ func (r *NotificationVKResource) Update(
 	vk.ID = id
 
 	err := r.client.UpdateNotification(ctx, vk)
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update notification", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}
 
@@ -234,11 +232,7 @@ func (r *NotificationVKResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete notification", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification")
 }
 
 // ImportState imports an existing resource by ID.

@@ -144,7 +144,7 @@ func (r *MonitorRadiusResource) Create(
 		return
 	}
 
-	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active)
+	err = handleMonitorActiveStateCreate(ctx, r.client, id, data.Active, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		resp.Diagnostics.AddError("failed to apply monitor active state", err.Error())
@@ -344,8 +344,7 @@ func (r *MonitorRadiusResource) Update(
 	radiusMonitor.ID = data.ID.ValueInt64()
 
 	err := r.client.UpdateMonitor(ctx, &radiusMonitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update Radius monitor", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update Radius monitor") {
 		return
 	}
 
@@ -377,10 +376,7 @@ func (r *MonitorRadiusResource) Delete(
 	}
 
 	err := r.client.DeleteMonitor(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete Radius monitor", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete Radius monitor")
 }
 
 // ImportState imports an existing resource by ID.

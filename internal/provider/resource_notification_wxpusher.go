@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -136,7 +135,7 @@ func (r *NotificationWxPusherResource) Read(
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
 
 		return
 	}
@@ -192,9 +191,7 @@ func (r *NotificationWxPusherResource) Update(
 	wxPusher.ID = id
 
 	err := r.client.UpdateNotification(ctx, wxPusher)
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update notification", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}
 
@@ -218,15 +215,7 @@ func (r *NotificationWxPusherResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
-			return
-		}
-
-		resp.Diagnostics.AddError("failed to delete notification", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification")
 }
 
 // ImportState imports an existing resource by ID.

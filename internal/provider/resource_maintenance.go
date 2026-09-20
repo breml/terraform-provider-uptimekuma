@@ -318,14 +318,17 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	m, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
-	// Handle error.
 	if err != nil {
-		if errors.Is(err, kuma.ErrNotFound) {
+		// GetMaintenance asks the server, so a window deleted outside Terraform
+		// comes back in the server's own words rather than as kuma.ErrNotFound.
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
+
 			return
 		}
 
 		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
+
 		return
 	}
 
@@ -362,9 +365,7 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	err = r.client.UpdateMaintenance(ctx, m)
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update maintenance", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update maintenance") {
 		return
 	}
 
@@ -393,11 +394,7 @@ func (r *MaintenanceResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteMaintenance(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete maintenance", err.Error())
-		return
-	}
+	deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete maintenance")
 }
 
 // ValidateConfig validates the resource configuration.

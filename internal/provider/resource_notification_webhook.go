@@ -171,7 +171,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	if !found {
-		resp.State.RemoveResource(ctx)
+		removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
 
 		return
 	}
@@ -258,9 +258,7 @@ func (r *NotificationWebhookResource) Update(
 	}
 
 	err := r.client.UpdateNotification(ctx, webhook)
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update notification", err.Error())
+	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
 		return
 	}
 
@@ -286,9 +284,7 @@ func (r *NotificationWebhookResource) Delete(
 	}
 
 	err := r.client.DeleteNotification(ctx, data.ID.ValueInt64())
-	// Handle error.
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete notification", err.Error())
+	if !deletedWithoutEvent(&resp.Diagnostics, err, "failed to delete notification") {
 		return
 	}
 
