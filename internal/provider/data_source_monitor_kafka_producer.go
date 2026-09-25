@@ -25,10 +25,11 @@ type MonitorKafkaProducerDataSource struct {
 
 // MonitorKafkaProducerDataSourceModel describes the data model for Kafka Producer monitor data source.
 type MonitorKafkaProducerDataSourceModel struct {
-	ID      types.Int64  `tfsdk:"id"`
-	Name    types.String `tfsdk:"name"`
-	Brokers types.List   `tfsdk:"brokers"`
-	Topic   types.String `tfsdk:"topic"`
+	ID      types.Int64   `tfsdk:"id"`
+	Name    types.String  `tfsdk:"name"`
+	Brokers types.List    `tfsdk:"brokers"`
+	Topic   types.String  `tfsdk:"topic"`
+	Timeout types.Float64 `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -67,6 +68,12 @@ func (*MonitorKafkaProducerDataSource) Schema(
 			"topic": schema.StringAttribute{
 				MarkdownDescription: "Kafka topic to publish messages to",
 				Computed:            true,
+			},
+			"timeout": schema.Float64Attribute{
+				MarkdownDescription: "Connection timeout in seconds, handed to kafkajs as its " +
+					"`connectionTimeout`. The column is NOT NULL server-side, so this is normally " +
+					"the stored value; null would mean the server reported none.",
+				Computed: true,
 			},
 		},
 	}
@@ -121,6 +128,7 @@ func (d *MonitorKafkaProducerDataSource) readByID(
 
 	data.Name = types.StringValue(kafkaMonitor.Name)
 	data.Topic = types.StringValue(kafkaMonitor.Topic)
+	data.Timeout = types.Float64PointerValue(kafkaMonitor.Timeout)
 
 	brokers, d2 := types.ListValueFrom(ctx, types.StringType, kafkaMonitor.Brokers)
 	resp.Diagnostics.Append(d2...)
@@ -149,6 +157,7 @@ func (d *MonitorKafkaProducerDataSource) readByName(
 
 	data.ID = types.Int64Value(kafkaMon.ID)
 	data.Topic = types.StringValue(kafkaMon.Topic)
+	data.Timeout = types.Float64PointerValue(kafkaMon.Timeout)
 
 	brokers, d2 := types.ListValueFrom(ctx, types.StringType, kafkaMon.Brokers)
 	resp.Diagnostics.Append(d2...)

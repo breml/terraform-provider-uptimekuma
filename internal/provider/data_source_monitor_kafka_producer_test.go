@@ -39,6 +39,11 @@ func TestAccMonitorKafkaProducerDataSource(t *testing.T) {
 						knownvalue.StringExact("monitor-topic"),
 					),
 					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_kafka_producer.by_name",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(2.5),
+					),
+					statecheck.ExpectKnownValue(
 						"data.uptimekuma_monitor_kafka_producer.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
@@ -55,6 +60,11 @@ func TestAccMonitorKafkaProducerDataSource(t *testing.T) {
 						tfjsonpath.New("topic"),
 						knownvalue.StringExact("monitor-topic"),
 					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_kafka_producer.by_id",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(2.5),
+					),
 				},
 			},
 		},
@@ -68,6 +78,7 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
   brokers = ["kafka.example.com:9092"]
   topic   = "monitor-topic"
   message = "ping"
+  timeout = 2.5
 }
 
 data "uptimekuma_monitor_kafka_producer" "by_name" {

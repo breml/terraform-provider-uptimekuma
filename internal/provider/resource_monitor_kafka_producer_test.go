@@ -28,6 +28,7 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 					"kafka-1.example.com:9092",
 					"test-topic",
 					"hello world",
+					5,
 				),
 				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -70,6 +71,11 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_kafka_producer.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(5),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_kafka_producer.test",
 						tfjsonpath.New("active"),
 						knownvalue.Bool(true),
 					),
@@ -88,6 +94,7 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 					"kafka-2.example.com:9093",
 					"updated-topic",
 					"updated message",
+					2.5,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
@@ -117,6 +124,13 @@ func TestAccMonitorKafkaProducerResource(t *testing.T) {
 						tfjsonpath.New("message"),
 						knownvalue.StringExact("updated message"),
 					),
+					// The monitor.timeout column is a DOUBLE, so a fractional
+					// value round-trips unchanged.
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_kafka_producer.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(2.5),
+					),
 				},
 			},
 			{
@@ -136,6 +150,7 @@ func testAccMonitorKafkaProducerResourceConfig(
 	broker string,
 	topic string,
 	message string,
+	timeout float64,
 ) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_kafka_producer" "test" {
@@ -144,9 +159,10 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
   brokers     = [%[3]q]
   topic       = %[4]q
   message     = %[5]q
+  timeout     = %[6]v
   active      = true
 }
-`, name, description, broker, topic, message)
+`, name, description, broker, topic, message, timeout)
 }
 
 func TestAccMonitorKafkaProducerResourceMinimal(t *testing.T) {
@@ -205,6 +221,13 @@ func TestAccMonitorKafkaProducerResourceMinimal(t *testing.T) {
 						"uptimekuma_monitor_kafka_producer.test",
 						tfjsonpath.New("max_retries"),
 						knownvalue.Int64Exact(3),
+					),
+					// An unset timeout reads back as the value Uptime Kuma
+					// assigns to a new Kafka Producer monitor.
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_kafka_producer.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(1),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_kafka_producer.test",
@@ -299,6 +322,11 @@ func TestAccMonitorKafkaProducerResourceWithAllOptions(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_kafka_producer.test",
+						tfjsonpath.New("timeout"),
+						knownvalue.Float64Exact(7.5),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_kafka_producer.test",
 						tfjsonpath.New("upside_down"),
 						knownvalue.Bool(false),
 					),
@@ -319,6 +347,7 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
   ssl                       = true
   allow_auto_topic_creation = true
   sasl_options              = jsonencode({ mechanism = "plain", username = "user", password = "pass" })
+  timeout                   = 7.5
   interval                  = 120
   retry_interval            = 60
   max_retries               = 5

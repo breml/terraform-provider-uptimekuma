@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -23,6 +26,18 @@ var (
 	_ resource.Resource                = &MonitorKafkaProducerResource{}
 	_ resource.ResourceWithImportState = &MonitorKafkaProducerResource{}
 )
+
+// defaultKafkaProducerTimeout is the connection timeout in seconds Uptime Kuma
+// assigns to a new Kafka Producer monitor. It is used both as the schema default
+// and as the read fallback: the monitor.timeout column is NOT NULL, so this value
+// is stored and reads back unchanged, which makes it safe to model as a Terraform
+// default without causing a perpetual diff.
+//
+// The value mirrors the unexported defaultKafkaProducerTimeout in the client
+// library (monitor/monitor_kafka_producer.go) and the value the web UI pre-fills
+// for a new Kafka Producer monitor; re-check it when bumping
+// go-uptime-kuma-client.
+const defaultKafkaProducerTimeout = 1
 
 // NewMonitorKafkaProducerResource returns a new instance of the Kafka Producer monitor resource.
 func NewMonitorKafkaProducerResource() resource.Resource {
@@ -38,12 +53,13 @@ type MonitorKafkaProducerResource struct {
 type MonitorKafkaProducerResourceModel struct {
 	MonitorBaseModel
 
-	Brokers                types.List   `tfsdk:"brokers"`
-	Topic                  types.String `tfsdk:"topic"`
-	Message                types.String `tfsdk:"message"`
-	SSL                    types.Bool   `tfsdk:"ssl"`
-	AllowAutoTopicCreation types.Bool   `tfsdk:"allow_auto_topic_creation"`
-	SASLOptions            types.String `tfsdk:"sasl_options"`
+	Brokers                types.List    `tfsdk:"brokers"`
+	Topic                  types.String  `tfsdk:"topic"`
+	Message                types.String  `tfsdk:"message"`
+	SSL                    types.Bool    `tfsdk:"ssl"`
+	AllowAutoTopicCreation types.Bool    `tfsdk:"allow_auto_topic_creation"`
+	SASLOptions            types.String  `tfsdk:"sasl_options"`
+	Timeout                types.Float64 `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -95,6 +111,21 @@ func (*MonitorKafkaProducerResource) Schema(
 					"`{\"mechanism\":\"plain\",\"username\":\"u\",\"password\":\"p\"}`).",
 				Optional:  true,
 				Sensitive: true,
+			},
+			"timeout": schema.Float64Attribute{
+				MarkdownDescription: "Connection timeout in seconds, handed to kafkajs as its " +
+					"`connectionTimeout`. Fractional values are supported and round-trip unchanged. " +
+					"Defaults to 1, the value the Uptime Kuma web UI assigns to a new Kafka Producer " +
+					"monitor. The server enforces no upper bound, but the web UI clamps the field to " +
+					"80% of `interval`, so a monitor edited there afterwards can come back lowered. " +
+					"Values of 0 or less are rejected because Uptime Kuma reads them as a request to " +
+					"fall back to 80% of `interval` at check time rather than as a timeout.",
+				Optional: true,
+				Computed: true,
+				Default:  float64default.StaticFloat64(defaultKafkaProducerTimeout),
+				Validators: []validator.Float64{
+					float64validator.AtLeast(0.1),
+				},
 			},
 		}),
 	}
@@ -172,6 +203,7 @@ func buildKafkaProducerMonitor(
 			Message:                data.Message.ValueString(),
 			SSL:                    data.SSL.ValueBool(),
 			AllowAutoTopicCreation: data.AllowAutoTopicCreation.ValueBool(),
+			Timeout:                float64ToPtr(data.Timeout),
 		},
 	}
 
@@ -244,6 +276,7 @@ func populateKafkaProducerMonitorBaseFields(
 	m.Topic = types.StringValue(kafkaMonitor.Topic)
 	m.SSL = types.BoolValue(kafkaMonitor.SSL)
 	m.AllowAutoTopicCreation = types.BoolValue(kafkaMonitor.AllowAutoTopicCreation)
+	m.Timeout = kafkaProducerTimeoutValue(ctx, kafkaMonitor)
 
 	// Uptime Kuma may not return the test message in the API response.
 	// Preserve the existing state value to avoid perpetual diffs.
@@ -258,6 +291,25 @@ func populateKafkaProducerMonitorBaseFields(
 	} else {
 		m.Brokers = types.ListNull(types.StringType)
 	}
+}
+
+// kafkaProducerTimeoutValue converts the timeout returned by the client into a Terraform Float64.
+//
+// The monitor.timeout column is NOT NULL and the client substitutes a value for an unset
+// timeout, so a nil pointer means the invariant behind defaultKafkaProducerTimeout no longer
+// holds. Substituting the fallback keeps the Computed attribute consistent after apply, but
+// the substitution is logged so a broken invariant is not silent.
+func kafkaProducerTimeoutValue(ctx context.Context, kafkaMonitor *monitor.KafkaProducer) types.Float64 {
+	if kafkaMonitor.Timeout != nil {
+		return types.Float64Value(*kafkaMonitor.Timeout)
+	}
+
+	tflog.Warn(ctx, "Kafka Producer monitor returned a null timeout, assuming the server default", map[string]any{
+		"id":      kafkaMonitor.ID,
+		"assumed": defaultKafkaProducerTimeout,
+	})
+
+	return types.Float64Value(defaultKafkaProducerTimeout)
 }
 
 // populateOptionalFieldsForKafkaProducer populates optional parent and notification fields from the Kafka Producer
