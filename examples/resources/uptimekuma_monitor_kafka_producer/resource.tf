@@ -33,8 +33,6 @@ resource "uptimekuma_monitor_kafka_producer" "sasl" {
   topic   = "uptime-monitor"
   message = "ping"
   ssl     = true
-
-  # Fractional connection timeouts round-trip unchanged.
   timeout = 2.5
 
   sasl_options = jsonencode({

@@ -48,8 +48,6 @@ resource "uptimekuma_monitor_kafka_producer" "sasl" {
   topic   = "uptime-monitor"
   message = "ping"
   ssl     = true
-
-  # Fractional connection timeouts round-trip unchanged.
   timeout = 2.5
 
   sasl_options = jsonencode({
@@ -93,7 +91,7 @@ resource "uptimekuma_monitor_kafka_producer" "sasl" {
 - `sasl_options` (String, Sensitive) SASL authentication options as a JSON-encoded object (e.g. `{"mechanism":"plain","username":"u","password":"p"}`).
 - `ssl` (Boolean) Whether to enable SSL/TLS for the Kafka connection.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Connection timeout in seconds, handed to kafkajs as its `connectionTimeout`. Fractional values are supported and round-trip unchanged. Defaults to 1, the value the Uptime Kuma web UI assigns to a new Kafka Producer monitor. The server enforces no upper bound, but the web UI clamps the field to 80% of `interval`, so a monitor edited there afterwards can come back lowered. Values of 0 or less are rejected because Uptime Kuma reads them as a request to fall back to 80% of `interval` at check time rather than as a timeout.
+- `timeout` (Number) Connection timeout in seconds, handed to kafkajs as its `connectionTimeout`. Must be at least 0.1; fractional values are supported and round-trip unchanged. Defaults to 1, the value the Uptime Kuma web UI assigns to a new Kafka Producer monitor. The floor exists because Uptime Kuma reads 0 or less as a request to fall back to 80% of `interval` at check time rather than as a timeout. The server enforces no upper bound, but the web UI clamps the field to 80% of `interval`, so a monitor edited there afterwards can come back lowered. A monitor created outside Terraform may have 0 stored, which reads into state as 0 and plans back to the default on the next apply; 0 itself cannot be written in configuration.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

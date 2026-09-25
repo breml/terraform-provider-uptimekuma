@@ -72,7 +72,8 @@ func (*MonitorKafkaProducerDataSource) Schema(
 			"timeout": schema.Float64Attribute{
 				MarkdownDescription: "Connection timeout in seconds, handed to kafkajs as its " +
 					"`connectionTimeout`. The column is NOT NULL server-side, so this is normally " +
-					"the stored value; null would mean the server reported none.",
+					"the stored value; null would mean the server reported none, in which case 1 " +
+					"applies.",
 				Computed: true,
 			},
 		},

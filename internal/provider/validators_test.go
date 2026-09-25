@@ -259,3 +259,64 @@ func TestJSONObjectValidator(t *testing.T) {
 		})
 	}
 }
+
+// kafkaProducerTimeoutValidators returns the validators the Kafka Producer
+// monitor resource declares for timeout.
+func kafkaProducerTimeoutValidators(t *testing.T) []validator.Float64 {
+	t.Helper()
+
+	resp := &resource.SchemaResponse{}
+	(&MonitorKafkaProducerResource{}).Schema(t.Context(), resource.SchemaRequest{}, resp)
+
+	attr, ok := resp.Schema.Attributes["timeout"].(schema.Float64Attribute)
+	if !ok {
+		t.Fatalf("timeout is %T, want schema.Float64Attribute", resp.Schema.Attributes["timeout"])
+	}
+
+	return attr.Validators
+}
+
+// TestMonitorKafkaProducerTimeoutValidation pins the plan-time floor. Uptime Kuma
+// reads a timeout of 0 or less as a request to fall back to 80% of the interval
+// rather than as a timeout, so allowing it would silently apply the fallback
+// instead of the configured value. There is no strict-greater-than float64
+// validator, so the floor is the 0.1 step the web UI uses for non-ping monitors.
+func TestMonitorKafkaProducerTimeoutValidation(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value     types.Float64
+		wantError bool
+	}{
+		"floor":          {value: types.Float64Value(0.1), wantError: false},
+		"whole second":   {value: types.Float64Value(1), wantError: false},
+		"fractional":     {value: types.Float64Value(2.5), wantError: false},
+		"above ui clamp": {value: types.Float64Value(3600), wantError: false},
+		"below floor":    {value: types.Float64Value(0.09), wantError: true},
+		"zero":           {value: types.Float64Value(0), wantError: true},
+		"negative":       {value: types.Float64Value(-1), wantError: true},
+		"null":           {value: types.Float64Null(), wantError: false},
+		"unknown":        {value: types.Float64Unknown(), wantError: false},
+	}
+
+	validators := kafkaProducerTimeoutValidators(t)
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := &validator.Float64Response{}
+			for _, v := range validators {
+				v.ValidateFloat64(
+					t.Context(),
+					validator.Float64Request{ConfigValue: test.value},
+					resp,
+				)
+			}
+
+			if got := resp.Diagnostics.HasError(); got != test.wantError {
+				t.Errorf("HasError() = %v, want %v (%v)", got, test.wantError, resp.Diagnostics)
+			}
+		})
+	}
+}

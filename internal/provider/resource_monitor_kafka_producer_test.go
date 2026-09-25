@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -9,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+
+	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
 func TestAccMonitorKafkaProducerResource(t *testing.T) {
@@ -236,6 +239,15 @@ func TestAccMonitorKafkaProducerResourceMinimal(t *testing.T) {
 					),
 				},
 			},
+			// Importing the default path is the one case where the schema
+			// default and the value read back from the server could diverge.
+			{
+				ResourceName:                         "uptimekuma_monitor_kafka_producer.test",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "id",
+				ImportStateVerifyIgnore:              []string{"message"},
+			},
 		},
 	})
 }
@@ -403,4 +415,83 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
   parent  = uptimekuma_monitor_group.test.id
 }
 `, groupName, monitorName)
+}
+
+// TestAccMonitorKafkaProducerResourceValidators proves the timeout floor is wired
+// into the schema. The rule itself is covered exhaustively by
+// TestMonitorKafkaProducerTimeoutValidation without a Terraform process.
+func TestAccMonitorKafkaProducerResourceValidators(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestKafkaProducerMonitorValidators")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMonitorKafkaProducerResourceConfigWithAttribute(
+					name, "timeout", "0",
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`must be at least 0\.10{5}`),
+			},
+			{
+				Config: testAccMonitorKafkaProducerResourceConfigWithAttribute(
+					name, "timeout", "0.09",
+				),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`must be at least 0\.10{5}`),
+			},
+		},
+	})
+}
+
+func testAccMonitorKafkaProducerResourceConfigWithAttribute(name string, attribute string, value string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_kafka_producer" "test" {
+  name    = %[1]q
+  brokers = ["kafka.example.com:9092"]
+  topic   = "monitor-topic"
+  message = "ping"
+
+  %[2]s = %[3]s
+}
+`, name, attribute, value)
+}
+
+// TestKafkaProducerTimeoutValue covers both branches of the read fallback. The nil
+// branch is unreachable from an acceptance test, because the monitor.timeout column
+// is NOT NULL server-side, so this is the only place it gets exercised.
+func TestKafkaProducerTimeoutValue(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		timeout *float64
+		want    float64
+	}{
+		"stored value":      {timeout: new(2.5), want: 2.5},
+		"stored whole":      {timeout: new(5.0), want: 5},
+		"stored zero":       {timeout: new(0.0), want: 0},
+		"absent from reply": {timeout: nil, want: defaultKafkaProducerTimeout},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			kafkaMonitor := &monitor.KafkaProducer{
+				Base:                 monitor.Base{ID: 7},
+				KafkaProducerDetails: monitor.KafkaProducerDetails{Timeout: test.timeout},
+			}
+
+			got := kafkaProducerTimeoutValue(t.Context(), kafkaMonitor)
+
+			if got.IsNull() || got.IsUnknown() {
+				t.Fatalf("kafkaProducerTimeoutValue() = %v, want %v", got, test.want)
+			}
+
+			if got.ValueFloat64() != test.want {
+				t.Errorf("kafkaProducerTimeoutValue() = %v, want %v", got.ValueFloat64(), test.want)
+			}
+		})
+	}
 }
