@@ -52,4 +52,5 @@ resource "uptimekuma_monitor_kafka_producer" "monitored" {
 ### Read-Only
 
 - `brokers` (List of String) List of Kafka broker addresses
+- `timeout` (Number) Connection timeout in seconds, handed to kafkajs as its `connectionTimeout`. The column is NOT NULL server-side, so this is normally the stored value; null would mean the server reported none, in which case 1 applies.
 - `topic` (String) Kafka topic to publish messages to
