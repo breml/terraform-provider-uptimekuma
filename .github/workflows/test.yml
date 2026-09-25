@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 jobs:
-  # Ensure project builds before running testing matrix
+  # Ensure project builds before linting and running the testing matrix
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -31,10 +31,6 @@ jobs:
           cache: true
       - run: go mod download
       - run: go build -v .
-      - name: Run linters
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
-        with:
-          version: latest
 
   format:
     name: Code Formatting
@@ -81,27 +77,30 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'task generate-docs' command and commit."; exit 1)
 
+  # Lint only once the project builds; the tests wait for linting to pass.
   lint:
     name: Lint
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
-        uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
       - uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: |-
             **/*.md
             !docs/**
-
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
-          version: latest
+          version: v2.13.2
 
   unit-test:
     name: Unit Tests
-    needs: build
+    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -124,7 +123,7 @@ jobs:
   # the shards from the actual test list, so every test runs in exactly one.
   test:
     name: Terraform Provider Acceptance Tests (${{ matrix.shard }}/4)
-    needs: build
+    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
