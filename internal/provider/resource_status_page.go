@@ -205,10 +205,14 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"analytics_type": schema.StringAttribute{
-				MarkdownDescription: "Analytics provider type (e.g. google, matomo, plausible, umami)",
-				Optional:            true,
+				MarkdownDescription: "Analytics provider whose tracking snippet Uptime Kuma renders on the" +
+					" public status page. One of `" + strings.Join(analyticsTypes(), "`, `") + "`." +
+					" `google` reads the tracking ID from `analytics_id`, the others read the script" +
+					" location from `analytics_script_url`. When null, no snippet is rendered.",
+				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.ConflictsWith(path.MatchRoot("google_analytics_id")),
+					stringvalidator.OneOf(analyticsTypes()...),
 				},
 			},
 			"analytics_id": schema.StringAttribute{
@@ -216,7 +220,7 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 			},
 			"analytics_script_url": schema.StringAttribute{
-				MarkdownDescription: "Analytics script URL (used by matomo, plausible, umami)",
+				MarkdownDescription: "Analytics script URL (used by matomo, plausible, umami, rybbit)",
 				Optional:            true,
 			},
 			"custom_css": schema.StringAttribute{
@@ -579,6 +583,19 @@ func (r *StatusPageResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete status page", err.Error())
 		return
+	}
+}
+
+// analyticsTypes returns the analytics provider types Uptime Kuma accepts on a
+// status page. The list is built from the client helpers so the provider
+// allowlist cannot drift from `statuspage.ValidAnalyticsType`.
+func analyticsTypes() []string {
+	return []string{
+		statuspage.AnalyticsTypeGoogle(),
+		statuspage.AnalyticsTypeUmami(),
+		statuspage.AnalyticsTypePlausible(),
+		statuspage.AnalyticsTypeMatomo(),
+		statuspage.AnalyticsTypeRybbit(),
 	}
 }
 

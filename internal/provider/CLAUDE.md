@@ -983,7 +983,7 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 
 1. Check `TF_ACC` environment variable (the container is only started when it is set)
 2. Create Docker pool and ping daemon
-3. Run a `louislam/uptime-kuma:2.5.0` container with `AutoRemove`, publishing its port
+3. Run a `louislam/uptime-kuma:2.5.5` container with `AutoRemove`, publishing its port
    3001 on a random host port
 4. Register the cleanup before connecting, so the container is purged even if the
    connection below never succeeds

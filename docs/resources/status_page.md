@@ -54,8 +54,8 @@ resource "uptimekuma_status_page" "example" {
 ### Optional
 
 - `analytics_id` (String) Analytics tracking ID
-- `analytics_script_url` (String) Analytics script URL (used by matomo, plausible, umami)
-- `analytics_type` (String) Analytics provider type (e.g. google, matomo, plausible, umami)
+- `analytics_script_url` (String) Analytics script URL (used by matomo, plausible, umami, rybbit)
+- `analytics_type` (String) Analytics provider whose tracking snippet Uptime Kuma renders on the public status page. One of `google`, `umami`, `plausible`, `matomo`, `rybbit`. `google` reads the tracking ID from `analytics_id`, the others read the script location from `analytics_script_url`. When null, no snippet is rendered.
 - `custom_css` (String) Custom CSS styling
 - `description` (String) Status page description
 - `domain_name_list` (List of String) Custom domain names

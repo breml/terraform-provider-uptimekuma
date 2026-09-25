@@ -257,6 +257,72 @@ resource "uptimekuma_status_page" "test" {
 `, slug, title)
 }
 
+func TestAccStatusPageResourceWithRybbitAnalytics(t *testing.T) {
+	slug := acctest.RandomWithPrefix("test-rybbit")
+	title := "Rybbit Status Page"
+	titleUpdated := "Updated Rybbit Status Page"
+	scriptURL := "https://app.rybbit.io/api/script.js"
+	scriptURLUpdated := "https://rybbit.example.com/api/script.js"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccStatusPageResourceConfigWithRybbit(slug, title, scriptURL),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(title),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_type"),
+						knownvalue.StringExact("rybbit"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_script_url"),
+						knownvalue.StringExact(scriptURL),
+					),
+				},
+			},
+			{
+				Config: testAccStatusPageResourceConfigWithRybbit(slug, titleUpdated, scriptURLUpdated),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact(titleUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_type"),
+						knownvalue.StringExact("rybbit"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_script_url"),
+						knownvalue.StringExact(scriptURLUpdated),
+					),
+				},
+			},
+		},
+	})
+}
+
+func testAccStatusPageResourceConfigWithRybbit(slug string, title string, scriptURL string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_status_page" "test" {
+  slug                 = %[1]q
+  title                = %[2]q
+  analytics_type       = "rybbit"
+  analytics_script_url = %[3]q
+}
+`, slug, title, scriptURL)
+}
+
 func TestAccStatusPageResourceWithDeprecatedGoogleAnalyticsID(t *testing.T) {
 	slug := acctest.RandomWithPrefix("test-ga-compat")
 	title := "GA Compat Status Page"
