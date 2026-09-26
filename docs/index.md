@@ -44,12 +44,15 @@ provide:
 ## Compatibility
 
 This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run against
-`louislam/uptime-kuma:2.5.0`. Against older servers some attributes behave differently:
+`louislam/uptime-kuma:2.5.5`. Against older servers some attributes behave differently:
 
 - `interval` and `retry_interval` lost their 24 day maximum in 2.5.0. The provider no longer
   enforces an upper bound, so earlier servers reject large values at apply time.
 - `screenshot_delay` on `uptimekuma_monitor_real_browser` is only echoed back since 2.5.0.
   Earlier servers cannot report drift on it or recover it on import.
+- `analytics_type = "rybbit"` on `uptimekuma_status_page` is only accepted from 2.5.1. Uptime Kuma
+  2.5.0 ships the server side support but still carries the older SQLite `CHECK` constraint on the
+  column, so the write fails at apply time with a constraint violation.
 - `system_service_name` on `uptimekuma_monitor_system_service` is validated against
   `^[a-zA-Z0-9._\-@]+$`, which matches the server side check added in 2.5.0. On Windows the
   Service Control Manager does not accept `@`, so a name containing it is accepted here but

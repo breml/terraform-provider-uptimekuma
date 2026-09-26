@@ -53,9 +53,9 @@ resource "uptimekuma_status_page" "example" {
 
 ### Optional
 
-- `analytics_id` (String) Analytics tracking ID
-- `analytics_script_url` (String) Analytics script URL (used by matomo, plausible, umami)
-- `analytics_type` (String) Analytics provider type (e.g. google, matomo, plausible, umami)
+- `analytics_id` (String) Site identifier passed to the analytics snippet. Its meaning depends on `analytics_type`: the gtag property ID for `google`, `data-website-id` for `umami`, `data-site-id` for `rybbit`, and the numeric site ID for `matomo`. For `plausible` it is `data-domain`, which is a comma separated list of domains rather than an ID. Uptime Kuma interpolates the `matomo` value into the snippet unquoted, so a non-numeric value there emits broken JavaScript.
+- `analytics_script_url` (String) Location of the analytics script, required by `umami`, `plausible`, `matomo` and `rybbit` and unused by `google`. For `umami`, `plausible` and `rybbit` this is the full script URL. For `matomo` it is the bare host of the Matomo installation (`matomo.example.com`), which Uptime Kuma expands into the tracker and script URLs itself; a value carrying a scheme or a path produces a broken snippet.
+- `analytics_type` (String) Analytics provider whose tracking snippet Uptime Kuma renders on the public status page. One of `google`, `umami`, `plausible`, `matomo`, `rybbit`. `google` requires `analytics_id`; every other type requires both `analytics_id` and `analytics_script_url`. When null, no snippet is rendered at all.
 - `custom_css` (String) Custom CSS styling
 - `description` (String) Status page description
 - `domain_name_list` (List of String) Custom domain names
