@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +18,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
 // testAccProtoV6ProviderFactories is used to instantiate a provider during acceptance testing.
@@ -858,4 +862,237 @@ data "uptimekuma_tag" "test" {
   name = uptimekuma_tag.test.name
 }
 `, name)
+}
+
+func TestApplyEnvironmentDefaults_Credentials(t *testing.T) {
+	t.Setenv("UPTIMEKUMA_TOTP_SECRET", "JBSWY3DPEHPK3PXP")
+	t.Setenv("UPTIMEKUMA_SESSION_TOKEN", "token-from-env")
+
+	model := UptimeKumaProviderModel{
+		Endpoint:     types.StringNull(),
+		Username:     types.StringNull(),
+		Password:     types.StringNull(),
+		TOTPSecret:   types.StringNull(),
+		SessionToken: types.StringNull(),
+	}
+
+	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+
+	if model.TOTPSecret.ValueString() != "JBSWY3DPEHPK3PXP" {
+		t.Errorf("expected totp_secret %q from env, got %q", "JBSWY3DPEHPK3PXP", model.TOTPSecret.ValueString())
+	}
+
+	if model.SessionToken.ValueString() != "token-from-env" {
+		t.Errorf("expected session_token %q from env, got %q", "token-from-env", model.SessionToken.ValueString())
+	}
+}
+
+func TestApplyEnvironmentDefaults_CredentialsConfigOverridesEnv(t *testing.T) {
+	t.Setenv("UPTIMEKUMA_TOTP_SECRET", "JBSWY3DPEHPK3PXP")
+	t.Setenv("UPTIMEKUMA_SESSION_TOKEN", "token-from-env")
+
+	model := UptimeKumaProviderModel{
+		Endpoint:     types.StringNull(),
+		Username:     types.StringNull(),
+		Password:     types.StringNull(),
+		TOTPSecret:   types.StringValue("MFRGGZDFMZTWQ2LK"),
+		SessionToken: types.StringValue("token-from-config"),
+	}
+
+	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+
+	if model.TOTPSecret.ValueString() != "MFRGGZDFMZTWQ2LK" {
+		t.Errorf("expected config totp_secret %q to take precedence, got %q",
+			"MFRGGZDFMZTWQ2LK", model.TOTPSecret.ValueString())
+	}
+
+	if model.SessionToken.ValueString() != "token-from-config" {
+		t.Errorf("expected config session_token %q to take precedence, got %q",
+			"token-from-config", model.SessionToken.ValueString())
+	}
+}
+
+// TestValidateCredentials pins the shapes Uptime Kuma can be authenticated
+// with. A session token next to a username and password is deliberately
+// allowed: the client tries the token first and falls back to the password
+// login for a token the server refuses, which is what recovers a configuration
+// whose stored token went stale.
+func TestValidateCredentials(t *testing.T) {
+	tests := []struct {
+		name         string
+		username     types.String
+		password     types.String
+		totpSecret   types.String
+		sessionToken types.String
+		wantError    bool
+	}{
+		{
+			name:         "no credentials",
+			username:     types.StringNull(),
+			password:     types.StringNull(),
+			totpSecret:   types.StringNull(),
+			sessionToken: types.StringNull(),
+		},
+		{
+			name:         "username and password",
+			username:     types.StringValue("admin"),
+			password:     types.StringValue("secret"),
+			totpSecret:   types.StringNull(),
+			sessionToken: types.StringNull(),
+		},
+		{
+			name:         "username, password and totp secret",
+			username:     types.StringValue("admin"),
+			password:     types.StringValue("secret"),
+			totpSecret:   types.StringValue("JBSWY3DPEHPK3PXP"),
+			sessionToken: types.StringNull(),
+		},
+		{
+			name:         "session token alone",
+			username:     types.StringNull(),
+			password:     types.StringNull(),
+			totpSecret:   types.StringNull(),
+			sessionToken: types.StringValue("token"),
+		},
+		{
+			name:         "session token with username and password",
+			username:     types.StringValue("admin"),
+			password:     types.StringValue("secret"),
+			totpSecret:   types.StringNull(),
+			sessionToken: types.StringValue("token"),
+		},
+		{
+			name:         "username without password",
+			username:     types.StringValue("admin"),
+			password:     types.StringNull(),
+			totpSecret:   types.StringNull(),
+			sessionToken: types.StringNull(),
+			wantError:    true,
+		},
+		{
+			name:         "password without username",
+			username:     types.StringNull(),
+			password:     types.StringValue("secret"),
+			totpSecret:   types.StringNull(),
+			sessionToken: types.StringNull(),
+			wantError:    true,
+		},
+		{
+			name:         "totp secret alone",
+			username:     types.StringNull(),
+			password:     types.StringNull(),
+			totpSecret:   types.StringValue("JBSWY3DPEHPK3PXP"),
+			sessionToken: types.StringNull(),
+			wantError:    true,
+		},
+		{
+			name:         "totp secret with session token only",
+			username:     types.StringNull(),
+			password:     types.StringNull(),
+			totpSecret:   types.StringValue("JBSWY3DPEHPK3PXP"),
+			sessionToken: types.StringValue("token"),
+			wantError:    true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			model := UptimeKumaProviderModel{
+				Endpoint:     types.StringValue("http://localhost:3001"),
+				Username:     tc.username,
+				Password:     tc.password,
+				TOTPSecret:   tc.totpSecret,
+				SessionToken: tc.sessionToken,
+			}
+
+			resp := &provider.ConfigureResponse{}
+
+			validateCredentials(&model, resp)
+
+			if got := resp.Diagnostics.HasError(); got != tc.wantError {
+				t.Errorf("expected error %t, got %t (%v)", tc.wantError, got, resp.Diagnostics.Errors())
+			}
+		})
+	}
+}
+
+// TestConnectionErrorDiagnostic pins that a login the server refused is named
+// as such instead of arriving as the generic connection failure every cause
+// used to share. The sentinels are wrapped the way the pool wraps them on the
+// way out, because a classification that only works on a bare error would
+// never fire in practice.
+func TestConnectionErrorDiagnostic(t *testing.T) {
+	tests := []struct {
+		name        string
+		err         error
+		wantSummary string
+	}{
+		{name: "auth required", err: kuma.ErrAuthRequired, wantSummary: "credentials required"},
+		{name: "invalid credentials", err: kuma.ErrInvalidCredentials, wantSummary: "invalid credentials"},
+		{
+			name:        "two-factor required",
+			err:         kuma.ErrTwoFactorRequired,
+			wantSummary: "two-factor authentication required",
+		},
+		{
+			name:        "invalid one-time code",
+			err:         kuma.ErrInvalidTOTPCode,
+			wantSummary: "invalid two-factor authentication code",
+		},
+		{
+			name:        "user inactive wins over the token rejection it wraps",
+			err:         kuma.ErrUserInactive,
+			wantSummary: "user inactive or deleted",
+		},
+		{
+			name:        "session token rejected",
+			err:         kuma.ErrInvalidSessionToken,
+			wantSummary: "session token rejected",
+		},
+		{name: "rate limited", err: kuma.ErrRateLimited, wantSummary: "too many login attempts"},
+		{
+			name:        "anything else stays the connection failure",
+			err:         errors.New("connect to server: context deadline exceeded"),
+			wantSummary: "failed to connect to Uptime Kuma",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			wrapped := fmt.Errorf("create pooled connection: %w", tc.err)
+
+			summary, detail := connectionErrorDiagnostic("http://localhost:3001", wrapped)
+
+			if summary != tc.wantSummary {
+				t.Errorf("expected summary %q, got %q", tc.wantSummary, summary)
+			}
+
+			if !strings.Contains(detail, tc.err.Error()) {
+				t.Errorf("expected detail to carry the underlying error %q, got %q", tc.err, detail)
+			}
+		})
+	}
+}
+
+// TestAccProviderTOTPSecretWithoutCredentials asserts the rejection of a
+// configuration the provider could not honour: the one-time code a
+// `totp_secret` produces is only ever asked for by a password login.
+func TestAccProviderTOTPSecretWithoutCredentials(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "uptimekuma" {
+  endpoint      = "http://localhost:3001"
+  session_token = "token"
+  totp_secret   = "JBSWY3DPEHPK3PXP"
+}
+
+data "uptimekuma_tag" "test" {}
+`,
+				ExpectError: regexp.MustCompile(`totp_secret`),
+			},
+		},
+	})
 }

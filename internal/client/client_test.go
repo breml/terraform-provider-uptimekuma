@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -372,5 +373,55 @@ func TestNewClientDirect_CancelledContextReturnsError(t *testing.T) {
 	_, err := newClientDirect(ctx, config)
 	if err == nil {
 		t.Fatal("expected error for cancelled context, got nil")
+	}
+}
+
+// TestTerminalAuthError pins which failures the retry loop must not repeat.
+// Every attempt costs one of the 20 logins per minute Uptime Kuma allows - two
+// for one that answers a one-time code - and a rejected credential is rejected
+// just as firmly on the fourth try, with the retry count replacing the reason
+// the server gave.
+func TestTerminalAuthError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "auth required", err: kuma.ErrAuthRequired, want: true},
+		{name: "invalid credentials", err: kuma.ErrInvalidCredentials, want: true},
+		{name: "two-factor required", err: kuma.ErrTwoFactorRequired, want: true},
+		{name: "invalid one-time code", err: kuma.ErrInvalidTOTPCode, want: true},
+		{name: "session token rejected", err: kuma.ErrInvalidSessionToken, want: true},
+		{name: "user inactive", err: kuma.ErrUserInactive, want: true},
+		{name: "rate limited", err: kuma.ErrRateLimited, want: true},
+		{
+			name: "wrapped sentinel",
+			err:  fmt.Errorf("login: %w: the server asked for a code again", kuma.ErrTwoFactorRequired),
+			want: true,
+		},
+		{name: "transport failure is worth a retry", err: errors.New("connect to server: EOF"), want: false},
+		{name: "no error", err: nil, want: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := terminalAuthError(tc.err); got != tc.want {
+				t.Errorf("expected terminalAuthError %t, got %t", tc.want, got)
+			}
+		})
+	}
+}
+
+// TestConnectOptions pins that the credential options only appear once
+// configured, so a client without them keeps the plain password login.
+func TestConnectOptions(t *testing.T) {
+	plain := connectOptions(&Config{}, time.Second)
+	if len(plain) != 3 {
+		t.Errorf("expected 3 options without credentials, got %d", len(plain))
+	}
+
+	full := connectOptions(&Config{TOTPSecret: "JBSWY3DPEHPK3PXP", SessionToken: "token"}, time.Second)
+	if len(full) != 5 {
+		t.Errorf("expected 5 options with totp secret and session token, got %d", len(full))
 	}
 }
