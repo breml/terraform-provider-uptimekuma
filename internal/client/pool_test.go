@@ -323,3 +323,45 @@ func TestCloseGlobalPool_NilPool(t *testing.T) {
 		t.Errorf("expected no error closing nil global pool, got %v", err)
 	}
 }
+
+// TestPool_ConfigMatches_Credentials pins the TOTP secret and the session token
+// as part of the pool's connection identity. Two provider blocks
+// authenticating as different accounts must not share one connection just
+// because neither of them names a username.
+func TestPool_ConfigMatches_Credentials(t *testing.T) {
+	pool := &Pool{
+		config: &Config{
+			Endpoint:     "http://localhost:3001",
+			SessionToken: "token",
+		},
+	}
+
+	if !pool.configMatches(&Config{Endpoint: "http://localhost:3001", SessionToken: "token"}) {
+		t.Error("expected configMatches to return true for an identical session token")
+	}
+
+	if pool.configMatches(&Config{Endpoint: "http://localhost:3001", SessionToken: "other-token"}) {
+		t.Error("expected configMatches to return false for a different session token")
+	}
+
+	if pool.configMatches(&Config{Endpoint: "http://localhost:3001"}) {
+		t.Error("expected configMatches to return false for a missing session token")
+	}
+
+	secretPool := &Pool{
+		config: &Config{
+			Endpoint:   "http://localhost:3001",
+			Username:   "admin",
+			Password:   "secret",
+			TOTPSecret: "JBSWY3DPEHPK3PXP",
+		},
+	}
+
+	if secretPool.configMatches(&Config{
+		Endpoint: "http://localhost:3001",
+		Username: "admin",
+		Password: "secret",
+	}) {
+		t.Error("expected configMatches to return false for a missing totp secret")
+	}
+}

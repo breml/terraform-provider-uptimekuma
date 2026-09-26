@@ -33,13 +33,94 @@ resource "uptimekuma_monitor_http" "example" {
 
 ## Authentication
 
-The provider uses basic authentication to connect to your Uptime Kuma instance. This is verified
-to work with Uptime Kuma instances that support basic authentication via API. You need to
-provide:
+`endpoint`, the URL of your Uptime Kuma instance, is always required. The credentials next to it
+form one of three shapes:
 
-- `endpoint` - The URL of your Uptime Kuma instance
-- `username` - Your Uptime Kuma username
-- `password` - Your Uptime Kuma password
+- **Username and password** - the usual way in. Every attribute can also come from an environment
+  variable, `UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME` and `UPTIMEKUMA_PASSWORD`.
+
+  ```hcl
+  provider "uptimekuma" {
+    endpoint = "http://localhost:3001"
+    username = "admin"
+    password = "password"
+  }
+  ```
+
+- **Username, password and a one-time code**, for an account with two-factor authentication
+  enabled. `totp_secret` is the base32 `secret` from the `otpauth://` URI Uptime Kuma shows while
+  two-factor authentication is set up - the provider derives the code the server asks for from it,
+  so nothing has to be typed at apply time. Spaces, hyphens, lower case and missing padding are
+  accepted. The secret is inert on an account without two-factor authentication.
+
+  ```hcl
+  provider "uptimekuma" {
+    endpoint    = "http://localhost:3001"
+    username    = "admin"
+    password    = "password"
+    totp_secret = "JBSWY3DPEHPK3PXP" # or UPTIMEKUMA_TOTP_SECRET
+  }
+  ```
+
+- **A session token**, the credential Uptime Kuma hands out on every successful login and accepts
+  in place of one. It bypasses two-factor authentication entirely, so it needs neither the password
+  nor a code.
+
+  ```hcl
+  provider "uptimekuma" {
+    endpoint      = "http://localhost:3001"
+    session_token = var.uptimekuma_session_token # or UPTIMEKUMA_SESSION_TOKEN
+  }
+  ```
+
+Set with a username and password as well, the token is tried first and the password login is the
+fallback for a token the server refuses - which is what a changed password leaves behind. The
+provider warns when that fallback happens, so the stored token can be replaced.
+
+### Obtaining a session token
+
+Uptime Kuma answers a successful login with the token; it is not shown anywhere in the web
+interface. Either read it out of the browser (the `token` entry the web interface stores for a
+logged-in session), or log in once with the Go client this provider is built on and print what it
+was given:
+
+```go
+client, err := kuma.New(ctx, "http://localhost:3001", "admin", "password",
+    kuma.WithTOTPSecret("JBSWY3DPEHPK3PXP")) // only for a 2FA account
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println(client.SessionToken())
+```
+
+### Why a token rather than a secret for a 2FA account
+
+Uptime Kuma records the last one-time code it accepted for an account and refuses to see it again,
+and that guard is per account rather than per connection. Two Terraform runs against the same 2FA
+account starting within the same 30 second step therefore cannot both log in, however correct the
+secret is. A token has no such guard and can be shared by any number of runs, which makes it the
+credential to use in CI.
+
+### Storing the credentials
+
+A session token is a bearer credential that does not expire: only a password change or a
+deactivated account invalidates it, and for a 2FA account it is a *stronger* credential than the
+password, because it needs no second factor. Store it - and `totp_secret`, which is the whole
+second factor - the way the password is stored, and keep both out of the state file by passing them
+through a variable or an environment variable.
+
+### Authentication and `uptimekuma_settings`
+
+Uptime Kuma asks for the account password again when settings are written, so
+`uptimekuma_settings` needs `password` on the provider. A configuration authenticated only with
+`session_token` can manage everything else.
+
+### Servers with authentication disabled
+
+A server that logs clients in by itself takes no credentials at all - leave `username`, `password`,
+`totp_secret` and `session_token` unset. Note that such a provider cannot ask Uptime Kuma to resend
+a list it missed, so it reports a resource it cannot find rather than removing it from state.
 
 ## Compatibility
 
