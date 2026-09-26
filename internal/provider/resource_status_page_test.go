@@ -263,13 +263,27 @@ func TestAccStatusPageResourceWithRybbitAnalytics(t *testing.T) {
 	titleUpdated := "Updated Rybbit Status Page"
 	scriptURL := "https://app.rybbit.io/api/script.js"
 	scriptURLUpdated := "https://rybbit.example.com/api/script.js"
+	siteID := "rybbit-site-1"
+	siteIDUpdated := "rybbit-site-2"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// Start on google so the following step exercises a change of the analytics
+			// type itself, not just of its companion attributes.
 			{
-				Config: testAccStatusPageResourceConfigWithRybbit(slug, title, scriptURL),
+				Config: testAccStatusPageResourceConfigWithGoogleAnalytics(slug, title),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_type"),
+						knownvalue.StringExact("google"),
+					),
+				},
+			},
+			{
+				Config: testAccStatusPageResourceConfigWithRybbit(slug, title, siteID, scriptURL),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
@@ -283,13 +297,26 @@ func TestAccStatusPageResourceWithRybbitAnalytics(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_id"),
+						knownvalue.StringExact(siteID),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
 						tfjsonpath.New("analytics_script_url"),
 						knownvalue.StringExact(scriptURL),
 					),
 				},
 			},
+			// The same configuration must produce an empty plan. analytics_script_url
+			// round trips through stringOrNullPreserveEmpty, the helper family behind the
+			// earlier perpetual diffs on this resource.
 			{
-				Config: testAccStatusPageResourceConfigWithRybbit(slug, titleUpdated, scriptURLUpdated),
+				Config:             testAccStatusPageResourceConfigWithRybbit(slug, title, siteID, scriptURL),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+			{
+				Config: testAccStatusPageResourceConfigWithRybbit(slug, titleUpdated, siteIDUpdated, scriptURLUpdated),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
@@ -298,8 +325,8 @@ func TestAccStatusPageResourceWithRybbitAnalytics(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
-						tfjsonpath.New("analytics_type"),
-						knownvalue.StringExact("rybbit"),
+						tfjsonpath.New("analytics_id"),
+						knownvalue.StringExact(siteIDUpdated),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_status_page.test",
@@ -308,19 +335,54 @@ func TestAccStatusPageResourceWithRybbitAnalytics(t *testing.T) {
 					),
 				},
 			},
+			// Dropping the analytics attributes has to clear them on the server, or the
+			// status page keeps serving a tracking snippet the configuration no longer asks
+			// for.
+			{
+				Config: testAccStatusPageResourceConfigMinimal(slug, titleUpdated),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_type"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_id"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_script_url"),
+						knownvalue.Null(),
+					),
+				},
+			},
 		},
 	})
 }
 
-func testAccStatusPageResourceConfigWithRybbit(slug string, title string, scriptURL string) string {
+func testAccStatusPageResourceConfigWithGoogleAnalytics(slug string, title string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_status_page" "test" {
+  slug           = %[1]q
+  title          = %[2]q
+  analytics_type = "google"
+  analytics_id   = "G-RYBBITSWAP"
+}
+`, slug, title)
+}
+
+func testAccStatusPageResourceConfigWithRybbit(slug string, title string, siteID string, scriptURL string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_status_page" "test" {
   slug                 = %[1]q
   title                = %[2]q
   analytics_type       = "rybbit"
-  analytics_script_url = %[3]q
+  analytics_id         = %[3]q
+  analytics_script_url = %[4]q
 }
-`, slug, title, scriptURL)
+`, slug, title, siteID, scriptURL)
 }
 
 func TestAccStatusPageResourceWithDeprecatedGoogleAnalyticsID(t *testing.T) {
@@ -338,6 +400,16 @@ func TestAccStatusPageResourceWithDeprecatedGoogleAnalyticsID(t *testing.T) {
 						"uptimekuma_status_page.test",
 						tfjsonpath.New("google_analytics_id"),
 						knownvalue.StringExact("UA-123456-1"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_type"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_status_page.test",
+						tfjsonpath.New("analytics_id"),
+						knownvalue.Null(),
 					),
 				},
 			},

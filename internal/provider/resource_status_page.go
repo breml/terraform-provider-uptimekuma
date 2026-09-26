@@ -21,7 +21,10 @@ import (
 	"github.com/breml/go-uptime-kuma-client/statuspage"
 )
 
-var _ resource.Resource = &StatusPageResource{}
+var (
+	_ resource.Resource                   = &StatusPageResource{}
+	_ resource.ResourceWithValidateConfig = &StatusPageResource{}
+)
 
 // statusPageIconValidator validates the icon field format.
 type statusPageIconValidator struct{}
@@ -207,8 +210,8 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"analytics_type": schema.StringAttribute{
 				MarkdownDescription: "Analytics provider whose tracking snippet Uptime Kuma renders on the" +
 					" public status page. One of `" + strings.Join(analyticsTypes(), "`, `") + "`." +
-					" `google` reads the tracking ID from `analytics_id`, the others read the script" +
-					" location from `analytics_script_url`. When null, no snippet is rendered.",
+					" `google` requires `analytics_id`; every other type requires both `analytics_id`" +
+					" and `analytics_script_url`. When null, no snippet is rendered at all.",
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.ConflictsWith(path.MatchRoot("google_analytics_id")),
@@ -216,12 +219,21 @@ func (*StatusPageResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"analytics_id": schema.StringAttribute{
-				MarkdownDescription: "Analytics tracking ID",
-				Optional:            true,
+				MarkdownDescription: "Site identifier passed to the analytics snippet. Its meaning depends on" +
+					" `analytics_type`: the gtag property ID for `google`, `data-website-id` for `umami`," +
+					" `data-site-id` for `rybbit`, and the numeric site ID for `matomo`. For `plausible` it" +
+					" is `data-domain`, which is a comma separated list of domains rather than an ID." +
+					" Uptime Kuma interpolates the `matomo` value into the snippet unquoted, so a" +
+					" non-numeric value there emits broken JavaScript.",
+				Optional: true,
 			},
 			"analytics_script_url": schema.StringAttribute{
-				MarkdownDescription: "Analytics script URL (used by matomo, plausible, umami, rybbit)",
-				Optional:            true,
+				MarkdownDescription: "Location of the analytics script, required by `umami`, `plausible`," +
+					" `matomo` and `rybbit` and unused by `google`. For `umami`, `plausible` and `rybbit`" +
+					" this is the full script URL. For `matomo` it is the bare host of the Matomo" +
+					" installation (`matomo.example.com`), which Uptime Kuma expands into the tracker and" +
+					" script URLs itself; a value carrying a scheme or a path produces a broken snippet.",
+				Optional: true,
 			},
 			"custom_css": schema.StringAttribute{
 				MarkdownDescription: "Custom CSS styling",
@@ -586,9 +598,79 @@ func (r *StatusPageResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
+// ValidateConfig validates the configuration for the status page resource.
+//
+// Uptime Kuma renders an analytics snippet only once the fields the chosen provider needs are
+// present, and it reports nothing when they are not: the snippet is either omitted or emitted
+// with an empty site identifier, so the tracking silently does not work.
+// `stringvalidator.AlsoRequires` cannot express this, because `analytics_script_url` is needed by
+// four of the five types rather than by all of them, which depends on the value of
+// `analytics_type` rather than on it being set at all.
+func (*StatusPageResource) ValidateConfig(
+	ctx context.Context,
+	req resource.ValidateConfigRequest,
+	resp *resource.ValidateConfigResponse,
+) {
+	var config StatusPageResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	validateStatusPageAnalytics(&config, resp)
+}
+
+// validateStatusPageAnalytics reports an analytics configuration that Uptime Kuma would accept on
+// write but could not render a working snippet from.
+func validateStatusPageAnalytics(config *StatusPageResourceModel, resp *resource.ValidateConfigResponse) {
+	if config.AnalyticsType.IsNull() || config.AnalyticsType.IsUnknown() {
+		// A null type means no analytics at all, and is also what the deprecated
+		// google_analytics_id path leaves behind. An unknown value is only known after
+		// apply, so there is nothing to validate against.
+		return
+	}
+
+	analyticsType := config.AnalyticsType.ValueString()
+
+	if config.AnalyticsID.IsNull() {
+		resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
+			path.Root("analytics_id"),
+			"Missing Attribute Configuration",
+			fmt.Sprintf(
+				"When %q is set to %q, the attribute %q must be set. "+
+					"Uptime Kuma passes it to the analytics snippet as the site identifier.",
+				"analytics_type", analyticsType, "analytics_id",
+			),
+		))
+	}
+
+	if analyticsType == statuspage.AnalyticsTypeGoogle() {
+		// Google Analytics is loaded from Google's own tag manager, so it needs no script URL.
+		return
+	}
+
+	if config.AnalyticsScriptURL.IsNull() {
+		resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
+			path.Root("analytics_script_url"),
+			"Missing Attribute Configuration",
+			fmt.Sprintf(
+				"When %q is set to %q, the attribute %q must be set. "+
+					"Uptime Kuma has no default location for the %s script.",
+				"analytics_type", analyticsType, "analytics_script_url", analyticsType,
+			),
+		))
+	}
+}
+
 // analyticsTypes returns the analytics provider types Uptime Kuma accepts on a
-// status page. The list is built from the client helpers so the provider
-// allowlist cannot drift from `statuspage.ValidAnalyticsType`.
+// status page, matching the server side allowlist in its status page socket
+// handler. The identifiers come from the client helpers rather than from string
+// literals, so a typo cannot slip in, but the enumeration itself is maintained
+// by hand: `statuspage` exposes one accessor per type and no way to iterate
+// them, so a type added to `statuspage.ValidAnalyticsType` has to be added here
+// too or the provider rejects a value the server accepts.
 func analyticsTypes() []string {
 	return []string{
 		statuspage.AnalyticsTypeGoogle(),
