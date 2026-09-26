@@ -393,7 +393,13 @@ func TestTerminalAuthError(t *testing.T) {
 		{name: "invalid one-time code", err: kuma.ErrInvalidTOTPCode, want: true},
 		{name: "session token rejected", err: kuma.ErrInvalidSessionToken, want: true},
 		{name: "user inactive", err: kuma.ErrUserInactive, want: true},
-		{name: "rate limited", err: kuma.ErrRateLimited, want: true},
+		{
+			// The limiter is a bucket that refills, so the retry loop is the
+			// mechanism that recovers from it, not an attempt wasted.
+			name: "rate limited is worth a retry",
+			err:  kuma.ErrRateLimited,
+			want: false,
+		},
 		{
 			name: "wrapped sentinel",
 			err:  fmt.Errorf("login: %w: the server asked for a code again", kuma.ErrTwoFactorRequired),
@@ -412,16 +418,117 @@ func TestTerminalAuthError(t *testing.T) {
 	}
 }
 
-// TestConnectOptions pins that the credential options only appear once
-// configured, so a client without them keeps the plain password login.
+// TestConnectOptions pins that each credential option only appears once its
+// own field is configured, so a client without them keeps the plain password
+// login - and, for the TOTP secret, so that kuma.New is never handed the empty
+// secret it rejects outright.
+//
+// A kuma.Option can only be applied to a kuma.Client, whose fields this
+// package cannot read, so the options are counted rather than identified. The
+// count is per field, which is what keeps one guard from covering for the
+// other; TestNewClientDirect_SessionTokenIsNotTheTOTPSecret pins that the two
+// are not swapped.
 func TestConnectOptions(t *testing.T) {
-	plain := connectOptions(&Config{}, time.Second)
-	if len(plain) != 3 {
-		t.Errorf("expected 3 options without credentials, got %d", len(plain))
+	tests := []struct {
+		name   string
+		config *Config
+		want   int
+	}{
+		{name: "no credentials", config: &Config{}, want: 3},
+		{name: "totp secret only", config: &Config{TOTPSecret: "JBSWY3DPEHPK3PXP"}, want: 4},
+		{name: "session token only", config: &Config{SessionToken: "token"}, want: 4},
+		{
+			name:   "rejection callback only",
+			config: &Config{OnSessionTokenRejected: func(error) {}},
+			want:   4,
+		},
+		{
+			name:   "all of them",
+			config: &Config{TOTPSecret: "JBSWY3DPEHPK3PXP", SessionToken: "token", OnSessionTokenRejected: func(error) {}},
+			want:   6,
+		},
 	}
 
-	full := connectOptions(&Config{TOTPSecret: "JBSWY3DPEHPK3PXP", SessionToken: "token"}, time.Second)
-	if len(full) != 5 {
-		t.Errorf("expected 5 options with totp secret and session token, got %d", len(full))
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := len(connectOptions(tc.config, time.Second)); got != tc.want {
+				t.Errorf("expected %d options, got %d", tc.want, got)
+			}
+		})
+	}
+}
+
+// TestValidateTOTPSecret pins the tolerances the upstream client documents for
+// a secret copied out of Uptime Kuma's two-factor dialog, and the rejection
+// that keeps a typo from being retried as an unreachable server.
+func TestValidateTOTPSecret(t *testing.T) {
+	tests := []struct {
+		name      string
+		secret    string
+		wantError bool
+	}{
+		{name: "base32", secret: "JBSWY3DPEHPK3PXP"},
+		{name: "lower case", secret: "jbswy3dpehpk3pxp"},
+		{name: "spaces and hyphens", secret: "jbsw y3dp-ehpk 3pxp"},
+		{name: "missing padding", secret: "JBSWY3DPEHPK3PX"},
+		{name: "empty", secret: "", wantError: true},
+		{name: "only separators", secret: " - = ", wantError: true},
+		{name: "not base32", secret: "JBSWY3DPEHPK3PX0", wantError: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateTOTPSecret(tc.secret)
+
+			if got := err != nil; got != tc.wantError {
+				t.Fatalf("expected error %t, got %v", tc.wantError, err)
+			}
+
+			if tc.wantError && !errors.Is(err, ErrInvalidTOTPSecret) {
+				t.Errorf("expected error to match ErrInvalidTOTPSecret, got %v", err)
+			}
+		})
+	}
+}
+
+// TestNew_MalformedTOTPSecretIsNotRetried pins that a secret no code can be
+// derived from fails before the first connection attempt. Retrying it would
+// spend the server's login budget on a value that cannot improve, and report
+// the result as a connection failure.
+func TestNew_MalformedTOTPSecretIsNotRetried(t *testing.T) {
+	ctx := t.Context()
+
+	start := time.Now()
+
+	_, err := New(ctx, &Config{Endpoint: "http://127.0.0.1:1", TOTPSecret: "JBSWY3DPEHPK3PX0"})
+	if !errors.Is(err, ErrInvalidTOTPSecret) {
+		t.Fatalf("expected ErrInvalidTOTPSecret, got %v", err)
+	}
+
+	// The first backoff alone is 500ms, so anything near it means the secret
+	// went down the retry path.
+	if elapsed := time.Since(start); elapsed > 100*time.Millisecond {
+		t.Errorf("expected the secret to be rejected before connecting, took %s", elapsed)
+	}
+}
+
+// TestNewClientDirect_SessionTokenIsNotTheTOTPSecret pins that the session
+// token is not handed to kuma.WithTOTPSecret. A token is not base32, so a
+// swapped pair of options fails the connection with a secret decoding error
+// instead of the transport error a refused port produces.
+func TestNewClientDirect_SessionTokenIsNotTheTOTPSecret(t *testing.T) {
+	ctx := t.Context()
+
+	_, err := New(ctx, &Config{
+		Endpoint:     "http://127.0.0.1:1",
+		SessionToken: "not-a-base32-token!",
+		MaxRetries:   0,
+	})
+	if err == nil {
+		t.Fatal("expected an error connecting to a refused port, got nil")
+	}
+
+	if strings.Contains(err.Error(), "totp") {
+		t.Errorf("expected the session token not to be read as a totp secret, got %v", err)
 	}
 }

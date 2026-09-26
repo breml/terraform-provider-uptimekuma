@@ -154,10 +154,14 @@ if err != nil {
 - Maximum 3 retry attempts (4 total attempts including first try)
 - A login the server refused is **not** retried. `terminalAuthError` matches the client's auth
   sentinels (`ErrAuthRequired`, `ErrInvalidCredentials`, `ErrTwoFactorRequired`,
-  `ErrInvalidTOTPCode`, `ErrInvalidSessionToken`, `ErrUserInactive`, `ErrRateLimited`) and returns
-  the error unchanged, so the provider can name the rejection instead of reporting a retry count.
-  It also keeps the retries from spending the server's 20 logins per minute - a login that answers
-  a one-time code costs two of them
+  `ErrInvalidTOTPCode`, `ErrInvalidSessionToken`, `ErrUserInactive`) and the error is returned
+  wrapped with `authenticate:`, which `errors.Is` sees through, so the provider can name the
+  rejection instead of reporting a retry count. It also keeps the retries from spending the
+  server's 20 logins per minute - a login that answers a one-time code costs two of them
+- `ErrRateLimited` is deliberately **not** in that list: it is the one rejection that time alone
+  recovers from, so it stays on the retry path, bounded by the overall `ConnectTimeout`
+- A `TOTPSecret` that is not base32 fails in `New` before the first attempt, as
+  `ErrInvalidTOTPSecret`, rather than being retried as though the server were at fault
 - Exponential backoff: base delay 500ms, multiplied by 2^attempt
 - Jitter: ±20% randomization (0.8 to 1.2 multiplier)
 - Backoff capped to the remaining overall `ConnectTimeout` budget
@@ -430,8 +434,9 @@ if err != nil {
 
 - `"endpoint is required"` - Config validation failure
 - `"failed after 4 attempts: ..."` - Connection retry exhaustion (with default `max_retries=3`)
-- `kuma.ErrInvalidCredentials` and the other auth sentinels - returned unwrapped and unretried,
-  see `terminalAuthError`
+- `kuma.ErrInvalidCredentials` and the other auth sentinels - unretried, wrapped with
+  `authenticate:` and matchable with `errors.Is`, see `terminalAuthError`
+- `ErrInvalidTOTPSecret` - a `TOTPSecret` that is not base32, rejected before connecting
 - `"connection cancelled: ..."` - Context cancellation during retry
 - `"pool config mismatch: ..."` - Credential confusion prevention
 

@@ -96,10 +96,13 @@ fmt.Println(client.SessionToken())
 
 ### Why a token rather than a secret for a 2FA account
 
-Uptime Kuma records the last one-time code it accepted for an account and refuses to see it again,
-and that guard is per account rather than per connection. Two Terraform runs against the same 2FA
-account starting within the same 30 second step therefore cannot both log in, however correct the
-secret is. A token has no such guard and can be shared by any number of runs, which makes it the
+Uptime Kuma records the *last* one-time code it accepted for an account and refuses to see that one
+again, and the guard is per account rather than per connection (`twoFAVerifyOptions` and the
+`twofa_last_token` check in the server's `server.js`). Two Terraform runs starting within the same
+30 second step therefore collide, and the client settles that collision by retrying once in the
+next step - but only that one: a third run in the same step has no step left to fall back to, and
+the retry is skipped altogether when the connection timeout cannot cover the wait of up to 30
+seconds. A token has no such guard and can be shared by any number of runs, which makes it the
 credential to use in CI.
 
 ### Storing the credentials
