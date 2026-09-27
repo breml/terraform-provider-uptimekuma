@@ -773,3 +773,253 @@ func TestReadWithResyncThenRemoveOnMissReportsTheTokenOnce(t *testing.T) {
 		t.Errorf("want no warnings, got %v", resp.Diagnostics.Warnings())
 	}
 }
+
+func TestSuspectedNotFound(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		err  error
+		want bool
+	}{
+		"the Node.js TypeError a deleted monitor provokes": {
+			err:  errors.New("getMonitor: Cannot read properties of null (reading 'id')"),
+			want: true,
+		},
+		"the status page handler refusing an unknown slug": {
+			err:  errors.New("getStatusPage: No slug?"),
+			want: true,
+		},
+		"the client's own words for a monitor ack carrying nothing": {
+			err:  errors.New("get monitor 5: monitor not found in response"),
+			want: true,
+		},
+		"the client's own words for a maintenance ack carrying nothing": {
+			err:  errors.New("get maintenance 5: maintenance not found in response"),
+			want: true,
+		},
+		"the client's own words for a status page ack carrying nothing": {
+			err:  errors.New("get status page main: config not found in response"),
+			want: true,
+		},
+		"a suspicion survives wrapping": {
+			err: fmt.Errorf(
+				"get monitor 5 as *monitor.HTTP: %w",
+				errors.New("getMonitor: Cannot read properties of null (reading 'id')"),
+			),
+			want: true,
+		},
+		"a decode failure is not a miss": {
+			err:  errors.New("get monitor 5 as *monitor.HTTP: json: cannot unmarshal string into int64"),
+			want: false,
+		},
+		"a transport error is not a miss": {
+			err:  errors.New("socket closed"),
+			want: false,
+		},
+		// The server may flag msg as an untranslated i18n key, and syncEmit relays
+		// it either way, so there is a shape of "gone" this cannot see. Confirming
+		// the suspicion is what keeps that from mattering: an unrecognised error is
+		// reported rather than acted on.
+		"an ack with no message is not a miss": {
+			err:  errors.New("getMonitor: "),
+			want: false,
+		},
+		// kuma.ErrNotFound comes from GetNotification, GetProxy, GetDockerHost, GetTag
+		// and GetMonitorTags. None of them reaches this predicate, whose callers only
+		// ever hold a GetMonitor, GetMonitorAs, GetMaintenance or GetStatusPage error.
+		"the cache sentinel is not this predicate's business": {
+			err:  fmt.Errorf("get notification: %w", kuma.ErrNotFound),
+			want: false,
+		},
+		// A caller that reached here without a failure is a bug, but it must not be a
+		// nil dereference: removeOnServerMiss then reports a nonsense error, which an
+		// acceptance test catches, instead of crashing the provider.
+		"a nil error is not a suspicion": {
+			err:  nil,
+			want: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := suspectedNotFound(test.err); got != test.want {
+				t.Errorf("want %t, got %t for %q", test.want, got, test.err)
+			}
+		})
+	}
+}
+
+// presence returns an exists func that reports the resource present from
+// presentOn onwards, counting calls. presentOn 1 is a resource the first look
+// already finds; 2 is one only the resync turns up; 0 is one that is never there.
+//
+// err fails the look. errOnCall 0 fails every one; a positive errOnCall fails only
+// that call, which is how a list that answers once and then breaks - the resync
+// succeeded, the connection dropped before the second getMonitorList - is
+// expressed.
+func presence(calls *int, presentOn int, err error, errOnCall int) func(context.Context) (bool, error) {
+	return func(context.Context) (bool, error) {
+		*calls++
+
+		if err != nil && (errOnCall == 0 || errOnCall == *calls) {
+			return false, err
+		}
+
+		return presentOn != 0 && *calls >= presentOn, nil
+	}
+}
+
+func TestRemoveOnServerMiss(t *testing.T) {
+	t.Parallel()
+
+	suspicious := errors.New("getMonitor: Cannot read properties of null (reading 'id')")
+
+	tests := map[string]struct {
+		client      *fakeResyncer
+		err         error
+		presentOn   int
+		existsErr   error
+		existsErrOn int
+		wantRemoved bool
+		wantErrors  int
+		wantDetails []string
+		wantResyncs int
+		wantCalls   int
+	}{
+		// An error that says nothing about existence is just an error; looking the
+		// resource up would answer a question nobody asked.
+		"an unrecognised error is reported without a lookup": {
+			client:      loggedIn(),
+			err:         errors.New("socket closed"),
+			wantErrors:  1,
+			wantDetails: []string{"socket closed"},
+		},
+		// The regression #409 is about: the monitor is alive, so the read error was
+		// a server-side fault and state must survive it.
+		"a resource the first look finds is reported, not removed": {
+			client:      loggedIn(),
+			err:         suspicious,
+			presentOn:   1,
+			wantErrors:  1,
+			wantDetails: []string{"Cannot read properties of null", "still lists", "terraform state rm"},
+			wantCalls:   1,
+		},
+		"a resource only the resync turns up is reported, not removed": {
+			client:      loggedIn(),
+			err:         suspicious,
+			presentOn:   2,
+			wantErrors:  1,
+			wantDetails: []string{"Cannot read properties of null", "still lists"},
+			wantResyncs: 1,
+			wantCalls:   2,
+		},
+		"a resource no refreshed list has is removed": {
+			client:      loggedIn(),
+			err:         suspicious,
+			wantRemoved: true,
+			wantResyncs: 1,
+			wantCalls:   2,
+		},
+		// Unlike removeOnMiss this does not refuse without a session token. The
+		// server's answer was authoritative, and refusing would leave every
+		// credential-less provider unable to see an external deletion at all.
+		"a resource is removed even when the cache could not be refreshed": {
+			client:      &fakeResyncer{token: ""},
+			err:         suspicious,
+			wantRemoved: true,
+			wantCalls:   1,
+		},
+		// Nor does it refuse for a list the server never sent, for the same reason.
+		"a resource is removed even when the server never sent the list": {
+			client:      &fakeResyncer{token: "session-token", missing: []string{maintenanceListEvent}},
+			err:         suspicious,
+			wantRemoved: true,
+			wantResyncs: 1,
+			wantCalls:   2,
+		},
+		"a lookup that fails leaves the resource in state": {
+			client:    loggedIn(),
+			err:       suspicious,
+			existsErr: errors.New("list monitors: socket closed"),
+			// Both failures must reach the reader: the read error is what suggests the
+			// monitor is gone, the lookup error is why that could not be checked.
+			wantErrors:  1,
+			wantDetails: []string{"Cannot read properties of null", "list monitors: socket closed"},
+			wantCalls:   1,
+		},
+		// The resync succeeded and the connection dropped before the second look. The
+		// resource must survive a lookup that answers once and then breaks, just as it
+		// survives one that never answers at all.
+		"a lookup that fails after the resync leaves the resource in state": {
+			client:      loggedIn(),
+			err:         suspicious,
+			existsErr:   errors.New("list monitors: connection reset"),
+			existsErrOn: 2,
+			wantErrors:  1,
+			wantDetails: []string{"Cannot read properties of null", "list monitors: connection reset"},
+			wantResyncs: 1,
+			wantCalls:   2,
+		},
+		"a resync that fails leaves the resource in state": {
+			client:      &fakeResyncer{token: "session-token", err: errors.New("login rejected")},
+			err:         suspicious,
+			wantErrors:  1,
+			wantDetails: []string{"Cannot read properties of null", "login rejected"},
+			wantResyncs: 1,
+			wantCalls:   1,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := readResponse(t)
+
+			var calls int
+
+			removeOnServerMiss(
+				t.Context(), test.client, test.err,
+				presence(&calls, test.presentOn, test.existsErr, test.existsErrOn),
+				"HTTP monitor", resp,
+			)
+
+			if got := resp.State.Raw.IsNull(); got != test.wantRemoved {
+				t.Errorf("want removed %t, got %t", test.wantRemoved, got)
+			}
+
+			if got := resp.Diagnostics.ErrorsCount(); got != test.wantErrors {
+				t.Fatalf("want %d errors, got %d: %v", test.wantErrors, got, resp.Diagnostics.Errors())
+			}
+
+			// It errors or it removes; it never warns. A confirmed deletion is drift
+			// Terraform reports itself.
+			if resp.Diagnostics.WarningsCount() != 0 {
+				t.Errorf("want no warnings, got %v", resp.Diagnostics.Warnings())
+			}
+
+			if test.wantErrors > 0 {
+				if got := resp.Diagnostics.Errors()[0].Summary(); got != "failed to read HTTP monitor" {
+					t.Errorf("want the resource named in the summary, got %q", got)
+				}
+
+				detail := resp.Diagnostics.Errors()[0].Detail()
+				for _, want := range test.wantDetails {
+					if !strings.Contains(detail, want) {
+						t.Errorf("want %q in the detail, got %q", want, detail)
+					}
+				}
+			}
+
+			if test.client.resyncs != test.wantResyncs {
+				t.Errorf("want %d resyncs, got %d", test.wantResyncs, test.client.resyncs)
+			}
+
+			if calls != test.wantCalls {
+				t.Errorf("want %d lookups, got %d", test.wantCalls, calls)
+			}
+		})
+	}
+}

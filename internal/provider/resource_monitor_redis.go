@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -170,24 +169,15 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 
 	var redisMonitor monitor.Redis
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &redisMonitor)
-	// Handle error.
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Redis monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Redis monitor", err.Error())
 		return
 	}
 
-	if actual := redisMonitor.Base.Type(); actual != "" && actual != redisMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": redisMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), redisMonitor.Type(), redisMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

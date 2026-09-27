@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -331,22 +330,14 @@ func (r *MonitorWebsocketUpgradeResource) Read(
 	var websocketUpgradeMonitor monitor.WebsocketUpgrade
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &websocketUpgradeMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Websocket Upgrade monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Websocket Upgrade monitor", err.Error())
 		return
 	}
 
-	if actual := websocketUpgradeMonitor.Base.Type(); actual != "" && actual != websocketUpgradeMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": websocketUpgradeMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), websocketUpgradeMonitor.Type(), websocketUpgradeMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

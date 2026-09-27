@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -168,24 +167,15 @@ func (r *MonitorTailscalePingResource) Read(
 
 	var tailscalePingMonitor monitor.TailscalePing
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &tailscalePingMonitor)
-	// Handle error.
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Tailscale Ping monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Tailscale Ping monitor", err.Error())
 		return
 	}
 
-	if actual := tailscalePingMonitor.Base.Type(); actual != "" && actual != tailscalePingMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": tailscalePingMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), tailscalePingMonitor.Type(), tailscalePingMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

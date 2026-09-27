@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -315,22 +314,14 @@ func (r *MonitorSNMPResource) Read(ctx context.Context, req resource.ReadRequest
 	var snmpMonitor monitor.SNMP
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &snmpMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "SNMP monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read SNMP monitor", err.Error())
 		return
 	}
 
-	if actual := snmpMonitor.Base.Type(); actual != "" && actual != snmpMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": snmpMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), snmpMonitor.Type(), snmpMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

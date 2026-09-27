@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -195,22 +194,14 @@ func (r *MonitorRabbitMQResource) Read(
 	var rabbitMQMonitor monitor.RabbitMQ
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &rabbitMQMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "RabbitMQ monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read RabbitMQ monitor", err.Error())
 		return
 	}
 
-	if actual := rabbitMQMonitor.Base.Type(); actual != "" && actual != rabbitMQMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": rabbitMQMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), rabbitMQMonitor.Type(), rabbitMQMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

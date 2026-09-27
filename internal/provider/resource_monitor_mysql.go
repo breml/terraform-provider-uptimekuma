@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -180,22 +179,14 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 	var mysqlMonitor monitor.MySQL
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &mysqlMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "MySQL monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read MySQL monitor", err.Error())
 		return
 	}
 
-	if actual := mysqlMonitor.Base.Type(); actual != "" && actual != mysqlMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": mysqlMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), mysqlMonitor.Type(), mysqlMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

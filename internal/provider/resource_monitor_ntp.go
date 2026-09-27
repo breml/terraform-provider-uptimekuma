@@ -215,31 +215,14 @@ func (r *MonitorNTPResource) Read(ctx context.Context, req resource.ReadRequest,
 	var ntpMonitor monitor.NTP
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &ntpMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "NTP monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read NTP monitor", err.Error())
 		return
 	}
 
-	if actual := ntpMonitor.Base.Type(); actual != "" && actual != ntpMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": ntpMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.Diagnostics.AddWarning(
-			"Monitor type changed outside Terraform",
-			fmt.Sprintf(
-				"Monitor %d is of type %q but is managed as %q, so it was removed from state and "+
-					"Terraform will plan to create a replacement. Manage it with the resource type "+
-					"matching %q, or remove it from the configuration, to avoid a duplicate.",
-				data.ID.ValueInt64(), actual, ntpMonitor.Type(), actual,
-			),
-		)
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), ntpMonitor.Type(), ntpMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

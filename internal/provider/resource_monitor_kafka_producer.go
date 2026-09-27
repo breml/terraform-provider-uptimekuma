@@ -361,22 +361,14 @@ func (r *MonitorKafkaProducerResource) Read(
 	var kafkaMonitor monitor.KafkaProducer
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &kafkaMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Kafka Producer monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Kafka Producer monitor", err.Error())
 		return
 	}
 
-	if actual := kafkaMonitor.Base.Type(); actual != "" && actual != kafkaMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": kafkaMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), kafkaMonitor.Type(), kafkaMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

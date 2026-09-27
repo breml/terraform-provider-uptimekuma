@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -163,22 +162,14 @@ func (r *MonitorSteamResource) Read(ctx context.Context, req resource.ReadReques
 	var steamMonitor monitor.Steam
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &steamMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Steam monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Steam monitor", err.Error())
 		return
 	}
 
-	if actual := steamMonitor.Base.Type(); actual != "" && actual != steamMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": steamMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), steamMonitor.Type(), steamMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

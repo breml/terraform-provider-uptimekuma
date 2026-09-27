@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -238,22 +237,14 @@ func (r *MonitorGlobalpingResource) Read(
 	var globalpingMonitor monitor.Globalping
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &globalpingMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Globalping monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Globalping monitor", err.Error())
 		return
 	}
 
-	if actual := globalpingMonitor.Base.Type(); actual != "" && actual != globalpingMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": globalpingMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), globalpingMonitor.Type(), globalpingMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 
