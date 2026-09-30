@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -248,24 +247,15 @@ func (r *MonitorGrpcKeywordResource) Read(ctx context.Context, req resource.Read
 	var grpcKeywordMonitor monitor.GrpcKeyword
 	// Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &grpcKeywordMonitor)
-	// Handle error.
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "gRPC Keyword monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read gRPC Keyword monitor", err.Error())
 		return
 	}
 
-	if actual := grpcKeywordMonitor.Base.Type(); actual != "" && actual != grpcKeywordMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": grpcKeywordMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), grpcKeywordMonitor.Type(), grpcKeywordMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

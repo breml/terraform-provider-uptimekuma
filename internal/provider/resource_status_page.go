@@ -363,6 +363,50 @@ func (r *StatusPageResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// statusPageLister is the part of *kuma.Client statusPageExists needs. It is a
+// seam of its own for the reason monitorLister is one: the presence check can then
+// be exercised without a socket.io server.
+type statusPageLister interface {
+	// GetStatusPages returns the status pages the client's state cache holds, keyed
+	// by ID. It emits nothing and cannot fail.
+	GetStatusPages(ctx context.Context) (map[int64]statuspage.StatusPage, error)
+}
+
+// statusPageExists builds the presence check removeOnServerMiss confirms a status
+// page deletion against.
+//
+// It matches on the slug, because that is what a status page is read by and what
+// carries RequiresReplace, so a page renamed outside Terraform really is gone
+// under the identity Terraform tracks. GetStatusPages is keyed by ID, so the slug
+// has to be looked for in the values.
+//
+// That list is served purely from the client's state cache and emits nothing,
+// unlike the GetStatusPage that produced the error being confirmed, so the resync
+// existsWithResync forces is the whole reason the answer is worth asking for.
+// Unlike maintenanceList, statusPageList is a required ready event, so Client.New
+// fails outright when the server never sends it and the cache is never simply
+// empty here.
+//
+// The error branch is defensive rather than live - GetStatusPages returns a nil
+// error unconditionally - but the closure signature requires it and upstream may
+// yet make the getter ask the server.
+func statusPageExists(client statusPageLister, slug string) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
+		pages, err := client.GetStatusPages(ctx)
+		if err != nil {
+			return false, fmt.Errorf("list status pages: %w", err)
+		}
+
+		for _, page := range pages {
+			if page.Slug == slug {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
+}
+
 // Read reads the current state of the resource.
 func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data StatusPageResourceModel
@@ -375,12 +419,10 @@ func (r *StatusPageResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	sp, err := r.client.GetStatusPage(ctx, data.Slug.ValueString())
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeOnServerMiss(
+			ctx, r.client, err, statusPageExists(r.client, data.Slug.ValueString()), "status page", resp,
+		)
 
-		resp.Diagnostics.AddError("failed to read status page", err.Error())
 		return
 	}
 

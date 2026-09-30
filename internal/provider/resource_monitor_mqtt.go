@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -330,22 +329,14 @@ func (r *MonitorMQTTResource) Read(ctx context.Context, req resource.ReadRequest
 	var mqttMonitor monitor.MQTT
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &mqttMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "MQTT monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read MQTT monitor", err.Error())
 		return
 	}
 
-	if actual := mqttMonitor.Base.Type(); actual != "" && actual != mqttMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": mqttMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), mqttMonitor.Type(), mqttMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

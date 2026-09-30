@@ -414,6 +414,14 @@ func int64ToPtr(v types.Int64) *int64
 func int64PtrToTypes(v *int64) types.Int64
 func boolToPtr(v types.Bool) *bool
 func boolPtrToTypes(v *bool) types.Bool
+
+// Confirm a failed monitor read against Uptime Kuma's monitor list before
+// dropping the monitor from state; see client_errors.go's removeOnServerMiss.
+func removeMonitorOnServerMiss(ctx, client, err, id, name, resp)
+
+// Drop a monitor whose server-side type no longer matches this resource, warning
+// rather than only logging. Reports false for an empty or matching type.
+func monitorTypeDrifted(ctx, id, managed, actual, resp) bool
 ```
 
 Nil means SQL NULL for nullable columns, which is how Uptime Kuma is told to
@@ -531,9 +539,57 @@ status page write go out as a plain `syncEmit` and need none of this.
 The helpers take the `resyncer` interface rather than `*kuma.Client`, so they
 are unit-testable; see [client_errors_test.go](client_errors_test.go).
 
-Monitor lookups and `GetTag`/`GetTags` need none of this: those getters ask the
-server. `GetMonitorTags` and `GetTagMonitors` are cache-backed like the list
-above, but the provider does not use them today.
+`GetTag` needs none of this: it asks the server and filters the live response, so
+its `kuma.ErrNotFound` is about a tag that is genuinely absent rather than a cache
+that is behind. `GetTags` returns every tag and produces no sentinel at all.
+`GetMonitorTags` and `GetTagMonitors` are cache-backed like the list above, but the
+provider does not use them today.
+
+**`GetMonitors` is cache-backed too.** It emits `getMonitorList` and then reads the
+cache the asynchronous `monitorList` broadcast fills, so the list it returns may be
+one broadcast behind - see
+[issue #430](https://github.com/breml/terraform-provider-uptimekuma/issues/430).
+Among the monitor getters only `GetMonitor`/`GetMonitorAs` read the ack itself
+(`GetMaintenance` and `GetStatusPage` read theirs too, see the table). So there are
+three tiers, not two:
+
+| getter | miss arrives as | use |
+| --- | --- | --- |
+| `GetNotification`, `GetProxy`, `GetDockerHost`, and the cache-backed lists | `kuma.ErrNotFound` or an empty list | `readWithResync` / `findWithResync`, then `removeOnMiss` / `reportMiss` |
+| `GetMonitor`, `GetMonitorAs`, `GetMaintenance`, `GetStatusPage` | the server's or the client's prose | `suspectedNotFound`, then `removeOnServerMiss` |
+| `GetTag` | `kuma.ErrNotFound` from a live response | `errors.Is` directly, no resync |
+
+`GetMonitors` sits in the first tier but has two uses that do not follow its row.
+`monitorExists` wraps it in `existsWithResync` and hands the answer to
+`removeOnServerMiss` as a veto, which is the row below. And `findMonitorByName`
+([datasource_monitor_helpers.go](datasource_monitor_helpers.go)) uses neither: it
+believes an empty result and calls `diags.AddError` directly, which is exactly the
+flake #430 reports and a known gap rather than the pattern to copy.
+
+**`removeOnServerMiss()` is not `removeOnMiss()`, and the difference is which way
+the burden of proof runs.** `removeOnMiss` has only a cache miss to go on, so it
+refuses to act on one it could not verify - a list the server never sent, or a
+provider with no session token and therefore no way to resync. `removeOnServerMiss`
+starts from a server-backed getter that has *already* answered that the resource
+is gone, and asks the list only whether it can overturn that. A hit keeps the
+resource and reports the read failure; an absence removes it; a check that fails
+outright reports both errors and keeps it. It therefore consults neither
+`MissingReadyEvents` nor the session token: `username`/`password` are optional,
+and refusing would leave every credential-less provider unable to detect an
+external deletion at all. An unrefreshed list does not condemn a resource - the
+read error already did - it merely fails to save it.
+
+How much the veto is worth therefore depends on the list, and
+[client_errors.go](client_errors.go) has the full account: `GetMonitors` asks the
+server, `GetMaintenances` only reads a cache that stays empty for good on a server
+that never sends `maintenanceList`, and `GetStatusPages` reads a cache that
+`Client.New` refuses to start without. It also names the two things the veto cannot
+rule out - a superseded broadcast that drops a resource created after the snapshot
+it carries (#430 again), and a hit on a deletion whose broadcast has not landed yet,
+which `findWithResync` never rechecks. Both are accepted deliberately, because a
+false absence costs a duplicate resource and a false presence only costs an error.
+Until the client waits for the broadcast rather than the ack, that is as good as the
+confirmation gets.
 
 List-all data sources (`uptimekuma_maintenances`) are deliberately exempt. A
 stale cache costs them a silently short list rather than a miss, so there is
@@ -722,14 +778,21 @@ func (r *{Type}Resource) Read(ctx context.Context, req resource.ReadRequest, res
     //    GetNotification, GetProxy, GetDockerHost - reports the miss through
     //    readWithResync/findWithResync instead, and the miss goes to
     //    removeOnMiss rather than to RemoveResource directly. A server-backed
-    //    getter reports it in the server's own words, so it needs
-    //    isNotFoundError rather than an errors.Is check.
-    if isNotFoundError(err) {
-        resp.State.RemoveResource(ctx)
+    //    getter reports it in the server's own words, which is a suspicion and
+    //    never a verdict, so it goes to removeOnServerMiss: a hit in the list
+    //    vetoes the removal, an absence confirms it, a check that cannot answer
+    //    leaves the server's verdict standing, and a failed check errors.
+    if err != nil {
+        removeMonitorOnServerMiss(ctx, r.client, err, id, "HTTP monitor", resp)
         return
     }
-    if err != nil {
-        resp.Diagnostics.AddError("Read failed", err.Error())
+
+    // 3a. Monitors only: the read may have succeeded on a monitor that is no
+    //     longer of this resource's type. That is drift the server states rather
+    //     than a miss the provider guesses, so the resource is dropped from state
+    //     for Terraform to replace - but with a warning, because the monitor now
+    //     at that ID stops being managed by anything.
+    if monitorTypeDrifted(ctx, id, apiObject.Type(), apiObject.Base.Type(), resp) {
         return
     }
 
@@ -860,12 +923,24 @@ if err != nil {
 ```go
 import "errors"
 
-err := r.client.GetMonitor(ctx, id)
-if errors.Is(err, kuma.ErrNotFound) {
-    resp.State.RemoveResource(ctx)  // Resource deleted externally
+// A cache-backed getter, read through readWithResync so the miss is checked
+// against a refreshed list before it is believed.
+notification, found, err := readWithResync(ctx, r.client, id, r.client.GetNotification)
+if err != nil {
+    resp.Diagnostics.AddError("failed to read notification", err.Error())
+    return
+}
+
+if !found {
+    // Removes the resource, or reports why the miss could not be trusted.
+    removeOnMiss(ctx, r.client, notificationListEvent, "notification", resp)
     return
 }
 ```
+
+A bare `errors.Is(err, kuma.ErrNotFound)` on a monitor getter is *not* the pattern:
+`GetMonitor`/`GetMonitorAs` never produce that sentinel, so the branch would be dead
+(see the end of this section).
 
 Only five getters produce `kuma.ErrNotFound`: `GetNotification`, `GetProxy`,
 `GetTag`, `GetMonitorTags` and `GetDockerHost`. Four of those serve from the
@@ -875,10 +950,26 @@ returns the sentinel without being cache-backed and must *not* be routed through
 refuse to drop a genuinely deleted tag from state.
 
 Every other getter asks the server, which reports a missing resource as an
-unwrapped `fmt.Errorf("%s: %s", ...)` or, for maintenance, as its own "not found
-in response". Use `isNotFoundError()` ([resource_monitor_helpers.go]
-(resource_monitor_helpers.go)) for those; it matches the server's wording for
-monitors, status pages and maintenance windows.
+unwrapped `fmt.Errorf("%s: %s", ...)` carrying the server's own message, or as
+the client's own "not found in response" for an ack that reported success and
+then carried nothing.
+
+**Matching that text is a suspicion, never a verdict.** `suspectedNotFound()`
+([client_errors.go](client_errors.go)) is all the matching there is, and the
+strings it looks for are not the provider's to rely on: `Cannot read properties
+of null` is a generic Node.js `TypeError` that Uptime Kuma emits just as readily
+for a server-side fault on a monitor that exists - a null column in a joined
+record, a partially migrated row - and the ack carries a `msgI18n` flag that
+lets the server send an untranslated key instead of prose, which only the
+client's login path looks at.
+
+So a suspicion must be confirmed before it is acted on. `removeOnServerMiss()`
+does that, and every resource read on a server-backed getter goes through it
+(monitors via the `removeMonitorOnServerMiss` wrapper). Believing the match
+unchecked is what
+[issue #409](https://github.com/breml/terraform-provider-uptimekuma/issues/409)
+was: a live monitor silently dropped from state, recreated as a duplicate on the
+next apply.
 
 A write never produces `kuma.ErrNotFound` either, so an
 `errors.Is(err, kuma.ErrNotFound)` branch on anything but those five getters is

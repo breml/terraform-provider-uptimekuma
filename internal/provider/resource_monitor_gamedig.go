@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -167,22 +166,14 @@ func (r *MonitorGameDigResource) Read(ctx context.Context, req resource.ReadRequ
 	var gameDigMonitor monitor.GameDig
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &gameDigMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "GameDig monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read GameDig monitor", err.Error())
 		return
 	}
 
-	if actual := gameDigMonitor.Base.Type(); actual != "" && actual != gameDigMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": gameDigMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), gameDigMonitor.Type(), gameDigMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

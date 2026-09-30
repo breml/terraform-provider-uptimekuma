@@ -585,9 +585,14 @@ func testAccDisappearsSteps(
 // refresh.
 //
 // GetMaintenance asks the server, so the miss arrives as the client's own "not
-// found in response" rather than as kuma.ErrNotFound. Read therefore has to go
-// through isNotFoundError; an errors.Is check never fires and turns this case
-// into a hard error no plan can get past.
+// found in response" rather than as kuma.ErrNotFound. Read therefore goes through
+// removeOnServerMiss; an errors.Is check never fires and turns this case into a
+// hard error no plan can get past.
+//
+// This also exercises maintenanceExists end to end, but only in one direction: it
+// asserts the window is removed, which a maintenanceExists that never matches
+// anything produces just as readily. Only a wrong key that matches too eagerly
+// would fail here. TestMaintenanceExists covers the other direction.
 func TestAccMaintenanceResource_disappears(t *testing.T) {
 	title := acctest.RandomWithPrefix("TestMaintenanceDisappears")
 	kumaClient := testAccOutOfBandClient(t)
@@ -638,5 +643,41 @@ func TestAccDockerHostResource_disappears(t *testing.T) {
 			"uptimekuma_docker_host.test",
 			testAccDeleteExternally(t, "uptimekuma_docker_host.test", kumaClient.DeleteDockerHost),
 		),
+	})
+}
+
+// TestAccMonitorHTTPResource_importMissing pins that a confirmed absence still
+// reaches RemoveResource through the import path, which no other test covers.
+//
+// Importing an ID the server does not have takes the same path as an external
+// deletion: GetMonitorAs fails with the server's null dereference, the monitor list
+// does not list it, and Read drops it from state - which the framework then reports
+// as a non-existent remote object. Were the confirmation ever to keep the resource
+// instead, the error would be "failed to read HTTP monitor", so one assertion tells
+// the two verdicts apart without deleting anything out of band.
+//
+// What it does not pin is the confirmation itself. The same message appears if
+// monitorExists always reported absent, and it appeared before there was any
+// confirmation at all - TestRemoveOnServerMiss and TestMonitorExists are what guard
+// that. It also needs the provider's credentials: without a session token
+// GetMonitors fails and the step dies on a regexp mismatch rather than an auth
+// error. providerConfig always supplies them.
+//
+// No apply happens, so the config's URL is never dialled by anything.
+func TestAccMonitorHTTPResource_importMissing(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestHTTPMonitorImportMissing")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:        testAccMonitorHTTPResourceConfig(name, "https://example.com", "GET", 60, 48),
+				ResourceName:  "uptimekuma_monitor_http.test",
+				ImportState:   true,
+				ImportStateId: "999999999",
+				ExpectError:   regexp.MustCompile(`Cannot import non-existent remote object`),
+			},
+		},
 	})
 }

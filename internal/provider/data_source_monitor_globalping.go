@@ -175,11 +175,22 @@ func (d *MonitorGlobalpingDataSource) readByID(
 	var globalpingMonitor monitor.Globalping
 	err := d.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &globalpingMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
+		// This is the one place that acts on suspectedNotFound without confirming it,
+		// as removeOnServerMiss says. Every other monitor data source reports a failed
+		// read alike, with no not-found branch at all. A data source holds no state to
+		// lose either way, so the cost is only a message about a cause that has not
+		// been established - which is why it hedges rather than asserting absence.
+		// Giving every monitor data source the same treatment is its own change.
+		if suspectedNotFound(err) {
 			resp.Diagnostics.AddError(
 				"Globalping monitor not found",
-				fmt.Sprintf("No Globalping monitor with ID %d exists.", data.ID.ValueInt64()),
+				fmt.Sprintf(
+					"Globalping monitor with ID %d could not be read; it may not exist. Uptime Kuma "+
+						"said: %s",
+					data.ID.ValueInt64(), err,
+				),
 			)
+
 			return
 		}
 

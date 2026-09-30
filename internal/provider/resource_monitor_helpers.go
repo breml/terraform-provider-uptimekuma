@@ -1,37 +1,124 @@
 package provider
 
 import (
-	"errors"
-	"strings"
+	"context"
+	"fmt"
+	"slices"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/monitor"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// isNotFoundError checks whether an error from the kuma client indicates
-// that the requested resource was not found.
+// monitorLister is the part of *kuma.Client monitorExists needs. It is a seam of
+// its own rather than an addition to resyncer, so that the presence check can be
+// exercised without a socket.io server and without teaching every other cache
+// helper about monitors.
+type monitorLister interface {
+	// GetMonitors asks the server to resend its monitor list and returns what the
+	// client then holds.
+	GetMonitors(ctx context.Context) ([]monitor.Base, error)
+}
+
+// monitorExists builds the presence check removeOnServerMiss confirms a monitor
+// deletion against.
 //
-// Resources that are looked up via a cached list (tags, notifications,
-// proxies, docker hosts) return kuma.ErrNotFound.
+// GetMonitors emits getMonitorList before reading the client's cache, so unlike
+// the maintenance and status page lists it does ask the server - but the answer
+// arrives as a whole-list broadcast the client applies asynchronously, so what
+// this reads may still be one broadcast behind. existsWithResync forces a resync
+// before an absence is believed; a hit is taken as it stands, because
+// findWithResync returns on one. See removeOnServerMiss for why that asymmetry is
+// the right way round.
 //
-// Resources fetched directly from the server (monitors, status pages,
-// maintenance) may return a server-side error from the Uptime Kuma
-// backend when the resource no longer exists.  Known patterns:
-//   - Monitors: "Cannot read properties of null (reading 'id')"
-//   - Status pages: "No slug?"
-//   - Maintenance: "maintenance not found in response", which the client
-//     builds itself when the server answers with no maintenance window
-func isNotFoundError(err error) bool {
-	if errors.Is(err, kuma.ErrNotFound) {
-		return true
+// A failure of the getter is returned as an error rather than as an absence, as
+// findWithResync requires: only an absence is worth a resync, and only an absence
+// may cost a monitor its place in state.
+func monitorExists(client monitorLister, id int64) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
+		monitors, err := client.GetMonitors(ctx)
+		if err != nil {
+			return false, fmt.Errorf("list monitors: %w", err)
+		}
+
+		return slices.ContainsFunc(monitors, func(mon monitor.Base) bool {
+			return mon.GetID() == id
+		}), nil
+	}
+}
+
+// removeMonitorOnServerMiss accounts for a failed monitor read, dropping the
+// monitor from Terraform state only once Uptime Kuma's monitor list agrees that
+// it is gone.
+//
+// It is removeOnServerMiss wired to a monitor, and every monitor resource Read
+// hands it the error from GetMonitorAs. name is the monitor in the words of the
+// diagnostics, e.g. "HTTP monitor". See removeOnServerMiss for what each outcome
+// means and why a list that cannot be refreshed never condemns the monitor.
+func removeMonitorOnServerMiss(
+	ctx context.Context,
+	client *kuma.Client,
+	err error,
+	id int64,
+	name string,
+	resp *resource.ReadResponse,
+) {
+	removeOnServerMiss(ctx, client, err, monitorExists(client, id), name, resp)
+}
+
+// monitorTypeDrifted reports whether the monitor Terraform holds in state is no
+// longer of the type this resource manages, and drops it from state when it is not.
+//
+// managed is the type this resource speaks for, which the client hardcodes per
+// monitor type, e.g. monitor.HTTP.Type() is always "http". actual is the type the
+// server reports, which Base.UnmarshalJSON reads off the record - so an empty
+// actual is a record that carried no type and means only that there is nothing to
+// compare, not that anything drifted.
+//
+// The removal is not the #409 mistake even though it looks like one. There the
+// provider guessed from an error string that a monitor was gone; here the read
+// succeeded and the server says the monitor at this ID is something else, so the
+// resource this state entry speaks for really does not exist and Terraform is
+// right to plan a replacement. What the removal must not be is invisible: it
+// warns as well as logging, because the monitor now at that ID stops being
+// managed by anything and the reader would otherwise see a resource leave state
+// with no account of why. tflog.Warn is kept for the structured fields, which
+// carry the two types for anyone reading provider logs.
+//
+// It never errors, so a caller only has to return when it reports true.
+func monitorTypeDrifted(
+	ctx context.Context,
+	id int64,
+	managed string,
+	actual string,
+	resp *resource.ReadResponse,
+) bool {
+	if actual == "" || actual == managed {
+		return false
 	}
 
-	msg := err.Error()
+	tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
+		"id":            id,
+		"expected_type": managed,
+		"actual_type":   actual,
+	})
 
-	return strings.Contains(msg, "Cannot read properties of null") ||
-		strings.Contains(msg, "No slug?") ||
-		strings.Contains(msg, "maintenance not found in response")
+	resp.Diagnostics.AddWarning(
+		"Monitor type changed outside Terraform",
+		fmt.Sprintf(
+			"Monitor %d is of type %q but is managed as %q, so it was removed from state and "+
+				"Terraform will plan to create a replacement. Manage it with the resource type "+
+				"matching %q, or remove it from the configuration, to avoid a duplicate.",
+			id, actual, managed, actual,
+		),
+	)
+
+	resp.State.RemoveResource(ctx)
+
+	return true
 }
 
 // strToPtr converts a Terraform string type to a pointer to string.

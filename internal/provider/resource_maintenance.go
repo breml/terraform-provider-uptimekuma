@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -306,6 +307,43 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// maintenanceLister is the part of *kuma.Client maintenanceExists needs. It is a
+// seam of its own for the reason monitorLister is one: the presence check can then
+// be exercised without a socket.io server.
+type maintenanceLister interface {
+	// GetMaintenances returns the maintenance windows the client's state cache
+	// holds. It emits nothing and cannot fail.
+	GetMaintenances(ctx context.Context) ([]maintenance.Maintenance, error)
+}
+
+// maintenanceExists builds the presence check removeOnServerMiss confirms a
+// maintenance window deletion against.
+//
+// GetMaintenances is served purely from the client's state cache and emits
+// nothing, unlike the GetMaintenance that produced the error being confirmed, so
+// the resync existsWithResync forces is the whole reason the answer is worth
+// asking for. maintenanceList is one of the best-effort ready events and
+// resyncReadyEvents drops it for good once it was missing at connect time, so
+// against a server that never sends it the cache stays empty, every window reads
+// as absent and this confirmation is a no-op: the server's verdict then stands, as
+// it did before there was a confirmation at all. removeOnServerMiss says so too.
+//
+// The error branch is defensive rather than live - GetMaintenances returns a nil
+// error unconditionally - but the closure signature requires it and upstream may
+// yet make the getter ask the server.
+func maintenanceExists(client maintenanceLister, id int64) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
+		windows, err := client.GetMaintenances(ctx)
+		if err != nil {
+			return false, fmt.Errorf("list maintenance windows: %w", err)
+		}
+
+		return slices.ContainsFunc(windows, func(window maintenance.Maintenance) bool {
+			return window.ID == id
+		}), nil
+	}
+}
+
 // Read reads the current state of the resource.
 func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data MaintenanceResourceModel
@@ -321,13 +359,9 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 	if err != nil {
 		// GetMaintenance asks the server, so a window deleted outside Terraform
 		// comes back in the server's own words rather than as kuma.ErrNotFound.
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-
-			return
-		}
-
-		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
+		removeOnServerMiss(
+			ctx, r.client, err, maintenanceExists(r.client, data.ID.ValueInt64()), "maintenance", resp,
+		)
 
 		return
 	}

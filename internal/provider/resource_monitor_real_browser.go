@@ -21,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -419,24 +418,15 @@ func (r *MonitorRealBrowserResource) Read(ctx context.Context, req resource.Read
 	var realBrowserMonitor monitor.RealBrowser
 	// Fetch monitor from API.
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &realBrowserMonitor)
-	// Handle error.
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "Real Browser monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read Real Browser monitor", err.Error())
 		return
 	}
 
-	if actual := realBrowserMonitor.Base.Type(); actual != "" && actual != realBrowserMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": realBrowserMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), realBrowserMonitor.Type(), realBrowserMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

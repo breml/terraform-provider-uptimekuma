@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -195,22 +194,14 @@ func (r *MonitorMongoDBResource) Read(
 	var mongoDBMonitor monitor.MongoDB
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &mongoDBMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "MongoDB monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read MongoDB monitor", err.Error())
 		return
 	}
 
-	if actual := mongoDBMonitor.Base.Type(); actual != "" && actual != mongoDBMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": mongoDBMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), mongoDBMonitor.Type(), mongoDBMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 

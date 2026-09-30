@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -219,35 +218,15 @@ func (r *MonitorPM2Resource) Read(
 	var pm2Monitor monitor.PM2
 
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &pm2Monitor)
-	// Handle error.
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
-		resp.Diagnostics.AddError("failed to read PM2 monitor", err.Error())
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "PM2 monitor", resp)
 
 		return
 	}
 
-	if actual := pm2Monitor.Base.Type(); actual != "" && actual != pm2Monitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": pm2Monitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.Diagnostics.AddWarning(
-			"Monitor type changed outside Terraform",
-			fmt.Sprintf(
-				"Monitor %d is of type %q but is managed as %q, so it was removed from state and "+
-					"Terraform will plan to create a replacement. Manage it with the resource type "+
-					"matching %q, or remove it from the configuration, to avoid a duplicate.",
-				data.ID.ValueInt64(), actual, pm2Monitor.Type(), actual,
-			),
-		)
-		resp.State.RemoveResource(ctx)
-
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), pm2Monitor.Type(), pm2Monitor.Base.Type(), resp,
+	) {
 		return
 	}
 

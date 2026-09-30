@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -250,22 +249,14 @@ func (r *MonitorSMTPResource) Read(ctx context.Context, req resource.ReadRequest
 	var smtpMonitor monitor.SMTP
 	err := r.client.GetMonitorAs(ctx, data.ID.ValueInt64(), &smtpMonitor)
 	if err != nil {
-		if isNotFoundError(err) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
+		removeMonitorOnServerMiss(ctx, r.client, err, data.ID.ValueInt64(), "SMTP monitor", resp)
 
-		resp.Diagnostics.AddError("failed to read SMTP monitor", err.Error())
 		return
 	}
 
-	if actual := smtpMonitor.Base.Type(); actual != "" && actual != smtpMonitor.Type() {
-		tflog.Warn(ctx, "monitor type changed externally, removing from state", map[string]any{
-			"id":            data.ID.ValueInt64(),
-			"expected_type": smtpMonitor.Type(),
-			"actual_type":   actual,
-		})
-		resp.State.RemoveResource(ctx)
+	if monitorTypeDrifted(
+		ctx, data.ID.ValueInt64(), smtpMonitor.Type(), smtpMonitor.Base.Type(), resp,
+	) {
 		return
 	}
 
