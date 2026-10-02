@@ -2,6 +2,7 @@ package client
 
 import (
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -321,5 +322,95 @@ func TestCloseGlobalPool_NilPool(t *testing.T) {
 	err := CloseGlobalPool()
 	if err != nil {
 		t.Errorf("expected no error closing nil global pool, got %v", err)
+	}
+}
+
+// TestPool_ConfigMatches_Credentials pins the TOTP secret and the session token
+// as part of the pool's connection identity. Two provider blocks
+// authenticating as different accounts must not share one connection just
+// because neither of them names a username.
+func TestPool_ConfigMatches_Credentials(t *testing.T) {
+	pool := &Pool{
+		config: &Config{
+			Endpoint:     "http://localhost:3001",
+			SessionToken: "token",
+		},
+	}
+
+	if !pool.configMatches(&Config{Endpoint: "http://localhost:3001", SessionToken: "token"}) {
+		t.Error("expected configMatches to return true for an identical session token")
+	}
+
+	if pool.configMatches(&Config{Endpoint: "http://localhost:3001", SessionToken: "other-token"}) {
+		t.Error("expected configMatches to return false for a different session token")
+	}
+
+	if pool.configMatches(&Config{Endpoint: "http://localhost:3001"}) {
+		t.Error("expected configMatches to return false for a missing session token")
+	}
+
+	secretPool := &Pool{
+		config: &Config{
+			Endpoint:   "http://localhost:3001",
+			Username:   "admin",
+			Password:   "secret",
+			TOTPSecret: "JBSWY3DPEHPK3PXP",
+		},
+	}
+
+	if secretPool.configMatches(&Config{
+		Endpoint: "http://localhost:3001",
+		Username: "admin",
+		Password: "secret",
+	}) {
+		t.Error("expected configMatches to return false for a missing totp secret")
+	}
+}
+
+// TestPool_GetOrCreate_MismatchRedactsSecrets pins that the message explaining
+// a rejected config carries no credential. It reaches the user as a Terraform
+// diagnostic, in CLI output and in CI logs, and a session token is a bearer
+// credential that does not expire.
+func TestPool_GetOrCreate_MismatchRedactsSecrets(t *testing.T) {
+	const (
+		existingToken  = "existing-session-token"
+		requestedToken = "requested-session-token"
+		existingSecret = "JBSWY3DPEHPK3PXP"
+	)
+
+	pool := &Pool{
+		// A non-nil client is what makes GetOrCreate compare configs at all;
+		// the mismatch is reported before it is ever used.
+		client: &kuma.Client{},
+		config: &Config{
+			Endpoint:     "http://localhost:3001",
+			TOTPSecret:   existingSecret,
+			SessionToken: existingToken,
+		},
+	}
+
+	_, err := pool.GetOrCreate(t.Context(), &Config{
+		Endpoint:     "http://localhost:3001",
+		SessionToken: requestedToken,
+	})
+	if err == nil {
+		t.Fatal("expected a config mismatch error, got nil")
+	}
+
+	message := err.Error()
+
+	for _, secret := range []string{existingToken, requestedToken, existingSecret} {
+		if strings.Contains(message, secret) {
+			t.Errorf("expected the mismatch message not to carry %q, got %q", secret, message)
+		}
+	}
+
+	for _, want := range []string{
+		"existing endpoint=\"http://localhost:3001\" username=\"\" totp_secret=set session_token=set",
+		"requested endpoint=\"http://localhost:3001\" username=\"\" totp_secret=unset session_token=set",
+	} {
+		if !strings.Contains(message, want) {
+			t.Errorf("expected the mismatch message to contain %q, got %q", want, message)
+		}
 	}
 }
