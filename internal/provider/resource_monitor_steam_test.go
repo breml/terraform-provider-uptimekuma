@@ -163,12 +163,12 @@ func TestAccMonitorSteamResourceFractionalTimeout(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorSteamResourceConfigWithTimeout(name, "steam.example.com", 27015, 1.5),
+				Config: testAccMonitorSteamResourceConfigWithTimeout(name, "steam.example.com", 27015, 0.5),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_steam.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Float64Exact(1.5),
+						knownvalue.Float64Exact(0.5),
 					),
 				},
 			},

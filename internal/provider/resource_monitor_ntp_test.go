@@ -284,12 +284,12 @@ func TestAccMonitorNTPResourceFractionalTimeout(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorNTPResourceConfigWithTimeout(name, "pool.ntp.org", 1.5),
+				Config: testAccMonitorNTPResourceConfigWithTimeout(name, "pool.ntp.org", 0.5),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_ntp.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Float64Exact(1.5),
+						knownvalue.Float64Exact(0.5),
 					),
 				},
 			},
@@ -472,7 +472,7 @@ func TestAccMonitorNTPResourceValidators(t *testing.T) {
 				Config: testAccMonitorNTPResourceConfigWithAttribute(
 					name, "timeout", "0",
 				),
-				ExpectError: regexp.MustCompile(`must be between 1\.0{6}`),
+				ExpectError: regexp.MustCompile(`must be at least 0\.10{5}`),
 			},
 			{
 				Config: testAccMonitorNTPResourceConfigWithAttribute(

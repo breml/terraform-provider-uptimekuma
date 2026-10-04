@@ -89,14 +89,17 @@ func httpURLAttribute() schema.StringAttribute {
 
 func httpTimeoutAttribute() schema.Float64Attribute {
 	return schema.Float64Attribute{
-		MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional values are " +
+		MarkdownDescription: "Request timeout in seconds, at least 0.1. Fractional values are " +
 			"supported. Defaults to 48, which is what Uptime Kuma itself uses when no timeout is set: " +
-			"80% of the default 60 second `interval`.",
+			"80% of the default 60 second `interval`. The floor exists because Uptime Kuma reads 0 or " +
+			"less as a request to fall back to 80% of `interval` at check time rather than as a " +
+			"timeout. The server enforces no upper bound, but the web UI clamps the field to 80% of " +
+			"`interval`, so a monitor edited there afterwards can come back lowered.",
 		Optional: true,
 		Computed: true,
 		Default:  float64default.StaticFloat64(48),
 		Validators: []validator.Float64{
-			float64validator.Between(1, 3600),
+			float64validator.AtLeast(0.1),
 		},
 	}
 }

@@ -293,12 +293,12 @@ func TestAccMonitorRabbitMQResourceFractionalTimeout(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorRabbitMQResourceConfigWithTimeout(name, nodes, 2.5),
+				Config: testAccMonitorRabbitMQResourceConfigWithTimeout(name, nodes, 0.5),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_rabbitmq.test",
 						tfjsonpath.New("timeout"),
-						knownvalue.Float64Exact(2.5),
+						knownvalue.Float64Exact(0.5),
 					),
 				},
 			},

@@ -101,15 +101,19 @@ func (*MonitorNTPResource) Schema(
 				},
 			},
 			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Query timeout in seconds, between 1 and 3600. Fractional values are " +
+				MarkdownDescription: "Query timeout in seconds, at least 0.1. Fractional values are " +
 					"supported and round-trip unchanged. Defaults to 10, the value the NTP check itself " +
 					"falls back to when no timeout is stored. Note that the Uptime Kuma web UI pre-fills " +
-					"48 for new NTP monitors, so a monitor created there and then imported reports 48.",
+					"48 for new NTP monitors, so a monitor created there and then imported reports 48. " +
+					"The floor exists because Uptime Kuma reads 0 or less as a request to fall back to " +
+					"80% of `interval` at check time rather than as a timeout. The server enforces no " +
+					"upper bound, but the web UI clamps the field to 80% of `interval`, so a monitor " +
+					"edited there afterwards can come back lowered.",
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(defaultNTPTimeout),
 				Validators: []validator.Float64{
-					float64validator.Between(1, 3600),
+					float64validator.AtLeast(0.1),
 				},
 			},
 			"ntp_stratum_threshold": schema.Int64Attribute{
