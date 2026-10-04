@@ -8,9 +8,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/notification"
 )
+
+// notificationGetter is the part of *kuma.Client the notification data source
+// helpers need. It is a seam of its own for the reason resyncer is one: the
+// lookups, and the diagnostics they report, can then be exercised without a
+// socket.io server, see datasource_notification_helpers_test.go.
+type notificationGetter interface {
+	resyncer
+
+	// GetNotification returns the notification the client's state cache holds
+	// under id, and an error wrapping kuma.ErrNotFound when it holds none.
+	GetNotification(ctx context.Context, id int64) (notification.Base, error)
+	// GetNotifications returns the notifications the client's state cache
+	// holds. It emits nothing and cannot fail.
+	GetNotifications(ctx context.Context) []notification.Base
+}
 
 // findNotificationByName searches for a notification by name and type.
 //
@@ -21,7 +35,7 @@ import (
 // be late.
 func findNotificationByName(
 	ctx context.Context,
-	client *kuma.Client,
+	client notificationGetter,
 	name string,
 	notificationType string,
 	diags *diag.Diagnostics,
@@ -92,7 +106,7 @@ func matchNotificationsByName(notifications []notification.Base, name string, no
 // type wants readNotificationByID, which does.
 func readNotificationWithResync(
 	ctx context.Context,
-	client *kuma.Client,
+	client notificationGetter,
 	id int64,
 	diags *diag.Diagnostics,
 ) (notification.Base, bool) {
@@ -128,7 +142,7 @@ func readNotificationWithResync(
 // keep the two in step when adding a type.
 func readNotificationByID(
 	ctx context.Context,
-	client *kuma.Client,
+	client notificationGetter,
 	id int64,
 	notificationType string,
 	wantDescription string,
