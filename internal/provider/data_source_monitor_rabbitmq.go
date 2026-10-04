@@ -108,6 +108,14 @@ func (d *MonitorRabbitMQDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), rabbitMQMonitor.Base.Type(), rabbitMQMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, rabbitMQMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(rabbitMQMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

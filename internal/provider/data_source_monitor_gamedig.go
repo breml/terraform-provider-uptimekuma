@@ -133,6 +133,14 @@ func (d *MonitorGameDigDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), gameDigMonitor.Base.Type(), gameDigMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, gameDigMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(gameDigMonitor.Name)
 	data.Hostname = types.StringValue(gameDigMonitor.Hostname)
 	data.Port = types.Int64Value(int64(gameDigMonitor.Port))

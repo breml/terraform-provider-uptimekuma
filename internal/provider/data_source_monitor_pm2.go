@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -117,18 +116,13 @@ func (d *MonitorPM2DataSource) readByID(
 		return
 	}
 
-	// GetMonitorAs unmarshals into monitor.PM2 without checking the type, and
-	// the wire field is shared with the system-service monitor, so a monitor of
-	// another type would decode into plausible-looking values.
-	if actual := pm2Monitor.Base.Type(); actual != "" && actual != pm2Monitor.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor ID %d has type %q, expected %q.",
-				data.ID.ValueInt64(), actual, pm2Monitor.Type(),
-			),
-		)
+	// PM2 and system-service monitors share a wire field, so a system-service
+	// monitor would decode into a plausible-looking process name.
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), pm2Monitor.Base.Type(), pm2Monitor.Type()) {
+		return
+	}
 
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, pm2Monitor.Name) {
 		return
 	}
 

@@ -114,6 +114,14 @@ func (d *MonitorSMTPDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), smtpMonitor.Base.Type(), smtpMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, smtpMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(smtpMonitor.Name)
 	data.Hostname = types.StringValue(smtpMonitor.Hostname)
 	data.DomainExpiryNotification = types.BoolValue(smtpMonitor.DomainExpiryNotification)

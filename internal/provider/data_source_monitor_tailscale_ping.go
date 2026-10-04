@@ -118,6 +118,19 @@ func (d *MonitorTailscalePingDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		tailscalePingMonitor.Base.Type(),
+		tailscalePingMonitor.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, tailscalePingMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(tailscalePingMonitor.Name)
 	data.Hostname = types.StringValue(tailscalePingMonitor.Hostname)
 	data.DomainExpiryNotification = types.BoolValue(tailscalePingMonitor.DomainExpiryNotification)

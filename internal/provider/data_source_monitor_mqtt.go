@@ -114,6 +114,14 @@ func (d *MonitorMQTTDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), mqttMonitor.Base.Type(), mqttMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, mqttMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(mqttMonitor.Name)
 	data.Topic = types.StringValue(mqttMonitor.MQTTTopic)
 	data.DomainExpiryNotification = types.BoolValue(mqttMonitor.DomainExpiryNotification)

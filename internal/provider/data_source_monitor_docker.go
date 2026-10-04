@@ -114,6 +114,14 @@ func (d *MonitorDockerDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), dockerMonitor.Base.Type(), dockerMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, dockerMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(dockerMonitor.Name)
 	data.DockerHostID = types.Int64Value(dockerMonitor.DockerHost)
 	data.DockerContainer = types.StringValue(dockerMonitor.DockerContainer)

@@ -108,6 +108,19 @@ func (d *MonitorSQLServerDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		sqlserverMonitor.Base.Type(),
+		sqlserverMonitor.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, sqlserverMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(sqlserverMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

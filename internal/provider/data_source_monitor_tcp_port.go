@@ -123,6 +123,14 @@ func (d *MonitorTCPPortDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), tcpMonitor.Base.Type(), tcpMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, tcpMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(tcpMonitor.Name)
 	data.Hostname = types.StringValue(tcpMonitor.Hostname)
 	data.Port = types.Int64Value(int64(tcpMonitor.Port))

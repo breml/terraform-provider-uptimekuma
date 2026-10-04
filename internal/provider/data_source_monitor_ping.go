@@ -114,6 +114,14 @@ func (d *MonitorPingDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), pingMonitor.Base.Type(), pingMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, pingMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(pingMonitor.Name)
 	data.Hostname = types.StringValue(pingMonitor.Hostname)
 	data.DomainExpiryNotification = types.BoolValue(pingMonitor.DomainExpiryNotification)

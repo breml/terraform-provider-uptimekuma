@@ -112,6 +112,10 @@ func (d *NotificationGTXMessagingDataSource) readByID(
 		return
 	}
 
+	if !dataSourceNameMatches(&resp.Diagnostics, "Notification", data.ID.ValueInt64(), data.Name, notif.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(notif.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

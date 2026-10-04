@@ -149,6 +149,9 @@ func readNotificationByID(
 }
 
 // validateNotificationDataSourceInput validates that either id or name is provided.
+//
+// Both may be set: the lookup then goes by id, and readByID rejects a name that
+// contradicts the notification the id resolved to, see dataSourceNameMatches.
 func validateNotificationDataSourceInput(
 	resp *datasource.ReadResponse,
 	idValue types.Int64,

@@ -108,6 +108,14 @@ func (d *MonitorMongoDBDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), mongoDBMonitor.Base.Type(), mongoDBMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, mongoDBMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(mongoDBMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

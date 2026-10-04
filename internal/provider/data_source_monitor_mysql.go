@@ -108,6 +108,14 @@ func (d *MonitorMySQLDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), mysqlMonitor.Base.Type(), mysqlMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, mysqlMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(mysqlMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

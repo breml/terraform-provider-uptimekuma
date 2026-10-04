@@ -198,6 +198,19 @@ func (d *MonitorGlobalpingDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		globalpingMonitor.Base.Type(),
+		globalpingMonitor.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, globalpingMonitor.Name) {
+		return
+	}
+
 	populateGlobalpingDataSourceModel(&globalpingMonitor, data)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

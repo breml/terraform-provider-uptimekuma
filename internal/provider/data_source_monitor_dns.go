@@ -114,6 +114,14 @@ func (d *MonitorDNSDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), dnsMonitor.Base.Type(), dnsMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, dnsMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(dnsMonitor.Name)
 	data.Hostname = types.StringValue(dnsMonitor.Hostname)
 	data.DomainExpiryNotification = types.BoolValue(dnsMonitor.DomainExpiryNotification)
