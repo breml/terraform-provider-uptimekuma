@@ -19,7 +19,7 @@ type notificationGetter interface {
 	resyncer
 
 	// GetNotification returns the notification the client's state cache holds
-	// under id, and kuma.ErrNotFound when it holds none.
+	// under id, and an error wrapping kuma.ErrNotFound when it holds none.
 	GetNotification(ctx context.Context, id int64) (notification.Base, error)
 	// GetNotifications returns the notifications the client's state cache
 	// holds. It emits nothing and cannot fail.

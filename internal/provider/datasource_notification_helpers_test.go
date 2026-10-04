@@ -19,13 +19,17 @@ import (
 
 // fakeNotificationClient stands in for *kuma.Client behind notificationGetter.
 // It models the state cache the real getters serve from: cached is what the
-// cache holds now, late is what only a resync brings in.
+// cache holds now, late is what it also holds once a resync was attempted. An
+// attempt that fails brings late in as well, which the real client's would not.
 type fakeNotificationClient struct {
 	*fakeResyncer
 
 	cached []notification.Base
 	late   []notification.Base
-	// err is what GetNotification fails with instead of looking anything up.
+	// err is what GetNotification fails with instead of looking anything up. The
+	// real getter only ever fails with kuma.ErrNotFound, so this stands for no
+	// failure it has today: it covers the guard in readWithResync that keeps any
+	// other error from being taken for a miss.
 	err error
 }
 
@@ -59,6 +63,9 @@ type wantDiag struct {
 	// detail is matched as a prefix, because reportMiss appends to it when the
 	// miss is inconclusive.
 	detail string
+	// exact has detail be the whole detail instead, which is how a miss the
+	// resync confirmed is told from an inconclusive one.
+	exact bool
 	// inDetail must appear somewhere in the detail.
 	inDetail string
 }
@@ -84,7 +91,9 @@ func checkDiag(t *testing.T, diags diag.Diagnostics, want wantDiag) {
 		t.Errorf("want summary %q, got %q", want.summary, got.Summary())
 	}
 
-	if !strings.HasPrefix(got.Detail(), want.detail) {
+	if want.exact && got.Detail() != want.detail {
+		t.Errorf("want detail %q, got %q", want.detail, got.Detail())
+	} else if !strings.HasPrefix(got.Detail(), want.detail) {
 		t.Errorf("want detail to start with %q, got %q", want.detail, got.Detail())
 	}
 
@@ -94,8 +103,8 @@ func checkDiag(t *testing.T, diags diag.Diagnostics, want wantDiag) {
 }
 
 // notificationBase builds a notification.Base the way the client does, from the
-// server's JSON. Its type is carried in an unexported field, so it cannot be
-// set with a struct literal.
+// server's JSON. Its type is carried in an unexported field the client fills
+// from the config string, so it cannot be set with a struct literal.
 func notificationBase(t *testing.T, id int64, name string, notificationType string) notification.Base {
 	t.Helper()
 
@@ -103,7 +112,6 @@ func notificationBase(t *testing.T, id int64, name string, notificationType stri
 		"id":     id,
 		"name":   name,
 		"active": true,
-		"type":   notificationType,
 		"config": `{"type":"` + notificationType + `"}`,
 	})
 	if err != nil {
@@ -137,12 +145,12 @@ func TestMatchNotificationsByName(t *testing.T) {
 			notificationType: "slack",
 			want:             []int64{1},
 		},
-		"the same name under another type does not match": {
+		"a name shared across types matches only the requested type": {
 			name:             "alerts",
 			notificationType: "discord",
 			want:             []int64{4},
 		},
-		"another name under the same type does not match": {
+		"a type shared across names matches only the requested name": {
 			name:             "pages",
 			notificationType: "slack",
 			want:             []int64{3},
@@ -203,7 +211,7 @@ func TestReadNotificationWithResync(t *testing.T) {
 			id:        1,
 			wantFound: true,
 		},
-		"a notification of any type is returned, the type is the caller's to check": {
+		"a notification the cache is one update behind on is found after a resync": {
 			resyncer:    loggedIn(),
 			late:        late,
 			id:          7,
@@ -214,13 +222,16 @@ func TestReadNotificationWithResync(t *testing.T) {
 			resyncer:    loggedIn(),
 			id:          7,
 			wantResyncs: 1,
-			wantDiag:    wantDiag{summary: "Notification not found", detail: missDetail, inDetail: missDetail},
+			wantDiag:    wantDiag{summary: "Notification not found", detail: missDetail, exact: true},
 		},
 		"a miss without a session token says the resync could not be made": {
 			resyncer: &fakeResyncer{},
 			id:       7,
 			wantDiag: wantDiag{summary: "Notification not found", detail: missDetail, inDetail: "without credentials"},
 		},
+		// The client fails to connect without its notificationList, so no client
+		// reports it missing today, see the list event constants in
+		// client_errors.go. This covers one that narrows its required lists.
 		"a miss in a list the server never sent names that list": {
 			resyncer:    &fakeResyncer{token: "session-token", missing: []string{notificationListEvent}},
 			id:          7,
@@ -297,6 +308,7 @@ func TestReadNotificationByID(t *testing.T) {
 			wantDiag: wantDiag{
 				summary: "Notification not found",
 				detail:  "No notification with ID 3 found.",
+				exact:   true,
 			},
 		},
 	}
@@ -335,7 +347,11 @@ func TestFindNotificationByName(t *testing.T) {
 		notificationBase(t, 6, "duplicated", "slack"),
 		notificationBase(t, 8, "elsewhere", "discord"),
 	}
-	late := []notification.Base{notificationBase(t, 7, "pages", "slack")}
+	late := []notification.Base{
+		notificationBase(t, 7, "pages", "slack"),
+		notificationBase(t, 9, "doubled", "slack"),
+		notificationBase(t, 10, "doubled", "slack"),
+	}
 
 	tests := map[string]struct {
 		resyncer    *fakeResyncer
@@ -362,6 +378,16 @@ func TestFindNotificationByName(t *testing.T) {
 			wantDiag: wantDiag{
 				summary: "Notification not found",
 				detail:  "No slack notification with name 'absent' found.",
+				exact:   true,
+			},
+		},
+		"a miss without a session token says the resync could not be made": {
+			resyncer: &fakeResyncer{},
+			name:     "absent",
+			wantDiag: wantDiag{
+				summary:  "Notification not found",
+				detail:   "No slack notification with name 'absent' found.",
+				inDetail: "without credentials",
 			},
 		},
 		"a name only another type carries is not found": {
@@ -371,6 +397,7 @@ func TestFindNotificationByName(t *testing.T) {
 			wantDiag: wantDiag{
 				summary: "Notification not found",
 				detail:  "No slack notification with name 'elsewhere' found.",
+				exact:   true,
 			},
 		},
 		"an ambiguous name is rejected without a resync": {
@@ -380,6 +407,15 @@ func TestFindNotificationByName(t *testing.T) {
 				summary:  "Multiple notifications found",
 				detail:   "Multiple slack notifications with name 'duplicated' found.",
 				inDetail: "use 'id'",
+			},
+		},
+		"a name that is ambiguous only after a resync is still rejected": {
+			resyncer:    loggedIn(),
+			name:        "doubled",
+			wantResyncs: 1,
+			wantDiag: wantDiag{
+				summary: "Multiple notifications found",
+				detail:  "Multiple slack notifications with name 'doubled' found.",
 			},
 		},
 		"a failed resync is a failed read, not a miss": {
