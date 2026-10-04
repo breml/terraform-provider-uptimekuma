@@ -82,13 +82,14 @@ func (*MonitorSteamResource) Schema(
 				},
 			},
 			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional " +
-					"values are supported and round-trip unchanged.",
+				MarkdownDescription: "Request timeout in seconds, at least 0.1. Fractional values " +
+					"are supported and round-trip unchanged. " + monitorTimeoutDefaultDescription + " " +
+					monitorTimeoutFloorDescription + " " + monitorTimeoutClampDescription,
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(48),
 				Validators: []validator.Float64{
-					float64validator.Between(1, 3600),
+					float64validator.AtLeast(0.1),
 				},
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),

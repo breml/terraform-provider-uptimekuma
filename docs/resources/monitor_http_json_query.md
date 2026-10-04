@@ -75,7 +75,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Request timeout in seconds, between 1 and 3600. Fractional values are supported. Defaults to 48, which is what Uptime Kuma itself uses when no timeout is set: 80% of the default 60 second `interval`.
+- `timeout` (Number) Request timeout in seconds, at least 0.1. Fractional values are supported. Defaults to 48, the value the Uptime Kuma web UI assigns to a new monitor: 80% of the default 60 second `interval`. The floor exists because Uptime Kuma treats 0 or less as no timeout being set and substitutes a value derived from `interval` instead of using it as a timeout. The server enforces no upper bound, but saving the monitor in the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can come back lowered.
 - `tls_ca` (String) TLS CA certificate
 - `tls_cert` (String, Sensitive) TLS client certificate
 - `tls_key` (String, Sensitive) TLS client key

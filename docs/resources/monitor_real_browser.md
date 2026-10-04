@@ -52,7 +52,7 @@ resource "uptimekuma_monitor_real_browser" "example" {
 - `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
 - `screenshot_delay` (Number) Delay in milliseconds before taking a screenshot. Must be less than `interval * 500`, that is half the interval converted to milliseconds; the server rejects larger values and negative ones. The delay cannot be cleared through the API, so this attribute is computed: removing it from configuration keeps the value the server already has rather than producing a plan that never converges. Set it to `0` to disable the delay. Uptime Kuma only returns the value since 2.5.0; against earlier versions it cannot be detected as drift or recovered on import.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number, Deprecated) Request timeout in seconds. Has no effect: the real browser check derives its timeout from 80% of `interval` and never reads this value. It is kept because Uptime Kuma stores it with every monitor.
+- `timeout` (Number, Deprecated) Request timeout in seconds. Has no effect: the real browser check derives its timeout from 80% of `interval` and never reads this value. It is kept because Uptime Kuma stores it with every monitor. Must be at least 0.1.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

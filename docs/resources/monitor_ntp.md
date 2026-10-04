@@ -97,7 +97,7 @@ resource "uptimekuma_monitor_ntp" "fractional_timeout" {
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Query timeout in seconds, between 1 and 3600. Fractional values are supported and round-trip unchanged. Defaults to 10, the value the NTP check itself falls back to when no timeout is stored. Note that the Uptime Kuma web UI pre-fills 48 for new NTP monitors, so a monitor created there and then imported reports 48.
+- `timeout` (Number) Query timeout in seconds, at least 0.1. Fractional values are supported and round-trip unchanged. Defaults to 10. Note that the Uptime Kuma web UI assigns 48 to new NTP monitors, so a monitor created there and then imported reports 48. The floor exists because Uptime Kuma treats 0 or less as no timeout being set and substitutes a value derived from `interval` instead of using it as a timeout. The server enforces no upper bound, but saving the monitor in the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can come back lowered.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

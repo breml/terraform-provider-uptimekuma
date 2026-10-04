@@ -87,16 +87,36 @@ func httpURLAttribute() schema.StringAttribute {
 	}
 }
 
+// The sentences every non-ping monitor shares in its timeout description. Ping
+// is the only type whose timeout Uptime Kuma bounds, so it documents its own.
+const (
+	// monitorTimeoutFloorDescription explains why 0 and below are rejected.
+	monitorTimeoutFloorDescription = "The floor exists because Uptime Kuma treats 0 or less as no " +
+		"timeout being set and substitutes a value derived from `interval` instead of using it as a " +
+		"timeout."
+
+	// monitorTimeoutClampDescription explains the absent upper bound and the
+	// drift a later edit in the web UI can cause.
+	monitorTimeoutClampDescription = "The server enforces no upper bound, but saving the monitor in " +
+		"the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can " +
+		"come back lowered."
+
+	// monitorTimeoutDefaultDescription describes the default of 48 most
+	// non-ping monitors share.
+	monitorTimeoutDefaultDescription = "Defaults to 48, the value the Uptime Kuma web UI assigns to " +
+		"a new monitor: 80% of the default 60 second `interval`."
+)
+
 func httpTimeoutAttribute() schema.Float64Attribute {
 	return schema.Float64Attribute{
-		MarkdownDescription: "Request timeout in seconds, between 1 and 3600. Fractional values are " +
-			"supported. Defaults to 48, which is what Uptime Kuma itself uses when no timeout is set: " +
-			"80% of the default 60 second `interval`.",
+		MarkdownDescription: "Request timeout in seconds, at least 0.1. Fractional values are " +
+			"supported. " + monitorTimeoutDefaultDescription + " " + monitorTimeoutFloorDescription +
+			" " + monitorTimeoutClampDescription,
 		Optional: true,
 		Computed: true,
 		Default:  float64default.StaticFloat64(48),
 		Validators: []validator.Float64{
-			float64validator.Between(1, 3600),
+			float64validator.AtLeast(0.1),
 		},
 	}
 }

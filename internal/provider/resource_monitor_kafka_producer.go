@@ -119,10 +119,8 @@ func (*MonitorKafkaProducerResource) Schema(
 				MarkdownDescription: "Connection timeout in seconds, handed to kafkajs as its " +
 					"`connectionTimeout`. Must be at least 0.1; fractional values are supported and " +
 					"round-trip unchanged. Defaults to 1, the value the Uptime Kuma web UI assigns to " +
-					"a new Kafka Producer monitor. The floor exists because Uptime Kuma reads 0 or " +
-					"less as a request to fall back to 80% of `interval` at check time rather than as " +
-					"a timeout. The server enforces no upper bound, but the web UI clamps the field to " +
-					"80% of `interval`, so a monitor edited there afterwards can come back lowered. A " +
+					"a new Kafka Producer monitor. " + monitorTimeoutFloorDescription + " " +
+					monitorTimeoutClampDescription + " A " +
 					"monitor created outside Terraform may have 0 stored, which reads into state as 0 " +
 					"and plans back to the default on the next apply; 0 itself cannot be written in " +
 					"configuration.",

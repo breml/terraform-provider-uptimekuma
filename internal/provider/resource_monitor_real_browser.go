@@ -87,14 +87,14 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	attrs["timeout"] = schema.Float64Attribute{
 		MarkdownDescription: "Request timeout in seconds. Has no effect: the real browser check derives " +
 			"its timeout from 80% of `interval` and never reads this value. It is kept because Uptime " +
-			"Kuma stores it with every monitor.",
+			"Kuma stores it with every monitor. Must be at least 0.1.",
 		DeprecationMessage: "timeout has no effect on a real browser monitor; the check uses 80% of " +
 			"interval. Remove it from the configuration.",
 		Optional: true,
 		Computed: true,
 		Default:  float64default.StaticFloat64(48),
 		Validators: []validator.Float64{
-			float64validator.Between(1, 3600),
+			float64validator.AtLeast(0.1),
 		},
 	}
 

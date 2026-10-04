@@ -419,7 +419,7 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
 
 // TestAccMonitorKafkaProducerResourceValidators proves the timeout floor is wired
 // into the schema. The rule itself is covered exhaustively by
-// TestMonitorKafkaProducerTimeoutValidation without a Terraform process.
+// TestMonitorTimeoutValidation without a Terraform process.
 func TestAccMonitorKafkaProducerResourceValidators(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestKafkaProducerMonitorValidators")
 
