@@ -218,7 +218,12 @@ func (r *MonitorRabbitMQResource) Read(
 	data.Password = ptrToTypes(rabbitMQMonitor.Password)
 
 	data.Timeout = timeoutValueOrDefault(
-		ctx, rabbitMQMonitor.ID, rabbitMQMonitor.Timeout, defaultMonitorTimeout, rabbitMQMonitor.Type(),
+		ctx,
+		rabbitMQMonitor.ID,
+		rabbitMQMonitor.Timeout,
+		defaultMonitorTimeout,
+		rabbitMQMonitor.Type(),
+		&resp.Diagnostics,
 	)
 
 	if rabbitMQMonitor.Parent != nil {

@@ -169,7 +169,7 @@ func (r *MonitorSteamResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	populateSteamModel(ctx, &steamMonitor, &data)
+	populateSteamModel(ctx, &steamMonitor, &data, &resp.Diagnostics)
 	populateSteamOptionalFields(ctx, &steamMonitor, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -308,7 +308,12 @@ func buildSteamMonitor(
 }
 
 // populateSteamModel populates the base fields of the Terraform model from the API response.
-func populateSteamModel(ctx context.Context, steamMonitor *monitor.Steam, data *MonitorSteamResourceModel) {
+func populateSteamModel(
+	ctx context.Context,
+	steamMonitor *monitor.Steam,
+	data *MonitorSteamResourceModel,
+	diags *diag.Diagnostics,
+) {
 	data.Name = types.StringValue(steamMonitor.Name)
 	if steamMonitor.Description != nil {
 		data.Description = types.StringValue(*steamMonitor.Description)
@@ -326,7 +331,7 @@ func populateSteamModel(ctx context.Context, steamMonitor *monitor.Steam, data *
 	data.Port = types.Int64Value(int64(steamMonitor.Port))
 	data.DomainExpiryNotification = types.BoolValue(steamMonitor.DomainExpiryNotification)
 	data.Timeout = timeoutValueOrDefault(
-		ctx, steamMonitor.ID, steamMonitor.Timeout, defaultMonitorTimeout, steamMonitor.Type(),
+		ctx, steamMonitor.ID, steamMonitor.Timeout, defaultMonitorTimeout, steamMonitor.Type(), diags,
 	)
 }
 

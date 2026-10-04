@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/breml/go-uptime-kuma-client/monitor"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
 // fakeMonitorLister stands in for *kuma.Client. monitorExists uses nothing else
@@ -172,29 +174,33 @@ func TestMonitorTypeDrifted(t *testing.T) {
 	}
 }
 
-// TestTimeoutValueOrDefault covers both branches of the read fallback. The nil
-// branch is unreachable from an acceptance test, because the monitor.timeout
-// column is NOT NULL server-side, so this is the only place it gets exercised.
+// TestTimeoutValueOrDefault covers both branches of the read fallback, and that
+// only the substitution raises a warning diagnostic. The nil branch is
+// unreachable from an acceptance test, because the monitor.timeout column is
+// NOT NULL server-side, so this is the only place it gets exercised.
 func TestTimeoutValueOrDefault(t *testing.T) {
 	t.Parallel()
 
 	const fallback = 10
 
 	tests := map[string]struct {
-		timeout *float64
-		want    float64
+		timeout      *float64
+		want         float64
+		wantWarnings int
 	}{
 		"stored value":      {timeout: new(2.5), want: 2.5},
 		"stored whole":      {timeout: new(5.0), want: 5},
 		"stored zero":       {timeout: new(0.0), want: 0},
-		"absent from reply": {timeout: nil, want: fallback},
+		"absent from reply": {timeout: nil, want: fallback, wantWarnings: 1},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := timeoutValueOrDefault(t.Context(), 7, test.timeout, fallback, "ntp")
+			var diags diag.Diagnostics
+
+			got := timeoutValueOrDefault(t.Context(), 7, test.timeout, fallback, "ntp", &diags)
 
 			if got.IsNull() || got.IsUnknown() {
 				t.Fatalf("timeoutValueOrDefault() = %v, want %v", got, test.want)
@@ -202,6 +208,11 @@ func TestTimeoutValueOrDefault(t *testing.T) {
 
 			if got.ValueFloat64() != test.want {
 				t.Errorf("timeoutValueOrDefault() = %v, want %v", got.ValueFloat64(), test.want)
+			}
+
+			// The substitution must reach the user, never fail the read.
+			if diags.HasError() || diags.WarningsCount() != test.wantWarnings {
+				t.Errorf("diagnostics = %v, want %d warnings and no error", diags, test.wantWarnings)
 			}
 		})
 	}

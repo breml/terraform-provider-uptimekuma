@@ -274,7 +274,7 @@ func populateKafkaProducerMonitorBaseFields(
 	m.SSL = types.BoolValue(kafkaMonitor.SSL)
 	m.AllowAutoTopicCreation = types.BoolValue(kafkaMonitor.AllowAutoTopicCreation)
 	m.Timeout = timeoutValueOrDefault(
-		ctx, kafkaMonitor.ID, kafkaMonitor.Timeout, defaultKafkaProducerTimeout, kafkaMonitor.Type(),
+		ctx, kafkaMonitor.ID, kafkaMonitor.Timeout, defaultKafkaProducerTimeout, kafkaMonitor.Type(), diags,
 	)
 
 	// Uptime Kuma may not return the test message in the API response.

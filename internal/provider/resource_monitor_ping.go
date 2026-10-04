@@ -212,7 +212,7 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	data.DomainExpiryNotification = types.BoolValue(pingMonitor.DomainExpiryNotification)
 
 	data.Timeout = timeoutValueOrDefault(
-		ctx, pingMonitor.ID, pingMonitor.Timeout, defaultMonitorTimeout, pingMonitor.Type(),
+		ctx, pingMonitor.ID, pingMonitor.Timeout, defaultMonitorTimeout, pingMonitor.Type(), &resp.Diagnostics,
 	)
 
 	if pingMonitor.Parent != nil {

@@ -223,7 +223,7 @@ func (r *MonitorNTPResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	populateNTPModel(ctx, &ntpMonitor, &data)
+	populateNTPModel(ctx, &ntpMonitor, &data, &resp.Diagnostics)
 	populateNTPOptionalFields(ctx, &ntpMonitor, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -364,7 +364,12 @@ func buildNTPMonitor(
 }
 
 // populateNTPModel populates the base fields of the Terraform model from the API response.
-func populateNTPModel(ctx context.Context, ntpMonitor *monitor.NTP, data *MonitorNTPResourceModel) {
+func populateNTPModel(
+	ctx context.Context,
+	ntpMonitor *monitor.NTP,
+	data *MonitorNTPResourceModel,
+	diags *diag.Diagnostics,
+) {
 	data.Name = types.StringValue(ntpMonitor.Name)
 	if ntpMonitor.Description != nil {
 		data.Description = types.StringValue(*ntpMonitor.Description)
@@ -383,7 +388,9 @@ func populateNTPModel(ctx context.Context, ntpMonitor *monitor.NTP, data *Monito
 	data.NTPStratumThreshold = int64PtrToTypes(ntpMonitor.NTPStratumThreshold)
 	data.NTPTimeOffsetThreshold = int64PtrToTypes(ntpMonitor.NTPTimeOffsetThreshold)
 	data.NTPRootDispersionThreshold = int64PtrToTypes(ntpMonitor.NTPRootDispersionThreshold)
-	data.Timeout = timeoutValueOrDefault(ctx, ntpMonitor.ID, ntpMonitor.Timeout, defaultNTPTimeout, ntpMonitor.Type())
+	data.Timeout = timeoutValueOrDefault(
+		ctx, ntpMonitor.ID, ntpMonitor.Timeout, defaultNTPTimeout, ntpMonitor.Type(), diags,
+	)
 }
 
 // populateNTPOptionalFields populates optional and computed fields from the API response.
