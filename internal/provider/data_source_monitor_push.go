@@ -104,6 +104,14 @@ func (d *MonitorPushDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), pushMonitor.Base.Type(), pushMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, pushMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(pushMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

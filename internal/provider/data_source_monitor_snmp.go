@@ -119,6 +119,14 @@ func (d *MonitorSNMPDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), snmpMonitor.Base.Type(), snmpMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, snmpMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(snmpMonitor.Name)
 	data.Hostname = types.StringValue(snmpMonitor.Hostname)
 	data.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)

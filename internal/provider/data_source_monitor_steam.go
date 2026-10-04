@@ -123,6 +123,14 @@ func (d *MonitorSteamDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), steamMonitor.Base.Type(), steamMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, steamMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(steamMonitor.Name)
 	data.Hostname = types.StringValue(steamMonitor.Hostname)
 	data.Port = types.Int64Value(int64(steamMonitor.Port))

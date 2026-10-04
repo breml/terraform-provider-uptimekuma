@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -144,17 +143,11 @@ func (d *MonitorNTPDataSource) readByID(
 		return
 	}
 
-	// GetMonitorAs unmarshals into monitor.NTP without checking the type, so a
-	// monitor of another type would decode into plausible-looking empty values.
-	if actual := ntpMonitor.Base.Type(); actual != "" && actual != ntpMonitor.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor ID %d has type %q, expected %q.",
-				data.ID.ValueInt64(), actual, ntpMonitor.Type(),
-			),
-		)
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), ntpMonitor.Base.Type(), ntpMonitor.Type()) {
+		return
+	}
 
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, ntpMonitor.Name) {
 		return
 	}
 

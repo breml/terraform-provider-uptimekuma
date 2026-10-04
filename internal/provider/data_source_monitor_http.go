@@ -114,6 +114,14 @@ func (d *MonitorHTTPDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), httpMonitor.Base.Type(), httpMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, httpMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(httpMonitor.Name)
 	data.URL = types.StringValue(httpMonitor.URL)
 	data.DomainExpiryNotification = types.BoolValue(httpMonitor.DomainExpiryNotification)

@@ -114,6 +114,10 @@ func (d *NotificationDataSource) readByID(
 		return
 	}
 
+	if !dataSourceNameMatches(&resp.Diagnostics, "Notification", data.ID.ValueInt64(), data.Name, notif.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(notif.Name)
 	data.Type = types.StringValue(notif.Type())
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

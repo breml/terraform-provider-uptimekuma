@@ -104,6 +104,14 @@ func (d *MonitorGroupDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), groupMonitor.Base.Type(), groupMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, groupMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(groupMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

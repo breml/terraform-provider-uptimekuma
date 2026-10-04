@@ -456,12 +456,23 @@ Converts API tag list to Terraform `types.List` of `MonitorTagModel`.
 [datasource_monitor_helpers.go](datasource_monitor_helpers.go)
 
 ```go
-// Find monitor by name and type
-func findMonitorByName(ctx context.Context, client *kuma.Client, name string, monitorType string, diags *diag.Diagnostics) (*kuma.Monitor, error)
+// Find monitor by name and type; nil with an error in diags on a miss or an ambiguous name
+func findMonitorByName(ctx context.Context, client *kuma.Client, name string, monitorType string, diags *diag.Diagnostics) monitor.Monitor
 
-// Validate either ID or name is provided (not both, not neither)
-func validateMonitorDataSourceInput(data *DataSourceModel, diags *diag.Diagnostics) bool
+// Validate that id or name is provided. Both may be set; the lookup then goes by id
+func validateMonitorDataSourceInput(resp *datasource.ReadResponse, idValue types.Int64, nameValue types.String) bool
+
+// Guard GetMonitorAs, which unmarshals a monitor of any type into the target without complaint
+func monitorTypeMatches(diags *diag.Diagnostics, id int64, actual string, want string) bool
+
+// Reject a configured name that contradicts the entity an id lookup resolved to
+func dataSourceNameMatches(diags *diag.Diagnostics, kind string, id int64, configured types.String, actual string) bool
 ```
+
+Every monitor and notification `readByID` calls `dataSourceNameMatches()` before it
+overwrites `data.Name`, and every monitor `readByID` calls `monitorTypeMatches()` first. A
+new data source must do the same: without them `id` silently wins over a conflicting `name`,
+and a monitor of another type decodes into plausible-looking empty values.
 
 Similar helpers exist for notifications:
 

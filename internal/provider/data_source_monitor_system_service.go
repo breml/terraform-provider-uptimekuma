@@ -114,14 +114,16 @@ func (d *MonitorSystemServiceDataSource) readByID(
 		return
 	}
 
-	if actual := systemServiceMon.Base.Type(); actual != "" && actual != systemServiceMon.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor ID %d has type %q, expected %q.",
-				data.ID.ValueInt64(), actual, systemServiceMon.Type(),
-			),
-		)
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		systemServiceMon.Base.Type(),
+		systemServiceMon.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, systemServiceMon.Name) {
 		return
 	}
 

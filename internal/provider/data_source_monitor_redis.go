@@ -104,6 +104,14 @@ func (d *MonitorRedisDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), redisMonitor.Base.Type(), redisMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, redisMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(redisMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

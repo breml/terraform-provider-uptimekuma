@@ -127,6 +127,14 @@ func (d *MonitorKafkaProducerDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), kafkaMonitor.Base.Type(), kafkaMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, kafkaMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(kafkaMonitor.Name)
 	data.Topic = types.StringValue(kafkaMonitor.Topic)
 	data.Timeout = types.Float64PointerValue(kafkaMonitor.Timeout)

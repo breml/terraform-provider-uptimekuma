@@ -113,6 +113,19 @@ func (d *MonitorGrpcKeywordDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		grpcKeywordMonitor.Base.Type(),
+		grpcKeywordMonitor.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, grpcKeywordMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(grpcKeywordMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(grpcKeywordMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

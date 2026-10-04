@@ -108,6 +108,14 @@ func (d *MonitorOracleDBDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), oracleDBMonitor.Base.Type(), oracleDBMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, oracleDBMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(oracleDBMonitor.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -131,14 +130,11 @@ func (d *MonitorWebsocketUpgradeDataSource) readByID(
 		return
 	}
 
-	if actual := wsMon.Base.Type(); actual != "" && actual != wsMon.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor ID %d has type %q, expected %q.",
-				data.ID.ValueInt64(), actual, wsMon.Type(),
-			),
-		)
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), wsMon.Base.Type(), wsMon.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, wsMon.Name) {
 		return
 	}
 

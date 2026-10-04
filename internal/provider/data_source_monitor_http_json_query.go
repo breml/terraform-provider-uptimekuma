@@ -113,6 +113,14 @@ func (d *MonitorHTTPJSONQueryDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), httpJSONMonitor.Base.Type(), httpJSONMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, httpJSONMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(httpJSONMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(httpJSONMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

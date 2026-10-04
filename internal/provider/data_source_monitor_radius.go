@@ -123,6 +123,14 @@ func (d *MonitorRadiusDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), radiusMonitor.Base.Type(), radiusMonitor.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, radiusMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(radiusMonitor.Name)
 	data.Hostname = types.StringValue(radiusMonitor.Hostname)
 	data.RadiusUsername = types.StringValue(radiusMonitor.Username)

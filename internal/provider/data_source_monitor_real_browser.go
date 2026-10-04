@@ -113,6 +113,19 @@ func (d *MonitorRealBrowserDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		realBrowserMonitor.Base.Type(),
+		realBrowserMonitor.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, realBrowserMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(realBrowserMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(realBrowserMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

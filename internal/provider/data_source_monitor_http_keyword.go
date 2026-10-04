@@ -113,6 +113,19 @@ func (d *MonitorHTTPKeywordDataSource) readByID(
 		return
 	}
 
+	if !monitorTypeMatches(
+		&resp.Diagnostics,
+		data.ID.ValueInt64(),
+		httpKeywordMonitor.Base.Type(),
+		httpKeywordMonitor.Type(),
+	) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, httpKeywordMonitor.Name) {
+		return
+	}
+
 	data.Name = types.StringValue(httpKeywordMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(httpKeywordMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

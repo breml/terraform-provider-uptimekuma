@@ -124,14 +124,11 @@ func (d *MonitorSIPOptionsDataSource) readByID(
 		return
 	}
 
-	if actual := sipMon.Base.Type(); actual != "" && actual != sipMon.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor ID %d has type %q, expected %q.",
-				data.ID.ValueInt64(), actual, sipMon.Type(),
-			),
-		)
+	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), sipMon.Base.Type(), sipMon.Type()) {
+		return
+	}
+
+	if !dataSourceNameMatches(&resp.Diagnostics, "Monitor", data.ID.ValueInt64(), data.Name, sipMon.Name) {
 		return
 	}
 
