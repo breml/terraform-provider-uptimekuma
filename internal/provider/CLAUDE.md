@@ -471,14 +471,21 @@ func dataSourceNameMatches(diags *diag.Diagnostics, kind string, id int64, confi
 
 Every monitor and notification `readByID` calls `dataSourceNameMatches()` before it
 overwrites `data.Name`, and every monitor `readByID` calls `monitorTypeMatches()` first. A
-new data source must do the same: without them `id` silently wins over a conflicting `name`,
-and a monitor of another type decodes into plausible-looking empty values.
+new monitor or notification data source must do the same: without them `id` silently wins
+over a conflicting `name`, and a monitor of another type decodes into plausible-looking
+values, empty or borrowed from a same-named field. `TestDataSourceReadByIDGuards` scans the
+source files for both calls. The Docker host, maintenance and tag data sources do not make
+the name check; there `id` still wins silently.
 
 Similar helpers exist for notifications:
 
 - `findNotificationByName()`
 - `readNotificationByID()` / `readNotificationWithResync()`
 - `validateNotificationDataSourceInput()`
+
+The type check lives inside `readNotificationByID()`, so there is no notification
+counterpart to `monitorTypeMatches()`; `dataSourceNameMatches()` is shared and called with
+kind `"Notification"`.
 
 **Cache-backed lookups must resync before reporting a miss.** The notification,
 proxy, Docker host, maintenance-list and status-page-list getters all serve from

@@ -116,8 +116,8 @@ func (d *MonitorPM2DataSource) readByID(
 		return
 	}
 
-	// The wire field is shared with the system-service monitor, so a monitor of
-	// that type would decode into a plausible-looking process name.
+	// PM2 and system-service monitors share a wire field, so a system-service
+	// monitor would decode into a plausible-looking process name.
 	if !monitorTypeMatches(&resp.Diagnostics, data.ID.ValueInt64(), pm2Monitor.Base.Type(), pm2Monitor.Type()) {
 		return
 	}
