@@ -303,6 +303,11 @@ func TestAccMonitorRabbitMQResourceFractionalTimeout(t *testing.T) {
 				},
 			},
 			{
+				ResourceName:      "uptimekuma_monitor_rabbitmq.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccMonitorRabbitMQResourceConfigWithTimeout(name, nodes, 12.75),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(

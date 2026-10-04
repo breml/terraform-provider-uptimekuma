@@ -173,6 +173,11 @@ func TestAccMonitorSteamResourceFractionalTimeout(t *testing.T) {
 				},
 			},
 			{
+				ResourceName:      "uptimekuma_monitor_steam.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccMonitorSteamResourceConfigWithTimeout(name, "steam.example.com", 27015, 30.25),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(

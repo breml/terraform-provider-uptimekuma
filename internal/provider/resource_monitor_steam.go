@@ -83,12 +83,8 @@ func (*MonitorSteamResource) Schema(
 			},
 			"timeout": schema.Float64Attribute{
 				MarkdownDescription: "Request timeout in seconds, at least 0.1. Fractional values " +
-					"are supported and round-trip unchanged. Defaults to 48, which is what Uptime Kuma " +
-					"itself uses when no timeout is set: 80% of the default 60 second `interval`. The " +
-					"floor exists because Uptime Kuma reads 0 or less as a request to fall back to 80% " +
-					"of `interval` at check time rather than as a timeout. The server enforces no upper " +
-					"bound, but the web UI clamps the field to 80% of `interval`, so a monitor edited " +
-					"there afterwards can come back lowered.",
+					"are supported and round-trip unchanged. " + monitorTimeoutDefaultDescription + " " +
+					monitorTimeoutFloorDescription + " " + monitorTimeoutClampDescription,
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(48),

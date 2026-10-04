@@ -440,6 +440,11 @@ func TestAccMonitorHTTPResourceFractionalTimeout(t *testing.T) {
 				},
 			},
 			{
+				ResourceName:      "uptimekuma_monitor_http.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccMonitorHTTPResourceConfig(name, "https://example.com", "GET", 60, 12.75),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(

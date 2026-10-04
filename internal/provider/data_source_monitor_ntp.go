@@ -73,8 +73,7 @@ func (*MonitorNTPDataSource) Schema(
 			},
 			"timeout": schema.Float64Attribute{
 				MarkdownDescription: "Query timeout in seconds. The column is NOT NULL server-side, " +
-					"so this is normally the stored value; null would mean the server reported none, " +
-					"in which case the check falls back to 10.",
+					"so this is normally the stored value; null would mean the server reported none.",
 				Computed: true,
 			},
 			"ntp_stratum_threshold": schema.Int64Attribute{

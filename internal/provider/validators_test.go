@@ -278,11 +278,10 @@ func monitorTimeoutValidators(t *testing.T, r resource.Resource) []validator.Flo
 
 // TestMonitorTimeoutValidation pins the plan-time floor of every monitor type
 // other than ping, the only type whose timeout Uptime Kuma bounds. Uptime Kuma
-// reads a timeout of 0 or less as a request to fall back to 80% of the interval
-// rather than as a timeout, so allowing it would silently apply the fallback
-// instead of the configured value. There is no strict-greater-than float64
-// validator, so the floor is the 0.1 step the web UI uses for non-ping monitors.
-// The server has no upper bound, so neither does the provider.
+// treats a timeout of 0 or less as no timeout being set and substitutes a value
+// derived from the interval, so allowing it would silently apply that value
+// instead of the configured one. The server has no upper bound, so neither does
+// the provider.
 func TestMonitorTimeoutValidation(t *testing.T) {
 	t.Parallel()
 
@@ -307,6 +306,10 @@ func TestMonitorTimeoutValidation(t *testing.T) {
 	}
 }
 
+// assertMonitorTimeoutFloor asserts that validators reject everything below 0.1,
+// accept everything from there up without a ceiling, and let null and unknown
+// through. There is no strict-greater-than float64 validator, so the floor is
+// the 0.1 step the web UI uses for non-ping monitors.
 func assertMonitorTimeoutFloor(t *testing.T, validators []validator.Float64) {
 	t.Helper()
 
@@ -317,8 +320,8 @@ func assertMonitorTimeoutFloor(t *testing.T, validators []validator.Float64) {
 		"floor":          {value: types.Float64Value(0.1), wantError: false},
 		"whole second":   {value: types.Float64Value(1), wantError: false},
 		"fractional":     {value: types.Float64Value(2.5), wantError: false},
-		"above ui clamp": {value: types.Float64Value(3600), wantError: false},
-		"above old cap":  {value: types.Float64Value(3600.5), wantError: false},
+		"former cap":     {value: types.Float64Value(3600), wantError: false},
+		"no upper bound": {value: types.Float64Value(1e9), wantError: false},
 		"below floor":    {value: types.Float64Value(0.09), wantError: true},
 		"zero":           {value: types.Float64Value(0), wantError: true},
 		"negative":       {value: types.Float64Value(-1), wantError: true},

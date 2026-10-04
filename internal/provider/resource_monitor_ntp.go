@@ -26,11 +26,14 @@ var (
 	_ resource.ResourceWithImportState = &MonitorNTPResource{}
 )
 
-// defaultNTPTimeout is the query timeout in seconds the NTP check falls back to
-// when no timeout is stored. It is used both as the schema default and as the
-// read fallback: the monitor.timeout column is NOT NULL, so this value is stored
-// and reads back unchanged, which makes it the only NTP fallback that can be
-// modelled as a Terraform default without causing a perpetual diff.
+// defaultNTPTimeout is the query timeout in seconds Uptime Kuma's NTP check names
+// as its fallback (`monitor.timeout || 10`). The check never reaches that
+// fallback, because the server replaces a timeout of 0 before the check runs,
+// but it is the default the type declares for itself. It is used both as the
+// schema default and as the read fallback: the monitor.timeout column is NOT
+// NULL, so this value is stored and reads back unchanged, which makes it the
+// only NTP fallback that can be modelled as a Terraform default without causing
+// a perpetual diff.
 //
 // The value mirrors the unexported defaultNTPTimeout in the client library
 // (monitor/monitor_ntp.go); re-check it when bumping go-uptime-kuma-client.
@@ -102,13 +105,9 @@ func (*MonitorNTPResource) Schema(
 			},
 			"timeout": schema.Float64Attribute{
 				MarkdownDescription: "Query timeout in seconds, at least 0.1. Fractional values are " +
-					"supported and round-trip unchanged. Defaults to 10, the value the NTP check itself " +
-					"falls back to when no timeout is stored. Note that the Uptime Kuma web UI pre-fills " +
-					"48 for new NTP monitors, so a monitor created there and then imported reports 48. " +
-					"The floor exists because Uptime Kuma reads 0 or less as a request to fall back to " +
-					"80% of `interval` at check time rather than as a timeout. The server enforces no " +
-					"upper bound, but the web UI clamps the field to 80% of `interval`, so a monitor " +
-					"edited there afterwards can come back lowered.",
+					"supported and round-trip unchanged. Defaults to 10. Note that the Uptime Kuma web " +
+					"UI assigns 48 to new NTP monitors, so a monitor created there and then imported " +
+					"reports 48. " + monitorTimeoutFloorDescription + " " + monitorTimeoutClampDescription,
 				Optional: true,
 				Computed: true,
 				Default:  float64default.StaticFloat64(defaultNTPTimeout),

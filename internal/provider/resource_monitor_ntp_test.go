@@ -294,6 +294,11 @@ func TestAccMonitorNTPResourceFractionalTimeout(t *testing.T) {
 				},
 			},
 			{
+				ResourceName:      "uptimekuma_monitor_ntp.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccMonitorNTPResourceConfigWithTimeout(name, "pool.ntp.org", 30.25),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
