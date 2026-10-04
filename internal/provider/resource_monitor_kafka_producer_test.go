@@ -10,8 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-
-	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
 func TestAccMonitorKafkaProducerResource(t *testing.T) {
@@ -456,42 +454,4 @@ resource "uptimekuma_monitor_kafka_producer" "test" {
   %[2]s = %[3]s
 }
 `, name, attribute, value)
-}
-
-// TestKafkaProducerTimeoutValue covers both branches of the read fallback. The nil
-// branch is unreachable from an acceptance test, because the monitor.timeout column
-// is NOT NULL server-side, so this is the only place it gets exercised.
-func TestKafkaProducerTimeoutValue(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		timeout *float64
-		want    float64
-	}{
-		"stored value":      {timeout: new(2.5), want: 2.5},
-		"stored whole":      {timeout: new(5.0), want: 5},
-		"stored zero":       {timeout: new(0.0), want: 0},
-		"absent from reply": {timeout: nil, want: defaultKafkaProducerTimeout},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			kafkaMonitor := &monitor.KafkaProducer{
-				Base:                 monitor.Base{ID: 7},
-				KafkaProducerDetails: monitor.KafkaProducerDetails{Timeout: test.timeout},
-			}
-
-			got := kafkaProducerTimeoutValue(t.Context(), kafkaMonitor)
-
-			if got.IsNull() || got.IsUnknown() {
-				t.Fatalf("kafkaProducerTimeoutValue() = %v, want %v", got, test.want)
-			}
-
-			if got.ValueFloat64() != test.want {
-				t.Errorf("kafkaProducerTimeoutValue() = %v, want %v", got.ValueFloat64(), test.want)
-			}
-		})
-	}
 }

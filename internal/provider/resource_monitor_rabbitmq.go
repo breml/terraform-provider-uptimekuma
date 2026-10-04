@@ -9,8 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -74,17 +72,13 @@ func (*MonitorRabbitMQResource) Schema(
 				Optional:            true,
 				Sensitive:           true,
 			},
-			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds, at least 0.1. Fractional values " +
-					"are supported and round-trip unchanged. " + monitorTimeoutDefaultDescription + " " +
-					monitorTimeoutFloorDescription + " " + monitorTimeoutClampDescription,
-				Optional: true,
-				Computed: true,
-				Default:  float64default.StaticFloat64(48),
-				Validators: []validator.Float64{
-					float64validator.AtLeast(0.1),
-				},
-			},
+			"timeout": monitorTimeoutAttribute(
+				"Request timeout in seconds, at least 0.1. Fractional values "+
+					"are supported and round-trip unchanged. "+monitorTimeoutDefaultDescription+" "+
+					monitorTimeoutFloorDescription+" "+monitorTimeoutClampDescription,
+				defaultMonitorTimeout,
+				float64validator.AtLeast(0.1),
+			),
 		}),
 	}
 }
@@ -223,11 +217,14 @@ func (r *MonitorRabbitMQResource) Read(
 	data.Username = ptrToTypes(rabbitMQMonitor.Username)
 	data.Password = ptrToTypes(rabbitMQMonitor.Password)
 
-	if rabbitMQMonitor.Timeout != nil {
-		data.Timeout = types.Float64Value(*rabbitMQMonitor.Timeout)
-	} else {
-		data.Timeout = types.Float64Null()
-	}
+	data.Timeout = timeoutValueOrDefault(
+		ctx,
+		rabbitMQMonitor.ID,
+		rabbitMQMonitor.Timeout,
+		defaultMonitorTimeout,
+		rabbitMQMonitor.Type(),
+		&resp.Diagnostics,
+	)
 
 	if rabbitMQMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*rabbitMQMonitor.Parent)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -260,9 +261,9 @@ func TestJSONObjectValidator(t *testing.T) {
 	}
 }
 
-// monitorTimeoutValidators returns the validators a monitor resource declares
-// for timeout.
-func monitorTimeoutValidators(t *testing.T, r resource.Resource) []validator.Float64 {
+// monitorTimeoutSchemaAttribute returns the timeout attribute a monitor resource
+// declares.
+func monitorTimeoutSchemaAttribute(t *testing.T, r resource.Resource) schema.Float64Attribute {
 	t.Helper()
 
 	resp := &resource.SchemaResponse{}
@@ -273,7 +274,106 @@ func monitorTimeoutValidators(t *testing.T, r resource.Resource) []validator.Flo
 		t.Fatalf("timeout is %T, want schema.Float64Attribute", resp.Schema.Attributes["timeout"])
 	}
 
-	return attr.Validators
+	return attr
+}
+
+// TestMonitorTimeoutSchema pins what monitorTimeoutAttribute gives every monitor
+// type: an Optional and Computed attribute with that type's default. The
+// defaults are the constants the read fallback uses, so the two cannot drift
+// apart. Real browser is the only type that deprecates the attribute.
+func TestMonitorTimeoutSchema(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		resource    resource.Resource
+		wantDefault float64
+		deprecated  bool
+	}{
+		"globalping":        {resource: NewMonitorGlobalpingResource(), wantDefault: defaultMonitorTimeout},
+		"http":              {resource: NewMonitorHTTPResource(), wantDefault: defaultMonitorTimeout},
+		"http_json_query":   {resource: NewMonitorHTTPJSONQueryResource(), wantDefault: defaultMonitorTimeout},
+		"http_keyword":      {resource: NewMonitorHTTPKeywordResource(), wantDefault: defaultMonitorTimeout},
+		"kafka_producer":    {resource: NewMonitorKafkaProducerResource(), wantDefault: defaultKafkaProducerTimeout},
+		"ntp":               {resource: NewMonitorNTPResource(), wantDefault: defaultNTPTimeout},
+		"ping":              {resource: NewMonitorPingResource(), wantDefault: defaultMonitorTimeout},
+		"rabbitmq":          {resource: NewMonitorRabbitMQResource(), wantDefault: defaultMonitorTimeout},
+		"steam":             {resource: NewMonitorSteamResource(), wantDefault: defaultMonitorTimeout},
+		"websocket_upgrade": {resource: NewMonitorWebsocketUpgradeResource(), wantDefault: defaultMonitorTimeout},
+		"real_browser": {
+			resource:    NewMonitorRealBrowserResource(),
+			wantDefault: defaultMonitorTimeout,
+			deprecated:  true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			attr := monitorTimeoutSchemaAttribute(t, test.resource)
+
+			if !attr.Optional || !attr.Computed {
+				t.Errorf("Optional = %v, Computed = %v, want both true", attr.Optional, attr.Computed)
+			}
+
+			if attr.Default == nil {
+				t.Fatal("Default is nil, want a static default")
+			}
+
+			resp := &defaults.Float64Response{}
+			attr.Default.DefaultFloat64(t.Context(), defaults.Float64Request{}, resp)
+
+			if got := resp.PlanValue.ValueFloat64(); got != test.wantDefault {
+				t.Errorf("default = %v, want %v", got, test.wantDefault)
+			}
+
+			if got := attr.DeprecationMessage != ""; got != test.deprecated {
+				t.Errorf("DeprecationMessage = %q, want deprecated %v", attr.DeprecationMessage, test.deprecated)
+			}
+		})
+	}
+}
+
+// TestMonitorPingTimeoutBounds pins the range of the one monitor type whose
+// timeout Uptime Kuma bounds: whole seconds between 1 and 300.
+func TestMonitorPingTimeoutBounds(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value     types.Float64
+		wantError bool
+	}{
+		"lower bound":       {value: types.Float64Value(1), wantError: false},
+		"default":           {value: types.Float64Value(defaultMonitorTimeout), wantError: false},
+		"upper bound":       {value: types.Float64Value(300), wantError: false},
+		"zero":              {value: types.Float64Value(0), wantError: true},
+		"below lower bound": {value: types.Float64Value(0.5), wantError: true},
+		"fractional":        {value: types.Float64Value(1.5), wantError: true},
+		"above upper bound": {value: types.Float64Value(301), wantError: true},
+		"null":              {value: types.Float64Null(), wantError: false},
+		"unknown":           {value: types.Float64Unknown(), wantError: false},
+	}
+
+	validators := monitorTimeoutSchemaAttribute(t, NewMonitorPingResource()).Validators
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := &validator.Float64Response{}
+			for _, v := range validators {
+				v.ValidateFloat64(
+					t.Context(),
+					validator.Float64Request{ConfigValue: test.value},
+					resp,
+				)
+			}
+
+			if got := resp.Diagnostics.HasError(); got != test.wantError {
+				t.Errorf("HasError() = %v, want %v (%v)", got, test.wantError, resp.Diagnostics)
+			}
+		})
+	}
 }
 
 // TestMonitorTimeoutValidation pins the plan-time floor of every monitor type
@@ -301,7 +401,7 @@ func TestMonitorTimeoutValidation(t *testing.T) {
 	for name, r := range resources {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			assertMonitorTimeoutFloor(t, monitorTimeoutValidators(t, r))
+			assertMonitorTimeoutFloor(t, monitorTimeoutSchemaAttribute(t, r).Validators)
 		})
 	}
 }

@@ -137,7 +137,7 @@ func (d *MonitorKafkaProducerDataSource) readByID(
 
 	data.Name = types.StringValue(kafkaMonitor.Name)
 	data.Topic = types.StringValue(kafkaMonitor.Topic)
-	data.Timeout = types.Float64PointerValue(kafkaMonitor.Timeout)
+	data.Timeout = float64PtrToTypes(kafkaMonitor.Timeout)
 
 	brokers, d2 := types.ListValueFrom(ctx, types.StringType, kafkaMonitor.Brokers)
 	resp.Diagnostics.Append(d2...)
@@ -166,7 +166,7 @@ func (d *MonitorKafkaProducerDataSource) readByName(
 
 	data.ID = types.Int64Value(kafkaMon.ID)
 	data.Topic = types.StringValue(kafkaMon.Topic)
-	data.Timeout = types.Float64PointerValue(kafkaMon.Timeout)
+	data.Timeout = float64PtrToTypes(kafkaMon.Timeout)
 
 	brokers, d2 := types.ListValueFrom(ctx, types.StringType, kafkaMon.Brokers)
 	resp.Diagnostics.Append(d2...)

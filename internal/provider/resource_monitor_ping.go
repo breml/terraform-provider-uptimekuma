@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -71,19 +70,15 @@ func (*MonitorPingResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					int64validator.Between(1, 65500),
 				},
 			},
-			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds, between 1 and 300. Must be a whole " +
-					"number: Uptime Kuma rounds the value to whole seconds for ping monitors, so a " +
-					"fractional value would leave state permanently out of sync with the server and is " +
+			"timeout": monitorTimeoutAttribute(
+				"Request timeout in seconds, between 1 and 300. Must be a whole "+
+					"number: Uptime Kuma rounds the value to whole seconds for ping monitors, so a "+
+					"fractional value would leave state permanently out of sync with the server and is "+
 					"rejected at plan time.",
-				Optional: true,
-				Computed: true,
-				Default:  float64default.StaticFloat64(48),
-				Validators: []validator.Float64{
-					float64validator.Between(1, 300),
-					wholeNumber(),
-				},
-			},
+				defaultMonitorTimeout,
+				float64validator.Between(1, 300),
+				wholeNumber(),
+			),
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
@@ -125,10 +120,7 @@ func (r *MonitorPingResource) Create(ctx context.Context, req resource.CreateReq
 		},
 	}
 
-	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
-		timeout := data.Timeout.ValueFloat64()
-		pingMonitor.Timeout = &timeout
-	}
+	pingMonitor.Timeout = float64ToPtr(data.Timeout)
 
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
@@ -219,11 +211,9 @@ func (r *MonitorPingResource) Read(ctx context.Context, req resource.ReadRequest
 	data.PacketSize = types.Int64Value(int64(pingMonitor.PacketSize))
 	data.DomainExpiryNotification = types.BoolValue(pingMonitor.DomainExpiryNotification)
 
-	if pingMonitor.Timeout != nil {
-		data.Timeout = types.Float64Value(*pingMonitor.Timeout)
-	} else {
-		data.Timeout = types.Float64Null()
-	}
+	data.Timeout = timeoutValueOrDefault(
+		ctx, pingMonitor.ID, pingMonitor.Timeout, defaultMonitorTimeout, pingMonitor.Type(), &resp.Diagnostics,
+	)
 
 	if pingMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*pingMonitor.Parent)
@@ -287,10 +277,7 @@ func (r *MonitorPingResource) Update(ctx context.Context, req resource.UpdateReq
 		},
 	}
 
-	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
-		timeout := data.Timeout.ValueFloat64()
-		pingMonitor.Timeout = &timeout
-	}
+	pingMonitor.Timeout = float64ToPtr(data.Timeout)
 
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()

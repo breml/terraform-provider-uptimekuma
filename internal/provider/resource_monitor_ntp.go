@@ -12,10 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -103,18 +101,14 @@ func (*MonitorNTPResource) Schema(
 					int64validator.Between(1, 65535),
 				},
 			},
-			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Query timeout in seconds, at least 0.1. Fractional values are " +
-					"supported and round-trip unchanged. Defaults to 10. Note that the Uptime Kuma web " +
-					"UI assigns 48 to new NTP monitors, so a monitor created there and then imported " +
-					"reports 48. " + monitorTimeoutFloorDescription + " " + monitorTimeoutClampDescription,
-				Optional: true,
-				Computed: true,
-				Default:  float64default.StaticFloat64(defaultNTPTimeout),
-				Validators: []validator.Float64{
-					float64validator.AtLeast(0.1),
-				},
-			},
+			"timeout": monitorTimeoutAttribute(
+				"Query timeout in seconds, at least 0.1. Fractional values are "+
+					"supported and round-trip unchanged. Defaults to 10. Note that the Uptime Kuma web "+
+					"UI assigns 48 to new NTP monitors, so a monitor created there and then imported "+
+					"reports 48. "+monitorTimeoutFloorDescription+" "+monitorTimeoutClampDescription,
+				defaultNTPTimeout,
+				float64validator.AtLeast(0.1),
+			),
 			"ntp_stratum_threshold": schema.Int64Attribute{
 				MarkdownDescription: "Stratum at which the monitor is considered down, between 1 and 15 " +
 					"(the range the Uptime Kuma web UI allows). The check fails when the reported " +
@@ -229,7 +223,7 @@ func (r *MonitorNTPResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	populateNTPModel(ctx, &ntpMonitor, &data)
+	populateNTPModel(ctx, &ntpMonitor, &data, &resp.Diagnostics)
 	populateNTPOptionalFields(ctx, &ntpMonitor, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -370,7 +364,12 @@ func buildNTPMonitor(
 }
 
 // populateNTPModel populates the base fields of the Terraform model from the API response.
-func populateNTPModel(ctx context.Context, ntpMonitor *monitor.NTP, data *MonitorNTPResourceModel) {
+func populateNTPModel(
+	ctx context.Context,
+	ntpMonitor *monitor.NTP,
+	data *MonitorNTPResourceModel,
+	diags *diag.Diagnostics,
+) {
 	data.Name = types.StringValue(ntpMonitor.Name)
 	if ntpMonitor.Description != nil {
 		data.Description = types.StringValue(*ntpMonitor.Description)
@@ -389,25 +388,9 @@ func populateNTPModel(ctx context.Context, ntpMonitor *monitor.NTP, data *Monito
 	data.NTPStratumThreshold = int64PtrToTypes(ntpMonitor.NTPStratumThreshold)
 	data.NTPTimeOffsetThreshold = int64PtrToTypes(ntpMonitor.NTPTimeOffsetThreshold)
 	data.NTPRootDispersionThreshold = int64PtrToTypes(ntpMonitor.NTPRootDispersionThreshold)
-	data.Timeout = ntpTimeoutValue(ctx, ntpMonitor)
-}
-
-// ntpTimeoutValue converts the timeout returned by the client into a Terraform Float64.
-//
-// The monitor.timeout column is NOT NULL, so a nil pointer means the invariant behind
-// defaultNTPTimeout no longer holds. Substituting the fallback keeps the Computed attribute
-// consistent after apply, but the substitution is logged so a broken invariant is not silent.
-func ntpTimeoutValue(ctx context.Context, ntpMonitor *monitor.NTP) types.Float64 {
-	if ntpMonitor.Timeout != nil {
-		return types.Float64Value(*ntpMonitor.Timeout)
-	}
-
-	tflog.Warn(ctx, "NTP monitor returned a null timeout, assuming the check fallback", map[string]any{
-		"id":      ntpMonitor.ID,
-		"assumed": defaultNTPTimeout,
-	})
-
-	return types.Float64Value(defaultNTPTimeout)
+	data.Timeout = timeoutValueOrDefault(
+		ctx, ntpMonitor.ID, ntpMonitor.Timeout, defaultNTPTimeout, ntpMonitor.Type(), diags,
+	)
 }
 
 // populateNTPOptionalFields populates optional and computed fields from the API response.

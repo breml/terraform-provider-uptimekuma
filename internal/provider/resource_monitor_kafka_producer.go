@@ -12,10 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -115,22 +112,18 @@ func (*MonitorKafkaProducerResource) Schema(
 				Optional:  true,
 				Sensitive: true,
 			},
-			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Connection timeout in seconds, handed to kafkajs as its " +
-					"`connectionTimeout`. Must be at least 0.1; fractional values are supported and " +
-					"round-trip unchanged. Defaults to 1, the value the Uptime Kuma web UI assigns to " +
-					"a new Kafka Producer monitor. " + monitorTimeoutFloorDescription + " " +
-					monitorTimeoutClampDescription + " A " +
-					"monitor created outside Terraform may have 0 stored, which reads into state as 0 " +
-					"and plans back to the default on the next apply; 0 itself cannot be written in " +
+			"timeout": monitorTimeoutAttribute(
+				"Connection timeout in seconds, handed to kafkajs as its "+
+					"`connectionTimeout`. Must be at least 0.1; fractional values are supported and "+
+					"round-trip unchanged. Defaults to 1, the value the Uptime Kuma web UI assigns to "+
+					"a new Kafka Producer monitor. "+monitorTimeoutFloorDescription+" "+
+					monitorTimeoutClampDescription+" A "+
+					"monitor created outside Terraform may have 0 stored, which reads into state as 0 "+
+					"and plans back to the default on the next apply; 0 itself cannot be written in "+
 					"configuration.",
-				Optional: true,
-				Computed: true,
-				Default:  float64default.StaticFloat64(defaultKafkaProducerTimeout),
-				Validators: []validator.Float64{
-					float64validator.AtLeast(0.1),
-				},
-			},
+				defaultKafkaProducerTimeout,
+				float64validator.AtLeast(0.1),
+			),
 		}),
 	}
 }
@@ -280,7 +273,9 @@ func populateKafkaProducerMonitorBaseFields(
 	m.Topic = types.StringValue(kafkaMonitor.Topic)
 	m.SSL = types.BoolValue(kafkaMonitor.SSL)
 	m.AllowAutoTopicCreation = types.BoolValue(kafkaMonitor.AllowAutoTopicCreation)
-	m.Timeout = kafkaProducerTimeoutValue(ctx, kafkaMonitor)
+	m.Timeout = timeoutValueOrDefault(
+		ctx, kafkaMonitor.ID, kafkaMonitor.Timeout, defaultKafkaProducerTimeout, kafkaMonitor.Type(), diags,
+	)
 
 	// Uptime Kuma may not return the test message in the API response.
 	// Preserve the existing state value to avoid perpetual diffs.
@@ -295,29 +290,6 @@ func populateKafkaProducerMonitorBaseFields(
 	} else {
 		m.Brokers = types.ListNull(types.StringType)
 	}
-}
-
-// kafkaProducerTimeoutValue converts the timeout returned by the client into a Terraform Float64.
-//
-// The monitor.timeout column is NOT NULL, so the server cannot report a null timeout; a nil
-// pointer here means the field was absent from the response altogether. Substituting the
-// fallback keeps the Computed attribute consistent after apply, but the substitution is logged
-// so the unexpected response shape is not silent.
-//
-// A stored 0 is passed through unchanged rather than substituted. It is a real value the server
-// reports for monitors created outside Terraform, and rewriting it on read would mask genuine
-// drift.
-func kafkaProducerTimeoutValue(ctx context.Context, kafkaMonitor *monitor.KafkaProducer) types.Float64 {
-	if kafkaMonitor.Timeout != nil {
-		return types.Float64Value(*kafkaMonitor.Timeout)
-	}
-
-	tflog.Warn(ctx, "Kafka Producer monitor returned a null timeout, assuming the server default", map[string]any{
-		"id":      kafkaMonitor.ID,
-		"assumed": defaultKafkaProducerTimeout,
-	})
-
-	return types.Float64Value(defaultKafkaProducerTimeout)
 }
 
 // populateOptionalFieldsForKafkaProducer populates optional parent and notification fields from the Kafka Producer

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -148,6 +149,51 @@ func domainExpiryNotificationAttribute() schema.BoolAttribute {
 		Optional: true,
 		Computed: true,
 		Default:  booldefault.StaticBool(false),
+	}
+}
+
+// defaultMonitorTimeout is the timeout in seconds the Uptime Kuma web UI assigns
+// to a new monitor of most types: 80% of the default 60 second interval. Ping
+// also uses it as its schema default, although the web UI pre-fills ping with 10.
+const defaultMonitorTimeout = 48
+
+// Sentences shared by the timeout descriptions of the monitor types whose
+// timeout has a floor but no upper bound. Ping (bounded 1-300) and real browser
+// (timeout ignored) write their own.
+const (
+	// monitorTimeoutFloorDescription explains why 0 and below are rejected.
+	monitorTimeoutFloorDescription = "The floor exists because Uptime Kuma treats 0 or less as no " +
+		"timeout being set and substitutes a value derived from `interval` instead of using it as a " +
+		"timeout."
+
+	// monitorTimeoutClampDescription explains the absent upper bound and the
+	// drift a later edit in the web UI can cause.
+	monitorTimeoutClampDescription = "The server enforces no upper bound, but saving the monitor in " +
+		"the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can " +
+		"come back lowered."
+
+	// monitorTimeoutDefaultDescription describes the default of 48 most
+	// non-ping monitors share. Keep in step with defaultMonitorTimeout.
+	monitorTimeoutDefaultDescription = "Defaults to 48, the value the Uptime Kuma web UI assigns to " +
+		"a new monitor: 80% of the default 60 second `interval`."
+)
+
+// monitorTimeoutAttribute returns the schema attribute for a monitor timeout in
+// seconds. The attribute is always Optional and Computed with a static default;
+// the description, the default and the validators are what differ between
+// monitor types. Callers may set further fields on the returned value, as real
+// browser does with DeprecationMessage.
+func monitorTimeoutAttribute(
+	description string,
+	defaultValue float64,
+	validators ...validator.Float64,
+) schema.Float64Attribute {
+	return schema.Float64Attribute{
+		MarkdownDescription: description,
+		Optional:            true,
+		Computed:            true,
+		Default:             float64default.StaticFloat64(defaultValue),
+		Validators:          validators,
 	}
 }
 

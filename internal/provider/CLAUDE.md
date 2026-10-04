@@ -410,6 +410,7 @@ func ptrToTypes(s *string) types.String
 
 // Same conversions for the other scalar types
 func float64ToPtr(v types.Float64) *float64
+func float64PtrToTypes(v *float64) types.Float64
 func int64ToPtr(v types.Int64) *int64
 func int64PtrToTypes(v *int64) types.Int64
 func boolToPtr(v types.Bool) *bool
@@ -422,7 +423,15 @@ func removeMonitorOnServerMiss(ctx, client, err, id, name, resp)
 // Drop a monitor whose server-side type no longer matches this resource, warning
 // rather than only logging. Reports false for an empty or matching type.
 func monitorTypeDrifted(ctx, id, managed, actual, resp) bool
+
+// Read a resource's timeout, substituting the schema default (with a warning
+// diagnostic) when the response carries none.
+func timeoutValueOrDefault(ctx, id, timeout, fallback, monitorType, diags) types.Float64
 ```
+
+The `timeout` schema attribute of every monitor resource comes from
+`monitorTimeoutAttribute()` in [resource_monitor_base.go](resource_monitor_base.go);
+pass the same default to it and to `timeoutValueOrDefault()`.
 
 Nil means SQL NULL for nullable columns, which is how Uptime Kuma is told to
 apply a check's own fallback. Modelling such a fallback as a Terraform default

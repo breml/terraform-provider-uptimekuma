@@ -8,6 +8,7 @@ import (
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -149,6 +150,61 @@ func float64ToPtr(v types.Float64) *float64 {
 	}
 
 	return v.ValueFloat64Pointer()
+}
+
+// float64PtrToTypes converts a pointer to float64 to a Terraform float64 type.
+// Returns Float64Null() if the pointer is nil.
+func float64PtrToTypes(v *float64) types.Float64 {
+	if v == nil {
+		return types.Float64Null()
+	}
+
+	return types.Float64Value(*v)
+}
+
+// timeoutValueOrDefault converts the timeout returned by the client into a
+// Terraform Float64 for a resource whose timeout attribute is Computed with a
+// default.
+//
+// The monitor.timeout column is NOT NULL, so the server cannot report a null
+// timeout; a nil pointer means the field was absent from the response
+// altogether. Substituting the fallback, which callers pass as the schema
+// default, keeps the Computed attribute consistent with the plan, but the
+// substitution is logged and reported as a warning diagnostic so the unexpected
+// response shape is not silent.
+//
+// A stored 0 is passed through unchanged rather than substituted. It is a real
+// value the server can report for monitors created outside Terraform (ping
+// excepted, whose timeout the server bounds to 1-300), and rewriting it on read
+// would mask genuine drift.
+func timeoutValueOrDefault(
+	ctx context.Context,
+	id int64,
+	timeout *float64,
+	fallback float64,
+	monitorType string,
+	diags *diag.Diagnostics,
+) types.Float64 {
+	if timeout != nil {
+		return types.Float64Value(*timeout)
+	}
+
+	tflog.Warn(ctx, "monitor response carried no timeout, assuming the schema default", map[string]any{
+		"id":      id,
+		"type":    monitorType,
+		"assumed": fallback,
+	})
+
+	diags.AddWarning(
+		"Monitor returned no timeout",
+		fmt.Sprintf(
+			"Monitor %d (%s) returned no timeout, so the default of %g was assumed. State may "+
+				"not reflect the value stored in Uptime Kuma.",
+			id, monitorType, fallback,
+		),
+	)
+
+	return types.Float64Value(fallback)
 }
 
 // int64ToPtr converts a Terraform int64 type to a pointer to int64.

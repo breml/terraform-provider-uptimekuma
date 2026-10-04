@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -81,17 +80,13 @@ func (*MonitorSteamResource) Schema(
 					int64validator.Between(1, 65535),
 				},
 			},
-			"timeout": schema.Float64Attribute{
-				MarkdownDescription: "Request timeout in seconds, at least 0.1. Fractional values " +
-					"are supported and round-trip unchanged. " + monitorTimeoutDefaultDescription + " " +
-					monitorTimeoutFloorDescription + " " + monitorTimeoutClampDescription,
-				Optional: true,
-				Computed: true,
-				Default:  float64default.StaticFloat64(48),
-				Validators: []validator.Float64{
-					float64validator.AtLeast(0.1),
-				},
-			},
+			"timeout": monitorTimeoutAttribute(
+				"Request timeout in seconds, at least 0.1. Fractional values "+
+					"are supported and round-trip unchanged. "+monitorTimeoutDefaultDescription+" "+
+					monitorTimeoutFloorDescription+" "+monitorTimeoutClampDescription,
+				defaultMonitorTimeout,
+				float64validator.AtLeast(0.1),
+			),
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
@@ -174,7 +169,7 @@ func (r *MonitorSteamResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	populateSteamModel(&steamMonitor, &data)
+	populateSteamModel(ctx, &steamMonitor, &data, &resp.Diagnostics)
 	populateSteamOptionalFields(ctx, &steamMonitor, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -287,10 +282,7 @@ func buildSteamMonitor(
 		},
 	}
 
-	if !data.Timeout.IsNull() && !data.Timeout.IsUnknown() {
-		timeout := data.Timeout.ValueFloat64()
-		steamMonitor.Timeout = &timeout
-	}
+	steamMonitor.Timeout = float64ToPtr(data.Timeout)
 
 	if !data.Description.IsNull() {
 		desc := data.Description.ValueString()
@@ -316,7 +308,12 @@ func buildSteamMonitor(
 }
 
 // populateSteamModel populates the base fields of the Terraform model from the API response.
-func populateSteamModel(steamMonitor *monitor.Steam, data *MonitorSteamResourceModel) {
+func populateSteamModel(
+	ctx context.Context,
+	steamMonitor *monitor.Steam,
+	data *MonitorSteamResourceModel,
+	diags *diag.Diagnostics,
+) {
 	data.Name = types.StringValue(steamMonitor.Name)
 	if steamMonitor.Description != nil {
 		data.Description = types.StringValue(*steamMonitor.Description)
@@ -333,12 +330,9 @@ func populateSteamModel(steamMonitor *monitor.Steam, data *MonitorSteamResourceM
 	data.Hostname = types.StringValue(steamMonitor.Hostname)
 	data.Port = types.Int64Value(int64(steamMonitor.Port))
 	data.DomainExpiryNotification = types.BoolValue(steamMonitor.DomainExpiryNotification)
-
-	if steamMonitor.Timeout != nil {
-		data.Timeout = types.Float64Value(*steamMonitor.Timeout)
-	} else {
-		data.Timeout = types.Float64Null()
-	}
+	data.Timeout = timeoutValueOrDefault(
+		ctx, steamMonitor.ID, steamMonitor.Timeout, defaultMonitorTimeout, steamMonitor.Type(), diags,
+	)
 }
 
 // populateSteamOptionalFields populates optional and computed fields from the API response.

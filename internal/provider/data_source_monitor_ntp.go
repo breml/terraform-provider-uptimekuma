@@ -186,11 +186,7 @@ func populateNTPDataSourceDetails(ntpMonitor *monitor.NTP, data *MonitorNTPDataS
 	data.NTPTimeOffsetThreshold = int64PtrToTypes(ntpMonitor.NTPTimeOffsetThreshold)
 	data.NTPRootDispersionThreshold = int64PtrToTypes(ntpMonitor.NTPRootDispersionThreshold)
 
-	// Unlike the resource, nothing here forces a non-null value, so report the
-	// column as it is stored and keep null meaning "the check applies its fallback".
-	if ntpMonitor.Timeout != nil {
-		data.Timeout = types.Float64Value(*ntpMonitor.Timeout)
-	} else {
-		data.Timeout = types.Float64Null()
-	}
+	// Unlike the resource, the data source has no default to stay consistent
+	// with, so a timeout absent from the response stays null.
+	data.Timeout = float64PtrToTypes(ntpMonitor.Timeout)
 }
