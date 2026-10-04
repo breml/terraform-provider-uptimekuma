@@ -188,9 +188,5 @@ func populateNTPDataSourceDetails(ntpMonitor *monitor.NTP, data *MonitorNTPDataS
 
 	// Unlike the resource, nothing here forces a non-null value, so report the
 	// column as it is stored and keep null meaning "the check applies its fallback".
-	if ntpMonitor.Timeout != nil {
-		data.Timeout = types.Float64Value(*ntpMonitor.Timeout)
-	} else {
-		data.Timeout = types.Float64Null()
-	}
+	data.Timeout = float64PtrToTypes(ntpMonitor.Timeout)
 }

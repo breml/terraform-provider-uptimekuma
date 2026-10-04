@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -148,6 +149,48 @@ func domainExpiryNotificationAttribute() schema.BoolAttribute {
 		Optional: true,
 		Computed: true,
 		Default:  booldefault.StaticBool(false),
+	}
+}
+
+// defaultMonitorTimeout is the timeout in seconds the Uptime Kuma web UI assigns
+// to a new monitor: 80% of the default 60 second interval.
+const defaultMonitorTimeout = 48
+
+// The sentences every non-ping monitor shares in its timeout description. Ping
+// is the only type whose timeout Uptime Kuma bounds, so it documents its own.
+const (
+	// monitorTimeoutFloorDescription explains why 0 and below are rejected.
+	monitorTimeoutFloorDescription = "The floor exists because Uptime Kuma treats 0 or less as no " +
+		"timeout being set and substitutes a value derived from `interval` instead of using it as a " +
+		"timeout."
+
+	// monitorTimeoutClampDescription explains the absent upper bound and the
+	// drift a later edit in the web UI can cause.
+	monitorTimeoutClampDescription = "The server enforces no upper bound, but saving the monitor in " +
+		"the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can " +
+		"come back lowered."
+
+	// monitorTimeoutDefaultDescription describes the default of 48 most
+	// non-ping monitors share.
+	monitorTimeoutDefaultDescription = "Defaults to 48, the value the Uptime Kuma web UI assigns to " +
+		"a new monitor: 80% of the default 60 second `interval`."
+)
+
+// monitorTimeoutAttribute returns the schema attribute for a monitor timeout in
+// seconds. The attribute is always Optional and Computed with a static default;
+// the description, the default and the validators are what differ between
+// monitor types.
+func monitorTimeoutAttribute(
+	description string,
+	defaultValue float64,
+	validators ...validator.Float64,
+) schema.Float64Attribute {
+	return schema.Float64Attribute{
+		MarkdownDescription: description,
+		Optional:            true,
+		Computed:            true,
+		Default:             float64default.StaticFloat64(defaultValue),
+		Validators:          validators,
 	}
 }
 

@@ -171,3 +171,56 @@ func TestMonitorTypeDrifted(t *testing.T) {
 		})
 	}
 }
+
+// TestTimeoutValueOrDefault covers both branches of the read fallback. The nil
+// branch is unreachable from an acceptance test, because the monitor.timeout
+// column is NOT NULL server-side, so this is the only place it gets exercised.
+func TestTimeoutValueOrDefault(t *testing.T) {
+	t.Parallel()
+
+	const fallback = 10
+
+	tests := map[string]struct {
+		timeout *float64
+		want    float64
+	}{
+		"stored value":      {timeout: new(2.5), want: 2.5},
+		"stored whole":      {timeout: new(5.0), want: 5},
+		"stored zero":       {timeout: new(0.0), want: 0},
+		"absent from reply": {timeout: nil, want: fallback},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := timeoutValueOrDefault(t.Context(), 7, test.timeout, fallback, "ntp")
+
+			if got.IsNull() || got.IsUnknown() {
+				t.Fatalf("timeoutValueOrDefault() = %v, want %v", got, test.want)
+			}
+
+			if got.ValueFloat64() != test.want {
+				t.Errorf("timeoutValueOrDefault() = %v, want %v", got.ValueFloat64(), test.want)
+			}
+		})
+	}
+}
+
+// TestFloat64PtrToTypes checks that nil maps to null and that a stored value,
+// including zero, is passed through.
+func TestFloat64PtrToTypes(t *testing.T) {
+	t.Parallel()
+
+	got := float64PtrToTypes(nil)
+	if !got.IsNull() {
+		t.Errorf("float64PtrToTypes(nil) = %v, want null", got)
+	}
+
+	for _, want := range []float64{0, 2.5} {
+		got = float64PtrToTypes(&want)
+		if got.IsNull() || got.ValueFloat64() != want {
+			t.Errorf("float64PtrToTypes(%v) = %v, want %v", want, got, want)
+		}
+	}
+}

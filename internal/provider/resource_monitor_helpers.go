@@ -151,6 +151,49 @@ func float64ToPtr(v types.Float64) *float64 {
 	return v.ValueFloat64Pointer()
 }
 
+// float64PtrToTypes converts a pointer to float64 to a Terraform float64 type.
+// Returns Float64Null() if the pointer is nil.
+func float64PtrToTypes(v *float64) types.Float64 {
+	if v == nil {
+		return types.Float64Null()
+	}
+
+	return types.Float64Value(*v)
+}
+
+// timeoutValueOrDefault converts the timeout returned by the client into a
+// Terraform Float64 for a resource whose timeout attribute is Computed with a
+// default.
+//
+// The monitor.timeout column is NOT NULL, so the server cannot report a null
+// timeout; a nil pointer means the field was absent from the response
+// altogether. Substituting the fallback, which callers pass as the schema
+// default, keeps the Computed attribute consistent with the plan, but the
+// substitution is logged so the unexpected response shape is not silent.
+//
+// A stored 0 is passed through unchanged rather than substituted. It is a real
+// value the server reports for monitors created outside Terraform, and
+// rewriting it on read would mask genuine drift.
+func timeoutValueOrDefault(
+	ctx context.Context,
+	id int64,
+	timeout *float64,
+	fallback float64,
+	monitorType string,
+) types.Float64 {
+	if timeout != nil {
+		return types.Float64Value(*timeout)
+	}
+
+	tflog.Warn(ctx, "monitor returned a null timeout, assuming the default", map[string]any{
+		"id":      id,
+		"type":    monitorType,
+		"assumed": fallback,
+	})
+
+	return types.Float64Value(fallback)
+}
+
 // int64ToPtr converts a Terraform int64 type to a pointer to int64.
 // Returns nil if the value is null or unknown. For columns the Uptime Kuma
 // server stores as nullable, nil round-trips as SQL NULL, which is how the
