@@ -85,6 +85,8 @@ type Config struct {
     PerAttemptTimeout    time.Duration  // Optional per-attempt cap; defaults to remaining ConnectTimeout budget
     OperationTimeout     time.Duration  // Bound on a single operation once connected (default: 60s)
     MaxRetries           int            // Max retry attempts (default: 3)
+    TOTPSecret           string         // Optional: 2FA shared secret, for kuma.WithTOTPSecret
+    SessionToken         string         // Optional: token login, for kuma.WithSessionToken
 }
 ```
 
@@ -92,6 +94,13 @@ type Config struct {
 
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
+- `TOTPSecret` is the base32 secret of an account with two-factor authentication enabled; the
+  client derives the one-time code the server asks for from it, and never sends one unless the
+  server asks, so it is inert on an account without two-factor authentication
+- `SessionToken` authenticates with the bearer credential an earlier login produced. With a
+  `Username` and `Password` set as well, the token is tried first and the password login is the
+  fallback for a token the server refuses; `kuma.Client.SessionTokenRejected` reports that
+  fallback. Both credentials are part of the pool's config identity
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
 - `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; this value bounds the overall
   connection process across all retry attempts and backoff
@@ -143,6 +152,16 @@ if err != nil {
 **Retry Logic:**
 
 - Maximum 3 retry attempts (4 total attempts including first try)
+- A login the server refused is **not** retried. `terminalAuthError` matches the client's auth
+  sentinels (`ErrAuthRequired`, `ErrInvalidCredentials`, `ErrTwoFactorRequired`,
+  `ErrInvalidTOTPCode`, `ErrInvalidSessionToken`, `ErrUserInactive`) and the error is returned
+  wrapped with `authenticate:`, which `errors.Is` sees through, so the provider can name the
+  rejection instead of reporting a retry count. It also keeps the retries from spending the
+  server's 20 logins per minute - a login that answers a one-time code costs two of them
+- `ErrRateLimited` is deliberately **not** in that list: it is the one rejection that time alone
+  recovers from, so it stays on the retry path, bounded by the overall `ConnectTimeout`
+- A `TOTPSecret` that is not base32 fails in `New` before the first attempt, as
+  `ErrInvalidTOTPSecret`, rather than being retried as though the server were at fault
 - Exponential backoff: base delay 500ms, multiplied by 2^attempt
 - Jitter: ±20% randomization (0.8 to 1.2 multiplier)
 - Backoff capped to the remaining overall `ConnectTimeout` budget
@@ -415,6 +434,9 @@ if err != nil {
 
 - `"endpoint is required"` - Config validation failure
 - `"failed after 4 attempts: ..."` - Connection retry exhaustion (with default `max_retries=3`)
+- `kuma.ErrInvalidCredentials` and the other auth sentinels - unretried, wrapped with
+  `authenticate:` and matchable with `errors.Is`, see `terminalAuthError`
+- `ErrInvalidTOTPSecret` - a `TOTPSecret` that is not base32, rejected before connecting
 - `"connection cancelled: ..."` - Context cancellation during retry
 - `"pool config mismatch: ..."` - Credential confusion prevention
 

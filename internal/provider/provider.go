@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,9 +11,11 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -38,6 +41,8 @@ type UptimeKumaProviderModel struct {
 	Endpoint          types.String `tfsdk:"endpoint"`
 	Username          types.String `tfsdk:"username"`
 	Password          types.String `tfsdk:"password"`
+	TOTPSecret        types.String `tfsdk:"totp_secret"`
+	SessionToken      types.String `tfsdk:"session_token"`
 	Timeout           types.String `tfsdk:"timeout"`
 	PerAttemptTimeout types.String `tfsdk:"per_attempt_timeout"`
 	OperationTimeout  types.String `tfsdk:"operation_timeout"`
@@ -54,6 +59,32 @@ func (p *UptimeKumaProvider) Metadata(
 	resp.Version = p.version
 }
 
+// totpSecretDescription documents the `totp_secret` attribute. It lives here
+// rather than inline so that the schema stays readable.
+const totpSecretDescription = "Shared secret of an account with two-factor authentication enabled. " +
+	"This is the base32 `secret` from the `otpauth://` URI Uptime Kuma shows while two-factor " +
+	"authentication is set up; the spaces, hyphens, lower case and missing padding a copied secret " +
+	"carries are all accepted. The provider derives the one-time code the server asks for from it, " +
+	"so no code has to be supplied by hand. It is only used once the server asks for a code, which " +
+	"makes it inert on an account without two-factor authentication. Uptime Kuma refuses the code " +
+	"it last accepted for an account, and the guard is per account: two Terraform runs starting " +
+	"within the same 30 second step collide, and only the client's retry in the next step settles " +
+	"it. A third run in the same step cannot log in - share a `session_token` instead. " +
+	"Can be set via `UPTIMEKUMA_TOTP_SECRET` environment variable."
+
+// sessionTokenDescription documents the `session_token` attribute.
+const sessionTokenDescription = "Session token from an earlier login, used instead of a password. " +
+	"Uptime Kuma hands one out on every successful login and accepts it in place of one; it bypasses " +
+	"two-factor authentication entirely, which makes it the way to run several Terraform " +
+	"configurations against an account that has it enabled. Set it alone, or together with " +
+	"`username` and `password`, in which case the token is tried first and the password login is " +
+	"the fallback for a token the server refuses. The token does not expire: only a password change " +
+	"or a deactivated account invalidates it, so store it the way the password is stored. Note " +
+	"that `uptimekuma_settings` needs `password` on the provider, because Uptime Kuma asks for the " +
+	"account password again when settings are written; a configuration authenticated only with a " +
+	"token can manage everything else. " +
+	"Can be set via `UPTIMEKUMA_SESSION_TOKEN` environment variable."
+
 // Schema returns the schema for the provider.
 func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -68,6 +99,19 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 			},
 			"password": schema.StringAttribute{
 				MarkdownDescription: "Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable.",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"totp_secret": schema.StringAttribute{
+				MarkdownDescription: totpSecretDescription,
+				Optional:            true,
+				Sensitive:           true,
+				Validators: []validator.String{
+					totpSecretValidator{},
+				},
+			},
+			"session_token": schema.StringAttribute{
+				MarkdownDescription: sessionTokenDescription,
 				Optional:            true,
 				Sensitive:           true,
 			},
@@ -137,25 +181,11 @@ func (*UptimeKumaProvider) Configure(
 	// Precedence: Terraform config > environment variables > nothing
 	applyEnvironmentDefaults(&data, resp)
 
-	// Validate configuration
-	// Endpoint is always required to connect to Uptime Kuma
-	// Username and password are optional (client will skip login if both are empty)
-	// However, if either username or password is provided, both must be present
-	hasUsername := !data.Username.IsNull()
-	hasPassword := !data.Password.IsNull()
-
 	if data.Endpoint.IsNull() {
 		resp.Diagnostics.AddError("endpoint required", "endpoint is required")
 	}
 
-	// If credentials are partially provided, require both
-	if hasUsername && !hasPassword {
-		resp.Diagnostics.AddError("password required", "password is required when username is provided")
-	}
-
-	if hasPassword && !hasUsername {
-		resp.Diagnostics.AddError("username required", "username is required when password is provided")
-	}
+	validateCredentials(&data, resp)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -166,25 +196,32 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
+	// The callback runs on this goroutine before client.New returns, so the
+	// rejection is in hand by the time it is read.
+	var sessionTokenRejection error
+
 	kumaClient, err := client.New(context.Background(), &client.Config{
-		Endpoint:             data.Endpoint.ValueString(),
-		Username:             data.Username.ValueString(),
-		Password:             data.Password.ValueString(),
-		EnableConnectionPool: true,
-		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
-		ConnectTimeout:       opts.connectTimeout,
-		PerAttemptTimeout:    opts.perAttemptTimeout,
-		OperationTimeout:     opts.operationTimeout,
-		MaxRetries:           opts.maxRetries,
+		Endpoint:               data.Endpoint.ValueString(),
+		Username:               data.Username.ValueString(),
+		Password:               data.Password.ValueString(),
+		TOTPSecret:             data.TOTPSecret.ValueString(),
+		SessionToken:           data.SessionToken.ValueString(),
+		OnSessionTokenRejected: func(err error) { sessionTokenRejection = err },
+		EnableConnectionPool:   true,
+		LogLevel:               kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+		ConnectTimeout:         opts.connectTimeout,
+		PerAttemptTimeout:      opts.perAttemptTimeout,
+		OperationTimeout:       opts.operationTimeout,
+		MaxRetries:             opts.maxRetries,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"failed to connect to Uptime Kuma",
-			connectionErrorDetail(data.Endpoint.ValueString(), err),
-		)
+		summary, detail := connectionErrorDiagnostic(data.Endpoint.ValueString(), err)
+		resp.Diagnostics.AddError(summary, detail)
 
 		return
 	}
+
+	warnRejectedSessionToken(sessionTokenRejection, resp)
 
 	// Context is cancelled on shutdown - you can use defer or goroutine
 	go func() {
@@ -201,6 +238,191 @@ func (*UptimeKumaProvider) Configure(
 	resp.ResourceData = pd
 }
 
+// validateCredentials checks that the configured credentials form one of the
+// shapes Uptime Kuma can be authenticated with: nothing at all, for a server
+// with authentication disabled; a username and password, optionally with a
+// `totp_secret` for an account that has two-factor authentication enabled
+// and/or a `session_token` to be tried before the password; or a
+// `session_token` on its own.
+//
+// A `totp_secret` without a username and password is rejected rather than
+// ignored: a token login never sees the server's request for a code, so the
+// secret could not take effect and its presence says the configuration means
+// something it does not do.
+// The shapes are judged by the value the client will be handed, not by whether
+// the attribute is null: `totp_secret = var.secret` with an empty default is a
+// value the client ignores, and rejecting it would fail a configuration that
+// works. types.String.ValueString reports the empty string for a null and for
+// an unknown value alike, which is what makes one test cover both.
+func validateCredentials(data *UptimeKumaProviderModel, resp *provider.ConfigureResponse) {
+	hasUsername := data.Username.ValueString() != ""
+	hasPassword := data.Password.ValueString() != ""
+
+	if hasUsername && !hasPassword {
+		resp.Diagnostics.AddError("password required", "password is required when username is provided")
+	}
+
+	if hasPassword && !hasUsername {
+		resp.Diagnostics.AddError("username required", "username is required when password is provided")
+	}
+
+	if data.TOTPSecret.ValueString() != "" && (!hasUsername || !hasPassword) {
+		resp.Diagnostics.AddError(
+			"username and password required",
+			"totp_secret is the secret the one-time code of a password login is derived from, so it "+
+				"requires username and password. A session_token needs no one-time code, because it "+
+				"bypasses two-factor authentication.",
+		)
+	}
+}
+
+// warnRejectedSessionToken reports a configured session_token the server
+// refused, which the password login then took over from. rejection is the
+// error the token was refused with, or nil for a token the server accepted.
+//
+// Nothing else says so: the connection succeeds, and the client goes on with a
+// fresh token of its own. A configuration whose stored token has died
+// therefore keeps applying for as long as the password stays next to it - until
+// the day the password is removed and the apply fails instead.
+//
+// A connection served from the pool does not repeat the warning, because the
+// login it would report happened once, on the Configure that opened it.
+func warnRejectedSessionToken(rejection error, resp *provider.ConfigureResponse) {
+	if rejection == nil {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeWarning(
+		path.Root("session_token"),
+		"session_token rejected",
+		"Uptime Kuma refused the configured session_token and the provider logged in with username "+
+			"and password instead. Replace it with the token of a fresh login, or remove the "+
+			"attribute. A session token does not expire on its own, so one that stops being "+
+			"accepted was invalidated - by a password change, or by the account being deactivated "+
+			"or deleted - and the stale value is worth scrubbing from wherever it is stored.\n\n"+
+			"Reason given: "+rejection.Error(),
+	)
+}
+
+// connectionErrorDiagnostic turns a failure of client.New into a diagnostic.
+//
+// The client reports what the server refused through its sentinel errors, so a
+// rejected credential names the attribute to fix instead of arriving as the
+// generic connection failure that every cause used to share.
+func connectionErrorDiagnostic(endpoint string, err error) (summary string, detail string) {
+	summary, detail = authErrorDiagnostic(err)
+	if summary != "" {
+		return summary, fmt.Sprintf("%s\n\nUnderlying error: %v", detail, err)
+	}
+
+	return "failed to connect to Uptime Kuma", connectionErrorDetail(endpoint, err)
+}
+
+// authErrorDiagnostic classifies the login rejections client.New reports, and
+// returns an empty summary for anything that is not one of them.
+//
+// The order matters twice over. kuma.ErrUserInactive wraps
+// kuma.ErrInvalidSessionToken, so the more specific case has to be tested
+// first. And the client's fallback returns a rejected session token and the
+// failure of the password login that followed as one error wrapping both
+// sentinels, which no single arm of the switch can describe - hence the
+// compound case ahead of it.
+func authErrorDiagnostic(err error) (summary string, detail string) {
+	fallbackSummary, fallbackDetail := passwordFallbackDiagnostic(err)
+	if fallbackSummary != "" {
+		return fallbackSummary, fallbackDetail
+	}
+
+	switch {
+	case errors.Is(err, client.ErrInvalidTOTPSecret):
+		return "invalid totp_secret", "The configured totp_secret is not a base32 shared secret, " +
+			"so no one-time code can be derived from it. Copy the `secret` out of the " +
+			"`otpauth://` URI Uptime Kuma showed while two-factor authentication was set up."
+
+	case errors.Is(err, kuma.ErrAuthRequired):
+		return "credentials required", "Uptime Kuma asks for a login and the provider has nothing to " +
+			"offer. Set username and password, or session_token, on the provider."
+
+	case errors.Is(err, kuma.ErrInvalidCredentials):
+		return "invalid credentials", "Uptime Kuma rejected the username and password."
+
+	case errors.Is(err, kuma.ErrTwoFactorRequired):
+		return "two-factor authentication required", "The account has two-factor authentication " +
+			"enabled, so the login needs a one-time code. Set totp_secret to the account's shared " +
+			"secret, or authenticate with session_token instead, which needs no code."
+
+	case errors.Is(err, kuma.ErrInvalidTOTPCode):
+		return "invalid two-factor authentication code", "Uptime Kuma rejected the one-time code " +
+			"derived from totp_secret. The underlying error below says which case it is: a code the " +
+			"server had already accepted, which is what runs colliding within the same 30 second " +
+			"step produce, or a code refused in two consecutive steps, which leaves the secret " +
+			"itself or this host's clock. Share a session_token to authenticate without a code."
+
+	case errors.Is(err, kuma.ErrUserInactive):
+		return "user inactive or deleted", "Uptime Kuma rejected the session_token because the " +
+			"account it names is deactivated or deleted. A password login cannot recover from that."
+
+	case errors.Is(err, kuma.ErrInvalidSessionToken):
+		return "session token rejected", "Uptime Kuma rejected the configured session_token, which " +
+			"is what a password change, or a deactivated or deleted account, leaves behind. " +
+			"Replace it with the token of a fresh login, or authenticate with username and password."
+
+	case errors.Is(err, kuma.ErrRateLimited):
+		return "too many login attempts", "Uptime Kuma refused the login because too many were " +
+			"attempted in a short time; it allows 20 per minute, and a login that answers a " +
+			"one-time code costs two of them. Wait for the minute to pass, or authenticate with " +
+			"session_token, which every run can share."
+
+	default:
+		return "", ""
+	}
+}
+
+// fallbackPrefix opens every diagnostic for a login that spent both credentials.
+const fallbackPrefix = "Uptime Kuma refused the configured session_token, and the username and " +
+	"password login the provider fell back to failed as well: "
+
+// passwordFallbackDiagnostic classifies the error the client returns when a
+// refused session token was followed by a password login that failed too. That
+// error wraps both sentinels, so classifying it by the token rejection alone
+// would report the stale token and bury the reason the recovery failed - which
+// is the half the user has to act on, and the only half that can be transient.
+//
+// It returns an empty summary for every other error, including a token
+// rejection on its own: the client only falls back when there is a password to
+// offer, and never for kuma.ErrUserInactive, which no password recovers from.
+func passwordFallbackDiagnostic(err error) (summary string, detail string) {
+	if !errors.Is(err, kuma.ErrInvalidSessionToken) || errors.Is(err, kuma.ErrUserInactive) {
+		return "", ""
+	}
+
+	switch {
+	case errors.Is(err, kuma.ErrRateLimited):
+		return "session_token rejected, password login rate limited", fallbackPrefix +
+			"too many logins were attempted in a short time. Uptime Kuma allows 20 per minute. " +
+			"Wait for the minute to pass; the session_token needs replacing either way."
+
+	case errors.Is(err, kuma.ErrTwoFactorRequired):
+		return "session_token rejected, password login needs a one-time code", fallbackPrefix +
+			"the account has two-factor authentication enabled and no totp_secret is configured. " +
+			"Replace the session_token with the token of a fresh login, or set totp_secret."
+
+	case errors.Is(err, kuma.ErrInvalidTOTPCode):
+		return "session_token rejected, one-time code refused", fallbackPrefix +
+			"Uptime Kuma rejected the one-time code derived from totp_secret. Replace the " +
+			"session_token with the token of a fresh login, and check the secret and this host's " +
+			"clock."
+
+	case errors.Is(err, kuma.ErrInvalidCredentials):
+		return "session_token and password both rejected", fallbackPrefix +
+			"the username and password were rejected too. Both credentials need replacing; a " +
+			"password change is what invalidates a session token, so one may well explain the other."
+
+	default:
+		return "", ""
+	}
+}
+
 func connectionErrorDetail(endpoint string, err error) string {
 	return fmt.Sprintf(
 		"Could not establish a connection to Uptime Kuma at %q.\n\n"+
@@ -208,8 +430,7 @@ func connectionErrorDetail(endpoint string, err error) string {
 			"Common causes:\n"+
 			"  - The endpoint URL is incorrect or Uptime Kuma is not reachable from this host.\n"+
 			"  - A reverse proxy is not forwarding the Socket.IO/WebSocket connection.\n"+
-			"  - TLS certificate issues when using a custom domain (try the direct URL to confirm).\n"+
-			"  - Two-factor authentication (2FA) is enabled on the account (currently not supported).\n\n"+
+			"  - TLS certificate issues when using a custom domain (try the direct URL to confirm).\n\n"+
 			"To collect diagnostics, re-run with the following environment variables set and share the "+
 			"output when reporting the issue:\n"+
 			"  TF_LOG=DEBUG SOCKETIO_LOG_LEVEL=DEBUG terraform plan",
@@ -369,6 +590,20 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.Conf
 	envPassword := os.Getenv("UPTIMEKUMA_PASSWORD")
 	if data.Password.IsNull() && envPassword != "" {
 		data.Password = types.StringValue(envPassword)
+	}
+
+	// Unlike the attributes above, these two fall back on the value rather
+	// than on IsNull, so that an attribute left empty by an unset variable -
+	// or one still unknown at plan time - reaches the environment rather than
+	// shadowing it with an empty string.
+	envTOTPSecret := os.Getenv("UPTIMEKUMA_TOTP_SECRET")
+	if data.TOTPSecret.ValueString() == "" && envTOTPSecret != "" {
+		data.TOTPSecret = types.StringValue(envTOTPSecret)
+	}
+
+	envSessionToken := os.Getenv("UPTIMEKUMA_SESSION_TOKEN")
+	if data.SessionToken.ValueString() == "" && envSessionToken != "" {
+		data.SessionToken = types.StringValue(envSessionToken)
 	}
 
 	envTimeout := os.Getenv("UPTIMEKUMA_TIMEOUT")
