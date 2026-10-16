@@ -23,3 +23,4 @@ Get HTTP Keyword monitor information by ID or name
 ### Read-Only
 
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
+- `ip_family` (String) IP protocol version used to connect to the target: `auto`, `ipv4` or `ipv6`

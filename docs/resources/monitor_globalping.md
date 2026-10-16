@@ -55,7 +55,7 @@ resource "uptimekuma_monitor_globalping" "example" {
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
 - `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
 - `invert_keyword` (Boolean) Invert the keyword match logic. When true, the monitor is UP when the keyword is NOT found.
-- `ip_family` (String) IP protocol version to use. One of `""` (auto), `ipv4`, `ipv6`.
+- `ip_family` (String) IP protocol version to use. One of `""` (default) or `auto`, both selecting the family automatically, `ipv4` or `ipv6`.
 - `json_path` (String) JSON path expression to evaluate in the response.
 - `json_path_operator` (String) Comparison operator for the JSON path check.
 - `keyword` (String) Keyword to search for in the HTTP response body. Used when `subtype` is `http`.

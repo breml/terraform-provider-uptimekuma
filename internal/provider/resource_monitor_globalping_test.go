@@ -311,3 +311,55 @@ resource "uptimekuma_monitor_globalping" "test" {
 }
 `, name)
 }
+
+// TestAccMonitorGlobalpingResourceIPFamily checks that `auto` is accepted next
+// to the empty string default, and that the server, which stores both as null,
+// reads back whichever of the two is configured.
+func TestAccMonitorGlobalpingResourceIPFamily(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestGlobalpingMonitorIPFamily")
+
+	check := func(value string) []statecheck.StateCheck {
+		return []statecheck.StateCheck{
+			statecheck.ExpectKnownValue(
+				"uptimekuma_monitor_globalping.test",
+				tfjsonpath.New("ip_family"),
+				knownvalue.StringExact(value),
+			),
+		}
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:            testAccMonitorGlobalpingIPFamilyConfig(name, `ip_family = "auto"`),
+				ConfigStateChecks: check("auto"),
+			},
+			{
+				Config:            testAccMonitorGlobalpingIPFamilyConfig(name, `ip_family = "ipv6"`),
+				ConfigStateChecks: check("ipv6"),
+			},
+			{
+				Config:            testAccMonitorGlobalpingIPFamilyConfig(name, ""),
+				ConfigStateChecks: check(""),
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_globalping.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccMonitorGlobalpingIPFamilyConfig(name string, ipFamily string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_globalping" "test" {
+  name    = %[1]q
+  subtype = "ping"
+  url     = "https://example.com"
+  %[2]s
+}
+`, name, ipFamily)
+}

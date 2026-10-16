@@ -28,6 +28,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
   max_redirects              = 10
   expiry_notification        = false
   domain_expiry_notification = false
+  ip_family                  = "ipv4"
 }
 ```
 
@@ -59,6 +60,7 @@ resource "uptimekuma_monitor_http_json_query" "example" {
 - `http_body_encoding` (String) HTTP body encoding
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
 - `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
+- `ip_family` (String) IP protocol version used to connect to the target. One of `auto` (default, selects the family automatically using Happy Eyeballs), `ipv4` or `ipv6`.
 - `json_path_operator` (String) Comparison operator for JSON path result. Valid values: `>`, `>=`, `<`, `<=`, `!=`, `==`, `contains`
 - `max_redirects` (Number) Maximum number of redirects to follow
 - `max_retries` (Number) Maximum number of retries

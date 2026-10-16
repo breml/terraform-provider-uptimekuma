@@ -433,6 +433,12 @@ The `timeout` schema attribute of every monitor resource comes from
 `monitorTimeoutAttribute()` in [resource_monitor_base.go](resource_monitor_base.go);
 pass the same default to it and to `timeoutValueOrDefault()`.
 
+The `ip_family` attribute of the HTTP, keyword and json-query monitors comes from
+`ipFamilyAttribute()` in [monitor_ip_family.go](monitor_ip_family.go) (default `auto`).
+Convert with `ipFamilyToAPI()` / `ipFamilyFromAPI(apiValue, prior, fallback)`: the server
+stores the automatic selection as null, so pass the resource's schema default as
+`fallback` (`ipFamilyAuto`, or `""` for globalping, which accepts both spellings).
+
 Nil means SQL NULL for nullable columns, which is how Uptime Kuma is told to
 apply a check's own fallback. Modelling such a fallback as a Terraform default
 instead causes a perpetual diff, because the server reads the column back as

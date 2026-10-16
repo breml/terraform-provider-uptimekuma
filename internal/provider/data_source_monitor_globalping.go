@@ -243,7 +243,7 @@ func populateGlobalpingDataSourceModel(globalpingMonitor *monitor.Globalping, da
 	data.Name = types.StringValue(globalpingMonitor.Name)
 	data.Subtype = types.StringValue(string(globalpingMonitor.Subtype))
 	data.Location = types.StringValue(globalpingMonitor.Location)
-	data.IPFamily = types.StringValue(string(globalpingMonitor.IPFamily))
+	data.IPFamily = ipFamilyFromAPI(globalpingMonitor.IPFamily, types.StringNull(), "")
 	data.Protocol = types.StringValue(globalpingMonitor.Protocol)
 	data.PingCount = types.Int64Value(int64(globalpingMonitor.PingCount))
 	data.Hostname = types.StringValue(globalpingMonitor.Hostname)

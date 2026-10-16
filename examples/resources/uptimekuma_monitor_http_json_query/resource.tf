@@ -13,4 +13,5 @@ resource "uptimekuma_monitor_http_json_query" "example" {
   max_redirects              = 10
   expiry_notification        = false
   domain_expiry_notification = false
+  ip_family                  = "ipv4"
 }
