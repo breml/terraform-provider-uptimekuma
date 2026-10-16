@@ -550,9 +550,11 @@ func existsWithResync(
 //   - Absent when the resource lives. The client rebuilds each list from one
 //     whole-list broadcast and applies it last-writer-wins, so a snapshot taken
 //     before a resource was created can land after it and drop it - see
-//     https://github.com/breml/terraform-provider-uptimekuma/issues/430. The
-//     resync narrows that window rather than closing it, which is no worse than
-//     believing err unchecked.
+//     https://github.com/breml/terraform-provider-uptimekuma/issues/430. For
+//     monitors the client orders GetMonitors with its own monitor writes since
+//     v0.6.2, which leaves only a monitorList from Resync or from another
+//     session; for the other lists the resync narrows the window rather than
+//     closing it. Either way it is no worse than believing err unchecked.
 //   - Present when the resource is gone. findWithResync returns on a hit without
 //     resyncing, and the lists are filled asynchronously, so a deletion whose
 //     broadcast has not been applied yet reads as present and the read is

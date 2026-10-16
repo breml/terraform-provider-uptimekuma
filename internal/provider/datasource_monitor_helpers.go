@@ -14,6 +14,12 @@ import (
 
 // findMonitorByName searches for a monitor by name and type.
 // Returns nil if not found or if multiple matches exist.
+//
+// A miss is believed without a resync. GetMonitors returns the list the server
+// sent in answer to its own request, ordered with this client's monitor writes,
+// so a monitor created earlier in the apply is in it. Before
+// go-uptime-kuma-client v0.6.2 it returned on the ack and could read a stale
+// cache, see https://github.com/breml/terraform-provider-uptimekuma/issues/430.
 func findMonitorByName(
 	ctx context.Context,
 	client *kuma.Client,

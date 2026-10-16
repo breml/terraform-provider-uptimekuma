@@ -19,21 +19,21 @@ import (
 // exercised without a socket.io server and without teaching every other cache
 // helper about monitors.
 type monitorLister interface {
-	// GetMonitors asks the server to resend its monitor list and returns what the
-	// client then holds.
+	// GetMonitors asks the server to resend its monitor list and returns it once
+	// the client has applied it.
 	GetMonitors(ctx context.Context) ([]monitor.Base, error)
 }
 
 // monitorExists builds the presence check removeOnServerMiss confirms a monitor
 // deletion against.
 //
-// GetMonitors emits getMonitorList before reading the client's cache, so unlike
-// the maintenance and status page lists it does ask the server - but the answer
-// arrives as a whole-list broadcast the client applies asynchronously, so what
-// this reads may still be one broadcast behind. existsWithResync forces a resync
-// before an absence is believed; a hit is taken as it stands, because
-// findWithResync returns on one. See removeOnServerMiss for why that asymmetry is
-// the right way round.
+// GetMonitors emits getMonitorList and returns only once the broadcast that
+// answers it has been applied, so unlike the maintenance and status page lists it
+// reflects the server as of the request. existsWithResync still forces a resync
+// before an absence is believed, which costs a login on a confirmed miss and
+// covers a monitorList from another session overtaking it; a hit is taken as it
+// stands, because findWithResync returns on one. See removeOnServerMiss for why
+// that asymmetry is the right way round.
 //
 // A failure of the getter is returned as an error rather than as an absence, as
 // findWithResync requires: only an absence is worth a resync, and only an absence

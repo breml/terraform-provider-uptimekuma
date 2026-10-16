@@ -578,13 +578,18 @@ that is behind. `GetTags` returns every tag and produces no sentinel at all.
 `GetMonitorTags` and `GetTagMonitors` are cache-backed like the list above, but the
 provider does not use them today.
 
-**`GetMonitors` is cache-backed too.** It emits `getMonitorList` and then reads the
-cache the asynchronous `monitorList` broadcast fills, so the list it returns may be
-one broadcast behind - see
-[issue #430](https://github.com/breml/terraform-provider-uptimekuma/issues/430).
-Among the monitor getters only `GetMonitor`/`GetMonitorAs` read the ack itself
-(`GetMaintenance` and `GetStatusPage` read theirs too, see the table). So there are
-three tiers, not two:
+**`GetMonitors` returns the list it asked for.** It emits `getMonitorList` and reads
+the cache the `monitorList` broadcast fills, but since go-uptime-kuma-client v0.6.2
+it waits for that broadcast instead of the ack, and holds the `monitorList` lock
+while it does. This client's other `GetMonitors` calls and its single-monitor
+writes cannot interleave with it, so the list is no older than the request (see
+[issue #430](https://github.com/breml/terraform-provider-uptimekuma/issues/430)).
+Only a `monitorList` this client did not ask for (from `Resync` or from another
+session of the same user) can still overtake it. A list that never arrives is an
+error wrapping `kuma.ErrUpdateEventTimeout`, never the stale cache.
+
+Among the other getters, `GetMonitor`/`GetMonitorAs`, `GetMaintenance` and
+`GetStatusPage` read the ack itself. So there are three tiers, not two:
 
 | getter | miss arrives as | use |
 | --- | --- | --- |
@@ -592,12 +597,13 @@ three tiers, not two:
 | `GetMonitor`, `GetMonitorAs`, `GetMaintenance`, `GetStatusPage` | the server's or the client's prose | `suspectedNotFound`, then `removeOnServerMiss` |
 | `GetTag` | `kuma.ErrNotFound` from a live response | `errors.Is` directly, no resync |
 
-`GetMonitors` sits in the first tier but has two uses that do not follow its row.
-`monitorExists` wraps it in `existsWithResync` and hands the answer to
-`removeOnServerMiss` as a veto, which is the row below. And `findMonitorByName`
-([datasource_monitor_helpers.go](datasource_monitor_helpers.go)) uses neither: it
-believes an empty result and calls `diags.AddError` directly, which is exactly the
-flake #430 reports and a known gap rather than the pattern to copy.
+`GetMonitors` fits none of the rows. `monitorExists` still wraps it in
+`existsWithResync` and hands the answer to `removeOnServerMiss` as a veto, which is
+the second row. The resync costs one login on a confirmed miss and is harmless.
+`findMonitorByName` ([datasource_monitor_helpers.go](datasource_monitor_helpers.go))
+believes a miss without a resync, and since v0.6.2 that is correct: the list is the
+server's answer to its own request. Do not copy that pattern to the other
+cache-backed lists, whose getters still read the cache without asking.
 
 **`removeOnServerMiss()` is not `removeOnMiss()`, and the difference is which way
 the burden of proof runs.** `removeOnMiss` has only a cache miss to go on, so it
@@ -617,12 +623,12 @@ How much the veto is worth therefore depends on the list, and
 server, `GetMaintenances` only reads a cache that stays empty for good on a server
 that never sends `maintenanceList`, and `GetStatusPages` reads a cache that
 `Client.New` refuses to start without. It also names the two things the veto cannot
-rule out - a superseded broadcast that drops a resource created after the snapshot
-it carries (#430 again), and a hit on a deletion whose broadcast has not landed yet,
-which `findWithResync` never rechecks. Both are accepted deliberately, because a
-false absence costs a duplicate resource and a false presence only costs an error.
-Until the client waits for the broadcast rather than the ack, that is as good as the
-confirmation gets.
+rule out. The first is a superseded broadcast that drops a resource created after
+the snapshot it carries. For monitors, client v0.6.2 narrows this to a `monitorList`
+from `Resync` or from another session (#430). The second is a hit on a deletion whose
+broadcast has not landed yet, which `findWithResync` never rechecks. Both are
+accepted deliberately, because a false absence costs a duplicate resource and a false
+presence only costs an error.
 
 List-all data sources (`uptimekuma_maintenances`) are deliberately exempt. A
 stale cache costs them a silently short list rather than a miss, so there is
