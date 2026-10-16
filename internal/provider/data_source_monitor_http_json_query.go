@@ -128,7 +128,7 @@ func (d *MonitorHTTPJSONQueryDataSource) readByID(
 
 	data.Name = types.StringValue(httpJSONMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(httpJSONMonitor.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpJSONMonitor.IPFamily, types.StringNull())
+	data.IPFamily = ipFamilyFromAPI(httpJSONMonitor.IPFamily, types.StringNull(), ipFamilyAuto)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -152,6 +152,6 @@ func (d *MonitorHTTPJSONQueryDataSource) readByName(
 
 	data.ID = types.Int64Value(httpJSONMon.ID)
 	data.DomainExpiryNotification = types.BoolValue(httpJSONMon.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpJSONMon.IPFamily, types.StringNull())
+	data.IPFamily = ipFamilyFromAPI(httpJSONMon.IPFamily, types.StringNull(), ipFamilyAuto)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

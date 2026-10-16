@@ -11,7 +11,7 @@ import (
 )
 
 // ipFamilyAuto is the ip_family value that lets Uptime Kuma select the IP
-// family automatically. The empty string is accepted as a synonym.
+// family automatically.
 const ipFamilyAuto = "auto"
 
 // ipFamilyAttribute returns the ip_family attribute of the HTTP, keyword and
@@ -19,13 +19,12 @@ const ipFamilyAuto = "auto"
 func ipFamilyAttribute() schema.StringAttribute {
 	return schema.StringAttribute{
 		MarkdownDescription: "IP protocol version used to connect to the target. One of `auto` " +
-			"(default, selects the family automatically using Happy Eyeballs), `ipv4` or `ipv6`. " +
-			"An empty string is accepted as a synonym for `auto`.",
+			"(default, selects the family automatically using Happy Eyeballs), `ipv4` or `ipv6`.",
 		Optional: true,
 		Computed: true,
 		Default:  stringdefault.StaticString(ipFamilyAuto),
 		Validators: []validator.String{
-			stringvalidator.OneOf("", ipFamilyAuto, string(monitor.IPFamilyIPv4), string(monitor.IPFamilyIPv6)),
+			stringvalidator.OneOf(ipFamilyAuto, string(monitor.IPFamilyIPv4), string(monitor.IPFamilyIPv6)),
 		},
 	}
 }
@@ -41,11 +40,13 @@ func ipFamilyToAPI(value types.String) monitor.IPFamily {
 }
 
 // ipFamilyFromAPI converts the client's IP family to the ip_family attribute.
-// The server cannot tell `auto` from the empty string, so for the automatic
-// selection the prior value is kept when it is one of the two, which avoids a
-// perpetual diff for a configuration using the empty string. Without such a
-// prior value, e.g. on import or in a data source, `auto` is returned.
-func ipFamilyFromAPI(apiValue monitor.IPFamily, prior types.String) types.String {
+// The server stores the automatic selection as null, so it cannot tell `auto`
+// from the empty string. For the automatic selection, the prior value is kept
+// when it is one of the two, which avoids a perpetual diff where the schema
+// accepts both (globalping). Without such a prior value, e.g. on import, in a
+// data source or after a change outside Terraform, fallback is returned: the
+// schema default of the calling resource.
+func ipFamilyFromAPI(apiValue monitor.IPFamily, prior types.String, fallback string) types.String {
 	if apiValue != monitor.IPFamilyAuto {
 		return types.StringValue(string(apiValue))
 	}
@@ -54,5 +55,5 @@ func ipFamilyFromAPI(apiValue monitor.IPFamily, prior types.String) types.String
 		return prior
 	}
 
-	return types.StringValue(ipFamilyAuto)
+	return types.StringValue(fallback)
 }

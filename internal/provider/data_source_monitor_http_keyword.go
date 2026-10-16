@@ -133,7 +133,7 @@ func (d *MonitorHTTPKeywordDataSource) readByID(
 
 	data.Name = types.StringValue(httpKeywordMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(httpKeywordMonitor.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpKeywordMonitor.IPFamily, types.StringNull())
+	data.IPFamily = ipFamilyFromAPI(httpKeywordMonitor.IPFamily, types.StringNull(), ipFamilyAuto)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -157,6 +157,6 @@ func (d *MonitorHTTPKeywordDataSource) readByName(
 
 	data.ID = types.Int64Value(httpKeywordMon.ID)
 	data.DomainExpiryNotification = types.BoolValue(httpKeywordMon.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpKeywordMon.IPFamily, types.StringNull())
+	data.IPFamily = ipFamilyFromAPI(httpKeywordMon.IPFamily, types.StringNull(), ipFamilyAuto)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

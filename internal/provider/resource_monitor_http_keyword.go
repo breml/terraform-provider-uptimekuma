@@ -347,7 +347,7 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 
 	data.Keyword = types.StringValue(httpKeywordMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(httpKeywordMonitor.InvertKeyword)
-	data.IPFamily = ipFamilyFromAPI(httpKeywordMonitor.IPFamily, data.IPFamily)
+	data.IPFamily = ipFamilyFromAPI(httpKeywordMonitor.IPFamily, data.IPFamily, ipFamilyAuto)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpKeywordMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

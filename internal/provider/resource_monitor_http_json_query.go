@@ -362,7 +362,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	data.JSONPath = types.StringValue(httpJSONQueryMonitor.JSONPath)
 	data.ExpectedValue = types.StringValue(httpJSONQueryMonitor.ExpectedValue)
 	data.JSONPathOperator = types.StringValue(httpJSONQueryMonitor.JSONPathOperator)
-	data.IPFamily = ipFamilyFromAPI(httpJSONQueryMonitor.IPFamily, data.IPFamily)
+	data.IPFamily = ipFamilyFromAPI(httpJSONQueryMonitor.IPFamily, data.IPFamily, ipFamilyAuto)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpJSONQueryMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

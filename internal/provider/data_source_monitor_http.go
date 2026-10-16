@@ -130,7 +130,7 @@ func (d *MonitorHTTPDataSource) readByID(
 	data.Name = types.StringValue(httpMonitor.Name)
 	data.URL = types.StringValue(httpMonitor.URL)
 	data.DomainExpiryNotification = types.BoolValue(httpMonitor.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpMonitor.IPFamily, types.StringNull())
+	data.IPFamily = ipFamilyFromAPI(httpMonitor.IPFamily, types.StringNull(), ipFamilyAuto)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -155,6 +155,6 @@ func (d *MonitorHTTPDataSource) readByName(
 	data.ID = types.Int64Value(httpMon.ID)
 	data.URL = types.StringValue(httpMon.URL)
 	data.DomainExpiryNotification = types.BoolValue(httpMon.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpMon.IPFamily, types.StringNull())
+	data.IPFamily = ipFamilyFromAPI(httpMon.IPFamily, types.StringNull(), ipFamilyAuto)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

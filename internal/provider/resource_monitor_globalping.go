@@ -45,7 +45,7 @@ type MonitorGlobalpingResourceModel struct {
 	Subtype types.String `tfsdk:"subtype"`
 	// Location is the probe location selector (e.g. "Europe", "us-east").
 	Location types.String `tfsdk:"location"`
-	// IPFamily selects the IP protocol version ("", "ipv4", or "ipv6").
+	// IPFamily selects the IP protocol version ("", "auto", "ipv4", or "ipv6").
 	IPFamily types.String `tfsdk:"ip_family"`
 	// Protocol is the protocol used for ping/traceroute checks.
 	Protocol types.String `tfsdk:"protocol"`
@@ -101,12 +101,13 @@ func (*MonitorGlobalpingResource) Schema(
 				Optional:            true,
 			},
 			"ip_family": schema.StringAttribute{
-				MarkdownDescription: "IP protocol version to use. One of `\"\"` (auto), `ipv4`, `ipv6`.",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString(""),
+				MarkdownDescription: "IP protocol version to use. One of `\"\"` (default) or `auto`, both selecting " +
+					"the family automatically, `ipv4` or `ipv6`.",
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(""),
 				Validators: []validator.String{
-					stringvalidator.OneOf("", "ipv4", "ipv6"),
+					stringvalidator.OneOf("", ipFamilyAuto, string(monitor.IPFamilyIPv4), string(monitor.IPFamilyIPv6)),
 				},
 			},
 			"protocol": schema.StringAttribute{
@@ -383,7 +384,7 @@ func buildGlobalpingMonitor(
 		GlobalpingDetails: monitor.GlobalpingDetails{
 			Subtype:          monitor.GlobalpingSubtype(data.Subtype.ValueString()),
 			Location:         data.Location.ValueString(),
-			IPFamily:         monitor.IPFamily(data.IPFamily.ValueString()),
+			IPFamily:         ipFamilyToAPI(data.IPFamily),
 			Protocol:         data.Protocol.ValueString(),
 			PingCount:        int(data.PingCount.ValueInt64()),
 			Hostname:         data.Hostname.ValueString(),
@@ -477,7 +478,7 @@ func populateGlobalpingModel(globalpingMonitor *monitor.Globalping, data *Monito
 
 	data.Subtype = types.StringValue(string(globalpingMonitor.Subtype))
 	data.Location = stringOrNull(globalpingMonitor.Location)
-	data.IPFamily = types.StringValue(string(globalpingMonitor.IPFamily))
+	data.IPFamily = ipFamilyFromAPI(globalpingMonitor.IPFamily, data.IPFamily, "")
 	data.Protocol = stringOrNull(globalpingMonitor.Protocol)
 	data.PingCount = types.Int64Value(int64(globalpingMonitor.PingCount))
 	data.Hostname = stringOrNull(globalpingMonitor.Hostname)

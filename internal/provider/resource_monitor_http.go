@@ -318,7 +318,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 
 	populateHTTPMonitorBaseFieldsForHTTP(&httpMonitor, &data)
 	populateOptionalFieldsForHTTP(ctx, &httpMonitor, &data, &resp.Diagnostics)
-	data.IPFamily = ipFamilyFromAPI(httpMonitor.IPFamily, data.IPFamily)
+	data.IPFamily = ipFamilyFromAPI(httpMonitor.IPFamily, data.IPFamily, ipFamilyAuto)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

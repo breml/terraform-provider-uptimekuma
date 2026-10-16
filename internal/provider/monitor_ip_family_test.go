@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -46,41 +47,61 @@ func TestIPFamilyFromAPI(t *testing.T) {
 	tests := map[string]struct {
 		apiValue monitor.IPFamily
 		prior    types.String
+		fallback string
 		want     types.String
 	}{
 		"auto without prior value": {
 			apiValue: monitor.IPFamilyAuto,
 			prior:    types.StringNull(),
+			fallback: "auto",
 			want:     types.StringValue("auto"),
+		},
+		"auto without prior value and empty fallback": {
+			apiValue: monitor.IPFamilyAuto,
+			prior:    types.StringNull(),
+			fallback: "",
+			want:     types.StringValue(""),
 		},
 		"auto with unknown prior value": {
 			apiValue: monitor.IPFamilyAuto,
 			prior:    types.StringUnknown(),
+			fallback: "auto",
 			want:     types.StringValue("auto"),
 		},
 		"auto keeps prior auto": {
 			apiValue: monitor.IPFamilyAuto,
 			prior:    types.StringValue("auto"),
+			fallback: "",
 			want:     types.StringValue("auto"),
 		},
 		"auto keeps prior empty string": {
 			apiValue: monitor.IPFamilyAuto,
 			prior:    types.StringValue(""),
+			fallback: "auto",
 			want:     types.StringValue(""),
 		},
 		"auto replaces prior ipv4 changed outside Terraform": {
 			apiValue: monitor.IPFamilyAuto,
 			prior:    types.StringValue("ipv4"),
+			fallback: "auto",
 			want:     types.StringValue("auto"),
+		},
+		"auto replaces prior ipv6 with empty fallback": {
+			apiValue: monitor.IPFamilyAuto,
+			prior:    types.StringValue("ipv6"),
+			fallback: "",
+			want:     types.StringValue(""),
 		},
 		"ipv6 replaces prior empty string": {
 			apiValue: monitor.IPFamilyIPv6,
 			prior:    types.StringValue(""),
+			fallback: "",
 			want:     types.StringValue("ipv6"),
 		},
 		"ipv4 without prior value": {
 			apiValue: monitor.IPFamilyIPv4,
 			prior:    types.StringNull(),
+			fallback: "auto",
 			want:     types.StringValue("ipv4"),
 		},
 	}
@@ -89,9 +110,12 @@ func TestIPFamilyFromAPI(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := ipFamilyFromAPI(tc.apiValue, tc.prior)
+			got := ipFamilyFromAPI(tc.apiValue, tc.prior, tc.fallback)
 			if !got.Equal(tc.want) {
-				t.Errorf("ipFamilyFromAPI(%q, %s) = %s, want %s", tc.apiValue, tc.prior, got, tc.want)
+				t.Errorf(
+					"ipFamilyFromAPI(%q, %s, %q) = %s, want %s",
+					tc.apiValue, tc.prior, tc.fallback, got, tc.want,
+				)
 			}
 		})
 	}
@@ -119,9 +143,9 @@ func TestAccMonitorHTTPJSONQueryResourceIPFamily(t *testing.T) {
 }
 
 // testAccMonitorIPFamily walks ip_family of the given monitor resource type
-// through ipv4, ipv6, the empty string and the omitted attribute, and imports
-// it. The post-apply plan the framework runs after each step catches a
-// perpetual diff, e.g. the empty string being read back as `auto`.
+// through ipv4, ipv6 and the omitted attribute (`auto`), importing it on ipv6
+// and on auto, and checks that the empty string is rejected. The data source
+// is checked both by id and by name.
 func testAccMonitorIPFamily(t *testing.T, resourceType string, body string) {
 	t.Helper()
 
@@ -139,18 +163,25 @@ func testAccMonitorIPFamily(t *testing.T, resourceType string, body string) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				// The data source is read after the monitor is created, because its
-				// id is unknown at plan time.
+				// The data sources are read after the monitor is created, because
+				// they reference its attributes.
 				Config: testAccMonitorIPFamilyConfig(resourceType, name, body, `ip_family = "ipv4"`) +
 					fmt.Sprintf(`
-data %[1]q "test" {
+data %[1]q "by_id" {
   id = %[2]s.id
+}
+
+data %[1]q "by_name" {
+  name = %[2]s.name
 }
 `, resourceType, address),
 				ConfigStateChecks: append(
 					check("ipv4"),
 					statecheck.ExpectKnownValue(
-						"data."+address, tfjsonpath.New("ip_family"), knownvalue.StringExact("ipv4"),
+						"data."+resourceType+".by_id", tfjsonpath.New("ip_family"), knownvalue.StringExact("ipv4"),
+					),
+					statecheck.ExpectKnownValue(
+						"data."+resourceType+".by_name", tfjsonpath.New("ip_family"), knownvalue.StringExact("ipv4"),
 					),
 				),
 			},
@@ -159,8 +190,13 @@ data %[1]q "test" {
 				ConfigStateChecks: check("ipv6"),
 			},
 			{
-				Config:            testAccMonitorIPFamilyConfig(resourceType, name, body, `ip_family = ""`),
-				ConfigStateChecks: check(""),
+				ResourceName:      address,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:      testAccMonitorIPFamilyConfig(resourceType, name, body, `ip_family = ""`),
+				ExpectError: regexp.MustCompile(`Attribute ip_family value must be one of`),
 			},
 			{
 				Config:            testAccMonitorIPFamilyConfig(resourceType, name, body, ""),
