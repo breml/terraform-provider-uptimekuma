@@ -43,6 +43,7 @@ type MonitorHTTPJSONQueryResourceModel struct {
 	ExpectedValue            types.String `tfsdk:"expected_value"`
 	JSONPathOperator         types.String `tfsdk:"json_path_operator"`
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	IPFamily                 types.String `tfsdk:"ip_family"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -85,6 +86,7 @@ func (*MonitorHTTPJSONQueryResource) Schema(
 				},
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
+			"ip_family":                  ipFamilyAttribute(),
 		})),
 	}
 }
@@ -187,6 +189,9 @@ func buildHTTPJSONQueryMonitor(
 			JSONPath:         data.JSONPath.ValueString(),
 			ExpectedValue:    data.ExpectedValue.ValueString(),
 			JSONPathOperator: data.JSONPathOperator.ValueString(),
+		},
+		IPFamilyDetails: monitor.IPFamilyDetails{
+			IPFamily: ipFamilyToAPI(data.IPFamily),
 		},
 	}
 
@@ -357,6 +362,7 @@ func (r *MonitorHTTPJSONQueryResource) Read(
 	data.JSONPath = types.StringValue(httpJSONQueryMonitor.JSONPath)
 	data.ExpectedValue = types.StringValue(httpJSONQueryMonitor.ExpectedValue)
 	data.JSONPathOperator = types.StringValue(httpJSONQueryMonitor.JSONPathOperator)
+	data.IPFamily = ipFamilyFromAPI(httpJSONQueryMonitor.IPFamily, data.IPFamily)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpJSONQueryMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

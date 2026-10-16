@@ -33,6 +33,7 @@ resource "uptimekuma_monitor_http" "example" {
   oauth_token_url_body       = ""
   expiry_notification        = false
   domain_expiry_notification = false
+  ip_family                  = "auto"
 }
 
 resource "uptimekuma_monitor_http" "with_keyword" {

@@ -383,7 +383,7 @@ func buildGlobalpingMonitor(
 		GlobalpingDetails: monitor.GlobalpingDetails{
 			Subtype:          monitor.GlobalpingSubtype(data.Subtype.ValueString()),
 			Location:         data.Location.ValueString(),
-			IPFamily:         monitor.GlobalpingIPFamily(data.IPFamily.ValueString()),
+			IPFamily:         monitor.IPFamily(data.IPFamily.ValueString()),
 			Protocol:         data.Protocol.ValueString(),
 			PingCount:        int(data.PingCount.ValueInt64()),
 			Hostname:         data.Hostname.ValueString(),

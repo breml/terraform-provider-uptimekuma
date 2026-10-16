@@ -28,6 +28,7 @@ type MonitorHTTPJSONQueryDataSourceModel struct {
 	ID                       types.Int64  `tfsdk:"id"`
 	Name                     types.String `tfsdk:"name"`
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	IPFamily                 types.String `tfsdk:"ip_family"`
 }
 
 // Metadata returns the metadata for the data source.
@@ -60,6 +61,10 @@ func (*MonitorHTTPJSONQueryDataSource) Schema(
 			},
 			"domain_expiry_notification": schema.BoolAttribute{
 				MarkdownDescription: "Enable domain (WHOIS) expiry notification",
+				Computed:            true,
+			},
+			"ip_family": schema.StringAttribute{
+				MarkdownDescription: "IP protocol version used to connect to the target: `auto`, `ipv4` or `ipv6`",
 				Computed:            true,
 			},
 		},
@@ -123,6 +128,7 @@ func (d *MonitorHTTPJSONQueryDataSource) readByID(
 
 	data.Name = types.StringValue(httpJSONMonitor.Name)
 	data.DomainExpiryNotification = types.BoolValue(httpJSONMonitor.DomainExpiryNotification)
+	data.IPFamily = ipFamilyFromAPI(httpJSONMonitor.IPFamily, types.StringNull())
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -146,5 +152,6 @@ func (d *MonitorHTTPJSONQueryDataSource) readByName(
 
 	data.ID = types.Int64Value(httpJSONMon.ID)
 	data.DomainExpiryNotification = types.BoolValue(httpJSONMon.DomainExpiryNotification)
+	data.IPFamily = ipFamilyFromAPI(httpJSONMon.IPFamily, types.StringNull())
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

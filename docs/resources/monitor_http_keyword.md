@@ -27,6 +27,7 @@ resource "uptimekuma_monitor_http_keyword" "example" {
   max_redirects              = 10
   expiry_notification        = false
   domain_expiry_notification = false
+  ip_family                  = "ipv4"
 }
 ```
 
@@ -58,6 +59,7 @@ resource "uptimekuma_monitor_http_keyword" "example" {
 - `ignore_tls` (Boolean) Ignore TLS/SSL errors
 - `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
 - `invert_keyword` (Boolean) Invert keyword match logic. When false (default), finding the keyword means UP and not finding it means DOWN. When true, finding the keyword means DOWN and not finding it means UP.
+- `ip_family` (String) IP protocol version used to connect to the target. One of `auto` (default, selects the family automatically using Happy Eyeballs), `ipv4` or `ipv6`. An empty string is accepted as a synonym for `auto`.
 - `max_redirects` (Number) Maximum number of redirects to follow
 - `max_retries` (Number) Maximum number of retries
 - `method` (String) HTTP method

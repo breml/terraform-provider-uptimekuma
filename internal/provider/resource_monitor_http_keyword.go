@@ -42,6 +42,7 @@ type MonitorHTTPKeywordResourceModel struct {
 	Keyword                  types.String `tfsdk:"keyword"`
 	InvertKeyword            types.Bool   `tfsdk:"invert_keyword"`
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	IPFamily                 types.String `tfsdk:"ip_family"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -77,6 +78,7 @@ func (*MonitorHTTPKeywordResource) Schema(
 				Default:             booldefault.StaticBool(false),
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
+			"ip_family":                  ipFamilyAttribute(),
 		})),
 	}
 }
@@ -178,6 +180,9 @@ func buildHTTPKeywordMonitor(
 		HTTPKeywordDetails: monitor.HTTPKeywordDetails{
 			Keyword:       data.Keyword.ValueString(),
 			InvertKeyword: data.InvertKeyword.ValueBool(),
+		},
+		IPFamilyDetails: monitor.IPFamilyDetails{
+			IPFamily: ipFamilyToAPI(data.IPFamily),
 		},
 	}
 
@@ -342,6 +347,7 @@ func (r *MonitorHTTPKeywordResource) Read(ctx context.Context, req resource.Read
 
 	data.Keyword = types.StringValue(httpKeywordMonitor.Keyword)
 	data.InvertKeyword = types.BoolValue(httpKeywordMonitor.InvertKeyword)
+	data.IPFamily = ipFamilyFromAPI(httpKeywordMonitor.IPFamily, data.IPFamily)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpKeywordMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

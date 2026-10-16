@@ -36,7 +36,8 @@ type MonitorHTTPResourceModel struct {
 	MonitorBaseModel
 	MonitorHTTPBaseModel
 
-	DomainExpiryNotification types.Bool `tfsdk:"domain_expiry_notification"`
+	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
+	IPFamily                 types.String `tfsdk:"ip_family"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -55,6 +56,7 @@ func (*MonitorHTTPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 		MarkdownDescription: "HTTP monitor resource",
 		Attributes: withMonitorBaseAttributes(withHTTPMonitorBaseAttributes(map[string]schema.Attribute{
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
+			"ip_family":                  ipFamilyAttribute(),
 		})),
 	}
 }
@@ -143,6 +145,9 @@ func buildHTTPMonitor(ctx context.Context, data *MonitorHTTPResourceModel, diags
 			OAuthScopes:              data.OAuthScopes.ValueString(),
 			OAuthAudience:            data.OAuthAudience.ValueString(),
 			CacheBust:                data.CacheBust.ValueBool(),
+		},
+		IPFamilyDetails: monitor.IPFamilyDetails{
+			IPFamily: ipFamilyToAPI(data.IPFamily),
 		},
 	}
 
@@ -313,6 +318,7 @@ func (r *MonitorHTTPResource) Read(ctx context.Context, req resource.ReadRequest
 
 	populateHTTPMonitorBaseFieldsForHTTP(&httpMonitor, &data)
 	populateOptionalFieldsForHTTP(ctx, &httpMonitor, &data, &resp.Diagnostics)
+	data.IPFamily = ipFamilyFromAPI(httpMonitor.IPFamily, data.IPFamily)
 
 	data.Tags = handleMonitorTagsRead(ctx, httpMonitor.Tags, data.Tags, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
