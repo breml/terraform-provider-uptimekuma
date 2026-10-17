@@ -15,7 +15,7 @@ output "api_prod_monitor_id" {
 
 output "deployment_push_monitor_url" {
   description = "Deployment push monitor URL for external integrations"
-  value       = uptimekuma_monitor_push.deployment_monitor.push_token
+  value       = "${var.uptimekuma_endpoint}/api/push/${uptimekuma_monitor_push.deployment_monitor.push_token}?status=up&msg=OK&ping="
   sensitive   = true
 }
 
