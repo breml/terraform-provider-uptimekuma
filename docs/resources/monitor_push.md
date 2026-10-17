@@ -15,12 +15,17 @@ Push monitor resource
 ```terraform
 resource "uptimekuma_monitor_push" "example" {
   name        = "External Push Event Monitoring"
-  push_token  = "auto_generated_by_uptime_kuma"
   interval    = 3600
   timeout     = 30
   max_retries = 0
   upside_down = false
   active      = true
+}
+
+# push_token is sensitive, so any output that references it must be sensitive too.
+output "push_url" {
+  value     = "https://uptime.example.com/api/push/${uptimekuma_monitor_push.example.push_token}?status=up&msg=OK&ping="
+  sensitive = true
 }
 ```
 
@@ -47,7 +52,7 @@ resource "uptimekuma_monitor_push" "example" {
 ### Read-Only
 
 - `id` (Number) Monitor identifier
-- `push_token` (String) Unique push token generated during resource creation. Used to construct the push URL: `{baseURL}/api/push/{pushToken}?status=up&msg=OK&ping=`.
+- `push_token` (String, Sensitive) Unique push token generated during resource creation. Used to construct the push URL: `{baseURL}/api/push/{pushToken}?status=up&msg=OK&ping=`.
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`

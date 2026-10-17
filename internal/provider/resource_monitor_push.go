@@ -85,6 +85,7 @@ func (*MonitorPushResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"push_token": schema.StringAttribute{
 				MarkdownDescription: "Unique push token generated during resource creation. Used to construct the push URL: `{baseURL}/api/push/{pushToken}?status=up&msg=OK&ping=`.",
 				Computed:            true,
+				Sensitive:           true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
