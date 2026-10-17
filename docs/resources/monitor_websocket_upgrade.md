@@ -36,7 +36,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "example" {
 
 ### Optional
 
-- `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301'])
+- `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301']). With an empty list no status code is accepted, so every check fails (or succeeds when `upside_down` is set).
 - `active` (Boolean) Monitor is active
 - `auth_domain` (String) NTLM authentication domain
 - `auth_method` (String) Authentication method

@@ -140,10 +140,11 @@ func httpMaxRedirectsAttribute() schema.Int64Attribute {
 
 func httpAcceptedStatusCodesAttribute() schema.ListAttribute {
 	return schema.ListAttribute{
-		MarkdownDescription: "Accepted HTTP status codes (e.g., ['200-299', '301'])",
-		ElementType:         types.StringType,
-		Optional:            true,
-		Computed:            true,
+		MarkdownDescription: "Accepted HTTP status codes (e.g., ['200-299', '301']). " +
+			"With an empty list no status code is accepted, so every check fails (or succeeds when `upside_down` is set).",
+		ElementType: types.StringType,
+		Optional:    true,
+		Computed:    true,
 		Default: listdefault.StaticValue(
 			types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")}),
 		),

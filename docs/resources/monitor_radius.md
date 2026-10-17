@@ -3,12 +3,12 @@
 page_title: "uptimekuma_monitor_radius Resource - uptimekuma"
 subcategory: ""
 description: |-
-  Radius monitor resource for testing Radius server authentication.
+  Radius monitor resource for testing Radius server authentication. The monitor is up on an Access-Accept or, since Uptime Kuma 2.5.1, an Access-Challenge answer.
 ---
 
 # uptimekuma_monitor_radius (Resource)
 
-Radius monitor resource for testing Radius server authentication.
+Radius monitor resource for testing Radius server authentication. The monitor is up on an `Access-Accept` or, since Uptime Kuma 2.5.1, an `Access-Challenge` answer.
 
 ## Example Usage
 

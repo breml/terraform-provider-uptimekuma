@@ -112,10 +112,11 @@ func withRealBrowserMonitorAttributes(attrs map[string]schema.Attribute) map[str
 	}
 
 	attrs["accepted_status_codes"] = schema.ListAttribute{
-		MarkdownDescription: "Accepted HTTP status codes (e.g., ['200-299', '301'])",
-		ElementType:         types.StringType,
-		Optional:            true,
-		Computed:            true,
+		MarkdownDescription: "Accepted HTTP status codes (e.g., ['200-299', '301']). " +
+			"Stored on the server but ignored by the check, which counts any status from 200 to 399 as up.",
+		ElementType: types.StringType,
+		Optional:    true,
+		Computed:    true,
 		Default: listdefault.StaticValue(
 			types.ListValueMust(types.StringType, []attr.Value{types.StringValue("200-299")}),
 		),
