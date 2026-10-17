@@ -42,7 +42,7 @@ resource "uptimekuma_monitor_http_keyword" "example" {
 
 ### Optional
 
-- `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301'])
+- `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301']). An empty list marks every response as down.
 - `active` (Boolean) Monitor is active
 - `auth_domain` (String) NTLM authentication domain
 - `auth_method` (String) Authentication method

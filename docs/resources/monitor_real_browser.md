@@ -36,7 +36,7 @@ resource "uptimekuma_monitor_real_browser" "example" {
 
 ### Optional
 
-- `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301'])
+- `accepted_status_codes` (List of String) Accepted HTTP status codes (e.g., ['200-299', '301']). Stored on the server but ignored by the check, which counts any status from 200 to 399 as up.
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)

@@ -60,7 +60,8 @@ func (*MonitorRadiusResource) Metadata(
 // Schema returns the schema for the resource.
 func (*MonitorRadiusResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Radius monitor resource for testing Radius server authentication.",
+		MarkdownDescription: "Radius monitor resource for testing Radius server authentication. " +
+			"The monitor is up on an `Access-Accept` or, since Uptime Kuma 2.5.1, an `Access-Challenge` answer.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
 			"hostname": schema.StringAttribute{
 				MarkdownDescription: "Radius server hostname or IP address",

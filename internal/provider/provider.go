@@ -452,7 +452,13 @@ func (*UptimeKumaProvider) Resources(_ context.Context) []func() resource.Resour
 	return resources
 }
 
+// notificationResources returns the notification resources. The list is split alphabetically
+// into two functions to stay within the function length limit.
 func notificationResources() []func() resource.Resource {
+	return append(notificationResourcesAToM(), notificationResourcesNToZ()...)
+}
+
+func notificationResourcesAToM() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationResource,
 		NewNotification46ElksResource,
@@ -493,6 +499,11 @@ func notificationResources() []func() resource.Resource {
 		NewNotificationMatrixResource,
 		NewNotificationMattermostResource,
 		NewNotificationMaxResource,
+	}
+}
+
+func notificationResourcesNToZ() []func() resource.Resource {
+	return []func() resource.Resource{
 		NewNotificationNextcloudTalkResource,
 		NewNotificationNotiferyResource,
 		NewNotificationNostrResource,
@@ -606,7 +617,13 @@ func (*UptimeKumaProvider) DataSources(_ context.Context) []func() datasource.Da
 	return dataSources
 }
 
+// notificationDataSources returns the notification data sources. The list is split alphabetically
+// into two functions to stay within the function length limit.
 func notificationDataSources() []func() datasource.DataSource {
+	return append(notificationDataSourcesAToM(), notificationDataSourcesNToZ()...)
+}
+
+func notificationDataSourcesAToM() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewNotificationDataSource,
 		NewNotification46ElksDataSource,
@@ -647,6 +664,11 @@ func notificationDataSources() []func() datasource.DataSource {
 		NewNotificationMatrixDataSource,
 		NewNotificationMattermostDataSource,
 		NewNotificationMaxDataSource,
+	}
+}
+
+func notificationDataSourcesNToZ() []func() datasource.DataSource {
+	return []func() datasource.DataSource{
 		NewNotificationNextcloudTalkDataSource,
 		NewNotificationNotiferyDataSource,
 		NewNotificationNostrDataSource,
