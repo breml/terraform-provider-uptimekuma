@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+
+	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
 // wholeNumberValidator rejects fractional float64 values.
@@ -169,4 +171,51 @@ func (v jsonObjectValidator) ValidateString(
 // JSON object.
 func jsonObject() validator.String {
 	return jsonObjectValidator{}
+}
+
+// totpSecretValidator rejects a `totp_secret` that is not a base32 shared
+// secret.
+//
+// The client rejects it too, but only once the provider configures itself,
+// where it arrives among the failures of an unreachable server. Checking it at
+// plan time names the attribute instead, and does so before a connection is
+// attempted.
+type totpSecretValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (totpSecretValidator) Description(_ context.Context) string {
+	return "value must be a base32 shared secret"
+}
+
+// MarkdownDescription returns a markdown description of the validator's behavior.
+func (v totpSecretValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// ValidateString reports an error if the configured value cannot produce a
+// one-time code. The empty string is accepted: it is what an unset variable
+// leaves behind, and the provider treats it as no secret at all.
+func (v totpSecretValidator) ValidateString(
+	ctx context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() || req.ConfigValue.ValueString() == "" {
+		return
+	}
+
+	err := client.ValidateTOTPSecret(req.ConfigValue.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Attribute Value",
+			fmt.Sprintf(
+				"Attribute %s %s: %s. Copy the `secret` out of the `otpauth://` URI Uptime Kuma "+
+					"showed while two-factor authentication was set up.",
+				req.Path,
+				v.Description(ctx),
+				err,
+			),
+		)
+	}
 }
