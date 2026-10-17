@@ -8,8 +8,8 @@ data "uptimekuma_monitor_sftp" "by_id" {
   id = 42
 }
 
-# Use the data source to reference an existing monitor. The SSH credentials are
-# not exposed by the data source.
+# Use the data source to reference an existing monitor. The SSH password,
+# private key and passphrase are not exposed by the data source.
 output "sftp_hostname" {
   value = data.uptimekuma_monitor_sftp.backup.hostname
 }

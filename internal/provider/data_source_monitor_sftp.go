@@ -25,8 +25,9 @@ type MonitorSFTPDataSource struct {
 
 // MonitorSFTPDataSourceModel describes the data model for SFTP monitor data source.
 //
-// The credentials are deliberately not exposed: a data source has no use for
-// them that would justify copying secrets into the state of another module.
+// The SSH password, private key and passphrase are deliberately not exposed: a
+// data source has no use for them that would justify copying secrets into the
+// state of another module.
 type MonitorSFTPDataSourceModel struct {
 	ID          types.Int64  `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
@@ -51,8 +52,8 @@ func (*MonitorSFTPDataSource) Schema(
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Get SFTP monitor information by ID or name. The SSH credentials are " +
-			"not exposed. Requires Uptime Kuma 2.5.4 or later.",
+		MarkdownDescription: "Get SFTP monitor information by ID or name. The SSH password, private " +
+			"key and passphrase are not exposed. Requires Uptime Kuma 2.5.4 or later.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.Int64Attribute{
 				MarkdownDescription: "Monitor identifier",

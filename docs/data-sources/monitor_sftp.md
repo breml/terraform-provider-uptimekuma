@@ -3,12 +3,12 @@
 page_title: "uptimekuma_monitor_sftp Data Source - uptimekuma"
 subcategory: ""
 description: |-
-  Get SFTP monitor information by ID or name. The SSH credentials are not exposed. Requires Uptime Kuma 2.5.4 or later.
+  Get SFTP monitor information by ID or name. The SSH password, private key and passphrase are not exposed. Requires Uptime Kuma 2.5.4 or later.
 ---
 
 # uptimekuma_monitor_sftp (Data Source)
 
-Get SFTP monitor information by ID or name. The SSH credentials are not exposed. Requires Uptime Kuma 2.5.4 or later.
+Get SFTP monitor information by ID or name. The SSH password, private key and passphrase are not exposed. Requires Uptime Kuma 2.5.4 or later.
 
 ## Example Usage
 
@@ -23,8 +23,8 @@ data "uptimekuma_monitor_sftp" "by_id" {
   id = 42
 }
 
-# Use the data source to reference an existing monitor. The SSH credentials are
-# not exposed by the data source.
+# Use the data source to reference an existing monitor. The SSH password,
+# private key and passphrase are not exposed by the data source.
 output "sftp_hostname" {
   value = data.uptimekuma_monitor_sftp.backup.hostname
 }

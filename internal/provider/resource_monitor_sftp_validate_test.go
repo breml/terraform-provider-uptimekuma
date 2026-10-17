@@ -10,11 +10,12 @@ import (
 
 // TestValidateSFTPCredentials covers the credential validation for every auth method, including
 // the omitted ssh_auth_method, which is null during validation and means the schema default
-// (password).
+// (password). A credential left unset in a row is null, the zero value of types.String.
 func TestValidateSFTPCredentials(t *testing.T) {
 	tests := []struct {
 		name              string
 		authMethod        types.String
+		password          types.String
 		privateKey        types.String
 		passphrase        types.String
 		expectedErrors    []string
@@ -93,6 +94,61 @@ func TestValidateSFTPCredentials(t *testing.T) {
 			expectedSummaries: []string{"Missing Attribute Configuration"},
 		},
 		{
+			name:       "auth method omitted, password set",
+			authMethod: types.StringNull(),
+			password:   types.StringValue("s3cret"),
+			privateKey: types.StringNull(),
+			passphrase: types.StringNull(),
+		},
+		{
+			name:              "auth method omitted, private key set",
+			authMethod:        types.StringNull(),
+			privateKey:        types.StringValue("key"),
+			passphrase:        types.StringNull(),
+			expectedErrors:    []string{"ssh_private_key"},
+			expectedSummaries: []string{"Invalid Attribute Combination"},
+		},
+		{
+			name:              "password, private key and passphrase set",
+			authMethod:        types.StringValue("password"),
+			password:          types.StringValue("s3cret"),
+			privateKey:        types.StringValue("key"),
+			passphrase:        types.StringValue("phrase"),
+			expectedErrors:    []string{"ssh_private_key", "ssh_passphrase"},
+			expectedSummaries: []string{"Invalid Attribute Combination", "Invalid Attribute Combination"},
+		},
+		{
+			name:       "password, private key only known after apply",
+			authMethod: types.StringValue("password"),
+			privateKey: types.StringUnknown(),
+			passphrase: types.StringNull(),
+		},
+		{
+			name:              "private key, password set",
+			authMethod:        types.StringValue("privateKey"),
+			password:          types.StringValue("s3cret"),
+			privateKey:        types.StringValue("key"),
+			passphrase:        types.StringNull(),
+			expectedErrors:    []string{"ssh_password"},
+			expectedSummaries: []string{"Invalid Attribute Combination"},
+		},
+		{
+			name:       "private key, password only known after apply",
+			authMethod: types.StringValue("privateKey"),
+			password:   types.StringUnknown(),
+			privateKey: types.StringValue("key"),
+			passphrase: types.StringNull(),
+		},
+		{
+			name:              "private key, key missing and password set",
+			authMethod:        types.StringValue("privateKey"),
+			password:          types.StringValue("s3cret"),
+			privateKey:        types.StringNull(),
+			passphrase:        types.StringNull(),
+			expectedErrors:    []string{"ssh_private_key", "ssh_password"},
+			expectedSummaries: []string{"Missing Attribute Configuration", "Invalid Attribute Combination"},
+		},
+		{
 			name:       "unexpected auth method is left to the schema validator",
 			authMethod: types.StringValue("publickey"),
 			privateKey: types.StringNull(),
@@ -104,6 +160,7 @@ func TestValidateSFTPCredentials(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := MonitorSFTPResourceModel{
 				SSHAuthMethod: tt.authMethod,
+				SSHPassword:   tt.password,
 				SSHPrivateKey: tt.privateKey,
 				SSHPassphrase: tt.passphrase,
 			}

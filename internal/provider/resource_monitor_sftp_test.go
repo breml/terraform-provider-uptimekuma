@@ -34,7 +34,6 @@ func TestAccMonitorSFTPResource(t *testing.T) {
 				Config: testAccMonitorSFTPResourceConfigPassword(
 					name, "sftp.example.com", 2222, "backup", "s3cret", "/upload", "Test SFTP monitor",
 				),
-				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_sftp.test",
@@ -148,6 +147,35 @@ func TestAccMonitorSFTPResource(t *testing.T) {
 				},
 			},
 			{
+				// Switching back to password authentication must clear the key
+				// material, which is worse to leave behind than a password.
+				Config: testAccMonitorSFTPResourceConfigPassword(
+					name, "sftp.example.com", 2222, "backup", "s3cret", "/upload", "Test SFTP monitor",
+				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sftp.test",
+						tfjsonpath.New("ssh_auth_method"),
+						knownvalue.StringExact("password"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sftp.test",
+						tfjsonpath.New("ssh_password"),
+						knownvalue.StringExact("s3cret"),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sftp.test",
+						tfjsonpath.New("ssh_private_key"),
+						knownvalue.Null(),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_sftp.test",
+						tfjsonpath.New("ssh_passphrase"),
+						knownvalue.Null(),
+					),
+				},
+			},
+			{
 				// The server returns the credentials to the owning user, so an
 				// import needs no ignore list.
 				ResourceName:      "uptimekuma_monitor_sftp.test",
@@ -215,8 +243,7 @@ func TestAccMonitorSFTPResourceMinimal(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccMonitorSFTPResourceConfigMinimal(name),
-				ExpectNonEmptyPlan: false,
+				Config: testAccMonitorSFTPResourceConfigMinimal(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_sftp.test",
@@ -299,8 +326,7 @@ func TestAccMonitorSFTPResourceFractionalTimeout(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config:             testAccMonitorSFTPResourceConfigMinimal(name),
-				ExpectNonEmptyPlan: false,
+				Config: testAccMonitorSFTPResourceConfigMinimal(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_sftp.test",
@@ -331,7 +357,6 @@ func TestAccMonitorSFTPResourceWithAllOptions(t *testing.T) {
 				Config: testAccMonitorSFTPResourceConfigWithAllOptions(
 					groupName, notificationName, tagName, name,
 				),
-				ExpectNonEmptyPlan: false,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_sftp.test",
@@ -467,6 +492,14 @@ func TestAccMonitorSFTPResourceValidators(t *testing.T) {
 			{
 				Config:      testAccMonitorSFTPResourceConfigWithAttribute(name, "ssh_passphrase", `"phrase"`),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
+			},
+			{
+				Config:      testAccMonitorSFTPResourceConfigWithAttribute(name, "ssh_private_key", `"key"`),
+				ExpectError: regexp.MustCompile(`"ssh_private_key"\s+is\s+ignored`),
+			},
+			{
+				Config:      testAccMonitorSFTPResourceConfigWithAttribute(name, "ssh_password", `" "`),
+				ExpectError: regexp.MustCompile(`must\s+not\s+be\s+empty`),
 			},
 		},
 	})

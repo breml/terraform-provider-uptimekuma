@@ -4,14 +4,14 @@ page_title: "uptimekuma_monitor_sftp Resource - uptimekuma"
 subcategory: ""
 description: |-
   SFTP monitor resource. The monitor opens an SSH connection to a host, authenticates with a password or a private key and, when sftp_path is set, checks that the remote path exists. Requires Uptime Kuma 2.5.4 or later.
-  port, the credentials and sftp_path are stored as SQL NULL while unset, which is a different state from setting them to the value the check falls back to. Leave them unset to follow the check's own fallbacks.
+  port, ssh_password, ssh_private_key, ssh_passphrase and sftp_path are stored as SQL NULL while unset, which is a different state from setting them to the value the check falls back to. Leave them unset to follow the check's own fallbacks.
 ---
 
 # uptimekuma_monitor_sftp (Resource)
 
 SFTP monitor resource. The monitor opens an SSH connection to a host, authenticates with a password or a private key and, when `sftp_path` is set, checks that the remote path exists. Requires Uptime Kuma 2.5.4 or later.
 
-`port`, the credentials and `sftp_path` are stored as SQL NULL while unset, which is a different state from setting them to the value the check falls back to. Leave them unset to follow the check's own fallbacks.
+`port`, `ssh_password`, `ssh_private_key`, `ssh_passphrase` and `sftp_path` are stored as SQL NULL while unset, which is a different state from setting them to the value the check falls back to. Leave them unset to follow the check's own fallbacks.
 
 ## Example Usage
 
@@ -95,10 +95,10 @@ variable "sftp_key_passphrase" {
 - `sftp_path` (String) Remote path that must exist on the server. While unset, the check only verifies that the SSH connection and authentication succeed.
 - `ssh_auth_method` (String) SSH authentication method, either `password` or `privateKey`. Defaults to `password`. `privateKey` requires `ssh_private_key`.
 - `ssh_passphrase` (String, Sensitive) Passphrase of `ssh_private_key`. Only allowed while `ssh_auth_method` is `privateKey`, because password authentication ignores it.
-- `ssh_password` (String, Sensitive) Password used while `ssh_auth_method` is `password`
-- `ssh_private_key` (String, Sensitive) Private key in PEM or OpenSSH format, used while `ssh_auth_method` is `privateKey`, where it is required.
+- `ssh_password` (String, Sensitive) Password for SSH authentication. Only allowed while `ssh_auth_method` is `password`, because key authentication ignores it.
+- `ssh_private_key` (String, Sensitive) Private key in PEM or OpenSSH format. Required while `ssh_auth_method` is `privateKey` and not allowed otherwise, because password authentication ignores it.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
-- `timeout` (Number) Connection timeout in seconds, at least 0.1, used as both the SSH ready timeout and the socket timeout. Fractional values are supported and round-trip unchanged. Defaults to 10. Note that the Uptime Kuma web UI assigns 48 to new monitors, so a monitor created there and then imported reports 48. The floor exists because Uptime Kuma treats 0 or less as no timeout being set and substitutes a value derived from `interval` instead of using it as a timeout. The server enforces no upper bound, but saving the monitor in the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can come back lowered.
+- `timeout` (Number) Connection timeout in seconds, at least 0.1, used as both the SSH ready timeout and the socket timeout. Fractional values are supported and round-trip unchanged. Defaults to 10. Note that the Uptime Kuma web UI assigns 48 to new monitors, so a monitor created there and then imported reports 48. The floor exists because the check treats 0 or less as no timeout being set and uses 10 instead, while the stored value would still read back as set. The server enforces no upper bound, but saving the monitor in the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can come back lowered.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 
 ### Read-Only

@@ -29,12 +29,17 @@ var (
 // defaultSFTPTimeout is the connection timeout in seconds Uptime Kuma's SFTP
 // check falls back to. It is used both as the schema default and as the read
 // fallback: the monitor.timeout column is NOT NULL, so this value is stored and
-// reads back unchanged, which makes it the only SFTP fallback that can be
+// reads back unchanged, which, as with ssh_auth_method, lets the fallback be
 // modelled as a Terraform default without causing a perpetual diff.
 //
 // The value mirrors the unexported defaultSFTPTimeout in the client library
 // (monitor/monitor_sftp.go); re-check it when bumping go-uptime-kuma-client.
 const defaultSFTPTimeout = 10
+
+// sftpTimeoutFloorDescription explains why 0 and below are rejected. Unlike most monitors, the
+// SFTP check falls back to a fixed value rather than one derived from interval.
+const sftpTimeoutFloorDescription = "The floor exists because the check treats 0 or less as no " +
+	"timeout being set and uses 10 instead, while the stored value would still read back as set."
 
 // NewMonitorSFTPResource returns a new instance of the SFTP monitor resource.
 func NewMonitorSFTPResource() resource.Resource {
@@ -80,7 +85,8 @@ func (*MonitorSFTPResource) Schema(
 		MarkdownDescription: "SFTP monitor resource. The monitor opens an SSH connection to a host, " +
 			"authenticates with a password or a private key and, when `sftp_path` is set, checks " +
 			"that the remote path exists. Requires Uptime Kuma 2.5.4 or later.\n\n" +
-			"`port`, the credentials and `sftp_path` are stored as SQL NULL while unset, which is " +
+			"`port`, `ssh_password`, `ssh_private_key`, `ssh_passphrase` and `sftp_path` are stored " +
+			"as SQL NULL while unset, which is " +
 			"a different state from setting them to the value the check falls back to. Leave them " +
 			"unset to follow the check's own fallbacks.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
@@ -104,7 +110,7 @@ func (*MonitorSFTPResource) Schema(
 					"and the socket timeout. Fractional values are supported and round-trip unchanged. "+
 					"Defaults to 10. Note that the Uptime Kuma web UI assigns 48 to new monitors, so a "+
 					"monitor created there and then imported reports 48. "+
-					monitorTimeoutFloorDescription+" "+monitorTimeoutClampDescription,
+					sftpTimeoutFloorDescription+" "+monitorTimeoutClampDescription,
 				defaultSFTPTimeout,
 				float64validator.AtLeast(0.1),
 			),
@@ -129,21 +135,32 @@ func (*MonitorSFTPResource) Schema(
 				},
 			},
 			"ssh_password": schema.StringAttribute{
-				MarkdownDescription: "Password used while `ssh_auth_method` is `password`",
-				Optional:            true,
-				Sensitive:           true,
-			},
-			"ssh_private_key": schema.StringAttribute{
-				MarkdownDescription: "Private key in PEM or OpenSSH format, used while " +
-					"`ssh_auth_method` is `privateKey`, where it is required.",
+				MarkdownDescription: "Password for SSH authentication. Only allowed while " +
+					"`ssh_auth_method` is `password`, because key authentication ignores it.",
 				Optional:  true,
 				Sensitive: true,
+				Validators: []validator.String{
+					nonBlank(),
+				},
+			},
+			"ssh_private_key": schema.StringAttribute{
+				MarkdownDescription: "Private key in PEM or OpenSSH format. Required while " +
+					"`ssh_auth_method` is `privateKey` and not allowed otherwise, because password " +
+					"authentication ignores it.",
+				Optional:  true,
+				Sensitive: true,
+				Validators: []validator.String{
+					nonBlank(),
+				},
 			},
 			"ssh_passphrase": schema.StringAttribute{
 				MarkdownDescription: "Passphrase of `ssh_private_key`. Only allowed while " +
 					"`ssh_auth_method` is `privateKey`, because password authentication ignores it.",
 				Optional:  true,
 				Sensitive: true,
+				Validators: []validator.String{
+					nonBlank(),
+				},
 			},
 			"sftp_path": schema.StringAttribute{
 				MarkdownDescription: "Remote path that must exist on the server. While unset, the " +
@@ -207,19 +224,39 @@ func validateSFTPCredentials(config *MonitorSFTPResourceModel, resp *resource.Va
 			))
 		}
 
+		rejectUnusedSFTPCredential(config.SSHPassword, "ssh_password", authMethod, resp)
+
 	case string(monitor.SFTPAuthMethodPassword):
-		if !config.SSHPassphrase.IsNull() && !config.SSHPassphrase.IsUnknown() {
-			resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
-				path.Root("ssh_passphrase"),
-				"Invalid Attribute Combination",
-				"The attribute \"ssh_passphrase\" is only used when \"ssh_auth_method\" is set to "+
-					"\"privateKey\" and must not be set otherwise.",
-			))
-		}
+		// A missing ssh_password is accepted: an SSH server may allow login
+		// without one.
+		rejectUnusedSFTPCredential(config.SSHPrivateKey, "ssh_private_key", authMethod, resp)
+		rejectUnusedSFTPCredential(config.SSHPassphrase, "ssh_passphrase", authMethod, resp)
 
 	default:
 		// An unexpected auth method is left to the schema validator.
 	}
+}
+
+// rejectUnusedSFTPCredential reports a credential that the configured auth method ignores, so
+// it would be stored on the server without ever being used.
+func rejectUnusedSFTPCredential(
+	value types.String,
+	attribute string,
+	authMethod string,
+	resp *resource.ValidateConfigResponse,
+) {
+	if value.IsNull() || value.IsUnknown() {
+		return
+	}
+
+	resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
+		path.Root(attribute),
+		"Invalid Attribute Combination",
+		fmt.Sprintf(
+			"The attribute %q is ignored when \"ssh_auth_method\" is set to %q and must not be set.",
+			attribute, authMethod,
+		),
+	))
 }
 
 // Create creates a new SFTP monitor resource.
@@ -459,8 +496,8 @@ func populateSFTPModel(
 	)
 	data.SSHUsername = types.StringValue(sftpMonitor.SSHUsername)
 
-	// The server reads a NULL column back as password, so an empty value only
-	// shows up for a monitor that was never saved through the server.
+	// The server reads a NULL or empty column back as password, so this only
+	// guards against a server that stops doing so.
 	authMethod := sftpMonitor.SSHAuthMethod
 	if authMethod == "" {
 		authMethod = monitor.SFTPAuthMethodPassword
