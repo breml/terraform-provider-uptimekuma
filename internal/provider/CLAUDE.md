@@ -66,7 +66,7 @@ Terraform's context cancels after `Configure()` completes. Socket.IO connection 
 
 ## Resource Categories
 
-### Monitor Resources (32 types)
+### Monitor Resources (33 types)
 
 #### HTTP-Based Monitors
 
@@ -84,6 +84,7 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_tcp_port` - TCP port connectivity
 - `uptimekuma_monitor_snmp` - SNMP device monitoring
 - `uptimekuma_monitor_ntp` - NTP (Network Time Protocol) server monitoring
+- `uptimekuma_monitor_sftp` - SFTP server monitoring (SSH login, optional remote path check)
 
 #### Database Monitors
 
