@@ -1,11 +1,15 @@
 package provider
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/breml/go-uptime-kuma-client/monitor"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -206,4 +210,110 @@ func soleOffset(t *testing.T, src string, call string) int {
 	}
 
 	return strings.Index(src, call)
+}
+
+// decodedMonitor builds a monitor.Base the way the client does, from the server's
+// JSON, because Type() reads a field only UnmarshalJSON sets.
+func decodedMonitor(t *testing.T, id int64, name string, monitorType string) monitor.Base {
+	t.Helper()
+
+	var mon monitor.Base
+
+	raw := fmt.Sprintf(`{"id":%d,"name":%q,"type":%q}`, id, name, monitorType)
+	err := json.Unmarshal([]byte(raw), &mon)
+	if err != nil {
+		t.Fatalf("decode monitor: %v", err)
+	}
+
+	return mon
+}
+
+func TestFindMonitorByName(t *testing.T) {
+	t.Parallel()
+
+	web := decodedMonitor(t, 7, "web", "http")
+	other := decodedMonitor(t, 9, "other", "http")
+	wrongType := decodedMonitor(t, 11, "web", "ping")
+	twin := decodedMonitor(t, 12, "web", "http")
+
+	tests := map[string]struct {
+		client      *fakeMonitorLister
+		wantID      int64
+		wantSummary string
+		wantCalls   int
+	}{
+		"a listed monitor is found after one look": {
+			client:    &fakeMonitorLister{lists: [][]monitor.Base{{other, web}}},
+			wantID:    7,
+			wantCalls: 1,
+		},
+		// The first answer was an unrequested monitorList older than the monitor,
+		// which GetMonitors returns because it matches the broadcast by name alone.
+		"a monitor only the second look lists is found": {
+			client:    &fakeMonitorLister{lists: [][]monitor.Base{{other}, {other, web}}},
+			wantID:    7,
+			wantCalls: 2,
+		},
+		"a monitor of another type is not found after a second look": {
+			client:      &fakeMonitorLister{lists: [][]monitor.Base{{other, wrongType}}},
+			wantSummary: "http monitor not found",
+			wantCalls:   2,
+		},
+		// An ambiguous name is an answer, not a miss, so it is not looked at twice.
+		"two monitors of the name are an error after one look": {
+			client:      &fakeMonitorLister{lists: [][]monitor.Base{{web, twin}}},
+			wantSummary: "Multiple monitors found",
+			wantCalls:   1,
+		},
+		"a list that will not answer is an error": {
+			client:      &fakeMonitorLister{err: errors.New("socket closed")},
+			wantSummary: "failed to read monitors",
+			wantCalls:   1,
+		},
+		"a second look that fails is an error, not a miss": {
+			client: &fakeMonitorLister{
+				lists: [][]monitor.Base{{other}},
+				err:   errors.New("connection reset"),
+				errOn: 2,
+			},
+			wantSummary: "failed to read monitors",
+			wantCalls:   2,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			var diags diag.Diagnostics
+
+			got := findMonitorByName(t.Context(), test.client, "web", "http", &diags)
+
+			if test.wantSummary == "" {
+				if diags.HasError() {
+					t.Fatalf("want no error, got %v", diags.Errors())
+				}
+
+				if got == nil || got.GetID() != test.wantID {
+					t.Fatalf("want monitor %d, got %v", test.wantID, got)
+				}
+			} else {
+				if got != nil {
+					t.Errorf("want no monitor, got %d", got.GetID())
+				}
+
+				if diags.ErrorsCount() != 1 {
+					t.Fatalf("want 1 error, got %v", diags.Errors())
+				}
+
+				if summary := diags.Errors()[0].Summary(); summary != test.wantSummary {
+					t.Errorf("want summary %q, got %q", test.wantSummary, summary)
+				}
+			}
+
+			if test.client.calls != test.wantCalls {
+				t.Errorf("want %d list calls, got %d", test.wantCalls, test.client.calls)
+			}
+		})
+	}
 }

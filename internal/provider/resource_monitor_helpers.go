@@ -19,27 +19,33 @@ import (
 // exercised without a socket.io server and without teaching every other cache
 // helper about monitors.
 type monitorLister interface {
-	// GetMonitors asks the server to resend its monitor list and returns it once
-	// the client has applied it.
+	// GetMonitors asks the server to resend its monitor list and returns the
+	// cached list once a monitorList broadcast that followed the request has been
+	// applied.
 	GetMonitors(ctx context.Context) ([]monitor.Base, error)
 }
 
-// monitorExists builds the presence check removeOnServerMiss confirms a monitor
-// deletion against.
+// monitorExists builds the presence check removeMonitorOnServerMiss confirms a
+// monitor deletion against. It asks the server twice before it reports an
+// absence.
 //
-// GetMonitors emits getMonitorList and returns only once the broadcast that
-// answers it has been applied, so unlike the maintenance and status page lists it
-// reflects the server as of the request. existsWithResync still forces a resync
-// before an absence is believed, which costs a login on a confirmed miss and
-// covers a monitorList from another session overtaking it; a hit is taken as it
-// stands, because findWithResync returns on one. See removeOnServerMiss for why
-// that asymmetry is the right way round.
+// GetMonitors emits getMonitorList and returns on the first monitorList
+// broadcast applied after it, holding the client's monitorList lock meanwhile,
+// so none of this client's monitor writes interleaves with it. The broadcast is
+// matched by name alone, though: one GetMonitors did not request - from Resync,
+// from a proxy saved with apply_existing, or from another session of the same
+// user - can arrive first and carry a list older than the request. A second
+// GetMonitors narrows that to two such broadcasts in a row.
 //
-// A failure of the getter is returned as an error rather than as an absence, as
-// findWithResync requires: only an absence is worth a resync, and only an absence
-// may cost a monitor its place in state.
+// The second look replaces the resync existsWithResync would do. Resync takes
+// no list lock, so the monitorList it triggers is itself one of those unordered
+// broadcasts, and it costs a login. A hit is taken as it stands; see
+// removeOnServerMiss for why that asymmetry is the right way round.
+//
+// A failure of the getter is returned as an error rather than as an absence:
+// only an absence may cost a monitor its place in state.
 func monitorExists(client monitorLister, id int64) func(context.Context) (bool, error) {
-	return func(ctx context.Context) (bool, error) {
+	listed := func(ctx context.Context) (bool, error) {
 		monitors, err := client.GetMonitors(ctx)
 		if err != nil {
 			return false, fmt.Errorf("list monitors: %w", err)
@@ -48,6 +54,15 @@ func monitorExists(client monitorLister, id int64) func(context.Context) (bool, 
 		return slices.ContainsFunc(monitors, func(mon monitor.Base) bool {
 			return mon.GetID() == id
 		}), nil
+	}
+
+	return func(ctx context.Context) (bool, error) {
+		present, err := listed(ctx)
+		if err != nil || present {
+			return present, err
+		}
+
+		return listed(ctx)
 	}
 }
 
@@ -59,6 +74,9 @@ func monitorExists(client monitorLister, id int64) func(context.Context) (bool, 
 // hands it the error from GetMonitorAs. name is the monitor in the words of the
 // diagnostics, e.g. "HTTP monitor". See removeOnServerMiss for what each outcome
 // means and why a list that cannot be refreshed never condemns the monitor.
+//
+// It skips the resync removeOnServerMiss would do, because monitorExists asks the
+// server a second time instead.
 func removeMonitorOnServerMiss(
 	ctx context.Context,
 	client *kuma.Client,
@@ -67,7 +85,7 @@ func removeMonitorOnServerMiss(
 	name string,
 	resp *resource.ReadResponse,
 ) {
-	removeOnServerMiss(ctx, client, err, monitorExists(client, id), name, resp)
+	removeOnServerMissWithoutResync(ctx, err, monitorExists(client, id), name, resp)
 }
 
 // monitorTypeDrifted reports whether the monitor Terraform holds in state is no

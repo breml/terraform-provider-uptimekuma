@@ -13,9 +13,14 @@ import (
 
 // fakeMonitorLister stands in for *kuma.Client. monitorExists uses nothing else
 // of it, which is why it takes the monitorLister interface.
+//
+// lists holds the answer to each call in turn, the last one repeating, so a
+// stale first answer can be followed by a current one. err fails every call, or
+// only call errOn when that is set.
 type fakeMonitorLister struct {
-	monitors []monitor.Base
-	err      error
+	lists [][]monitor.Base
+	err   error
+	errOn int
 
 	calls int
 }
@@ -23,11 +28,15 @@ type fakeMonitorLister struct {
 func (f *fakeMonitorLister) GetMonitors(context.Context) ([]monitor.Base, error) {
 	f.calls++
 
-	if f.err != nil {
+	if f.err != nil && (f.errOn == 0 || f.errOn == f.calls) {
 		return nil, f.err
 	}
 
-	return f.monitors, nil
+	if len(f.lists) == 0 {
+		return nil, nil
+	}
+
+	return f.lists[min(f.calls, len(f.lists))-1], nil
 }
 
 func TestMonitorExists(t *testing.T) {
@@ -42,23 +51,36 @@ func TestMonitorExists(t *testing.T) {
 		id        int64
 		want      bool
 		wantError string
+		wantCalls int
 	}{
-		"a listed monitor is present": {
-			client: &fakeMonitorLister{monitors: listed},
-			id:     7,
-			want:   true,
+		// A hit is believed as it stands, see removeOnServerMiss.
+		"a listed monitor is present after one look": {
+			client:    &fakeMonitorLister{lists: [][]monitor.Base{listed}},
+			id:        7,
+			want:      true,
+			wantCalls: 1,
 		},
-		"an unlisted monitor is absent": {
-			client: &fakeMonitorLister{monitors: listed},
-			id:     8,
+		"an unlisted monitor is absent after a second look": {
+			client:    &fakeMonitorLister{lists: [][]monitor.Base{listed}},
+			id:        8,
+			wantCalls: 2,
 		},
 		"an empty list reports every monitor absent": {
-			client: &fakeMonitorLister{},
-			id:     7,
+			client:    &fakeMonitorLister{},
+			id:        7,
+			wantCalls: 2,
 		},
-		// findWithResync requires a failure to arrive as an error and never as an
-		// absence: only an absence is worth a resync, and only an absence may cost a
-		// monitor its place in state.
+		// The first answer was an unrequested monitorList older than the monitor,
+		// e.g. from a Resync, which GetMonitors returns because it matches the
+		// broadcast by name alone.
+		"a monitor only the second look lists is present": {
+			client:    &fakeMonitorLister{lists: [][]monitor.Base{{{ID: 9}}, listed}},
+			id:        7,
+			want:      true,
+			wantCalls: 2,
+		},
+		// removeOnServerMiss requires a failure to arrive as an error and never as
+		// an absence: only an absence may cost a monitor its place in state.
 		"a list that will not answer is an error, not an absence": {
 			client: &fakeMonitorLister{err: errors.New("socket closed")},
 			id:     7,
@@ -66,6 +88,17 @@ func TestMonitorExists(t *testing.T) {
 			// error beside the read error it is confirming, and "socket closed" alone
 			// would not say which of the two failed.
 			wantError: "list monitors: socket closed",
+			wantCalls: 1,
+		},
+		"a second look that fails is an error, not an absence": {
+			client: &fakeMonitorLister{
+				lists: [][]monitor.Base{listed},
+				err:   errors.New("connection reset"),
+				errOn: 2,
+			},
+			id:        8,
+			wantError: "list monitors: connection reset",
+			wantCalls: 2,
 		},
 	}
 
@@ -93,11 +126,8 @@ func TestMonitorExists(t *testing.T) {
 				}
 			}
 
-			// existsWithResync calls the closure once per look; a getter that retried
-			// internally would defeat the resync it is wrapped in. Asserted on the
-			// error path too, which the early return used to skip.
-			if test.client.calls != 1 {
-				t.Errorf("want 1 list call, got %d", test.client.calls)
+			if test.client.calls != test.wantCalls {
+				t.Errorf("want %d list calls, got %d", test.wantCalls, test.client.calls)
 			}
 		})
 	}
