@@ -297,6 +297,7 @@ func TestMonitorTimeoutSchema(t *testing.T) {
 		"ntp":               {resource: NewMonitorNTPResource(), wantDefault: defaultNTPTimeout},
 		"ping":              {resource: NewMonitorPingResource(), wantDefault: defaultMonitorTimeout},
 		"rabbitmq":          {resource: NewMonitorRabbitMQResource(), wantDefault: defaultMonitorTimeout},
+		"sftp":              {resource: NewMonitorSFTPResource(), wantDefault: defaultSFTPTimeout},
 		"steam":             {resource: NewMonitorSteamResource(), wantDefault: defaultMonitorTimeout},
 		"websocket_upgrade": {resource: NewMonitorWebsocketUpgradeResource(), wantDefault: defaultMonitorTimeout},
 		"real_browser": {
@@ -394,6 +395,7 @@ func TestMonitorTimeoutValidation(t *testing.T) {
 		"ntp":               NewMonitorNTPResource(),
 		"rabbitmq":          NewMonitorRabbitMQResource(),
 		"real_browser":      NewMonitorRealBrowserResource(),
+		"sftp":              NewMonitorSFTPResource(),
 		"steam":             NewMonitorSteamResource(),
 		"websocket_upgrade": NewMonitorWebsocketUpgradeResource(),
 	}
