@@ -8,37 +8,36 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
 // findMonitorByName searches for a monitor by name and type.
 // Returns nil if not found or if multiple matches exist.
+//
+// A miss is believed only after a second GetMonitors. GetMonitors waits for a
+// monitorList broadcast that follows its request and is ordered with this
+// client's monitor writes, so a monitor created earlier in the apply is normally
+// in the first list, see
+// https://github.com/breml/terraform-provider-uptimekuma/issues/430. An
+// unrequested monitorList that arrives first can still hide one, and the second
+// look covers that the same way monitorExists does, without a resync.
 func findMonitorByName(
 	ctx context.Context,
-	client *kuma.Client,
+	client monitorLister,
 	name string,
 	monitorType string,
 	diags *diag.Diagnostics,
 ) monitor.Monitor {
-	// Fetch all monitors from the API.
-	monitors, err := client.GetMonitors(ctx)
-	if err != nil {
-		diags.AddError("failed to read monitors", err.Error())
-		return nil
-	}
-
-	// Search for the monitor matching the given name and type.
-	var found monitor.Monitor
-	for i := range monitors {
-		mon := &monitors[i]
-		// Skip monitors that don't match the name or type.
-		if mon.Name != name || mon.Type() != monitorType {
-			continue
+	for range 2 {
+		// Fetch all monitors from the API.
+		monitors, err := client.GetMonitors(ctx)
+		if err != nil {
+			diags.AddError("failed to read monitors", err.Error())
+			return nil
 		}
 
-		// Report error if multiple monitors match.
-		if found != nil {
+		found, multiple := matchMonitorByName(monitors, name, monitorType)
+		if multiple {
 			diags.AddError(
 				"Multiple monitors found",
 				fmt.Sprintf(
@@ -47,22 +46,47 @@ func findMonitorByName(
 					name,
 				),
 			)
+
 			return nil
+		}
+
+		if found != nil {
+			return found
+		}
+	}
+
+	// Report error if no monitor matches.
+	diags.AddError(
+		fmt.Sprintf("%s monitor not found", monitorType),
+		fmt.Sprintf("No %s monitor with name '%s' found.", monitorType, name),
+	)
+
+	return nil
+}
+
+// matchMonitorByName returns the one monitor in monitors with the given name and
+// type, or nil. multiple reports that more than one matched, in which case found
+// is nil.
+func matchMonitorByName(
+	monitors []monitor.Base,
+	name string,
+	monitorType string,
+) (found monitor.Monitor, multiple bool) {
+	for i := range monitors {
+		mon := &monitors[i]
+		// Skip monitors that don't match the name or type.
+		if mon.Name != name || mon.Type() != monitorType {
+			continue
+		}
+
+		if found != nil {
+			return nil, true
 		}
 
 		found = mon
 	}
 
-	// Report error if no monitor matches.
-	if found == nil {
-		diags.AddError(
-			fmt.Sprintf("%s monitor not found", monitorType),
-			fmt.Sprintf("No %s monitor with name '%s' found.", monitorType, name),
-		)
-		return nil
-	}
-
-	return found
+	return found, false
 }
 
 // validateMonitorDataSourceInput validates that either id or name is provided.

@@ -28,8 +28,8 @@ import (
 //
 // monitorList has no constant here because nothing takes it. monitorExists is
 // what reads that list, through GetMonitors, and it is handed to
-// removeOnServerMiss, which consults neither MissingReadyEvents nor the session
-// token. See that helper for why.
+// removeOnServerMissWithoutResync, which consults neither MissingReadyEvents nor
+// the session token. See removeOnServerMiss for why.
 const (
 	notificationListEvent = "notificationList"
 	statusPageListEvent   = "statusPageList"
@@ -508,7 +508,8 @@ func existsWithResync(
 // suspectedNotFound. name is the resource in the words of the diagnostics, e.g.
 // "HTTP monitor". exists looks the resource up in the list the client caches for
 // its kind, and is run through existsWithResync so the list is refreshed once
-// before an absence is accepted.
+// before an absence is accepted. Monitors skip that resync and go through
+// removeOnServerMissWithoutResync, see monitorExists.
 //
 // The list is a veto, not a corroboration, and that is the whole difference from
 // removeOnMiss. There the only evidence is a cache miss, so the burden of proof
@@ -550,16 +551,23 @@ func existsWithResync(
 //   - Absent when the resource lives. The client rebuilds each list from one
 //     whole-list broadcast and applies it last-writer-wins, so a snapshot taken
 //     before a resource was created can land after it and drop it - see
-//     https://github.com/breml/terraform-provider-uptimekuma/issues/430. The
-//     resync narrows that window rather than closing it, which is no worse than
+//     https://github.com/breml/terraform-provider-uptimekuma/issues/430. For
+//     monitors the client orders GetMonitors with its own monitor writes, which
+//     leaves a monitorList GetMonitors did not request - from Resync, from a
+//     proxy saved with apply_existing, or from another session - and
+//     monitorExists looks twice to narrow that. For the other lists the resync
+//     narrows the window rather than closing it. Either way it is no worse than
 //     believing err unchecked.
-//   - Present when the resource is gone. findWithResync returns on a hit without
-//     resyncing, and the lists are filled asynchronously, so a deletion whose
+//   - Present when the resource is gone. A hit is believed without a second
+//     look, and the lists are filled asynchronously, so a deletion whose
 //     broadcast has not been applied yet reads as present and the read is
-//     reported instead of removing the resource. The next refresh clears it once
-//     the broadcast lands; if it never does - deleted under another account, a
-//     direct database change, a proxy dropping the event - the detail below names
-//     terraform state rm, because nothing else will get past it.
+//     reported instead of removing the resource. For monitors, this client's own
+//     deletes land before any GetMonitors that follows them, so only one of the
+//     unrequested monitorList broadcasts above can do this. The next refresh
+//     clears it once the broadcast lands; if it never does - deleted under
+//     another account, a direct database change, a proxy dropping the event -
+//     the detail below names terraform state rm, because nothing else will get
+//     past it.
 //
 // Both are deliberate. A false absence is #409 and costs a duplicate resource; a
 // false presence costs an error, so the veto is worth having even unrefreshed.
@@ -574,6 +582,28 @@ func removeOnServerMiss(
 	name string,
 	resp *resource.ReadResponse,
 ) {
+	removeOnServerMissWithoutResync(
+		ctx,
+		err,
+		func(ctx context.Context) (bool, error) {
+			return existsWithResync(ctx, client, exists)
+		},
+		name,
+		resp,
+	)
+}
+
+// removeOnServerMissWithoutResync is removeOnServerMiss with exists believed as
+// it answers, for a presence check that refreshes its list itself. Everything
+// removeOnServerMiss documents applies, except that exists is not wrapped in
+// existsWithResync.
+func removeOnServerMissWithoutResync(
+	ctx context.Context,
+	err error,
+	exists func(context.Context) (bool, error),
+	name string,
+	resp *resource.ReadResponse,
+) {
 	summary := fmt.Sprintf("failed to read %s", name)
 
 	if !suspectedNotFound(err) {
@@ -582,7 +612,7 @@ func removeOnServerMiss(
 		return
 	}
 
-	present, existsErr := existsWithResync(ctx, client, exists)
+	present, existsErr := exists(ctx)
 	if existsErr != nil {
 		resp.Diagnostics.AddError(
 			summary,
@@ -606,7 +636,7 @@ func removeOnServerMiss(
 					"than on one that was deleted - usually a server-side fault such as a null "+
 					"column in a record it joins. It has been left in state, because removing it "+
 					"would make the next apply create a duplicate. If Uptime Kuma really no longer "+
-					"has it, the provider's list of %ss is one broadcast behind; rerun to pick up "+
+					"has it, the provider's list of %ss may be behind; rerun to pick up "+
 					"the refreshed list, or remove it from state with `terraform state rm` if the "+
 					"broadcast never arrives.",
 				err, name, name,
