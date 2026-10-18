@@ -9,8 +9,8 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 
 **Key Features**:
 
-- 85+ resource types (monitors, notifications, status pages, maintenance windows, etc.)
-- 81+ corresponding data sources for querying existing resources
+- 140 resource types (monitors, notifications, status pages, maintenance windows, etc.)
+- 140 corresponding data sources for querying existing resources
 - Built-in retry logic and connection pooling for reliability
 - Comprehensive testing with Docker-based acceptance tests
 - Strict code quality standards with 80+ linters enabled
@@ -60,7 +60,7 @@ terraform-provider-uptimekuma/
 ├── internal/
 │   ├── client/                  # Client abstraction with pooling
 │   │   └── CLAUDE.md           # 📖 Client documentation
-│   └── provider/                # Provider implementation (339 files)
+│   └── provider/                # Provider implementation (595 files)
 │       └── CLAUDE.md           # 📖 Provider documentation
 ├── docs/                        # Generated Terraform documentation
 ├── examples/                    # Terraform examples
@@ -77,14 +77,15 @@ terraform-provider-uptimekuma/
 
 ### Resource Categories
 
-The provider manages 85+ resource types across multiple categories:
+The provider manages 140 resource types across multiple categories:
 
-**Monitors** (33 types): HTTP, ping, DNS, TCP, SFTP, databases (PostgreSQL, MySQL, MongoDB, Redis, SQL Server),
-MQTT, Docker, real browser, SNMP, push, gRPC, Steam, and monitor groups.
+**Monitors** (34 types): HTTP, ping, DNS, TCP, SFTP, SMTP, SIP, RADIUS, WebSocket, databases (PostgreSQL, MySQL,
+MongoDB, Redis, SQL Server, OracleDB), message brokers (MQTT, Kafka, RabbitMQ), Docker, real browser, SNMP, push,
+manual, gRPC, Steam, GameDig, Globalping, Tailscale, PM2, system services, and monitor groups.
 
-**Notifications** (51 types): Webhook, Slack, Teams, Discord, email (SMTP), push services (Pushover, Telegram,
-Signal, etc.), SMS services, enterprise alerting (PagerDuty, Opsgenie, Splunk), regional platforms (Feishu,
-DingTalk), and many more.
+**Notifications** (96 types plus a generic `uptimekuma_notification`): Webhook, Slack, Teams, Discord,
+email (SMTP), push services (Pushover, Telegram, Signal, etc.), SMS services, enterprise alerting (PagerDuty,
+Opsgenie, Splunk), regional platforms (Feishu, DingTalk), and many more.
 
 **Status Pages**: Public status pages with monitor groups and incidents.
 
@@ -92,7 +93,7 @@ DingTalk), and many more.
 
 **Infrastructure**: Tags, proxies, and Docker host integration.
 
-**Data Sources**: Each resource has a corresponding data source (81 total) for querying existing resources by ID or name.
+**Data Sources**: Each resource has a corresponding data source (140 total) for querying existing resources by ID or name.
 
 ### Design Patterns
 
@@ -118,7 +119,7 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
 
 - **[internal/provider/CLAUDE.md](internal/provider/CLAUDE.md)** - Provider implementation
   - Provider structure and configuration
-  - Complete resource catalog (85+ resources, 81+ data sources)
+  - Complete resource catalog (140 resources, 140 data sources)
   - Base models and helper functions
   - CRUD implementation patterns
   - State management

@@ -5,9 +5,9 @@ This package implements the Terraform provider for Uptime Kuma, including all re
 ## Package Overview
 
 - **Package**: `internal/provider`
-- **Files**: 339 files total
-- **Resources**: 85+ resource types
-- **Data Sources**: 81+ data source types (mirroring resources)
+- **Files**: 595 files total
+- **Resources**: 140 resource types
+- **Data Sources**: 140 data source types (mirroring resources)
 - **Size**: One of the largest packages in the codebase
 
 ## Provider Structure
@@ -66,7 +66,7 @@ Terraform's context cancels after `Configure()` completes. Socket.IO connection 
 
 ## Resource Categories
 
-### Monitor Resources (33 types)
+### Monitor Resources (34 types)
 
 #### HTTP-Based Monitors
 
@@ -76,6 +76,7 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_http_keyword` - HTTP with keyword presence checking
 - `uptimekuma_monitor_http_json_query` - HTTP with JSON response validation
 - `uptimekuma_monitor_grpc_keyword` - gRPC with keyword monitoring
+- `uptimekuma_monitor_websocket_upgrade` - WebSocket handshake check
 
 #### Network Monitors
 
@@ -85,6 +86,11 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_snmp` - SNMP device monitoring
 - `uptimekuma_monitor_ntp` - NTP (Network Time Protocol) server monitoring
 - `uptimekuma_monitor_sftp` - SFTP server monitoring (SSH login, optional remote path check)
+- `uptimekuma_monitor_smtp` - SMTP server monitoring
+- `uptimekuma_monitor_sip_options` - SIP OPTIONS request monitoring
+- `uptimekuma_monitor_radius` - RADIUS server authentication
+- `uptimekuma_monitor_tailscale_ping` - Tailscale node connectivity and latency
+- `uptimekuma_monitor_globalping` - Distributed checks from the Globalping probe network
 
 #### Database Monitors
 
@@ -93,11 +99,15 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_mongodb` - MongoDB monitoring
 - `uptimekuma_monitor_redis` - Redis monitoring
 - `uptimekuma_monitor_sqlserver` - SQL Server monitoring
+- `uptimekuma_monitor_oracledb` - OracleDB monitoring
 
 #### IoT/Protocol Monitors
 
 - `uptimekuma_monitor_mqtt` - MQTT protocol monitoring
+- `uptimekuma_monitor_kafka_producer` - Apache Kafka producer connectivity
+- `uptimekuma_monitor_rabbitmq` - RabbitMQ monitoring
 - `uptimekuma_monitor_push` - Push-based monitoring (for integrations)
+- `uptimekuma_monitor_manual` - Passive monitor whose status (`up`, `down`, `pending`) is set from Terraform
 
 #### Specialized Monitors
 
@@ -105,14 +115,18 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 - `uptimekuma_monitor_docker` - Docker container health monitoring
 - `uptimekuma_monitor_steam` - Steam game server monitoring
 - `uptimekuma_monitor_pm2` - PM2 process monitoring via `pm2 jlist` on the Uptime Kuma host
+- `uptimekuma_monitor_system_service` - systemd (Linux) or Windows service state
+- `uptimekuma_monitor_gamedig` - Game server monitoring via GameDig
 
 #### Organization
 
 - `uptimekuma_monitor_group` - Monitor groups for hierarchical organization
 
-### Notification Resources (51 types)
+### Notification Resources (96 types)
 
-All notification types follow the same pattern with type-specific fields:
+96 typed notification resources plus the generic `uptimekuma_notification`. The list below is a
+selection; `provider.go` holds the complete registration. All notification types follow the same
+pattern with type-specific fields:
 
 #### Webhook
 
@@ -217,7 +231,7 @@ All notification types follow the same pattern with type-specific fields:
 
 ### Data Sources
 
-Each resource has a corresponding data source (81 total) that allows querying existing resources:
+Each resource has a corresponding data source (140 total) that allows querying existing resources:
 
 - By ID: `data.uptimekuma_monitor_http.example.id = 123`
 - By name: `data.uptimekuma_monitor_http.example.name = "Production API"`
@@ -1488,7 +1502,7 @@ Testing framework providing:
 
 Most files are 200-400 lines. Large files:
 
-- `provider.go` (338 lines) - 85+ resource + 81+ data source registrations
+- `provider.go` (744 lines) - 140 resource + 140 data source registrations
 - `resource_monitor_http.go` (300+ lines) - Heavily documented
 - `resource_monitor_http_base.go` (300+ lines) - Many HTTP configuration options
 - `resource_status_page.go` (350+ lines) - Complex nested structures
