@@ -26,9 +26,11 @@ type UptimeKumaProvider struct {
 
 ```go
 type UptimeKumaProviderModel struct {
-    Endpoint types.String `tfsdk:"endpoint"`  // Required: Uptime Kuma server URL
-    Username types.String `tfsdk:"username"`  // Optional: Login username
-    Password types.String `tfsdk:"password"`  // Optional: Login password (sensitive)
+    Endpoint     types.String `tfsdk:"endpoint"`      // Required: Uptime Kuma server URL
+    Username     types.String `tfsdk:"username"`      // Optional: Login username
+    Password     types.String `tfsdk:"password"`      // Optional: Login password (sensitive)
+    TOTPSecret   types.String `tfsdk:"totp_secret"`   // Optional: 2FA shared secret (sensitive)
+    SessionToken types.String `tfsdk:"session_token"` // Optional: token login (sensitive)
 }
 ```
 
@@ -37,13 +39,47 @@ type UptimeKumaProviderModel struct {
 - `UPTIMEKUMA_ENDPOINT` - Provider endpoint (e.g., `https://uptime-kuma.example.com`)
 - `UPTIMEKUMA_USERNAME` - Login username
 - `UPTIMEKUMA_PASSWORD` - Login password
+- `UPTIMEKUMA_TOTP_SECRET` - Base32 shared secret of an account with two-factor authentication
+- `UPTIMEKUMA_SESSION_TOKEN` - Session token from an earlier login, used instead of the password
 - `SOCKETIO_LOG_LEVEL` - Socket.IO client logging level (for debugging)
 
-**Configuration Validation**:
+**Configuration Validation** (`validateCredentials`):
 
 - Endpoint: Always required
-- Credentials: Both or neither (if username provided, password required; if password provided, username required)
+- Three accepted credential shapes: nothing at all (server with authentication disabled);
+  `username` + `password`, optionally with `totp_secret` and/or `session_token`; `session_token`
+  alone. A token-only configuration cannot manage `uptimekuma_settings`, which needs `password`
+  because Uptime Kuma asks for it again when settings are written, and a configuration with no
+  credentials at all cannot resync its cache (see `resyncCache` in
+  [client_errors.go](client_errors.go))
+- The shapes are judged by the value the client will receive, not by `IsNull`: an attribute fed
+  from an empty variable, or still unknown at plan time, counts as unset
+- `username` and `password`: both or neither
+- `totp_secret` requires `username` + `password`: the one-time code it produces is only ever asked
+  for by a password login, so a token-only configuration could never use it
+- `session_token` next to `username` + `password` is allowed - the client tries the token first and
+  falls back to the password login for a token the server refuses. `warnRejectedSessionToken`
+  reports that fallback, because nothing else does: the connect succeeds either way
 - Precedence: Terraform config > environment variables
+
+**Login Failure Diagnostics** (`connectionErrorDiagnostic` / `authErrorDiagnostic`):
+
+The client reports what the server refused through its sentinel errors, so each rejection gets its
+own summary naming the attribute to fix - `invalid credentials`, `two-factor authentication
+required`, `invalid two-factor authentication code`, `session token rejected`, `user inactive or
+deleted`, `credentials required`, `too many login attempts` - and anything else falls back to the
+generic `failed to connect to Uptime Kuma`. Two ordering hazards shape the switch:
+`kuma.ErrUserInactive` wraps `kuma.ErrInvalidSessionToken`, so it has to be tested first; and a
+refused session token followed by a failing password login arrives as one error wrapping *both*
+sentinels, which `passwordFallbackDiagnostic` handles ahead of the switch so the reason the
+recovery failed is not hidden behind the stale token. `internal/client` returns these without
+retrying, except `kuma.ErrRateLimited`, which time recovers from - see
+[../client/CLAUDE.md](../client/CLAUDE.md).
+
+A full TOTP acceptance test is not possible here: enabling two-factor authentication on the test
+container needs `Prepare2FA`/`Save2FA`, which the upstream client exposes only in its own
+`export_test.go`. The session token path is covered instead, from the live client's
+`SessionToken()`.
 
 ### Provider Configuration ([provider.go](provider.go))
 
