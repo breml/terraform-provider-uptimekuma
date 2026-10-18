@@ -66,7 +66,7 @@ Terraform's context cancels after `Configure()` completes. Socket.IO connection 
 
 ## Resource Categories
 
-### Monitor Resources (33 types)
+### Monitor Resources (34 types)
 
 #### HTTP-Based Monitors
 
@@ -98,6 +98,7 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 
 - `uptimekuma_monitor_mqtt` - MQTT protocol monitoring
 - `uptimekuma_monitor_push` - Push-based monitoring (for integrations)
+- `uptimekuma_monitor_manual` - Passive monitor whose status (`up`, `down`, `pending`) is set from Terraform
 
 #### Specialized Monitors
 
