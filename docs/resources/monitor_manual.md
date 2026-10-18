@@ -4,14 +4,14 @@ page_title: "uptimekuma_monitor_manual Resource - uptimekuma"
 subcategory: ""
 description: |-
   Manual monitor resource. A passive monitor whose status is set by the user instead of being determined by a check, available since Uptime Kuma 2.0.0. The base attributes still apply on top of the status: upside_down, retries and maintenance behave as for any other monitor.
-  Uptime Kuma does not return the status it stores, so a status changed in the web UI is not detected as drift; Terraform reapplies its value on the next update of the resource only.
+  Uptime Kuma does not return the status it stores, so a status changed in the web UI is not detected as drift; Terraform reapplies its value on the next update of the resource only, and every update, also of an unrelated attribute, replaces a status set in the web UI.
 ---
 
 # uptimekuma_monitor_manual (Resource)
 
 Manual monitor resource. A passive monitor whose status is set by the user instead of being determined by a check, available since Uptime Kuma 2.0.0. The base attributes still apply on top of the status: `upside_down`, retries and maintenance behave as for any other monitor.
 
-Uptime Kuma does not return the status it stores, so a status changed in the web UI is not detected as drift; Terraform reapplies its value on the next update of the resource only.
+Uptime Kuma does not return the status it stores, so a status changed in the web UI is not detected as drift; Terraform reapplies its value on the next update of the resource only, and every update, also of an unrelated attribute, replaces a status set in the web UI.
 
 ## Example Usage
 
@@ -43,9 +43,7 @@ resource "uptimekuma_monitor_manual" "pending" {
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
 - `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
-- `manual_status` (String) Status the monitor reports, one of `up`, `down` or `pending`. While unset the monitor reports pending with the message `Manual monitoring - No status set`. Every update of the resource sends this value, so removing it resets the monitor to pending.
-
-The attribute is write-only: Uptime Kuma stores it but never returns it, so the provider keeps the configured value in state. After an import it is null until the next apply.
+- `manual_status` (String) Status the monitor reports, one of `up`, `down` or `pending`. While unset the monitor reports pending with the message `Manual monitoring - No status set`. Every update of the resource sends this value, so removing it resets the monitor to pending. Uptime Kuma stores the status but never returns it, so the provider keeps the configured value in state and cannot detect changes made outside Terraform. After an import it is null in state; if the configuration sets it, the next plan shows the change and the apply sends it.
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization

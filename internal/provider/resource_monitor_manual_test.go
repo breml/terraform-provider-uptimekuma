@@ -17,10 +17,12 @@ import (
 )
 
 func TestManualStatusMapping(t *testing.T) {
+	// The numeric values are the Uptime Kuma encoding; pinning them catches a
+	// mapping that is swapped consistently in both directions.
 	tests := map[string]monitor.ManualStatus{
-		"up":      monitor.ManualStatusUp,
-		"down":    monitor.ManualStatusDown,
-		"pending": monitor.ManualStatusPending,
+		"up":      1,
+		"down":    0,
+		"pending": 2,
 	}
 
 	for value, want := range tests {
@@ -52,7 +54,7 @@ func TestManualStatusMapping(t *testing.T) {
 	})
 }
 
-// TestBuildManualMonitorStatus guards the write-only status: Uptime Kuma
+// TestBuildManualMonitorStatus guards the unreturned status: Uptime Kuma
 // resets the monitor to pending on any edit without a status, so the build
 // helper must carry the planned status regardless of which attribute changed.
 func TestBuildManualMonitorStatus(t *testing.T) {
@@ -109,32 +111,89 @@ func TestBuildManualMonitorStatus(t *testing.T) {
 }
 
 func TestBuildManualMonitorInvalidStatus(t *testing.T) {
-	data := &MonitorManualResourceModel{
-		MonitorBaseModel: MonitorBaseModel{
-			Name:            types.StringValue("manual"),
-			Description:     types.StringNull(),
-			Parent:          types.Int64Null(),
-			NotificationIDs: types.ListNull(types.Int64Type),
+	tests := map[string]types.String{
+		"invalid": types.StringValue("maybe"),
+		"unknown": types.StringUnknown(),
+	}
+
+	for name, status := range tests {
+		t.Run(name, func(t *testing.T) {
+			data := &MonitorManualResourceModel{
+				MonitorBaseModel: MonitorBaseModel{
+					Name:            types.StringValue("manual"),
+					Description:     types.StringNull(),
+					Parent:          types.Int64Null(),
+					NotificationIDs: types.ListNull(types.Int64Type),
+				},
+				ManualStatus: status,
+			}
+
+			var diags diag.Diagnostics
+
+			got := buildManualMonitor(t.Context(), data, &diags)
+			if !diags.HasError() {
+				t.Fatal("expected an error diagnostic")
+			}
+
+			if got != nil {
+				t.Fatal("expected no monitor")
+			}
+		})
+	}
+}
+
+func TestReadManualStatus(t *testing.T) {
+	tests := map[string]struct {
+		server      *monitor.ManualStatus
+		current     types.String
+		want        types.String
+		wantWarning bool
+	}{
+		"not returned keeps state": {
+			current: types.StringValue("down"),
+			want:    types.StringValue("down"),
 		},
-		ManualStatus: types.StringValue("maybe"),
+		"not returned keeps null": {
+			current: types.StringNull(),
+			want:    types.StringNull(),
+		},
+		"returned is adopted": {
+			server:  new(monitor.ManualStatusUp),
+			current: types.StringValue("down"),
+			want:    types.StringValue("up"),
+		},
+		"unrecognized keeps state and warns": {
+			server:      new(monitor.ManualStatus(3)),
+			current:     types.StringValue("down"),
+			want:        types.StringValue("down"),
+			wantWarning: true,
+		},
 	}
 
-	var diags diag.Diagnostics
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var diags diag.Diagnostics
 
-	got := buildManualMonitor(t.Context(), data, &diags)
-	if !diags.HasError() {
-		t.Fatal("expected an error diagnostic")
-	}
+			got := readManualStatus(t.Context(), 42, tc.server, tc.current, &diags)
+			if !got.Equal(tc.want) {
+				t.Errorf("readManualStatus() = %s, want %s", got, tc.want)
+			}
 
-	if got != nil {
-		t.Fatal("expected no monitor")
+			if diags.HasError() {
+				t.Fatalf("unexpected error diagnostics: %v", diags)
+			}
+
+			if gotWarning := diags.WarningsCount() > 0; gotWarning != tc.wantWarning {
+				t.Errorf("warning = %t, want %t (%v)", gotWarning, tc.wantWarning, diags)
+			}
+		})
 	}
 }
 
 // TestAccMonitorManualResource covers the create, import and update round-trip.
 //
-// manual_status is write-only, so Uptime Kuma never returns it and the import
-// step cannot verify it.
+// Uptime Kuma never returns manual_status, so the import step cannot verify
+// it, and no step checks the status the server actually reports.
 func TestAccMonitorManualResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestManualMonitor")
 	nameUpdated := acctest.RandomWithPrefix("TestManualMonitorUpdated")

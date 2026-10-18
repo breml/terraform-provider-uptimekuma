@@ -318,6 +318,45 @@ resource "uptimekuma_monitor_ping" "test" {
 	})
 }
 
+// TestAccMonitorManualResource_typeDrift verifies that type drift is detected
+// for a manual monitor. monitor.Manual decodes a monitor of any type, so the
+// type check in Read is the only guard.
+func TestAccMonitorManualResource_typeDrift(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestManualTypeDrift")
+	kumaClient := testAccOutOfBandClient(t)
+
+	config := providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_manual" "test" {
+  name          = %[1]q
+  manual_status = "up"
+}
+`, name)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             config,
+				Check:              testAccChangeMonitorTypeToHTTP(t, kumaClient, "uptimekuma_monitor_manual.test"),
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				RefreshPlanChecks: resource.RefreshPlanChecks{
+					PostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"uptimekuma_monitor_manual.test",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestAccStatusPageResource_disappears verifies that when a status page is
 // deleted externally, the provider removes it from state and plans to recreate it.
 func TestAccStatusPageResource_disappears(t *testing.T) {

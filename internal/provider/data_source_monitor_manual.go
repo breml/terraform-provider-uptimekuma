@@ -111,8 +111,9 @@ func (d *MonitorManualDataSource) readByID(
 		return
 	}
 
-	// Without type-specific fields any monitor decodes cleanly, so the type
-	// check is the only thing that rejects a monitor of another type.
+	// The data source exposes only id and name, and GetMonitorAs decodes a
+	// monitor of any type without complaint, so the type check is what rejects
+	// a monitor of another type.
 	if !monitorTypeMatches(
 		&resp.Diagnostics, data.ID.ValueInt64(), manualMonitor.Base.Type(), manualMonitor.Type(),
 	) {

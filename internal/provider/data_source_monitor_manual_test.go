@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -23,10 +24,19 @@ func TestAccMonitorManualDataSource(t *testing.T) {
 			{
 				Config: testAccMonitorManualDataSourceConfig(name),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
+					statecheck.CompareValuePairs(
 						"data.uptimekuma_monitor_manual.by_name",
 						tfjsonpath.New("id"),
-						knownvalue.NotNull(),
+						"uptimekuma_monitor_manual.test",
+						tfjsonpath.New("id"),
+						compare.ValuesSame(),
+					),
+					statecheck.CompareValuePairs(
+						"data.uptimekuma_monitor_manual.by_id",
+						tfjsonpath.New("id"),
+						"uptimekuma_monitor_manual.test",
+						tfjsonpath.New("id"),
+						compare.ValuesSame(),
 					),
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_monitor_manual.by_name",

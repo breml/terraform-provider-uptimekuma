@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/monitor"
@@ -43,7 +44,7 @@ type MonitorManualResource struct {
 type MonitorManualResourceModel struct {
 	MonitorBaseModel
 
-	ManualStatus types.String `tfsdk:"manual_status"` // Write-only status: up, down or pending.
+	ManualStatus types.String `tfsdk:"manual_status"` // Status up, down or pending; never returned by the server.
 }
 
 // Metadata returns the metadata for the resource.
@@ -68,16 +69,18 @@ func (*MonitorManualResource) Schema(
 			"behave as for any other monitor.\n\n" +
 			"Uptime Kuma does not return the status it stores, so a status changed in the web UI " +
 			"is not detected as drift; Terraform reapplies its value on the next update of the " +
-			"resource only.",
+			"resource only, and every update, also of an unrelated attribute, replaces a status " +
+			"set in the web UI.",
 		Attributes: withMonitorBaseAttributes(map[string]schema.Attribute{
 			"manual_status": schema.StringAttribute{
 				MarkdownDescription: "Status the monitor reports, one of `up`, `down` or `pending`. " +
 					"While unset the monitor reports pending with the message " +
 					"`Manual monitoring - No status set`. Every update of the resource sends this " +
-					"value, so removing it resets the monitor to pending.\n\n" +
-					"The attribute is write-only: Uptime Kuma stores it but never returns it, so the " +
-					"provider keeps the configured value in state. After an import it is null until " +
-					"the next apply.",
+					"value, so removing it resets the monitor to pending. Uptime Kuma stores the " +
+					"status but never returns it, so the provider keeps the configured value in " +
+					"state and cannot detect changes made outside Terraform. After an import it is " +
+					"null in state; if the configuration sets it, the next plan shows the change and " +
+					"the apply sends it.",
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(manualStatusUp, manualStatusDown, manualStatusPending),
@@ -133,6 +136,47 @@ func manualStatusToString(status monitor.ManualStatus) (string, bool) {
 	}
 }
 
+// readManualStatus returns the manual_status value to store after a read.
+//
+// Uptime Kuma stores the status but does not send it back. The value from
+// state is kept, so neither a refresh nor an import fabricates a status; the
+// server value is adopted if a future version begins returning it. A server
+// value the provider does not recognize keeps the state value and raises a
+// warning, as the server does not validate the stored status.
+func readManualStatus(
+	ctx context.Context,
+	id int64,
+	server *monitor.ManualStatus,
+	current types.String,
+	diags *diag.Diagnostics,
+) types.String {
+	if server == nil {
+		return current
+	}
+
+	status, ok := manualStatusToString(*server)
+	if ok {
+		return types.StringValue(status)
+	}
+
+	tflog.Warn(ctx, "Manual monitor reports an unrecognized manual status", map[string]any{
+		"id":            id,
+		"manual_status": int64(*server),
+	})
+
+	diags.AddAttributeWarning(
+		path.Root("manual_status"),
+		"Unrecognized manual status",
+		fmt.Sprintf(
+			"Monitor %d reports manual status %d, which the provider does not know. Keeping %s "+
+				"from state; the next apply overwrites the status on the server.",
+			id, int64(*server), current.String(),
+		),
+	)
+
+	return current
+}
+
 // buildManualMonitor assembles the client monitor from the resource model.
 //
 // Uptime Kuma overwrites the stored status on every edit, and a nil status
@@ -156,13 +200,28 @@ func buildManualMonitor(
 		},
 	}
 
-	if !data.ManualStatus.IsNull() && !data.ManualStatus.IsUnknown() {
+	// An unknown status must not fall through to nil, which would silently
+	// reset the monitor to pending.
+	if data.ManualStatus.IsUnknown() {
+		diags.AddAttributeError(
+			path.Root("manual_status"),
+			"Unknown manual status",
+			"The manual status must be known at apply time.",
+		)
+
+		return nil
+	}
+
+	if !data.ManualStatus.IsNull() {
 		status, ok := manualStatusFromString(data.ManualStatus.ValueString())
 		if !ok {
 			diags.AddAttributeError(
 				path.Root("manual_status"),
 				"Invalid manual status",
-				fmt.Sprintf("Unsupported manual status %q.", data.ManualStatus.ValueString()),
+				fmt.Sprintf(
+					"Unsupported manual status %q. Expected one of %q, %q or %q.",
+					data.ManualStatus.ValueString(), manualStatusUp, manualStatusDown, manualStatusPending,
+				),
 			)
 
 			return nil
@@ -286,16 +345,9 @@ func (r *MonitorManualResource) Read(
 	data.UpsideDown = types.BoolValue(manualMonitor.UpsideDown)
 	data.Active = types.BoolValue(manualMonitor.IsActive)
 
-	// manual_status is write-only: Uptime Kuma stores it but does not send it
-	// back. Keep the value from state, so neither a refresh nor an import
-	// fabricates a status; adopt the server value if a future version begins
-	// returning it.
-	if manualMonitor.ManualStatus != nil {
-		status, ok := manualStatusToString(*manualMonitor.ManualStatus)
-		if ok {
-			data.ManualStatus = types.StringValue(status)
-		}
-	}
+	data.ManualStatus = readManualStatus(
+		ctx, data.ID.ValueInt64(), manualMonitor.ManualStatus, data.ManualStatus, &resp.Diagnostics,
+	)
 
 	if manualMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*manualMonitor.Parent)
