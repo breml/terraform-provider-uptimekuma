@@ -116,7 +116,7 @@ func (r *NotificationSMSGatewayResource) Create(
 		return
 	}
 
-	smsGateway := sMSGatewayFromModel(&data)
+	smsGateway := smsGatewayFromModel(&data)
 
 	id, err := r.client.CreateNotification(ctx, smsGateway)
 	// Handle error.
@@ -209,7 +209,7 @@ func (r *NotificationSMSGatewayResource) Update(
 		return
 	}
 
-	smsGateway := sMSGatewayFromModel(&data)
+	smsGateway := smsGatewayFromModel(&data)
 	smsGateway.ID = id
 
 	err := r.client.UpdateNotification(ctx, smsGateway)
@@ -260,8 +260,8 @@ func (*NotificationSMSGatewayResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-// sMSGatewayFromModel builds an SMS Gateway notification from the resource model.
-func sMSGatewayFromModel(data *NotificationSMSGatewayResourceModel) notification.SMSGateway {
+// smsGatewayFromModel builds an SMS Gateway notification from the resource model.
+func smsGatewayFromModel(data *NotificationSMSGatewayResourceModel) notification.SMSGateway {
 	return notification.SMSGateway{
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
