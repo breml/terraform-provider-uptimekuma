@@ -2,13 +2,21 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/notification"
 )
 
 func TestAccNotificationSMTPResource(t *testing.T) {
@@ -283,4 +291,131 @@ resource "uptimekuma_notification_smtp" "test" {
 	config += "}\n"
 
 	return config
+}
+
+func TestAccNotificationSMTPResourcePasswordWO(t *testing.T) {
+	name := acctest.RandomWithPrefix("NotificationSMTPPasswordWO")
+	kumaClient := testAccOutOfBandClient(t)
+	addr := "uptimekuma_notification_smtp.test"
+
+	// Neither attribute may carry the password in state, whatever the version.
+	passwordAbsentFromState := func(version string) []statecheck.StateCheck {
+		return []statecheck.StateCheck{
+			statecheck.ExpectKnownValue(addr, tfjsonpath.New("password"), knownvalue.Null()),
+			statecheck.ExpectKnownValue(addr, tfjsonpath.New("password_wo"), knownvalue.Null()),
+			statecheck.ExpectKnownValue(addr, tfjsonpath.New("password_wo_version"), knownvalue.StringExact(version)),
+		}
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_11_0),
+		},
+		Steps: []resource.TestStep{
+			// password and password_wo are mutually exclusive.
+			{
+				Config:      testAccNotificationSMTPPasswordWOBothConfig(name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
+			},
+			{
+				Config:            testAccNotificationSMTPPasswordWOConfig(name, "first-secret", "1"),
+				ConfigStateChecks: passwordAbsentFromState("1"),
+				Check:             testAccCheckSMTPServerPassword(t, kumaClient, addr, "first-secret"),
+			},
+			// A changed write-only value alone is invisible to the plan: nothing is sent.
+			{
+				Config: testAccNotificationSMTPPasswordWOConfig(name, "second-secret", "1"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: testAccCheckSMTPServerPassword(t, kumaClient, addr, "first-secret"),
+			},
+			// Bumping the version sends the current write-only value.
+			{
+				Config: testAccNotificationSMTPPasswordWOConfig(name, "second-secret", "2"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(addr, plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: passwordAbsentFromState("2"),
+				Check:             testAccCheckSMTPServerPassword(t, kumaClient, addr, "second-secret"),
+			},
+		},
+	})
+}
+
+// testAccCheckSMTPServerPassword asserts the password Uptime Kuma stores for the notification,
+// which is the only place a write-only value can be observed.
+func testAccCheckSMTPServerPassword(
+	t *testing.T,
+	kumaClient *kuma.Client,
+	resourceAddr string,
+	want string,
+) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceAddr]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", resourceAddr)
+		}
+
+		id, err := strconv.ParseInt(rs.Primary.ID, 10, 64)
+		if err != nil {
+			return fmt.Errorf("parse id %q: %w", rs.Primary.ID, err)
+		}
+
+		base, err := kumaClient.GetNotification(t.Context(), id)
+		if err != nil {
+			return fmt.Errorf("get notification %d: %w", id, err)
+		}
+
+		smtp := notification.SMTP{}
+
+		err = base.As(&smtp)
+		if err != nil {
+			return fmt.Errorf("convert notification %d to smtp: %w", id, err)
+		}
+
+		if smtp.Password != want {
+			return fmt.Errorf("server password for notification %d is %q, want %q", id, smtp.Password, want)
+		}
+
+		return nil
+	}
+}
+
+// testAccNotificationSMTPPasswordWOConfig renders an SMTP notification authenticated with a
+// write-only password.
+func testAccNotificationSMTPPasswordWOConfig(name string, password string, version string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_smtp" "test" {
+  name                = %[1]q
+  host                = "smtp.example.com"
+  from                = "uptime-kuma@example.com"
+  to                  = "admin@example.com"
+  username            = "smtp-user"
+  password_wo         = %[2]q
+  password_wo_version = %[3]q
+}
+`, name, password, version)
+}
+
+// testAccNotificationSMTPPasswordWOBothConfig sets both password and password_wo, which the
+// schema rejects.
+func testAccNotificationSMTPPasswordWOBothConfig(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_smtp" "test" {
+  name                = %[1]q
+  host                = "smtp.example.com"
+  from                = "uptime-kuma@example.com"
+  to                  = "admin@example.com"
+  password            = "plain"
+  password_wo         = "write-only"
+  password_wo_version = "3"
+}
+`, name)
 }
