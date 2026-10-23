@@ -159,6 +159,42 @@ func TestNonBlankValidator(t *testing.T) {
 	}
 }
 
+func TestNonEmptyCommaListValidator(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		value     types.String
+		wantError bool
+	}{
+		"single":            {value: types.StringValue("+15551234567"), wantError: false},
+		"multiple":          {value: types.StringValue("+15551234567,+15559876543"), wantError: false},
+		"irregular spacing": {value: types.StringValue(" +15551234567 , ,"), wantError: false},
+		"null":              {value: types.StringNull(), wantError: false},
+		"unknown":           {value: types.StringUnknown(), wantError: false},
+		"empty":             {value: types.StringValue(""), wantError: true},
+		"spaces only":       {value: types.StringValue("   "), wantError: true},
+		"comma only":        {value: types.StringValue(","), wantError: true},
+		"commas and spaces": {value: types.StringValue(" , ,\t, "), wantError: true},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := &validator.StringResponse{}
+			nonEmptyCommaList().ValidateString(
+				t.Context(),
+				validator.StringRequest{ConfigValue: test.value},
+				resp,
+			)
+
+			if got := resp.Diagnostics.HasError(); got != test.wantError {
+				t.Errorf("HasError() = %v, want %v (%v)", got, test.wantError, resp.Diagnostics)
+			}
+		})
+	}
+}
+
 // pm2ProcessNameValidators returns the validators the PM2 monitor resource
 // declares for process_name.
 func pm2ProcessNameValidators(t *testing.T) []validator.String {

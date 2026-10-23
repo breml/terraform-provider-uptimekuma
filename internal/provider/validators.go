@@ -114,6 +114,60 @@ func nonBlank() validator.String {
 	return nonBlankValidator{}
 }
 
+// nonEmptyCommaListValidator rejects comma separated lists that contain no
+// entry once each entry is trimmed.
+//
+// Some Uptime Kuma fields hold a comma separated list that the server splits,
+// trims and filters for empty entries before use. A value such as "," or
+// " , " therefore leaves nothing to act on, and the server reports success
+// without doing anything. Rejecting it at plan time reports the mistake on the
+// attribute instead.
+type nonEmptyCommaListValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (nonEmptyCommaListValidator) Description(_ context.Context) string {
+	return "value must contain at least one non-empty comma separated entry"
+}
+
+// MarkdownDescription returns a markdown description of the validator's behavior.
+func (v nonEmptyCommaListValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// ValidateString reports an error if the configured value has no non-empty entry.
+func (v nonEmptyCommaListValidator) ValidateString(
+	ctx context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	for entry := range strings.SplitSeq(req.ConfigValue.ValueString(), ",") {
+		if strings.TrimSpace(entry) != "" {
+			return
+		}
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		req.Path,
+		"Invalid Attribute Value",
+		fmt.Sprintf(
+			"Attribute %s %s, got: %q.",
+			req.Path,
+			v.Description(ctx),
+			req.ConfigValue.ValueString(),
+		),
+	)
+}
+
+// nonEmptyCommaList returns a validator that rejects comma separated lists
+// without a non-empty entry.
+func nonEmptyCommaList() validator.String {
+	return nonEmptyCommaListValidator{}
+}
+
 // jsonObjectValidator rejects strings that do not decode to a JSON object.
 //
 // The value is handed to a server that parses it and spreads the result into

@@ -67,7 +67,7 @@ func (*NotificationSMSGatewayResource) Schema(
 					"itself. The value is stored verbatim, the provider does not normalize it.",
 				Required: true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
+					validateURL(),
 				},
 			},
 			"api_key": schema.StringAttribute{
@@ -82,11 +82,11 @@ func (*NotificationSMSGatewayResource) Schema(
 				MarkdownDescription: "One or more recipient phone numbers in international format, separated by " +
 					"commas, for example `+15551234567, +15559876543`. Uptime Kuma trims each number and discards " +
 					"the empty entries; a value that leaves no number would send nothing while still reporting " +
-					"success, so a blank value is rejected. The value is stored verbatim, the provider does not " +
-					"normalize it.",
+					"success, so such a value, blank or only commas, is rejected. The value is stored verbatim, " +
+					"the provider does not normalize it.",
 				Required: true,
 				Validators: []validator.String{
-					nonBlank(),
+					nonEmptyCommaList(),
 				},
 			},
 		}),

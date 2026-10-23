@@ -40,7 +40,7 @@ resource "uptimekuma_notification_smsgateway" "team" {
 
 - `api_key` (String, Sensitive) The API key of the SMS Gateway server, sent as the `X-API-Key` header.
 - `name` (String) Notification name
-- `recipients` (String) One or more recipient phone numbers in international format, separated by commas, for example `+15551234567, +15559876543`. Uptime Kuma trims each number and discards the empty entries; a value that leaves no number would send nothing while still reporting success, so a blank value is rejected. The value is stored verbatim, the provider does not normalize it.
+- `recipients` (String) One or more recipient phone numbers in international format, separated by commas, for example `+15551234567, +15559876543`. Uptime Kuma trims each number and discards the empty entries; a value that leaves no number would send nothing while still reporting success, so such a value, blank or only commas, is rejected. The value is stored verbatim, the provider does not normalize it.
 - `url` (String) The base URL of the SMS Gateway server without an API path, for example `http://localhost:8080`. Uptime Kuma strips trailing slashes and appends `/api/v1/sms/send` itself. The value is stored verbatim, the provider does not normalize it.
 
 ### Optional

@@ -112,8 +112,8 @@ func TestAccNotificationSMSGatewayResource(t *testing.T) {
 }
 
 // TestAccNotificationSMSGatewayResourceInvalidConfig covers the validators and the required-argument
-// errors. A blank recipients value is rejected because the server would send nothing and still
-// report success.
+// errors. A recipients value without a number is rejected because the server would send nothing and
+// still report success.
 func TestAccNotificationSMSGatewayResourceInvalidConfig(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationSMSGatewayInvalid")
 
@@ -125,13 +125,31 @@ func TestAccNotificationSMSGatewayResourceInvalidConfig(t *testing.T) {
 				Config: testAccNotificationSMSGatewayResourceConfig(
 					name, "http://localhost:8080", "api-key", "  ",
 				),
-				ExpectError: regexp.MustCompile(`must\s+not\s+be\s+empty`),
+				ExpectError: regexp.MustCompile(`at\s+least\s+one\s+non-empty`),
+			},
+			{
+				Config: testAccNotificationSMSGatewayResourceConfig(
+					name, "http://localhost:8080", "api-key", ",",
+				),
+				ExpectError: regexp.MustCompile(`at\s+least\s+one\s+non-empty`),
+			},
+			{
+				Config: testAccNotificationSMSGatewayResourceConfig(
+					name, "http://localhost:8080", "api-key", " , ",
+				),
+				ExpectError: regexp.MustCompile(`at\s+least\s+one\s+non-empty`),
 			},
 			{
 				Config: testAccNotificationSMSGatewayResourceConfig(
 					name, "", "api-key", "+15551234567",
 				),
-				ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
+				ExpectError: regexp.MustCompile(`Invalid URL`),
+			},
+			{
+				Config: testAccNotificationSMSGatewayResourceConfig(
+					name, "sms.example.com:8080", "api-key", "+15551234567",
+				),
+				ExpectError: regexp.MustCompile(`Invalid URL`),
 			},
 			{
 				Config: testAccNotificationSMSGatewayResourceConfig(
