@@ -31,16 +31,18 @@ type ProxyResource struct {
 
 // ProxyResourceModel describes the resource data model.
 type ProxyResourceModel struct {
-	ID            types.Int64  `tfsdk:"id"`
-	Protocol      types.String `tfsdk:"protocol"`
-	Host          types.String `tfsdk:"host"`
-	Port          types.Int64  `tfsdk:"port"`
-	Auth          types.Bool   `tfsdk:"auth"`
-	Username      types.String `tfsdk:"username"`
-	Password      types.String `tfsdk:"password"`
-	Active        types.Bool   `tfsdk:"active"`
-	Default       types.Bool   `tfsdk:"default"`
-	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
+	ID                types.Int64  `tfsdk:"id"`
+	Protocol          types.String `tfsdk:"protocol"`
+	Host              types.String `tfsdk:"host"`
+	Port              types.Int64  `tfsdk:"port"`
+	Auth              types.Bool   `tfsdk:"auth"`
+	Username          types.String `tfsdk:"username"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	Active            types.Bool   `tfsdk:"active"`
+	Default           types.Bool   `tfsdk:"default"`
+	ApplyExisting     types.Bool   `tfsdk:"apply_existing"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -91,7 +93,7 @@ func (*ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			"password": schema.StringAttribute{
 				Optional:            true,
 				Sensitive:           true,
-				MarkdownDescription: "Password for proxy authentication",
+				MarkdownDescription: "Password for proxy authentication.",
 			},
 			"active": schema.BoolAttribute{
 				Optional:            true,
@@ -113,6 +115,7 @@ func (*ProxyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			},
 		},
 	}
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "Password for proxy authentication")
 }
 
 // Configure configures the resource with the API client.
@@ -144,19 +147,24 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ApplyExisting: data.ApplyExisting.ValueBool(),
 	}
 
+	password := writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if data.Auth.ValueBool() {
 		if data.Username.IsNull() || data.Username.ValueString() == "" {
 			resp.Diagnostics.AddError("validation error", "username is required when auth is enabled")
 			return
 		}
 
-		if data.Password.IsNull() || data.Password.ValueString() == "" {
-			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
+		if password == "" {
+			resp.Diagnostics.AddError("validation error", "password or password_wo is required when auth is enabled")
 			return
 		}
 
 		p.Username = data.Username.ValueString()
-		p.Password = data.Password.ValueString()
+		p.Password = password
 	}
 
 	id, err := r.client.CreateProxy(ctx, p)
@@ -238,19 +246,24 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		ApplyExisting: data.ApplyExisting.ValueBool(),
 	}
 
+	password := writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if data.Auth.ValueBool() {
 		if data.Username.IsNull() || data.Username.ValueString() == "" {
 			resp.Diagnostics.AddError("validation error", "username is required when auth is enabled")
 			return
 		}
 
-		if data.Password.IsNull() || data.Password.ValueString() == "" {
-			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
+		if password == "" {
+			resp.Diagnostics.AddError("validation error", "password or password_wo is required when auth is enabled")
 			return
 		}
 
 		p.Username = data.Username.ValueString()
-		p.Password = data.Password.ValueString()
+		p.Password = password
 	}
 
 	err := r.client.UpdateProxy(ctx, p)

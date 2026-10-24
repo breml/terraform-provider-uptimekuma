@@ -487,7 +487,7 @@ func TestAccMonitorSFTPResourceValidators(t *testing.T) {
 			},
 			{
 				Config:      testAccMonitorSFTPResourceConfigWithAttribute(name, "ssh_auth_method", `"privateKey"`),
-				ExpectError: regexp.MustCompile(`"ssh_private_key"\s+must\s+be\s+set`),
+				ExpectError: regexp.MustCompile(`"ssh_private_key"\s+or\s+"ssh_private_key_wo"\s+must\s+be\s+set`),
 			},
 			{
 				Config:      testAccMonitorSFTPResourceConfigWithAttribute(name, "ssh_passphrase", `"phrase"`),

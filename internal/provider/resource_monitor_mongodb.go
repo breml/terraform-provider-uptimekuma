@@ -34,11 +34,13 @@ type MonitorMongoDBResource struct {
 type MonitorMongoDBResourceModel struct {
 	MonitorBaseModel
 
-	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
-	DatabaseQuery            types.String `tfsdk:"database_query"`
-	JSONPath                 types.String `tfsdk:"json_path"`
-	ExpectedValue            types.String `tfsdk:"expected_value"`
-	Conditions               types.List   `tfsdk:"conditions"`
+	DatabaseConnectionString          types.String `tfsdk:"database_connection_string"`
+	DatabaseConnectionStringWO        types.String `tfsdk:"database_connection_string_wo"`
+	DatabaseConnectionStringWOVersion types.String `tfsdk:"database_connection_string_wo_version"`
+	DatabaseQuery                     types.String `tfsdk:"database_query"`
+	JSONPath                          types.String `tfsdk:"json_path"`
+	ExpectedValue                     types.String `tfsdk:"expected_value"`
+	Conditions                        types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -81,6 +83,12 @@ func (*MonitorMongoDBResource) Schema(
 			"conditions": conditionsAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"database_connection_string",
+		"MongoDB connection string (e.g., mongodb://username:password@host:port/database)",
+	)
 }
 
 // Configure configures the MongoDB monitor resource with the API client.
@@ -117,11 +125,17 @@ func (r *MonitorMongoDBResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		MongoDBDetails: monitor.MongoDBDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            strToPtr(data.DatabaseQuery),
-			JSONPath:                 strToPtr(data.JSONPath),
-			ExpectedValue:            strToPtr(data.ExpectedValue),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: strToPtr(data.DatabaseQuery),
+			JSONPath:      strToPtr(data.JSONPath),
+			ExpectedValue: strToPtr(data.ExpectedValue),
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -218,7 +232,10 @@ func (r *MonitorMongoDBResource) Read(
 	data.MaxRetries = types.Int64Value(mongoDBMonitor.MaxRetries)
 	data.UpsideDown = types.BoolValue(mongoDBMonitor.UpsideDown)
 	data.Active = types.BoolValue(mongoDBMonitor.IsActive)
-	data.DatabaseConnectionString = types.StringValue(mongoDBMonitor.DatabaseConnectionString)
+	if data.DatabaseConnectionStringWOVersion.IsNull() {
+		data.DatabaseConnectionString = types.StringValue(mongoDBMonitor.DatabaseConnectionString)
+	}
+
 	if mongoDBMonitor.DatabaseQuery == nil {
 		data.DatabaseQuery = types.StringValue(`{"ping": 1}`)
 	} else {
@@ -293,11 +310,17 @@ func (r *MonitorMongoDBResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		MongoDBDetails: monitor.MongoDBDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            strToPtr(data.DatabaseQuery),
-			JSONPath:                 strToPtr(data.JSONPath),
-			ExpectedValue:            strToPtr(data.ExpectedValue),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: strToPtr(data.DatabaseQuery),
+			JSONPath:      strToPtr(data.JSONPath),
+			ExpectedValue: strToPtr(data.ExpectedValue),
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

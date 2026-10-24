@@ -34,9 +34,11 @@ type MonitorPostgresResource struct {
 type MonitorPostgresResourceModel struct {
 	MonitorBaseModel
 
-	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
-	DatabaseQuery            types.String `tfsdk:"database_query"`
-	Conditions               types.List   `tfsdk:"conditions"`
+	DatabaseConnectionString          types.String `tfsdk:"database_connection_string"`
+	DatabaseConnectionStringWO        types.String `tfsdk:"database_connection_string_wo"`
+	DatabaseConnectionStringWOVersion types.String `tfsdk:"database_connection_string_wo_version"`
+	DatabaseQuery                     types.String `tfsdk:"database_query"`
+	Conditions                        types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -71,6 +73,12 @@ func (*MonitorPostgresResource) Schema(
 			"conditions": conditionsAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"database_connection_string",
+		"PostgreSQL connection string (e.g., postgres://username:password@host:port/database)",
+	)
 }
 
 // Configure configures the PostgreSQL monitor resource with the API client.
@@ -107,9 +115,15 @@ func (r *MonitorPostgresResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		PostgresDetails: monitor.PostgresDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: data.DatabaseQuery.ValueStringPointer(),
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -202,7 +216,10 @@ func (r *MonitorPostgresResource) Read(ctx context.Context, req resource.ReadReq
 	data.MaxRetries = types.Int64Value(postgresMonitor.MaxRetries)
 	data.UpsideDown = types.BoolValue(postgresMonitor.UpsideDown)
 	data.Active = types.BoolValue(postgresMonitor.IsActive)
-	data.DatabaseConnectionString = types.StringValue(postgresMonitor.DatabaseConnectionString)
+	if data.DatabaseConnectionStringWOVersion.IsNull() {
+		data.DatabaseConnectionString = types.StringValue(postgresMonitor.DatabaseConnectionString)
+	}
+
 	if postgresMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*postgresMonitor.DatabaseQuery)
 	}
@@ -272,9 +289,15 @@ func (r *MonitorPostgresResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		PostgresDetails: monitor.PostgresDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: data.DatabaseQuery.ValueStringPointer(),
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

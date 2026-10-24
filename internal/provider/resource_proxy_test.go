@@ -1,13 +1,17 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
 func TestAccProxyResource(t *testing.T) {
@@ -265,4 +269,42 @@ resource "uptimekuma_proxy" "test" {
 
 func testAccProxyResourceConfigEmpty() string {
 	return providerConfig()
+}
+
+// TestAccProxyResourceWriteOnly runs non-parallel like every proxy test, see
+// TestAccProxyResource.
+func TestAccProxyResourceWriteOnly(t *testing.T) {
+	host := acctest.RandomWithPrefix("wo") + ".proxy.example.com"
+
+	resource.Test(t, testAccWriteOnlyTestCase(t, writeOnlyTestCase{
+		addr:     "uptimekuma_proxy.test",
+		attrs:    []string{"password"},
+		noImport: true,
+		config: func(secret string, version string) string {
+			return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_proxy" "test" {
+  host     = %[1]q
+  port     = 8080
+  protocol = "http"
+  auth     = true
+  username = "monitor"
+  active   = true
+%[2]s}
+`, host, writeOnlyAttrLines(secret, version, "password"))
+		},
+		serverSecrets: func(ctx context.Context, kumaClient *kuma.Client, id int64) (map[string]string, error) {
+			// GetProxy serves from a cache that nothing waits to refresh after a write.
+			err := kumaClient.Resync(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("resync out-of-band client: %w", err)
+			}
+
+			p, err := kumaClient.GetProxy(ctx, id)
+			if err != nil {
+				return nil, fmt.Errorf("get proxy %d: %w", id, err)
+			}
+
+			return map[string]string{"password": p.Password}, nil
+		},
+	}))
 }

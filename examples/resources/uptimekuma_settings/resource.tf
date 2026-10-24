@@ -15,3 +15,10 @@ resource "uptimekuma_settings" "minimal" {
   server_timezone       = "UTC"
   keep_data_period_days = 7
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: steam_api_key_wo is never stored in
+# plan or state. Change steam_api_key_wo_version whenever the secret changes.
+resource "uptimekuma_settings" "write_only" {
+  steam_api_key_wo         = "steam-api-key"
+  steam_api_key_wo_version = "1"
+}

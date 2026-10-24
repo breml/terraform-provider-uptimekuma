@@ -52,3 +52,16 @@ resource "uptimekuma_monitor_http" "with_json_query" {
   active   = true
   method   = "GET"
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: basic_auth_pass_wo is never stored in
+# plan or state. Change basic_auth_pass_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_http" "write_only" {
+  name = "HTTP monitor with a write-only basic auth password"
+
+  url         = "https://api.example.com/health"
+  auth_method = "basic"
+
+  basic_auth_user            = "monitor"
+  basic_auth_pass_wo         = "basic-auth-password"
+  basic_auth_pass_wo_version = "1"
+}

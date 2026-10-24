@@ -52,3 +52,16 @@ variable "sftp_key_passphrase" {
   type      = string
   sensitive = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: ssh_private_key_wo is never stored in
+# plan or state. Change ssh_private_key_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_sftp" "write_only" {
+  name = "SFTP monitor with a write-only private key"
+
+  hostname        = "sftp.example.com"
+  ssh_username    = "backup"
+  ssh_auth_method = "privateKey"
+
+  ssh_private_key_wo         = file("~/.ssh/id_ed25519")
+  ssh_private_key_wo_version = "1"
+}

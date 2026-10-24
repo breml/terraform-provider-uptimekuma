@@ -12,6 +12,7 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 - 142 resource types (monitors, notifications, status pages, maintenance windows, etc.)
 - 142 corresponding data sources for querying existing resources
 - Built-in retry logic and connection pooling for reliability
+- Write-only (`*_wo`) variants of secret attributes keep credentials out of plan and state
 - Comprehensive testing with Docker-based acceptance tests
 - Strict code quality standards with 80+ linters enabled
 
@@ -103,6 +104,8 @@ Opsgenie, Splunk), regional platforms (Feishu, DingTalk), and many more.
 - **Context management**: `context.Background()` in provider, Terraform context in resources
 - **Error handling**: `resp.Diagnostics` pattern with early returns, never direct returns
 - **Connection pooling**: Singleton pattern for acceptance tests to prevent rate limiting
+- **Write-only secrets**: `withWriteOnlySecret()` adds `<name>_wo` / `<name>_wo_version` to a
+  secret attribute; Read must not refresh the secret while the version is set
 
 See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed implementation patterns.
 
@@ -123,6 +126,7 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
   - Base models and helper functions
   - CRUD implementation patterns
   - State management
+  - Write-only secrets (`*_wo` attributes)
   - Testing infrastructure
   - Recent changes (v0.1.6 status page perpetual diff fix)
 
@@ -145,6 +149,8 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
   (internal/provider/CLAUDE.md#testing-infrastructure)
 - **Client Creation**: See [internal/client/CLAUDE.md § Client Creation Patterns]
   (internal/client/CLAUDE.md#client-creation-patterns)
+- **Write-only Secrets**: See [internal/provider/CLAUDE.md § Write-only Secrets]
+  (internal/provider/CLAUDE.md#write-only-secrets)
 - **Linting Issues**: See [CODE_STYLE.md § Common Issues]
   (CODE_STYLE.md#common-linting-issues--solutions)
 
@@ -202,6 +208,9 @@ Before marking a task complete:
 3. **Unit tests cover new functionality**: Add comprehensive test coverage
    - Use separate `_test` package for unit tests (exception: provider tests)
    - Tests should be clear and focused on specific behaviors
+   - A resource with secret attributes offers `*_wo` variants and a `testAccWriteOnlyTestCase`
+     acceptance test, see [internal/provider/CLAUDE.md § Write-only Secrets]
+     (internal/provider/CLAUDE.md#write-only-secrets)
 4. **All tests pass**: Both `task test` and `task testacc` must pass
    - Unit tests run with shuffle and race detection
    - Acceptance tests require real Uptime Kuma instance

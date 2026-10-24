@@ -6,14 +6,12 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -112,13 +110,9 @@ func (*NotificationSMTPResource) Schema(
 				Optional:            true,
 			},
 			"password": schema.StringAttribute{
-				MarkdownDescription: "SMTP password for authentication. Stored in state; use `password_wo` to " +
-					"keep it out of state.",
-				Optional:  true,
-				Sensitive: true,
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.MatchRoot("password_wo")),
-				},
+				MarkdownDescription: "SMTP password for authentication.",
+				Optional:            true,
+				Sensitive:           true,
 			},
 			"from": schema.StringAttribute{
 				MarkdownDescription: "Sender email address",
@@ -172,7 +166,7 @@ func (*NotificationSMTPResource) Schema(
 		})),
 	}
 
-	resp.Schema.Attributes = withSMTPPasswordWOAttributes(resp.Schema.Attributes)
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "SMTP password for authentication")
 }
 
 // withSMTPDkimAttributes adds the DKIM signing attributes to the provided attribute map, which
@@ -215,56 +209,6 @@ func withSMTPDkimAttributes(attrs map[string]schema.Attribute) map[string]schema
 	return attrs
 }
 
-// withSMTPPasswordWOAttributes adds the write-only alternative to password. Terraform and
-// OpenTofu never store a write-only value in plan or state, so a change to it alone produces
-// no diff; password_wo_version is the stored stand-in whose change triggers the update.
-func withSMTPPasswordWOAttributes(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	attrs["password_wo"] = schema.StringAttribute{
-		MarkdownDescription: "SMTP password for authentication, write-only: sent to Uptime Kuma on create " +
-			"and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or " +
-			"later. Conflicts with `password`; requires `password_wo_version`. An imported notification " +
-			"has no `password_wo_version` yet, so `terraform import` stores the server's password in " +
-			"`password` until the next apply with `password_wo` set removes it from state.",
-		Optional:  true,
-		Sensitive: true,
-		WriteOnly: true,
-		Validators: []validator.String{
-			stringvalidator.AlsoRequires(path.MatchRoot("password_wo_version")),
-		},
-	}
-
-	attrs["password_wo_version"] = schema.StringAttribute{
-		MarkdownDescription: "Any value that changes whenever `password_wo` changes, for example a counter " +
-			"or a hash of the secret's encrypted source. A change triggers an update that sends the " +
-			"current `password_wo`.",
-		Optional: true,
-		Validators: []validator.String{
-			stringvalidator.AlsoRequires(path.MatchRoot("password_wo")),
-		},
-	}
-
-	return attrs
-}
-
-// smtpPassword returns the password to send to Uptime Kuma: password_wo, which only the
-// configuration carries, or else password from the plan.
-func smtpPassword(
-	ctx context.Context,
-	config tfsdk.Config,
-	data *NotificationSMTPResourceModel,
-	diags *diag.Diagnostics,
-) string {
-	var passwordWO types.String
-
-	diags.Append(config.GetAttribute(ctx, path.Root("password_wo"), &passwordWO)...)
-
-	if !passwordWO.IsNull() {
-		return passwordWO.ValueString()
-	}
-
-	return data.Password.ValueString()
-}
-
 // Configure configures the SMTP notification resource with the API client.
 func (r *NotificationSMTPResource) Configure(
 	_ context.Context,
@@ -284,7 +228,7 @@ func (r *NotificationSMTPResource) Create(
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
-	password := smtpPassword(ctx, req.Config, &data, &resp.Diagnostics)
+	password := writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -389,7 +333,7 @@ func (r *NotificationSMTPResource) Update(
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
-	password := smtpPassword(ctx, req.Config, &data, &resp.Diagnostics)
+	password := writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

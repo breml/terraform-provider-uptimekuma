@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -44,6 +45,8 @@ type MonitorSNMPResourceModel struct {
 	SNMPVersion              types.String `tfsdk:"snmp_version"`
 	SNMPOID                  types.String `tfsdk:"snmp_oid"`
 	SNMPCommunity            types.String `tfsdk:"snmp_community"`
+	SNMPCommunityWO          types.String `tfsdk:"snmp_community_wo"`
+	SNMPCommunityWOVersion   types.String `tfsdk:"snmp_community_wo_version"`
 	SNMPV3Username           types.String `tfsdk:"snmp_v3_username"`
 	JSONPath                 types.String `tfsdk:"json_path"`
 	JSONPathOperator         types.String `tfsdk:"json_path_operator"`
@@ -119,6 +122,8 @@ func (*MonitorSNMPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "snmp_community", "SNMP community string")
 }
 
 // Configure configures the resource with the API client.
@@ -139,6 +144,7 @@ func (r *MonitorSNMPResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	snmpMonitor := buildSNMPMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &snmpMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -228,6 +234,17 @@ func buildSNMPMonitor(ctx context.Context, data *MonitorSNMPResourceModel, diags
 	return snmpMonitor
 }
 
+// applyWriteOnlySecrets replaces the secrets in m with their write-only variants where the
+// configuration sets them; only the configuration carries a write-only value.
+func (data *MonitorSNMPResourceModel) applyWriteOnlySecrets(
+	ctx context.Context,
+	config tfsdk.Config,
+	m *monitor.SNMP,
+	diags *diag.Diagnostics,
+) {
+	m.SNMPCommunity = writeOnlyOrPlan(ctx, config, "snmp_community", data.SNMPCommunity, diags)
+}
+
 // populateSNMPMonitorBaseFields populates the resource model with data from the SNMP monitor API response.
 func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPResourceModel) {
 	m.Name = types.StringValue(snmpMonitor.Name)
@@ -246,7 +263,10 @@ func populateSNMPMonitorBaseFields(snmpMonitor *monitor.SNMP, m *MonitorSNMPReso
 	m.Hostname = types.StringValue(snmpMonitor.Hostname)
 	m.SNMPVersion = types.StringValue(snmpMonitor.SNMPVersion)
 	m.SNMPOID = types.StringValue(snmpMonitor.SNMPOID)
-	m.SNMPCommunity = types.StringValue(snmpMonitor.SNMPCommunity)
+	if m.SNMPCommunityWOVersion.IsNull() {
+		m.SNMPCommunity = types.StringValue(snmpMonitor.SNMPCommunity)
+	}
+
 	m.DomainExpiryNotification = types.BoolValue(snmpMonitor.DomainExpiryNotification)
 	// snmp_v3_username is not echoed on read by the server. Preserve the
 	// configured value to avoid a perpetual diff; adopt the server value if a
@@ -355,6 +375,7 @@ func (r *MonitorSNMPResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	snmpMonitor := buildSNMPMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &snmpMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

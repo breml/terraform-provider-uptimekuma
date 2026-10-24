@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -39,17 +40,19 @@ type MonitorMQTTResource struct {
 type MonitorMQTTResourceModel struct {
 	MonitorBaseModel
 
-	Hostname                 types.String `tfsdk:"hostname"`             // MQTT broker hostname or IP.
-	Port                     types.Int64  `tfsdk:"port"`                 // MQTT broker port.
-	MQTTTopic                types.String `tfsdk:"mqtt_topic"`           // Topic to subscribe to.
-	MQTTUsername             types.String `tfsdk:"mqtt_username"`        // Optional username for MQTT authentication.
-	MQTTPassword             types.String `tfsdk:"mqtt_password"`        // Optional password for MQTT authentication.
-	MQTTWebsocketPath        types.String `tfsdk:"mqtt_websocket_path"`  // Optional WebSocket path for WebSocket connections.
-	MQTTCheckType            types.String `tfsdk:"mqtt_check_type"`      // Check type: keyword or json-query.
-	MQTTSuccessMessage       types.String `tfsdk:"mqtt_success_message"` // Expected message for keyword check.
-	JSONPath                 types.String `tfsdk:"json_path"`            // JSON path for json-query check.
-	ExpectedValue            types.String `tfsdk:"expected_value"`       // Expected value for json-query check.
-	Conditions               types.List   `tfsdk:"conditions"`           // Optional assertion clauses.
+	Hostname                 types.String `tfsdk:"hostname"`                 // MQTT broker hostname or IP.
+	Port                     types.Int64  `tfsdk:"port"`                     // MQTT broker port.
+	MQTTTopic                types.String `tfsdk:"mqtt_topic"`               // Topic to subscribe to.
+	MQTTUsername             types.String `tfsdk:"mqtt_username"`            // Optional username for MQTT authentication.
+	MQTTPassword             types.String `tfsdk:"mqtt_password"`            // Optional password for MQTT authentication.
+	MQTTPasswordWO           types.String `tfsdk:"mqtt_password_wo"`         // Write-only MQTT password.
+	MQTTPasswordWOVersion    types.String `tfsdk:"mqtt_password_wo_version"` // Triggers sending mqtt_password_wo.
+	MQTTWebsocketPath        types.String `tfsdk:"mqtt_websocket_path"`      // Optional WebSocket path for WebSocket connections.
+	MQTTCheckType            types.String `tfsdk:"mqtt_check_type"`          // Check type: keyword or json-query.
+	MQTTSuccessMessage       types.String `tfsdk:"mqtt_success_message"`     // Expected message for keyword check.
+	JSONPath                 types.String `tfsdk:"json_path"`                // JSON path for json-query check.
+	ExpectedValue            types.String `tfsdk:"expected_value"`           // Expected value for json-query check.
+	Conditions               types.List   `tfsdk:"conditions"`               // Optional assertion clauses.
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
@@ -119,6 +122,12 @@ func (*MonitorMQTTResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"mqtt_password",
+		"MQTT password for authentication",
+	)
 }
 
 // Configure configures the resource with the API client.
@@ -139,6 +148,7 @@ func (r *MonitorMQTTResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	mqttMonitor := buildMQTTMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &mqttMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -244,6 +254,17 @@ func buildMQTTMonitor(ctx context.Context, data *MonitorMQTTResourceModel, diags
 	return mqttMonitor
 }
 
+// applyWriteOnlySecrets replaces the secrets in m with their write-only variants where the
+// configuration sets them; only the configuration carries a write-only value.
+func (data *MonitorMQTTResourceModel) applyWriteOnlySecrets(
+	ctx context.Context,
+	config tfsdk.Config,
+	m *monitor.MQTT,
+	diags *diag.Diagnostics,
+) {
+	m.MQTTPassword = strToPtr(writeOnlyOrPlanValue(ctx, config, "mqtt_password", data.MQTTPassword, diags))
+}
+
 // populateMQTTMonitorBaseFieldsForMQTT populates the base MQTT monitor fields from the API response.
 // Extracts MQTT-specific fields from the API response into the model.
 // Handles base monitor fields and all MQTT configuration options.
@@ -268,7 +289,10 @@ func populateMQTTMonitorBaseFieldsForMQTT(mqttMonitor *monitor.MQTT, m *MonitorM
 	m.JSONPath = stringOrNull(stringPtrValue(mqttMonitor.JSONPath))
 	m.ExpectedValue = stringOrNull(stringPtrValue(mqttMonitor.ExpectedValue))
 	m.MQTTUsername = stringOrNull(stringPtrValue(mqttMonitor.MQTTUsername))
-	m.MQTTPassword = stringOrNull(stringPtrValue(mqttMonitor.MQTTPassword))
+	if m.MQTTPasswordWOVersion.IsNull() {
+		m.MQTTPassword = stringOrNull(stringPtrValue(mqttMonitor.MQTTPassword))
+	}
+
 	m.MQTTWebsocketPath = stringOrNull(stringPtrValue(mqttMonitor.MQTTWebsocketPath))
 	m.DomainExpiryNotification = types.BoolValue(mqttMonitor.DomainExpiryNotification)
 }
@@ -370,6 +394,7 @@ func (r *MonitorMQTTResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	mqttMonitor := buildMQTTMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &mqttMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

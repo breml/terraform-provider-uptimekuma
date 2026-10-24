@@ -34,9 +34,11 @@ type MonitorSQLServerResource struct {
 type MonitorSQLServerResourceModel struct {
 	MonitorBaseModel
 
-	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
-	DatabaseQuery            types.String `tfsdk:"database_query"`
-	Conditions               types.List   `tfsdk:"conditions"`
+	DatabaseConnectionString          types.String `tfsdk:"database_connection_string"`
+	DatabaseConnectionStringWO        types.String `tfsdk:"database_connection_string_wo"`
+	DatabaseConnectionStringWOVersion types.String `tfsdk:"database_connection_string_wo_version"`
+	DatabaseQuery                     types.String `tfsdk:"database_query"`
+	Conditions                        types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -71,6 +73,12 @@ func (*MonitorSQLServerResource) Schema(
 			"conditions": conditionsAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"database_connection_string",
+		"SQL Server connection string",
+	)
 }
 
 // Configure configures the SQL Server monitor resource with the API client.
@@ -107,9 +115,15 @@ func (r *MonitorSQLServerResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		SQLServerDetails: monitor.SQLServerDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            new(data.DatabaseQuery.ValueString()),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: new(data.DatabaseQuery.ValueString()),
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -206,7 +220,10 @@ func (r *MonitorSQLServerResource) Read(
 	data.MaxRetries = types.Int64Value(sqlserverMonitor.MaxRetries)
 	data.UpsideDown = types.BoolValue(sqlserverMonitor.UpsideDown)
 	data.Active = types.BoolValue(sqlserverMonitor.IsActive)
-	data.DatabaseConnectionString = types.StringValue(sqlserverMonitor.DatabaseConnectionString)
+	if data.DatabaseConnectionStringWOVersion.IsNull() {
+		data.DatabaseConnectionString = types.StringValue(sqlserverMonitor.DatabaseConnectionString)
+	}
+
 	if sqlserverMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*sqlserverMonitor.DatabaseQuery)
 	} else {
@@ -278,9 +295,15 @@ func (r *MonitorSQLServerResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		SQLServerDetails: monitor.SQLServerDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            new(data.DatabaseQuery.ValueString()),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: new(data.DatabaseQuery.ValueString()),
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

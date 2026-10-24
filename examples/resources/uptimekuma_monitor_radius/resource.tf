@@ -47,3 +47,18 @@ resource "uptimekuma_monitor_radius" "accounting" {
   radius_secret   = "shared-secret"
   interval        = 300
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: radius_password_wo and
+# radius_secret_wo are never stored in plan or state. Change the matching
+# *_wo_version whenever a secret changes.
+resource "uptimekuma_monitor_radius" "write_only" {
+  name = "RADIUS monitor with write-only credentials"
+
+  hostname        = "radius.example.com"
+  radius_username = "monitor"
+
+  radius_password_wo         = "radius-password"
+  radius_password_wo_version = "1"
+  radius_secret_wo           = "radius-shared-secret"
+  radius_secret_wo_version   = "1"
+}

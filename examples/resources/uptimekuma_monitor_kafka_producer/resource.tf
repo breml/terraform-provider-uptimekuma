@@ -50,3 +50,16 @@ resource "uptimekuma_monitor_kafka_producer" "sasl" {
     }
   ]
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: sasl_options_wo is never stored in
+# plan or state. Change sasl_options_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_kafka_producer" "write_only" {
+  name = "Kafka producer monitor with write-only SASL options"
+
+  brokers = ["kafka.example.com:9092"]
+  topic   = "monitor-topic"
+  message = "ping"
+
+  sasl_options_wo         = jsonencode({ mechanism = "plain", username = "monitor", password = "kafka-password" })
+  sasl_options_wo_version = "1"
+}

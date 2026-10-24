@@ -34,11 +34,15 @@ type MonitorOracleDBResource struct {
 type MonitorOracleDBResourceModel struct {
 	MonitorBaseModel
 
-	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
-	DatabaseQuery            types.String `tfsdk:"database_query"`
-	BasicAuthUser            types.String `tfsdk:"basic_auth_user"`
-	BasicAuthPass            types.String `tfsdk:"basic_auth_pass"`
-	Conditions               types.List   `tfsdk:"conditions"`
+	DatabaseConnectionString          types.String `tfsdk:"database_connection_string"`
+	DatabaseConnectionStringWO        types.String `tfsdk:"database_connection_string_wo"`
+	DatabaseConnectionStringWOVersion types.String `tfsdk:"database_connection_string_wo_version"`
+	DatabaseQuery                     types.String `tfsdk:"database_query"`
+	BasicAuthUser                     types.String `tfsdk:"basic_auth_user"`
+	BasicAuthPass                     types.String `tfsdk:"basic_auth_pass"`
+	BasicAuthPassWO                   types.String `tfsdk:"basic_auth_pass_wo"`
+	BasicAuthPassWOVersion            types.String `tfsdk:"basic_auth_pass_wo_version"`
+	Conditions                        types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -86,6 +90,14 @@ func (*MonitorOracleDBResource) Schema(
 			"conditions": conditionsAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"database_connection_string",
+		"Oracle EZCONNECT connection string (e.g., host:port/service)",
+	)
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "basic_auth_pass", "Oracle Database password")
 }
 
 // Configure configures the OracleDB monitor resource with the API client.
@@ -122,11 +134,23 @@ func (r *MonitorOracleDBResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		OracleDBDetails: monitor.OracleDBDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
-			Username:                 data.BasicAuthUser.ValueString(),
-			Password:                 data.BasicAuthPass.ValueString(),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: data.DatabaseQuery.ValueStringPointer(),
+			Username:      data.BasicAuthUser.ValueString(),
+			Password: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"basic_auth_pass",
+				data.BasicAuthPass,
+				&resp.Diagnostics,
+			),
+			Conditions: buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -219,13 +243,18 @@ func (r *MonitorOracleDBResource) Read(ctx context.Context, req resource.ReadReq
 	data.MaxRetries = types.Int64Value(oracleDBMonitor.MaxRetries)
 	data.UpsideDown = types.BoolValue(oracleDBMonitor.UpsideDown)
 	data.Active = types.BoolValue(oracleDBMonitor.IsActive)
-	data.DatabaseConnectionString = types.StringValue(oracleDBMonitor.DatabaseConnectionString)
+	if data.DatabaseConnectionStringWOVersion.IsNull() {
+		data.DatabaseConnectionString = types.StringValue(oracleDBMonitor.DatabaseConnectionString)
+	}
+
 	if oracleDBMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*oracleDBMonitor.DatabaseQuery)
 	}
 
 	data.BasicAuthUser = types.StringValue(oracleDBMonitor.Username)
-	data.BasicAuthPass = types.StringValue(oracleDBMonitor.Password)
+	if data.BasicAuthPassWOVersion.IsNull() {
+		data.BasicAuthPass = types.StringValue(oracleDBMonitor.Password)
+	}
 
 	if oracleDBMonitor.Parent != nil {
 		data.Parent = types.Int64Value(*oracleDBMonitor.Parent)
@@ -292,11 +321,23 @@ func (r *MonitorOracleDBResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		OracleDBDetails: monitor.OracleDBDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            data.DatabaseQuery.ValueStringPointer(),
-			Username:                 data.BasicAuthUser.ValueString(),
-			Password:                 data.BasicAuthPass.ValueString(),
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: data.DatabaseQuery.ValueStringPointer(),
+			Username:      data.BasicAuthUser.ValueString(),
+			Password: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"basic_auth_pass",
+				data.BasicAuthPass,
+				&resp.Diagnostics,
+			),
+			Conditions: buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

@@ -79,3 +79,16 @@ resource "uptimekuma_monitor_snmp" "uptime" {
   port           = 161
   interval       = 60
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: snmp_community_wo is never stored in
+# plan or state. Change snmp_community_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_snmp" "write_only" {
+  name = "SNMP monitor with a write-only community string"
+
+  hostname     = "192.168.1.1"
+  snmp_version = "2c"
+  snmp_oid     = ".1.3.6.1.2.1.1.5.0"
+
+  snmp_community_wo         = "private-community"
+  snmp_community_wo_version = "1"
+}

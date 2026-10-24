@@ -82,3 +82,14 @@ resource "uptimekuma_monitor_oracledb" "example_with_notification" {
 
   notification_ids = [uptimekuma_notification_slack.alerts.id]
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: basic_auth_pass_wo is never stored in
+# plan or state. Change basic_auth_pass_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_oracledb" "write_only" {
+  name = "OracleDB monitor with a write-only password"
+
+  database_connection_string = "oracle.example.com:1521/ORCLPDB1"
+  basic_auth_user            = "monitor"
+  basic_auth_pass_wo         = "oracle-password"
+  basic_auth_pass_wo_version = "1"
+}

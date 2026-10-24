@@ -69,3 +69,18 @@ resource "uptimekuma_monitor_group" "mqtt_monitors" {
   name     = "MQTT Monitors"
   interval = 60
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: mqtt_password_wo is never stored in
+# plan or state. Change mqtt_password_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_mqtt" "write_only" {
+  name = "MQTT monitor with a write-only password"
+
+  hostname        = "mqtt.example.com"
+  port            = 1883
+  mqtt_topic      = "status"
+  mqtt_check_type = "keyword"
+
+  mqtt_username            = "monitor"
+  mqtt_password_wo         = "mqtt-password"
+  mqtt_password_wo_version = "1"
+}

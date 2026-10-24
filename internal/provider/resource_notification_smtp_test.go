@@ -1,9 +1,9 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"regexp"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -399,9 +399,7 @@ func TestAccNotificationSMTPResourcePasswordWO(t *testing.T) {
 }
 
 // testAccCheckSMTPServerPassword asserts the password Uptime Kuma stores for the notification,
-// which is the only place a write-only value can be observed. The out-of-band client serves
-// notifications from a cache that the server's notificationList broadcast refreshes, and nothing
-// waits for that broadcast after a write, so the cache is resynced before it is read.
+// which is the only place a write-only value can be observed.
 func testAccCheckSMTPServerPassword(
 	t *testing.T,
 	kumaClient *kuma.Client,
@@ -411,34 +409,29 @@ func testAccCheckSMTPServerPassword(
 	t.Helper()
 
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceAddr]
-		if !ok {
-			return fmt.Errorf("resource %s not found in state", resourceAddr)
-		}
-
-		id, err := strconv.ParseInt(rs.Primary.ID, 10, 64)
+		id, err := testAccStateID(s, resourceAddr)
 		if err != nil {
-			return fmt.Errorf("parse id %q: %w", rs.Primary.ID, err)
+			return err
 		}
 
-		err = kumaClient.Resync(t.Context())
+		got, err := smtpServerSecrets(t.Context(), kumaClient, id)
 		if err != nil {
-			return fmt.Errorf("resync out-of-band client: %w", err)
+			return err
 		}
 
-		smtp := notification.SMTP{}
-
-		err = kumaClient.GetNotificationAs(t.Context(), id, &smtp)
-		if err != nil {
-			return fmt.Errorf("get notification %d: %w", id, err)
-		}
-
-		if smtp.Password != want {
-			return fmt.Errorf("server password for notification %d is %q, want %q", id, smtp.Password, want)
+		if got["password"] != want {
+			return fmt.Errorf("server password for notification %d is %q, want %q", id, got["password"], want)
 		}
 
 		return nil
 	}
+}
+
+// smtpServerSecrets reads the password Uptime Kuma stores for an SMTP notification.
+func smtpServerSecrets(ctx context.Context, kumaClient *kuma.Client, id int64) (map[string]string, error) {
+	return notificationSecrets(func(n *notification.SMTP) map[string]string {
+		return map[string]string{"password": n.Password}
+	})(ctx, kumaClient, id)
 }
 
 // testAccCheckSMTPImportedPassword asserts the state an import produces: password holds the
