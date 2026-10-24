@@ -56,3 +56,21 @@ resource "uptimekuma_notification_smtp" "with_dkim" {
   is_active  = true
   is_default = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: password_wo is never stored in
+# plan or state. Change password_wo_version whenever the password changes.
+resource "uptimekuma_notification_smtp" "write_only_password" {
+  name = "SMTP with a write-only password"
+
+  host = "smtp.example.com"
+  port = 587
+  from = "monitoring@example.com"
+  to   = "alerts@example.com"
+
+  username            = "smtp-user"
+  password_wo         = "smtp-password"
+  password_wo_version = "1"
+
+  is_active  = true
+  is_default = false
+}
