@@ -9,8 +9,8 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 
 **Key Features**:
 
-- 141 resource types (monitors, notifications, status pages, maintenance windows, etc.)
-- 141 corresponding data sources for querying existing resources
+- 142 resource types (monitors, notifications, status pages, maintenance windows, etc.)
+- 142 corresponding data sources for querying existing resources
 - Built-in retry logic and connection pooling for reliability
 - Comprehensive testing with Docker-based acceptance tests
 - Strict code quality standards with 80+ linters enabled
@@ -60,7 +60,7 @@ terraform-provider-uptimekuma/
 ├── internal/
 │   ├── client/                  # Client abstraction with pooling
 │   │   └── CLAUDE.md           # 📖 Client documentation
-│   └── provider/                # Provider implementation (599 files)
+│   └── provider/                # Provider implementation (603 files)
 │       └── CLAUDE.md           # 📖 Provider documentation
 ├── docs/                        # Generated Terraform documentation
 ├── examples/                    # Terraform examples
@@ -77,13 +77,13 @@ terraform-provider-uptimekuma/
 
 ### Resource Categories
 
-The provider manages 141 resource types across multiple categories:
+The provider manages 142 resource types across multiple categories:
 
 **Monitors** (34 types): HTTP, ping, DNS, TCP, SFTP, SMTP, SIP, RADIUS, WebSocket, databases (PostgreSQL, MySQL,
 MongoDB, Redis, SQL Server, OracleDB), message brokers (MQTT, Kafka, RabbitMQ), Docker, real browser, SNMP, push,
 manual, gRPC, Steam, GameDig, Globalping, Tailscale, PM2, system services, and monitor groups.
 
-**Notifications** (97 types plus a generic `uptimekuma_notification`): Webhook, Slack, Teams, Discord,
+**Notifications** (98 types plus a generic `uptimekuma_notification`): Webhook, Slack, Teams, Discord,
 email (SMTP), push services (Pushover, Telegram, Signal, etc.), SMS services, enterprise alerting (PagerDuty,
 Opsgenie, Splunk), regional platforms (Feishu, DingTalk), and many more.
 
@@ -93,7 +93,7 @@ Opsgenie, Splunk), regional platforms (Feishu, DingTalk), and many more.
 
 **Infrastructure**: Tags, proxies, and Docker host integration.
 
-**Data Sources**: Each resource has a corresponding data source (141 total) for querying existing resources by ID or name.
+**Data Sources**: Each resource has a corresponding data source (142 total) for querying existing resources by ID or name.
 
 ### Design Patterns
 
@@ -119,7 +119,7 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
 
 - **[internal/provider/CLAUDE.md](internal/provider/CLAUDE.md)** - Provider implementation
   - Provider structure and configuration
-  - Complete resource catalog (141 resources, 141 data sources)
+  - Complete resource catalog (142 resources, 142 data sources)
   - Base models and helper functions
   - CRUD implementation patterns
   - State management
