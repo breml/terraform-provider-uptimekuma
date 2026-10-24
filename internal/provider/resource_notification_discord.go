@@ -37,13 +37,15 @@ type NotificationDiscordResource struct {
 type NotificationDiscordResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL    types.String `tfsdk:"webhook_url"`
-	Username      types.String `tfsdk:"username"`
-	ChannelType   types.String `tfsdk:"channel_type"`
-	ThreadID      types.String `tfsdk:"thread_id"`
-	PostName      types.String `tfsdk:"post_name"`
-	PrefixMessage types.String `tfsdk:"prefix_message"`
-	DisableURL    types.Bool   `tfsdk:"disable_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Username            types.String `tfsdk:"username"`
+	ChannelType         types.String `tfsdk:"channel_type"`
+	ThreadID            types.String `tfsdk:"thread_id"`
+	PostName            types.String `tfsdk:"post_name"`
+	PrefixMessage       types.String `tfsdk:"prefix_message"`
+	DisableURL          types.Bool   `tfsdk:"disable_url"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -100,6 +102,12 @@ func (*NotificationDiscordResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"The Discord webhook URL to which notifications will be sent",
+	)
 }
 
 // Configure configures the Discord notification resource with the API client.
@@ -133,7 +141,7 @@ func (r *NotificationDiscordResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		DiscordDetails: notification.DiscordDetails{
-			WebhookURL:    data.WebhookURL.ValueString(),
+			WebhookURL:    writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:      data.Username.ValueString(),
 			ChannelType:   data.ChannelType.ValueString(),
 			ThreadID:      data.ThreadID.ValueString(),
@@ -141,6 +149,10 @@ func (r *NotificationDiscordResource) Create(
 			PrefixMessage: data.PrefixMessage.ValueString(),
 			DisableURL:    data.DisableURL.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, discord)
@@ -198,7 +210,10 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	data.IsDefault = types.BoolValue(discord.IsDefault)
 	data.ApplyExisting = types.BoolValue(discord.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(discord.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(discord.WebhookURL)
+	}
+
 	if discord.Username != "" {
 		data.Username = types.StringValue(discord.Username)
 	} else {
@@ -258,7 +273,7 @@ func (r *NotificationDiscordResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		DiscordDetails: notification.DiscordDetails{
-			WebhookURL:    data.WebhookURL.ValueString(),
+			WebhookURL:    writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:      data.Username.ValueString(),
 			ChannelType:   data.ChannelType.ValueString(),
 			ThreadID:      data.ThreadID.ValueString(),
@@ -266,6 +281,10 @@ func (r *NotificationDiscordResource) Update(
 			PrefixMessage: data.PrefixMessage.ValueString(),
 			DisableURL:    data.DisableURL.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, discord)

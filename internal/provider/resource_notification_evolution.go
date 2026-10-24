@@ -36,10 +36,12 @@ type NotificationEvolutionResource struct {
 type NotificationEvolutionResourceModel struct {
 	NotificationBaseModel
 
-	APIURL       types.String `tfsdk:"api_url"`
-	InstanceName types.String `tfsdk:"instance_name"`
-	AuthToken    types.String `tfsdk:"auth_token"`
-	Recipient    types.String `tfsdk:"recipient"`
+	APIURL             types.String `tfsdk:"api_url"`
+	InstanceName       types.String `tfsdk:"instance_name"`
+	AuthToken          types.String `tfsdk:"auth_token"`
+	AuthTokenWO        types.String `tfsdk:"auth_token_wo"`
+	AuthTokenWOVersion types.String `tfsdk:"auth_token_wo_version"`
+	Recipient          types.String `tfsdk:"recipient"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -92,6 +94,12 @@ func (*NotificationEvolutionResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"auth_token",
+		"Evolution API authentication token",
+	)
 }
 
 // Configure configures the Evolution notification resource with the API client.
@@ -127,9 +135,13 @@ func (r *NotificationEvolutionResource) Create(
 		EvolutionDetails: notification.EvolutionDetails{
 			APIURL:       data.APIURL.ValueString(),
 			InstanceName: data.InstanceName.ValueString(),
-			AuthToken:    data.AuthToken.ValueString(),
+			AuthToken:    writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			Recipient:    data.Recipient.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, evolution)
@@ -193,7 +205,10 @@ func (r *NotificationEvolutionResource) Read(
 
 	data.APIURL = types.StringValue(evolution.APIURL)
 	data.InstanceName = types.StringValue(evolution.InstanceName)
-	data.AuthToken = types.StringValue(evolution.AuthToken)
+	if data.AuthTokenWOVersion.IsNull() {
+		data.AuthToken = types.StringValue(evolution.AuthToken)
+	}
+
 	data.Recipient = types.StringValue(evolution.Recipient)
 
 	// Populate state.
@@ -225,9 +240,13 @@ func (r *NotificationEvolutionResource) Update(
 		EvolutionDetails: notification.EvolutionDetails{
 			APIURL:       data.APIURL.ValueString(),
 			InstanceName: data.InstanceName.ValueString(),
-			AuthToken:    data.AuthToken.ValueString(),
+			AuthToken:    writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			Recipient:    data.Recipient.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, evolution)

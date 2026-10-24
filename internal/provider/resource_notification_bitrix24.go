@@ -36,8 +36,10 @@ type NotificationBitrix24Resource struct {
 type NotificationBitrix24ResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL         types.String `tfsdk:"webhook_url"`
-	NotificationUserID types.String `tfsdk:"notification_user_id"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	NotificationUserID  types.String `tfsdk:"notification_user_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -72,6 +74,8 @@ func (*NotificationBitrix24Resource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Bitrix24 webhook URL")
 }
 
 // Configure configures the Bitrix24 notification resource with the API client.
@@ -105,9 +109,13 @@ func (r *NotificationBitrix24Resource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		Bitrix24Details: notification.Bitrix24Details{
-			WebhookURL:         data.WebhookURL.ValueString(),
+			WebhookURL:         writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			NotificationUserID: data.NotificationUserID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, bitrix24)
@@ -169,7 +177,10 @@ func (r *NotificationBitrix24Resource) Read(
 	data.IsDefault = types.BoolValue(bitrix24.IsDefault)
 	data.ApplyExisting = types.BoolValue(bitrix24.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(bitrix24.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(bitrix24.WebhookURL)
+	}
+
 	data.NotificationUserID = types.StringValue(bitrix24.NotificationUserID)
 
 	// Populate state.
@@ -199,9 +210,13 @@ func (r *NotificationBitrix24Resource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		Bitrix24Details: notification.Bitrix24Details{
-			WebhookURL:         data.WebhookURL.ValueString(),
+			WebhookURL:         writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			NotificationUserID: data.NotificationUserID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, bitrix24)

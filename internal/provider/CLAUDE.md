@@ -763,7 +763,11 @@ changed write-only value alone plans nothing, and that a version bump sends it, 
 secret back from Uptime Kuma with `notificationSecrets()` or `monitorSecrets()`. It ends by
 importing the resource and checking that every secret holds the server's value, except those
 named in `importOmits` (Read never refreshes them); set `noImport` for a resource without
-import support. Use `writeOnlyAttrLines()` for the HCL. The full set of transitions and the
+import support. Use `writeOnlyAttrLines()` for the HCL; `writeOnlyTestSecret()` gives an
+attribute named `*url` a URL value, so URL validators pass. A notification adds an entry to the
+table test in [write_only_notifications_test.go](write_only_notifications_test.go), which runs
+`testAccNotificationWriteOnly()`; monitors use `testAccMonitorWriteOnly()` in
+[write_only_monitors_test.go](write_only_monitors_test.go). The full set of transitions and the
 validators are covered once, in `TestAccNotificationSMTPResourcePasswordWO`. Every write-only test needs
 Terraform 1.11 or later and is skipped below. Locally, point `TF_ACC_TERRAFORM_PATH` at a
 Terraform 1.11+ binary. Do not use `TF_ACC_TERRAFORM_VERSION` for a parallel run: every test

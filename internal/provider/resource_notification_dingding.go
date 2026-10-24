@@ -36,9 +36,13 @@ type NotificationDingDingResource struct {
 type NotificationDingDingResourceModel struct {
 	NotificationBaseModel
 
-	WebHookURL types.String `tfsdk:"webhook_url"`
-	SecretKey  types.String `tfsdk:"secret_key"`
-	Mentioning types.String `tfsdk:"mentioning"`
+	WebHookURL          types.String `tfsdk:"webhook_url"`
+	WebHookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebHookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	SecretKey           types.String `tfsdk:"secret_key"`
+	SecretKeyWO         types.String `tfsdk:"secret_key_wo"`
+	SecretKeyWOVersion  types.String `tfsdk:"secret_key_wo_version"`
+	Mentioning          types.String `tfsdk:"mentioning"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -78,6 +82,14 @@ func (*NotificationDingDingResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "DingDing webhook URL")
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"secret_key",
+		"DingDing secret key for signature verification",
+	)
 }
 
 // Configure configures the DingDing notification resource with the API client.
@@ -111,10 +123,14 @@ func (r *NotificationDingDingResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		DingDingDetails: notification.DingDingDetails{
-			WebHookURL: data.WebHookURL.ValueString(),
-			SecretKey:  data.SecretKey.ValueString(),
+			WebHookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebHookURL, &resp.Diagnostics),
+			SecretKey:  writeOnlyOrPlan(ctx, req.Config, "secret_key", data.SecretKey, &resp.Diagnostics),
 			Mentioning: data.Mentioning.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, dingding)
@@ -176,11 +192,15 @@ func (r *NotificationDingDingResource) Read(
 	data.IsDefault = types.BoolValue(dingding.IsDefault)
 	data.ApplyExisting = types.BoolValue(dingding.ApplyExisting)
 
-	data.WebHookURL = types.StringValue(dingding.WebHookURL)
-	if dingding.SecretKey != "" {
-		data.SecretKey = types.StringValue(dingding.SecretKey)
-	} else {
+	if data.WebHookURLWOVersion.IsNull() {
+		data.WebHookURL = types.StringValue(dingding.WebHookURL)
+	}
+
+	if data.SecretKeyWOVersion.IsNull() {
 		data.SecretKey = types.StringNull()
+		if dingding.SecretKey != "" {
+			data.SecretKey = types.StringValue(dingding.SecretKey)
+		}
 	}
 
 	if dingding.Mentioning != "" {
@@ -216,10 +236,14 @@ func (r *NotificationDingDingResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		DingDingDetails: notification.DingDingDetails{
-			WebHookURL: data.WebHookURL.ValueString(),
-			SecretKey:  data.SecretKey.ValueString(),
+			WebHookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebHookURL, &resp.Diagnostics),
+			SecretKey:  writeOnlyOrPlan(ctx, req.Config, "secret_key", data.SecretKey, &resp.Diagnostics),
 			Mentioning: data.Mentioning.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, dingding)

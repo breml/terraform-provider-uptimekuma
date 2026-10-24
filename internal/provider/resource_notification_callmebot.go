@@ -36,7 +36,9 @@ type NotificationCallMeBotResource struct {
 type NotificationCallMeBotResourceModel struct {
 	NotificationBaseModel
 
-	Endpoint types.String `tfsdk:"endpoint"`
+	Endpoint          types.String `tfsdk:"endpoint"`
+	EndpointWO        types.String `tfsdk:"endpoint_wo"`
+	EndpointWOVersion types.String `tfsdk:"endpoint_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,12 @@ func (*NotificationCallMeBotResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"endpoint",
+		"CallMeBot endpoint URL where notifications will be sent",
+	)
 }
 
 // Configure configures the CallMeBot notification resource with the API client.
@@ -100,8 +108,12 @@ func (r *NotificationCallMeBotResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		CallMeBotDetails: notification.CallMeBotDetails{
-			Endpoint: data.Endpoint.ValueString(),
+			Endpoint: writeOnlyOrPlan(ctx, req.Config, "endpoint", data.Endpoint, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, callmebot)
@@ -163,7 +175,9 @@ func (r *NotificationCallMeBotResource) Read(
 	data.IsDefault = types.BoolValue(callmebot.IsDefault)
 	data.ApplyExisting = types.BoolValue(callmebot.ApplyExisting)
 
-	data.Endpoint = types.StringValue(callmebot.Endpoint)
+	if data.EndpointWOVersion.IsNull() {
+		data.Endpoint = types.StringValue(callmebot.Endpoint)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +206,12 @@ func (r *NotificationCallMeBotResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		CallMeBotDetails: notification.CallMeBotDetails{
-			Endpoint: data.Endpoint.ValueString(),
+			Endpoint: writeOnlyOrPlan(ctx, req.Config, "endpoint", data.Endpoint, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, callmebot)

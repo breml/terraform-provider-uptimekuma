@@ -36,8 +36,10 @@ type NotificationGoAlertResource struct {
 type NotificationGoAlertResourceModel struct {
 	NotificationBaseModel
 
-	BaseURL types.String `tfsdk:"base_url"`
-	Token   types.String `tfsdk:"token"`
+	BaseURL        types.String `tfsdk:"base_url"`
+	Token          types.String `tfsdk:"token"`
+	TokenWO        types.String `tfsdk:"token_wo"`
+	TokenWOVersion types.String `tfsdk:"token_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -75,6 +77,8 @@ func (*NotificationGoAlertResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "token", "GoAlert integration token")
 }
 
 // Configure configures the GoAlert notification resource with the API client.
@@ -109,8 +113,12 @@ func (r *NotificationGoAlertResource) Create(
 		},
 		GoAlertDetails: notification.GoAlertDetails{
 			BaseURL: data.BaseURL.ValueString(),
-			Token:   data.Token.ValueString(),
+			Token:   writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, goalert)
@@ -173,7 +181,9 @@ func (r *NotificationGoAlertResource) Read(
 	data.ApplyExisting = types.BoolValue(goalert.ApplyExisting)
 
 	data.BaseURL = types.StringValue(goalert.BaseURL)
-	data.Token = types.StringValue(goalert.Token)
+	if data.TokenWOVersion.IsNull() {
+		data.Token = types.StringValue(goalert.Token)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -203,8 +213,12 @@ func (r *NotificationGoAlertResource) Update(
 		},
 		GoAlertDetails: notification.GoAlertDetails{
 			BaseURL: data.BaseURL.ValueString(),
-			Token:   data.Token.ValueString(),
+			Token:   writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, goalert)

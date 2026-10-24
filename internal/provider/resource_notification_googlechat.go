@@ -37,9 +37,11 @@ type NotificationGoogleChatResource struct {
 type NotificationGoogleChatResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL  types.String `tfsdk:"webhook_url"`
-	UseTemplate types.Bool   `tfsdk:"use_template"`
-	Template    types.String `tfsdk:"template"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	UseTemplate         types.Bool   `tfsdk:"use_template"`
+	Template            types.String `tfsdk:"template"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -80,6 +82,12 @@ func (*NotificationGoogleChatResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"Google Chat webhook URL for sending notifications",
+	)
 }
 
 // Configure configures the Google Chat notification resource with the API client.
@@ -113,10 +121,14 @@ func (r *NotificationGoogleChatResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		GoogleChatDetails: notification.GoogleChatDetails{
-			WebhookURL:  data.WebhookURL.ValueString(),
+			WebhookURL:  writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			UseTemplate: data.UseTemplate.ValueBool(),
 			Template:    data.Template.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, googleChat)
@@ -178,7 +190,10 @@ func (r *NotificationGoogleChatResource) Read(
 	data.IsDefault = types.BoolValue(googleChat.IsDefault)
 	data.ApplyExisting = types.BoolValue(googleChat.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(googleChat.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(googleChat.WebhookURL)
+	}
+
 	data.UseTemplate = types.BoolValue(googleChat.UseTemplate)
 
 	if googleChat.Template != "" {
@@ -214,10 +229,14 @@ func (r *NotificationGoogleChatResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		GoogleChatDetails: notification.GoogleChatDetails{
-			WebhookURL:  data.WebhookURL.ValueString(),
+			WebhookURL:  writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			UseTemplate: data.UseTemplate.ValueBool(),
 			Template:    data.Template.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, googleChat)

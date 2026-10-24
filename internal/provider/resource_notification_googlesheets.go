@@ -36,7 +36,9 @@ type NotificationGoogleSheetsResource struct {
 type NotificationGoogleSheetsResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,12 @@ func (*NotificationGoogleSheetsResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"Deployed Google Apps Script web app URL",
+	)
 }
 
 // Configure configures the Google Sheets notification resource with the API client.
@@ -100,8 +108,12 @@ func (r *NotificationGoogleSheetsResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		GoogleSheetsDetails: notification.GoogleSheetsDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, googleSheets)
@@ -163,7 +175,9 @@ func (r *NotificationGoogleSheetsResource) Read(
 	data.IsDefault = types.BoolValue(googleSheets.IsDefault)
 	data.ApplyExisting = types.BoolValue(googleSheets.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(googleSheets.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(googleSheets.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +206,12 @@ func (r *NotificationGoogleSheetsResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		GoogleSheetsDetails: notification.GoogleSheetsDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, googleSheets)

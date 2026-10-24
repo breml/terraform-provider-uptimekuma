@@ -36,8 +36,10 @@ type NotificationBaleResource struct {
 type NotificationBaleResourceModel struct {
 	NotificationBaseModel
 
-	BotToken types.String `tfsdk:"bot_token"`
-	ChatID   types.String `tfsdk:"chat_id"`
+	BotToken          types.String `tfsdk:"bot_token"`
+	BotTokenWO        types.String `tfsdk:"bot_token_wo"`
+	BotTokenWOVersion types.String `tfsdk:"bot_token_wo_version"`
+	ChatID            types.String `tfsdk:"chat_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -75,6 +77,8 @@ func (*NotificationBaleResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "bot_token", "Bale bot API token")
 }
 
 // Configure configures the Bale notification resource with the API client.
@@ -108,9 +112,13 @@ func (r *NotificationBaleResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		BaleDetails: notification.BaleDetails{
-			BotToken: data.BotToken.ValueString(),
+			BotToken: writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics),
 			ChatID:   data.ChatID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, bale)
@@ -168,7 +176,10 @@ func (r *NotificationBaleResource) Read(ctx context.Context, req resource.ReadRe
 	data.IsDefault = types.BoolValue(bale.IsDefault)
 	data.ApplyExisting = types.BoolValue(bale.ApplyExisting)
 
-	data.BotToken = types.StringValue(bale.BotToken)
+	if data.BotTokenWOVersion.IsNull() {
+		data.BotToken = types.StringValue(bale.BotToken)
+	}
+
 	data.ChatID = types.StringValue(bale.ChatID)
 
 	// Populate state.
@@ -198,9 +209,13 @@ func (r *NotificationBaleResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		BaleDetails: notification.BaleDetails{
-			BotToken: data.BotToken.ValueString(),
+			BotToken: writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics),
 			ChatID:   data.ChatID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, bale)

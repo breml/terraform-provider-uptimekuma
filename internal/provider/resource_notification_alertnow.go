@@ -36,7 +36,9 @@ type NotificationAlertNowResource struct {
 type NotificationAlertNowResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationAlertNowResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "AlertNow webhook URL")
 }
 
 // Configure configures the AlertNow notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationAlertNowResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		AlertNowDetails: notification.AlertNowDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, alertNow)
@@ -163,7 +171,9 @@ func (r *NotificationAlertNowResource) Read(
 	data.IsDefault = types.BoolValue(alertNow.IsDefault)
 	data.ApplyExisting = types.BoolValue(alertNow.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(alertNow.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(alertNow.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationAlertNowResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		AlertNowDetails: notification.AlertNowDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, alertNow)

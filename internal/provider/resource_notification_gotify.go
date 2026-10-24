@@ -38,9 +38,11 @@ type NotificationGotifyResource struct {
 type NotificationGotifyResourceModel struct {
 	NotificationBaseModel
 
-	ServerURL        types.String `tfsdk:"server_url"`
-	ApplicationToken types.String `tfsdk:"application_token"`
-	Priority         types.Int64  `tfsdk:"priority"`
+	ServerURL                 types.String `tfsdk:"server_url"`
+	ApplicationToken          types.String `tfsdk:"application_token"`
+	ApplicationTokenWO        types.String `tfsdk:"application_token_wo"`
+	ApplicationTokenWOVersion types.String `tfsdk:"application_token_wo_version"`
+	Priority                  types.Int64  `tfsdk:"priority"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -88,6 +90,8 @@ func (*NotificationGotifyResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "application_token", "Gotify application token")
 }
 
 // Configure configures the Gotify notification resource with the API client.
@@ -122,9 +126,13 @@ func (r *NotificationGotifyResource) Create(
 		},
 		GotifyDetails: notification.GotifyDetails{
 			ServerURL:        data.ServerURL.ValueString(),
-			ApplicationToken: data.ApplicationToken.ValueString(),
+			ApplicationToken: writeOnlyOrPlan(ctx, req.Config, "application_token", data.ApplicationToken, &resp.Diagnostics),
 			Priority:         int(data.Priority.ValueInt64()),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, gotify)
@@ -187,7 +195,10 @@ func (r *NotificationGotifyResource) Read(
 	data.ApplyExisting = types.BoolValue(gotify.ApplyExisting)
 
 	data.ServerURL = types.StringValue(gotify.ServerURL)
-	data.ApplicationToken = types.StringValue(gotify.ApplicationToken)
+	if data.ApplicationTokenWOVersion.IsNull() {
+		data.ApplicationToken = types.StringValue(gotify.ApplicationToken)
+	}
+
 	data.Priority = types.Int64Value(int64(gotify.Priority))
 
 	// Populate state.
@@ -218,9 +229,13 @@ func (r *NotificationGotifyResource) Update(
 		},
 		GotifyDetails: notification.GotifyDetails{
 			ServerURL:        data.ServerURL.ValueString(),
-			ApplicationToken: data.ApplicationToken.ValueString(),
+			ApplicationToken: writeOnlyOrPlan(ctx, req.Config, "application_token", data.ApplicationToken, &resp.Diagnostics),
 			Priority:         int(data.Priority.ValueInt64()),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, gotify)

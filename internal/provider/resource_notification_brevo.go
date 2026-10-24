@@ -36,13 +36,15 @@ type NotificationBrevoResource struct {
 type NotificationBrevoResourceModel struct {
 	NotificationBaseModel
 
-	APIKey    types.String `tfsdk:"api_key"`
-	ToEmail   types.String `tfsdk:"to_email"`
-	FromEmail types.String `tfsdk:"from_email"`
-	FromName  types.String `tfsdk:"from_name"`
-	Subject   types.String `tfsdk:"subject"`
-	CCEmail   types.String `tfsdk:"cc_email"`
-	BCCEmail  types.String `tfsdk:"bcc_email"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	ToEmail         types.String `tfsdk:"to_email"`
+	FromEmail       types.String `tfsdk:"from_email"`
+	FromName        types.String `tfsdk:"from_name"`
+	Subject         types.String `tfsdk:"subject"`
+	CCEmail         types.String `tfsdk:"cc_email"`
+	BCCEmail        types.String `tfsdk:"bcc_email"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -103,6 +105,8 @@ func (*NotificationBrevoResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Brevo API key for authentication")
 }
 
 // Configure configures the Brevo notification resource with the API client.
@@ -136,7 +140,7 @@ func (r *NotificationBrevoResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		BrevoDetails: notification.BrevoDetails{
-			APIKey:    data.APIKey.ValueString(),
+			APIKey:    writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			ToEmail:   data.ToEmail.ValueString(),
 			FromEmail: data.FromEmail.ValueString(),
 			FromName:  data.FromName.ValueString(),
@@ -144,6 +148,10 @@ func (r *NotificationBrevoResource) Create(
 			CCEmail:   data.CCEmail.ValueString(),
 			BCCEmail:  data.BCCEmail.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, brevo)
@@ -201,7 +209,10 @@ func (r *NotificationBrevoResource) Read(ctx context.Context, req resource.ReadR
 	data.IsDefault = types.BoolValue(brevo.IsDefault)
 	data.ApplyExisting = types.BoolValue(brevo.ApplyExisting)
 
-	data.APIKey = types.StringValue(brevo.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(brevo.APIKey)
+	}
+
 	data.ToEmail = types.StringValue(brevo.ToEmail)
 	data.FromEmail = types.StringValue(brevo.FromEmail)
 
@@ -256,7 +267,7 @@ func (r *NotificationBrevoResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		BrevoDetails: notification.BrevoDetails{
-			APIKey:    data.APIKey.ValueString(),
+			APIKey:    writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			ToEmail:   data.ToEmail.ValueString(),
 			FromEmail: data.FromEmail.ValueString(),
 			FromName:  data.FromName.ValueString(),
@@ -264,6 +275,10 @@ func (r *NotificationBrevoResource) Update(
 			CCEmail:   data.CCEmail.ValueString(),
 			BCCEmail:  data.BCCEmail.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, brevo)
