@@ -36,10 +36,12 @@ type NotificationBarkResource struct {
 type NotificationBarkResourceModel struct {
 	NotificationBaseModel
 
-	Endpoint   types.String `tfsdk:"endpoint"`
-	Group      types.String `tfsdk:"group"`
-	Sound      types.String `tfsdk:"sound"`
-	APIVersion types.String `tfsdk:"api_version"`
+	Endpoint          types.String `tfsdk:"endpoint"`
+	EndpointWO        types.String `tfsdk:"endpoint_wo"`
+	EndpointWOVersion types.String `tfsdk:"endpoint_wo_version"`
+	Group             types.String `tfsdk:"group"`
+	Sound             types.String `tfsdk:"sound"`
+	APIVersion        types.String `tfsdk:"api_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -82,6 +84,8 @@ func (*NotificationBarkResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "endpoint", "Bark server endpoint URL")
 }
 
 // Configure configures the Bark notification resource with the API client.
@@ -115,11 +119,15 @@ func (r *NotificationBarkResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		BarkDetails: notification.BarkDetails{
-			Endpoint:   data.Endpoint.ValueString(),
+			Endpoint:   writeOnlyOrPlan(ctx, req.Config, "endpoint", data.Endpoint, &resp.Diagnostics),
 			Group:      data.Group.ValueString(),
 			Sound:      data.Sound.ValueString(),
 			APIVersion: data.APIVersion.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, bark)
@@ -177,7 +185,10 @@ func (r *NotificationBarkResource) Read(ctx context.Context, req resource.ReadRe
 	data.IsDefault = types.BoolValue(bark.IsDefault)
 	data.ApplyExisting = types.BoolValue(bark.ApplyExisting)
 
-	data.Endpoint = types.StringValue(bark.Endpoint)
+	if data.EndpointWOVersion.IsNull() {
+		data.Endpoint = types.StringValue(bark.Endpoint)
+	}
+
 	if bark.Group != "" {
 		data.Group = types.StringValue(bark.Group)
 	} else {
@@ -223,11 +234,15 @@ func (r *NotificationBarkResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		BarkDetails: notification.BarkDetails{
-			Endpoint:   data.Endpoint.ValueString(),
+			Endpoint:   writeOnlyOrPlan(ctx, req.Config, "endpoint", data.Endpoint, &resp.Diagnostics),
 			Group:      data.Group.ValueString(),
 			Sound:      data.Sound.ValueString(),
 			APIVersion: data.APIVersion.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, bark)

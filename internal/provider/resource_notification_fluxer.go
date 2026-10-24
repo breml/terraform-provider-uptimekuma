@@ -36,13 +36,15 @@ type NotificationFluxerResource struct {
 type NotificationFluxerResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL         types.String `tfsdk:"webhook_url"`
-	Username           types.String `tfsdk:"username"`
-	PrefixMessage      types.String `tfsdk:"prefix_message"`
-	DisableURL         types.Bool   `tfsdk:"disable_url"`
-	UseMessageTemplate types.Bool   `tfsdk:"use_message_template"`
-	MessageFormat      types.String `tfsdk:"message_format"`
-	MessageTemplate    types.String `tfsdk:"message_template"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Username            types.String `tfsdk:"username"`
+	PrefixMessage       types.String `tfsdk:"prefix_message"`
+	DisableURL          types.Bool   `tfsdk:"disable_url"`
+	UseMessageTemplate  types.Bool   `tfsdk:"use_message_template"`
+	MessageFormat       types.String `tfsdk:"message_format"`
+	MessageTemplate     types.String `tfsdk:"message_template"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -99,6 +101,12 @@ func (*NotificationFluxerResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"The Fluxer webhook URL to which notifications will be sent",
+	)
 }
 
 // Configure configures the Fluxer notification resource with the API client.
@@ -125,6 +133,11 @@ func (r *NotificationFluxerResource) Create(
 	}
 
 	fluxer := fluxerFromModel(&data)
+	fluxer.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, fluxer)
 	// Handle error.
@@ -179,7 +192,10 @@ func (r *NotificationFluxerResource) Read(ctx context.Context, req resource.Read
 	data.IsDefault = types.BoolValue(fluxer.IsDefault)
 	data.ApplyExisting = types.BoolValue(fluxer.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(fluxer.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(fluxer.WebhookURL)
+	}
+
 	if fluxer.Username != "" {
 		data.Username = types.StringValue(fluxer.Username)
 	} else {
@@ -226,6 +242,12 @@ func (r *NotificationFluxerResource) Update(
 	}
 
 	fluxer := fluxerFromModel(&data)
+	fluxer.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	fluxer.ID = id
 
 	err := r.client.UpdateNotification(ctx, fluxer)

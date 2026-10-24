@@ -36,8 +36,10 @@ type NotificationFreemobileResource struct {
 type NotificationFreemobileResourceModel struct {
 	NotificationBaseModel
 
-	User types.String `tfsdk:"user"`
-	Pass types.String `tfsdk:"pass"`
+	User          types.String `tfsdk:"user"`
+	Pass          types.String `tfsdk:"pass"`
+	PassWO        types.String `tfsdk:"pass_wo"`
+	PassWOVersion types.String `tfsdk:"pass_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -75,6 +77,8 @@ func (*NotificationFreemobileResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "pass", "Free Mobile API key")
 }
 
 // Configure configures the Free Mobile notification resource with the API client.
@@ -109,8 +113,12 @@ func (r *NotificationFreemobileResource) Create(
 		},
 		FreeMobileDetails: notification.FreeMobileDetails{
 			User: data.User.ValueString(),
-			Pass: data.Pass.ValueString(),
+			Pass: writeOnlyOrPlan(ctx, req.Config, "pass", data.Pass, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, freemobile)
@@ -173,7 +181,9 @@ func (r *NotificationFreemobileResource) Read(
 	data.ApplyExisting = types.BoolValue(freemobile.ApplyExisting)
 
 	data.User = types.StringValue(freemobile.User)
-	data.Pass = types.StringValue(freemobile.Pass)
+	if data.PassWOVersion.IsNull() {
+		data.Pass = types.StringValue(freemobile.Pass)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -203,8 +213,12 @@ func (r *NotificationFreemobileResource) Update(
 		},
 		FreeMobileDetails: notification.FreeMobileDetails{
 			User: data.User.ValueString(),
-			Pass: data.Pass.ValueString(),
+			Pass: writeOnlyOrPlan(ctx, req.Config, "pass", data.Pass, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, freemobile)

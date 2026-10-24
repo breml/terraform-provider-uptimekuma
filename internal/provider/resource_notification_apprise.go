@@ -36,8 +36,10 @@ type NotificationAppriseResource struct {
 type NotificationAppriseResourceModel struct {
 	NotificationBaseModel
 
-	AppriseURL types.String `tfsdk:"apprise_url"`
-	Title      types.String `tfsdk:"title"`
+	AppriseURL          types.String `tfsdk:"apprise_url"`
+	AppriseURLWO        types.String `tfsdk:"apprise_url_wo"`
+	AppriseURLWOVersion types.String `tfsdk:"apprise_url_wo_version"`
+	Title               types.String `tfsdk:"title"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -61,6 +63,7 @@ func (*NotificationAppriseResource) Schema(
 			"apprise_url": schema.StringAttribute{
 				MarkdownDescription: "Apprise URL or comma-separated list of URLs",
 				Required:            true,
+				Sensitive:           true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
@@ -71,6 +74,12 @@ func (*NotificationAppriseResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"apprise_url",
+		"Apprise URL or comma-separated list of URLs",
+	)
 }
 
 // Configure configures the Apprise notification resource with the API client.
@@ -104,9 +113,13 @@ func (r *NotificationAppriseResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		AppriseDetails: notification.AppriseDetails{
-			AppriseURL: data.AppriseURL.ValueString(),
+			AppriseURL: writeOnlyOrPlan(ctx, req.Config, "apprise_url", data.AppriseURL, &resp.Diagnostics),
 			Title:      data.Title.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, apprise)
@@ -164,7 +177,10 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 	data.IsDefault = types.BoolValue(apprise.IsDefault)
 	data.ApplyExisting = types.BoolValue(apprise.ApplyExisting)
 
-	data.AppriseURL = types.StringValue(apprise.AppriseURL)
+	if data.AppriseURLWOVersion.IsNull() {
+		data.AppriseURL = types.StringValue(apprise.AppriseURL)
+	}
+
 	if apprise.Title != "" {
 		data.Title = types.StringValue(apprise.Title)
 	} else {
@@ -198,9 +214,13 @@ func (r *NotificationAppriseResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		AppriseDetails: notification.AppriseDetails{
-			AppriseURL: data.AppriseURL.ValueString(),
+			AppriseURL: writeOnlyOrPlan(ctx, req.Config, "apprise_url", data.AppriseURL, &resp.Diagnostics),
 			Title:      data.Title.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, apprise)

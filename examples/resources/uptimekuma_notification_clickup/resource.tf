@@ -15,3 +15,15 @@ resource "uptimekuma_notification_clickup" "no_url" {
   channel_id   = "abc12-345"
   disable_url  = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: token_wo is never stored in
+# plan or state. Change token_wo_version whenever the secret changes.
+resource "uptimekuma_notification_clickup" "write_only" {
+  name = "ClickUp with a write-only secret"
+
+  workspace_id = "9012345678"
+  channel_id   = "4-90123456-8"
+
+  token_wo         = "pk_your-personal-token"
+  token_wo_version = "1"
+}

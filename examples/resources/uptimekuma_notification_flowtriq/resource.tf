@@ -14,3 +14,15 @@ resource "uptimekuma_notification_flowtriq" "authenticated" {
   is_active   = true
   is_default  = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: webhook_url_wo and api_key_wo are
+# never stored in plan or state. Change the matching *_wo_version whenever a
+# secret changes.
+resource "uptimekuma_notification_flowtriq" "write_only" {
+  name = "Flowtriq with write-only secrets"
+
+  webhook_url_wo         = "https://app.flowtriq.com/api/webhooks/0123456789abcdef"
+  webhook_url_wo_version = "1"
+  api_key_wo             = "your-flowtriq-api-key"
+  api_key_wo_version     = "1"
+}

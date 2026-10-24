@@ -36,10 +36,12 @@ type NotificationClicksendSmsResource struct {
 type NotificationClicksendSmsResourceModel struct {
 	NotificationBaseModel
 
-	Login      types.String `tfsdk:"login"`
-	Password   types.String `tfsdk:"password"`
-	ToNumber   types.String `tfsdk:"to_number"`
-	SenderName types.String `tfsdk:"sender_name"`
+	Login             types.String `tfsdk:"login"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	ToNumber          types.String `tfsdk:"to_number"`
+	SenderName        types.String `tfsdk:"sender_name"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -92,6 +94,8 @@ func (*NotificationClicksendSmsResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "ClickSend API key")
 }
 
 // Configure configures the ClickSend SMS notification resource with the API client.
@@ -126,10 +130,14 @@ func (r *NotificationClicksendSmsResource) Create(
 		},
 		ClickSendSMSDetails: notification.ClickSendSMSDetails{
 			Login:      data.Login.ValueString(),
-			Password:   data.Password.ValueString(),
+			Password:   writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			ToNumber:   data.ToNumber.ValueString(),
 			SenderName: data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, clicksendSms)
@@ -192,7 +200,10 @@ func (r *NotificationClicksendSmsResource) Read(
 	data.ApplyExisting = types.BoolValue(clicksendSms.ApplyExisting)
 
 	data.Login = types.StringValue(clicksendSms.Login)
-	data.Password = types.StringValue(clicksendSms.Password)
+	if data.PasswordWOVersion.IsNull() {
+		data.Password = types.StringValue(clicksendSms.Password)
+	}
+
 	data.ToNumber = types.StringValue(clicksendSms.ToNumber)
 	data.SenderName = types.StringValue(clicksendSms.SenderName)
 
@@ -224,10 +235,14 @@ func (r *NotificationClicksendSmsResource) Update(
 		},
 		ClickSendSMSDetails: notification.ClickSendSMSDetails{
 			Login:      data.Login.ValueString(),
-			Password:   data.Password.ValueString(),
+			Password:   writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			ToNumber:   data.ToNumber.ValueString(),
 			SenderName: data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, clicksendSms)

@@ -36,11 +36,13 @@ type NotificationAliyunsmsResource struct {
 type NotificationAliyunsmsResourceModel struct {
 	NotificationBaseModel
 
-	AccessKeyID     types.String `tfsdk:"access_key_id"`
-	SecretAccessKey types.String `tfsdk:"secret_access_key"`
-	PhoneNumber     types.String `tfsdk:"phone_number"`
-	SignName        types.String `tfsdk:"sign_name"`
-	TemplateCode    types.String `tfsdk:"template_code"`
+	AccessKeyID              types.String `tfsdk:"access_key_id"`
+	SecretAccessKey          types.String `tfsdk:"secret_access_key"`
+	SecretAccessKeyWO        types.String `tfsdk:"secret_access_key_wo"`
+	SecretAccessKeyWOVersion types.String `tfsdk:"secret_access_key_wo_version"`
+	PhoneNumber              types.String `tfsdk:"phone_number"`
+	SignName                 types.String `tfsdk:"sign_name"`
+	TemplateCode             types.String `tfsdk:"template_code"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -100,6 +102,8 @@ func (*NotificationAliyunsmsResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "secret_access_key", "Aliyun secret access key")
 }
 
 // Configure configures the Aliyun SMS notification resource with the API client.
@@ -134,11 +138,15 @@ func (r *NotificationAliyunsmsResource) Create(
 		},
 		AliyunSMSDetails: notification.AliyunSMSDetails{
 			AccessKeyID:     data.AccessKeyID.ValueString(),
-			SecretAccessKey: data.SecretAccessKey.ValueString(),
+			SecretAccessKey: writeOnlyOrPlan(ctx, req.Config, "secret_access_key", data.SecretAccessKey, &resp.Diagnostics),
 			PhoneNumber:     data.PhoneNumber.ValueString(),
 			SignName:        data.SignName.ValueString(),
 			TemplateCode:    data.TemplateCode.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, aliyunsms)
@@ -201,7 +209,10 @@ func (r *NotificationAliyunsmsResource) Read(
 	data.ApplyExisting = types.BoolValue(aliyunsms.ApplyExisting)
 
 	data.AccessKeyID = types.StringValue(aliyunsms.AccessKeyID)
-	data.SecretAccessKey = types.StringValue(aliyunsms.SecretAccessKey)
+	if data.SecretAccessKeyWOVersion.IsNull() {
+		data.SecretAccessKey = types.StringValue(aliyunsms.SecretAccessKey)
+	}
+
 	data.PhoneNumber = types.StringValue(aliyunsms.PhoneNumber)
 	data.SignName = types.StringValue(aliyunsms.SignName)
 	data.TemplateCode = types.StringValue(aliyunsms.TemplateCode)
@@ -234,11 +245,15 @@ func (r *NotificationAliyunsmsResource) Update(
 		},
 		AliyunSMSDetails: notification.AliyunSMSDetails{
 			AccessKeyID:     data.AccessKeyID.ValueString(),
-			SecretAccessKey: data.SecretAccessKey.ValueString(),
+			SecretAccessKey: writeOnlyOrPlan(ctx, req.Config, "secret_access_key", data.SecretAccessKey, &resp.Diagnostics),
 			PhoneNumber:     data.PhoneNumber.ValueString(),
 			SignName:        data.SignName.ValueString(),
 			TemplateCode:    data.TemplateCode.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, aliyunsms)

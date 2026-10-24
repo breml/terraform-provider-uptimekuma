@@ -19,3 +19,14 @@ resource "uptimekuma_notification_alerta" "staging" {
   is_active     = true
   is_default    = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
+# plan or state. Change api_key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_alerta" "write_only" {
+  name = "Alerta with a write-only secret"
+
+  api_endpoint = "https://alerta.example.com"
+
+  api_key_wo         = "your-alerta-api-key"
+  api_key_wo_version = "1"
+}

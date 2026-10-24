@@ -38,12 +38,14 @@ type NotificationCellsyntResource struct {
 type NotificationCellsyntResourceModel struct {
 	NotificationBaseModel
 
-	Login          types.String `tfsdk:"login"`
-	Password       types.String `tfsdk:"password"`
-	Destination    types.String `tfsdk:"destination"`
-	Originator     types.String `tfsdk:"originator"`
-	OriginatorType types.String `tfsdk:"originator_type"`
-	AllowLongSMS   types.Bool   `tfsdk:"allow_long_sms"`
+	Login             types.String `tfsdk:"login"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	Destination       types.String `tfsdk:"destination"`
+	Originator        types.String `tfsdk:"originator"`
+	OriginatorType    types.String `tfsdk:"originator_type"`
+	AllowLongSMS      types.Bool   `tfsdk:"allow_long_sms"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -111,6 +113,8 @@ func (*NotificationCellsyntResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "Cellsynt account password")
 }
 
 // Configure configures the Cellsynt notification resource with the API client.
@@ -145,12 +149,16 @@ func (r *NotificationCellsyntResource) Create(
 		},
 		CellsyntDetails: notification.CellsyntDetails{
 			Login:          data.Login.ValueString(),
-			Password:       data.Password.ValueString(),
+			Password:       writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			Destination:    data.Destination.ValueString(),
 			Originator:     data.Originator.ValueString(),
 			OriginatorType: data.OriginatorType.ValueString(),
 			AllowLongSMS:   data.AllowLongSMS.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, cellsynt)
@@ -213,7 +221,10 @@ func (r *NotificationCellsyntResource) Read(
 	data.ApplyExisting = types.BoolValue(cellsynt.ApplyExisting)
 
 	data.Login = types.StringValue(cellsynt.Login)
-	data.Password = types.StringValue(cellsynt.Password)
+	if data.PasswordWOVersion.IsNull() {
+		data.Password = types.StringValue(cellsynt.Password)
+	}
+
 	data.Destination = types.StringValue(cellsynt.Destination)
 	data.Originator = types.StringValue(cellsynt.Originator)
 	data.OriginatorType = types.StringValue(cellsynt.OriginatorType)
@@ -247,12 +258,16 @@ func (r *NotificationCellsyntResource) Update(
 		},
 		CellsyntDetails: notification.CellsyntDetails{
 			Login:          data.Login.ValueString(),
-			Password:       data.Password.ValueString(),
+			Password:       writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			Destination:    data.Destination.ValueString(),
 			Originator:     data.Originator.ValueString(),
 			OriginatorType: data.OriginatorType.ValueString(),
 			AllowLongSMS:   data.AllowLongSMS.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, cellsynt)

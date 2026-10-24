@@ -36,10 +36,12 @@ type Notification46ElksResource struct {
 type Notification46ElksResourceModel struct {
 	NotificationBaseModel
 
-	Username   types.String `tfsdk:"username"`
-	AuthToken  types.String `tfsdk:"auth_token"`
-	FromNumber types.String `tfsdk:"from_number"`
-	ToNumber   types.String `tfsdk:"to_number"`
+	Username           types.String `tfsdk:"username"`
+	AuthToken          types.String `tfsdk:"auth_token"`
+	AuthTokenWO        types.String `tfsdk:"auth_token_wo"`
+	AuthTokenWOVersion types.String `tfsdk:"auth_token_wo_version"`
+	FromNumber         types.String `tfsdk:"from_number"`
+	ToNumber           types.String `tfsdk:"to_number"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -92,6 +94,8 @@ func (*Notification46ElksResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "auth_token", "46elks authentication token")
 }
 
 // Configure configures the 46elks notification resource with the API client.
@@ -126,10 +130,14 @@ func (r *Notification46ElksResource) Create(
 		},
 		FortySixElksDetails: notification.FortySixElksDetails{
 			Username:   data.Username.ValueString(),
-			AuthToken:  data.AuthToken.ValueString(),
+			AuthToken:  writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			FromNumber: data.FromNumber.ValueString(),
 			ToNumber:   data.ToNumber.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, elks)
@@ -192,7 +200,10 @@ func (r *Notification46ElksResource) Read(
 	data.ApplyExisting = types.BoolValue(elks.ApplyExisting)
 
 	data.Username = types.StringValue(elks.Username)
-	data.AuthToken = types.StringValue(elks.AuthToken)
+	if data.AuthTokenWOVersion.IsNull() {
+		data.AuthToken = types.StringValue(elks.AuthToken)
+	}
+
 	data.FromNumber = types.StringValue(elks.FromNumber)
 	data.ToNumber = types.StringValue(elks.ToNumber)
 
@@ -224,10 +235,14 @@ func (r *Notification46ElksResource) Update(
 		},
 		FortySixElksDetails: notification.FortySixElksDetails{
 			Username:   data.Username.ValueString(),
-			AuthToken:  data.AuthToken.ValueString(),
+			AuthToken:  writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			FromNumber: data.FromNumber.ValueString(),
 			ToNumber:   data.ToNumber.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, elks)

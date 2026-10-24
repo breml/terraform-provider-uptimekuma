@@ -36,7 +36,9 @@ type NotificationGrafanaOncallResource struct {
 type NotificationGrafanaOncallResourceModel struct {
 	NotificationBaseModel
 
-	GrafanaOncallURL types.String `tfsdk:"grafana_oncall_url"`
+	GrafanaOncallURL          types.String `tfsdk:"grafana_oncall_url"`
+	GrafanaOncallURLWO        types.String `tfsdk:"grafana_oncall_url_wo"`
+	GrafanaOncallURLWOVersion types.String `tfsdk:"grafana_oncall_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,12 @@ func (*NotificationGrafanaOncallResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"grafana_oncall_url",
+		"Grafana OnCall webhook URL",
+	)
 }
 
 // Configure configures the Grafana OnCall notification resource with the API client.
@@ -100,8 +108,18 @@ func (r *NotificationGrafanaOncallResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		GrafanaOncallDetails: notification.GrafanaOncallDetails{
-			GrafanaOncallURL: data.GrafanaOncallURL.ValueString(),
+			GrafanaOncallURL: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"grafana_oncall_url",
+				data.GrafanaOncallURL,
+				&resp.Diagnostics,
+			),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, grafanaOncall)
@@ -163,7 +181,9 @@ func (r *NotificationGrafanaOncallResource) Read(
 	data.IsDefault = types.BoolValue(grafanaOncall.IsDefault)
 	data.ApplyExisting = types.BoolValue(grafanaOncall.ApplyExisting)
 
-	data.GrafanaOncallURL = types.StringValue(grafanaOncall.GrafanaOncallURL)
+	if data.GrafanaOncallURLWOVersion.IsNull() {
+		data.GrafanaOncallURL = types.StringValue(grafanaOncall.GrafanaOncallURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +212,18 @@ func (r *NotificationGrafanaOncallResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		GrafanaOncallDetails: notification.GrafanaOncallDetails{
-			GrafanaOncallURL: data.GrafanaOncallURL.ValueString(),
+			GrafanaOncallURL: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"grafana_oncall_url",
+				data.GrafanaOncallURL,
+				&resp.Diagnostics,
+			),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, grafanaOncall)
