@@ -248,6 +248,8 @@ func TestAccMonitorKafkaProducerResourceWriteOnly(t *testing.T) {
 	resource.ParallelTest(t, testAccWriteOnlyTestCase(t, writeOnlyTestCase{
 		addr:  "uptimekuma_monitor_kafka_producer.test",
 		attrs: []string{"sasl_options"},
+		// Read never refreshes sasl_options, so an import leaves it unset.
+		importOmits: []string{"sasl_options"},
 		config: func(secret string, version string) string {
 			return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_kafka_producer" "test" {

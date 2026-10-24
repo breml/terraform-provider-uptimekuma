@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,6 +43,14 @@ type writeOnlyTestCase struct {
 	// singleton marks a resource without a numeric ID, such as uptimekuma_settings;
 	// serverSecrets is then called with ID 0.
 	singleton bool
+
+	// importOmits are the attributes of attrs whose Read never refreshes the secret, so an
+	// import leaves them unset rather than storing the server's value.
+	importOmits []string
+
+	// noImport marks a resource without import support, such as uptimekuma_proxy, which skips
+	// the import step.
+	noImport bool
 }
 
 // writeOnlyTestSecret derives a distinct secret per attribute, so that a resource sending one
@@ -53,7 +62,9 @@ func writeOnlyTestSecret(attr string, secret string) string {
 // testAccWriteOnlyTestCase returns a test case that creates the resource with write-only
 // secrets, checks they reach the server but not state, that a changed write-only value alone
 // plans nothing, and that bumping the version sends it. The full set of transitions, the
-// validators and import are covered once, by TestAccNotificationSMTPResourcePasswordWO.
+// validators are covered once, by TestAccNotificationSMTPResourcePasswordWO. The last step
+// imports the resource, which has no <attr>_wo_version to go by and so stores the server's
+// value of every secret whose Read refreshes it.
 func testAccWriteOnlyTestCase(t *testing.T, tc writeOnlyTestCase) resource.TestCase {
 	t.Helper()
 
@@ -73,7 +84,7 @@ func testAccWriteOnlyTestCase(t *testing.T, tc writeOnlyTestCase) resource.TestC
 		return checks
 	}
 
-	return resource.TestCase{
+	testCase := resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
@@ -106,6 +117,48 @@ func testAccWriteOnlyTestCase(t *testing.T, tc writeOnlyTestCase) resource.TestC
 				Check:             testAccCheckServerSecrets(t, kumaClient, tc, "second"),
 			},
 		},
+	}
+
+	if !tc.noImport {
+		testCase.Steps = append(testCase.Steps, resource.TestStep{
+			ResourceName:     tc.addr,
+			ImportState:      true,
+			ImportStateCheck: testAccCheckImportedSecrets(tc, "second"),
+		})
+	}
+
+	return testCase
+}
+
+// testAccCheckImportedSecrets asserts the state an import produces: every secret attribute
+// holds the server's value unless tc.importOmits names it, and no <attr>_wo or
+// <attr>_wo_version is set.
+func testAccCheckImportedSecrets(tc writeOnlyTestCase, secret string) resource.ImportStateCheckFunc {
+	return func(states []*terraform.InstanceState) error {
+		if len(states) != 1 {
+			return fmt.Errorf("import of %s produced %d resources, want 1", tc.addr, len(states))
+		}
+
+		attrs := states[0].Attributes
+
+		for _, attr := range tc.attrs {
+			want := writeOnlyTestSecret(attr, secret)
+			if slices.Contains(tc.importOmits, attr) {
+				want = ""
+			}
+
+			if attrs[attr] != want {
+				return fmt.Errorf("imported %s of %s is %q, want %q", attr, tc.addr, attrs[attr], want)
+			}
+
+			for _, unset := range []string{attr + writeOnlySuffix, attr + writeOnlyVersionSuffix} {
+				if attrs[unset] != "" {
+					return fmt.Errorf("imported %s of %s is %q, want unset", unset, tc.addr, attrs[unset])
+				}
+			}
+		}
+
+		return nil
 	}
 }
 

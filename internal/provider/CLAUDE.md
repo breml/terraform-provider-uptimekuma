@@ -760,9 +760,11 @@ helper. A resource test describes its secrets in a `writeOnlyTestCase` and passe
 non-parallel files listed under [Test Parallelism](#test-parallelism)). The case creates the
 resource with `<name>_wo`, checks that state holds neither the secret nor `<name>_wo`, that a
 changed write-only value alone plans nothing, and that a version bump sends it, reading the
-secret back from Uptime Kuma with `notificationSecrets()` or `monitorSecrets()`. Use
-`writeOnlyAttrLines()` for the HCL. The full set of transitions, validators and import is
-covered once, in `TestAccNotificationSMTPResourcePasswordWO`. Every write-only test needs
+secret back from Uptime Kuma with `notificationSecrets()` or `monitorSecrets()`. It ends by
+importing the resource and checking that every secret holds the server's value, except those
+named in `importOmits` (Read never refreshes them); set `noImport` for a resource without
+import support. Use `writeOnlyAttrLines()` for the HCL. The full set of transitions and the
+validators are covered once, in `TestAccNotificationSMTPResourcePasswordWO`. Every write-only test needs
 Terraform 1.11 or later and is skipped below. Locally, point `TF_ACC_TERRAFORM_PATH` at a
 Terraform 1.11+ binary. Do not use `TF_ACC_TERRAFORM_VERSION` for a parallel run: every test
 then downloads its own copy, and a run aborts on `text file busy`.

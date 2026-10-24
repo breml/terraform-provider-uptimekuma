@@ -277,8 +277,9 @@ func TestAccProxyResourceWriteOnly(t *testing.T) {
 	host := acctest.RandomWithPrefix("wo") + ".proxy.example.com"
 
 	resource.Test(t, testAccWriteOnlyTestCase(t, writeOnlyTestCase{
-		addr:  "uptimekuma_proxy.test",
-		attrs: []string{"password"},
+		addr:     "uptimekuma_proxy.test",
+		attrs:    []string{"password"},
+		noImport: true,
 		config: func(secret string, version string) string {
 			return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_proxy" "test" {
