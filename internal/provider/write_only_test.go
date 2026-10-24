@@ -5,10 +5,15 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func TestWithWriteOnlySecretRequired(t *testing.T) {
@@ -78,13 +83,13 @@ func TestWithWriteOnlySecretComputedWithoutDefault(t *testing.T) {
 	var found bool
 
 	for _, m := range stored.PlanModifiers {
-		if _, ok := m.(nullWhileWriteOnly); ok {
+		if _, ok := m.(writeOnlyComputedPlan); ok {
 			found = true
 		}
 	}
 
 	if !found {
-		t.Error("api_key lacks the nullWhileWriteOnly plan modifier")
+		t.Error("api_key lacks the writeOnlyComputedPlan plan modifier")
 	}
 
 	assertWriteOnlyPair(t, attrs, "api_key")
@@ -197,4 +202,82 @@ func stringAttribute(t *testing.T, attrs map[string]schema.Attribute, name strin
 	}
 
 	return attr
+}
+
+func TestWriteOnlyComputedPlan(t *testing.T) {
+	s := schema.Schema{Attributes: map[string]schema.Attribute{
+		"api_key":            schema.StringAttribute{Optional: true, Computed: true},
+		"api_key_wo_version": schema.StringAttribute{Optional: true},
+	}}
+	objectType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{
+		"api_key":            tftypes.String,
+		"api_key_wo_version": tftypes.String,
+	}}
+	object := func(apiKey, version any) tftypes.Value {
+		return tftypes.NewValue(objectType, map[string]tftypes.Value{
+			"api_key":            tftypes.NewValue(tftypes.String, apiKey),
+			"api_key_wo_version": tftypes.NewValue(tftypes.String, version),
+		})
+	}
+
+	tests := map[string]struct {
+		config tftypes.Value
+		state  tftypes.Value
+		want   types.String
+	}{
+		"stored value configured": {
+			config: object("key", nil),
+			state:  object("key", nil),
+			want:   types.StringValue("prior"),
+		},
+		"neither configured": {
+			config: object(nil, nil),
+			state:  object("key", nil),
+			want:   types.StringValue("prior"),
+		},
+		"create without write-only": {
+			config: object(nil, nil),
+			state:  tftypes.NewValue(objectType, nil),
+			want:   types.StringValue("prior"),
+		},
+		"write-only in use": {
+			config: object(nil, "1"),
+			state:  object("key", nil),
+			want:   types.StringNull(),
+		},
+		"write-only removed": {
+			config: object(nil, nil),
+			state:  object(nil, "1"),
+			want:   types.StringUnknown(),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var configValue types.String
+
+			config := tfsdk.Config{Schema: s, Raw: tc.config}
+			if diags := config.GetAttribute(t.Context(), path.Root("api_key"), &configValue); diags.HasError() {
+				t.Fatalf("read config: %v", diags)
+			}
+
+			req := planmodifier.StringRequest{
+				Config:      config,
+				ConfigValue: configValue,
+				State:       tfsdk.State{Schema: s, Raw: tc.state},
+				PlanValue:   types.StringValue("prior"),
+			}
+			resp := planmodifier.StringResponse{PlanValue: req.PlanValue}
+
+			writeOnlyComputedPlan{versionName: "api_key_wo_version"}.PlanModifyString(t.Context(), req, &resp)
+
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+			}
+
+			if !resp.PlanValue.Equal(tc.want) {
+				t.Errorf("plan value = %s, want %s", resp.PlanValue, tc.want)
+			}
+		})
+	}
 }

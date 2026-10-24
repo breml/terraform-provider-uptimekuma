@@ -137,7 +137,7 @@ resource "uptimekuma_monitor_snmp" "write_only" {
 - `port` (Number) SNMP device port
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
-- `snmp_community` (String, Sensitive) SNMP community string Stored in state; use `snmp_community_wo` to keep it out of state.
+- `snmp_community` (String, Sensitive) SNMP community string. Stored in state; use `snmp_community_wo` to keep it out of state.
 - `snmp_community_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) SNMP community string, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `snmp_community`; requires `snmp_community_wo_version`. An imported resource has no `snmp_community_wo_version` yet, so `terraform import` may store the server's value in `snmp_community` until the next apply with `snmp_community_wo` set removes it from state.
 - `snmp_community_wo_version` (String) Any value that changes whenever `snmp_community_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `snmp_community_wo`.
 - `snmp_v3_username` (String) SNMP v3 username (for SNMP version 3). Note: up to and including Uptime Kuma 2.5.0 the server stores this value but does not return it on read, so it cannot be detected as drift or recovered on import. Removing this field from configuration requires a `terraform apply` to synchronize state; `terraform plan` will always show a diff after removal until apply is run.

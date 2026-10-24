@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -60,10 +61,14 @@ func withWriteOnlySecret(
 		stored.Validators = append(stored.Validators, stringvalidator.ConflictsWith(path.MatchRoot(woName)))
 	}
 
-	// A computed attribute without a default would otherwise plan its prior value, which Read
-	// no longer refreshes while the write-only variant is in use.
+	// A computed attribute without a default plans its prior value (UseStateForUnknown) or
+	// unknown, neither of which matches Read while the write-only variant is in use.
 	if stored.Computed && stored.Default == nil {
-		stored.PlanModifiers = append(stored.PlanModifiers, nullWhileWriteOnly{versionName: versionName})
+		stored.PlanModifiers = append(stored.PlanModifiers, writeOnlyComputedPlan{versionName: versionName})
+	}
+
+	if desc := stored.MarkdownDescription; desc != "" && !strings.HasSuffix(desc, ".") {
+		stored.MarkdownDescription += "."
 	}
 
 	stored.MarkdownDescription += fmt.Sprintf(" Stored in state; use `%s` to keep it out of state.", woName)
@@ -130,25 +135,29 @@ func writeOnlyOrPlanValue(
 	return plan
 }
 
-// nullWhileWriteOnly plans a computed secret attribute as null while its write-only variant is
-// in use, which a set <name>_wo_version signals. Read does not refresh the attribute then, so
-// any other planned value would not match the state after apply.
-type nullWhileWriteOnly struct {
+// writeOnlyComputedPlan plans a computed secret attribute that has no default:
+//   - null while its write-only variant is in use, which a set <name>_wo_version signals. Read
+//     does not refresh the attribute then, so any other planned value would not match the state
+//     after apply.
+//   - unknown when the configuration drops <name>_wo_version that the state still holds. The
+//     state holds null for the attribute, which UseStateForUnknown would plan, while Read now
+//     refreshes it from the server again.
+type writeOnlyComputedPlan struct {
 	versionName string
 }
 
 // Description implements planmodifier.String.
-func (m nullWhileWriteOnly) Description(_ context.Context) string {
-	return fmt.Sprintf("The value is null while %s is set.", m.versionName)
+func (m writeOnlyComputedPlan) Description(_ context.Context) string {
+	return fmt.Sprintf("The value is null while %s is set and unknown when it is removed.", m.versionName)
 }
 
 // MarkdownDescription implements planmodifier.String.
-func (m nullWhileWriteOnly) MarkdownDescription(ctx context.Context) string {
+func (m writeOnlyComputedPlan) MarkdownDescription(ctx context.Context) string {
 	return m.Description(ctx)
 }
 
 // PlanModifyString implements planmodifier.String.
-func (m nullWhileWriteOnly) PlanModifyString(
+func (m writeOnlyComputedPlan) PlanModifyString(
 	ctx context.Context,
 	req planmodifier.StringRequest,
 	resp *planmodifier.StringResponse,
@@ -161,9 +170,20 @@ func (m nullWhileWriteOnly) PlanModifyString(
 
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(m.versionName), &version)...)
 
-	if version.IsNull() {
+	if !version.IsNull() {
+		resp.PlanValue = types.StringNull()
 		return
 	}
 
-	resp.PlanValue = types.StringNull()
+	if req.State.Raw.IsNull() {
+		return
+	}
+
+	var stateVersion types.String
+
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root(m.versionName), &stateVersion)...)
+
+	if !stateVersion.IsNull() {
+		resp.PlanValue = types.StringUnknown()
+	}
 }

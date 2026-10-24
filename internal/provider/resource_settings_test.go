@@ -174,8 +174,10 @@ resource "uptimekuma_settings" "test" {
 }
 
 // TestAccSettingsResourceWriteOnly runs non-parallel like every settings test, because settings
-// are a singleton. The last step clears the key again, as destroying the resource leaves the
-// server settings as they are.
+// are a singleton. It starts from a stored steam_api_key, which the write-only steps must drop
+// from state, and ends by removing the write-only pair, after which Read refreshes the key from
+// the server again. The last step clears the key, as destroying the resource leaves the server
+// settings as they are.
 func TestAccSettingsResourceWriteOnly(t *testing.T) {
 	testCase := testAccWriteOnlyTestCase(t, writeOnlyTestCase{
 		addr:      "uptimekuma_settings.test",
@@ -197,7 +199,27 @@ resource "uptimekuma_settings" "test" {
 		},
 	})
 
+	testCase.Steps = append([]resource.TestStep{{
+		Config: providerConfig() + `
+resource "uptimekuma_settings" "test" {
+  steam_api_key = "stored"
+}
+`,
+		ConfigStateChecks: []statecheck.StateCheck{
+			statecheck.ExpectKnownValue("uptimekuma_settings.test", tfjsonpath.New("steam_api_key"),
+				knownvalue.StringExact("stored")),
+		},
+	}}, testCase.Steps...)
+
 	testCase.Steps = append(testCase.Steps, resource.TestStep{
+		Config: providerConfig() + `
+resource "uptimekuma_settings" "test" {}
+`,
+		ConfigStateChecks: []statecheck.StateCheck{
+			statecheck.ExpectKnownValue("uptimekuma_settings.test", tfjsonpath.New("steam_api_key"),
+				knownvalue.StringExact(writeOnlyTestSecret("steam_api_key", "second"))),
+		},
+	}, resource.TestStep{
 		Config: providerConfig() + `
 resource "uptimekuma_settings" "test" {
   steam_api_key = ""

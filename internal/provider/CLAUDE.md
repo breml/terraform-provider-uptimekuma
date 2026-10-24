@@ -707,7 +707,7 @@ An attribute that holds a real secret should offer a write-only alternative (Ter
 OpenTofu 1.11), so the secret never reaches plan or state:
 
 - `<name>` - the existing attribute, still stored in state
-- `<name>_wo` - write-only: Terraform sends it with every apply but never stores it
+- `<name>_wo` - write-only: sent to Uptime Kuma on create and on any update, but never stored
 - `<name>_wo_version` - stored stand-in; a change to it triggers the update that sends
   `<name>_wo`, because a change to a write-only value alone produces no diff
 
@@ -738,8 +738,9 @@ if data.APIKeyWOVersion.IsNull() {
   helper takes the model, resolve the secrets after it in an `applyWriteOnlySecrets()` method
   on the model (see the SFTP, MQTT and RADIUS monitors and `MonitorHTTPBaseModel`).
 - A `Computed` secret without a default (settings `steam_api_key`) gets the
-  `nullWhileWriteOnly` plan modifier, so it plans null rather than its prior value while
-  `<name>_wo_version` is set.
+  `writeOnlyComputedPlan` plan modifier. It plans null rather than the prior value while
+  `<name>_wo_version` is set, and unknown when the configuration drops a
+  `<name>_wo_version` that the state holds, so that Read may refresh the secret again.
 - A `ValidateConfig` that checks a secret must accept `<name>_wo` in its place (see
   `validateSFTPCredentials()`).
 - Import has no `<name>_wo_version` to go by, so a Read that refreshes the secret stores the

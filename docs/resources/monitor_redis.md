@@ -50,7 +50,7 @@ resource "uptimekuma_monitor_redis" "write_only" {
 
 - `active` (Boolean) Monitor is active
 - `conditions` (Attributes List) Optional list of assertion clauses evaluated against the monitor result. Each condition is chained with the previous one using `and_or`. (see [below for nested schema](#nestedatt--conditions))
-- `database_connection_string` (String, Sensitive) Redis connection string (e.g., redis://user:password@host:port) Stored in state; use `database_connection_string_wo` to keep it out of state.
+- `database_connection_string` (String, Sensitive) Redis connection string (e.g., redis://user:password@host:port). Stored in state; use `database_connection_string_wo` to keep it out of state.
 - `database_connection_string_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Redis connection string (e.g., redis://user:password@host:port), write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `database_connection_string`; requires `database_connection_string_wo_version`. An imported resource has no `database_connection_string_wo_version` yet, so `terraform import` may store the server's value in `database_connection_string` until the next apply with `database_connection_string_wo` set removes it from state.
 - `database_connection_string_wo_version` (String) Any value that changes whenever `database_connection_string_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `database_connection_string_wo`.
 - `description` (String) Description

@@ -123,7 +123,7 @@ resource "uptimekuma_monitor_mqtt" "write_only" {
 - `json_path` (String) JSON path for json-query check
 - `max_retries` (Number) Maximum number of retries
 - `mqtt_check_type` (String) Check type: keyword or json-query
-- `mqtt_password` (String, Sensitive) MQTT password for authentication Stored in state; use `mqtt_password_wo` to keep it out of state.
+- `mqtt_password` (String, Sensitive) MQTT password for authentication. Stored in state; use `mqtt_password_wo` to keep it out of state.
 - `mqtt_password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) MQTT password for authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `mqtt_password`; requires `mqtt_password_wo_version`. An imported resource has no `mqtt_password_wo_version` yet, so `terraform import` may store the server's value in `mqtt_password` until the next apply with `mqtt_password_wo` set removes it from state.
 - `mqtt_password_wo_version` (String) Any value that changes whenever `mqtt_password_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `mqtt_password_wo`.
 - `mqtt_success_message` (String) Expected message for keyword check

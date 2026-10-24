@@ -25,7 +25,7 @@ type serverSecretsFunc func(ctx context.Context, kumaClient *kuma.Client, id int
 // writeOnlyTestCase describes the write-only secrets of one resource for
 // testAccWriteOnlyTestCase.
 type writeOnlyTestCase struct {
-	// addr is the resource address, e.g. "uptimekuma_notification_telegram.test".
+	// addr is the resource address, e.g. "uptimekuma_notification_smtp.test".
 	addr string
 
 	// attrs are the secret attributes whose <attr>_wo variant config sets.
@@ -91,7 +91,8 @@ func testAccWriteOnlyTestCase(t *testing.T, tc writeOnlyTestCase) resource.TestC
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
-				Check: testAccCheckServerSecrets(t, kumaClient, tc, "first"),
+				ConfigStateChecks: storedSecretsAbsent(tc),
+				Check:             testAccCheckServerSecrets(t, kumaClient, tc, "first"),
 			},
 			// Bumping the version sends the current write-only value.
 			{

@@ -159,7 +159,7 @@ func (r *ProxyResource) Create(ctx context.Context, req resource.CreateRequest, 
 		}
 
 		if password == "" {
-			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
+			resp.Diagnostics.AddError("validation error", "password or password_wo is required when auth is enabled")
 			return
 		}
 
@@ -258,7 +258,7 @@ func (r *ProxyResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		}
 
 		if password == "" {
-			resp.Diagnostics.AddError("validation error", "password is required when auth is enabled")
+			resp.Diagnostics.AddError("validation error", "password or password_wo is required when auth is enabled")
 			return
 		}
 

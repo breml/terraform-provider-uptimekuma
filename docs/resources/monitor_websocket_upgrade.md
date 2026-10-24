@@ -56,7 +56,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "write_only" {
 - `auth_domain` (String) NTLM authentication domain
 - `auth_method` (String) Authentication method
 - `auth_workstation` (String) NTLM authentication workstation
-- `basic_auth_pass` (String, Sensitive) Basic authentication password Stored in state; use `basic_auth_pass_wo` to keep it out of state.
+- `basic_auth_pass` (String, Sensitive) Basic authentication password. Stored in state; use `basic_auth_pass_wo` to keep it out of state.
 - `basic_auth_pass_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Basic authentication password, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `basic_auth_pass`; requires `basic_auth_pass_wo_version`. An imported resource has no `basic_auth_pass_wo_version` yet, so `terraform import` may store the server's value in `basic_auth_pass` until the next apply with `basic_auth_pass_wo` set removes it from state.
 - `basic_auth_pass_wo_version` (String) Any value that changes whenever `basic_auth_pass_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `basic_auth_pass_wo`.
 - `basic_auth_user` (String) Basic authentication username
@@ -76,7 +76,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "write_only" {
 - `oauth_audience` (String) OAuth audience
 - `oauth_auth_method` (String) OAuth authentication method
 - `oauth_client_id` (String) OAuth client ID
-- `oauth_client_secret` (String, Sensitive) OAuth client secret Stored in state; use `oauth_client_secret_wo` to keep it out of state.
+- `oauth_client_secret` (String, Sensitive) OAuth client secret. Stored in state; use `oauth_client_secret_wo` to keep it out of state.
 - `oauth_client_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) OAuth client secret, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `oauth_client_secret`; requires `oauth_client_secret_wo_version`. An imported resource has no `oauth_client_secret_wo_version` yet, so `terraform import` may store the server's value in `oauth_client_secret` until the next apply with `oauth_client_secret_wo` set removes it from state.
 - `oauth_client_secret_wo_version` (String) Any value that changes whenever `oauth_client_secret_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `oauth_client_secret_wo`.
 - `oauth_scopes` (String) OAuth scopes
@@ -89,7 +89,7 @@ resource "uptimekuma_monitor_websocket_upgrade" "write_only" {
 - `timeout` (Number) Request timeout in seconds, at least 0.1. Fractional values are supported. Defaults to 48, the value the Uptime Kuma web UI assigns to a new monitor: 80% of the default 60 second `interval`. The floor exists because Uptime Kuma treats 0 or less as no timeout being set and substitutes a value derived from `interval` instead of using it as a timeout. The server enforces no upper bound, but saving the monitor in the web UI clamps the value to 80% of `interval`, so a monitor edited there afterwards can come back lowered.
 - `tls_ca` (String) TLS CA certificate
 - `tls_cert` (String, Sensitive) TLS client certificate
-- `tls_key` (String, Sensitive) TLS client key Stored in state; use `tls_key_wo` to keep it out of state.
+- `tls_key` (String, Sensitive) TLS client key. Stored in state; use `tls_key_wo` to keep it out of state.
 - `tls_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) TLS client key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `tls_key`; requires `tls_key_wo_version`. An imported resource has no `tls_key_wo_version` yet, so `terraform import` may store the server's value in `tls_key` until the next apply with `tls_key_wo` set removes it from state.
 - `tls_key_wo_version` (String) Any value that changes whenever `tls_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `tls_key_wo`.
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)

@@ -152,6 +152,10 @@ func (r *MonitorRabbitMQResource) Create(
 		rabbitMQMonitor.NotificationIDs = notificationIDs
 	}
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id, err := r.client.CreateMonitor(ctx, &rabbitMQMonitor)
 	// Handle error.
 	if err != nil && !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create RabbitMQ monitor") {
@@ -321,6 +325,10 @@ func (r *MonitorRabbitMQResource) Update(
 		}
 
 		rabbitMQMonitor.NotificationIDs = notificationIDs
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateMonitor(ctx, &rabbitMQMonitor)

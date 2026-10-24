@@ -371,7 +371,7 @@ func (r *SettingsResource) readSettings(
 	data.NSCD = types.BoolValue(s.NSCD)
 	data.TrustProxy = types.BoolValue(s.TrustProxy)
 	data.PrimaryBaseURL = types.StringValue(s.PrimaryBaseURL)
-	// A steam_api_key_wo_version in state means steam_api_key_wo is in use, so state must not
+	// A steam_api_key_wo_version in the model means steam_api_key_wo is in use, so state must not
 	// learn the key from the server. An import has no version yet and does pick the key up.
 	if data.SteamAPIKeyWOVersion.IsNull() {
 		data.SteamAPIKey = types.StringValue(s.SteamAPIKey)

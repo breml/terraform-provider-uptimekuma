@@ -221,7 +221,7 @@ func buildKafkaProducerMonitor(
 		kafkaMonitor.Brokers = brokers
 	}
 
-	setSASLOptions(&kafkaMonitor, data.SASLOptions, diags)
+	setSASLOptions(&kafkaMonitor, data.SASLOptions, "sasl_options", diags)
 	if diags.HasError() {
 		return kafkaMonitor
 	}
@@ -247,8 +247,9 @@ func buildKafkaProducerMonitor(
 	return kafkaMonitor
 }
 
-// setSASLOptions decodes the JSON-encoded SASL options into m, nil when unset.
-func setSASLOptions(m *monitor.KafkaProducer, raw types.String, diags *diag.Diagnostics) {
+// setSASLOptions decodes the JSON-encoded SASL options of the attribute attr into m, nil when
+// unset.
+func setSASLOptions(m *monitor.KafkaProducer, raw types.String, attr string, diags *diag.Diagnostics) {
 	m.SASLOptions = nil
 
 	if raw.IsNull() || raw.IsUnknown() {
@@ -259,7 +260,11 @@ func setSASLOptions(m *monitor.KafkaProducer, raw types.String, diags *diag.Diag
 
 	err := json.Unmarshal([]byte(raw.ValueString()), &saslOptions)
 	if err != nil {
-		diags.AddError("failed to parse sasl_options", fmt.Sprintf("must be valid JSON: %s", err.Error()))
+		diags.AddAttributeError(
+			path.Root(attr),
+			"failed to parse "+attr,
+			fmt.Sprintf("must be valid JSON: %s", err.Error()),
+		)
 		return
 	}
 
@@ -274,7 +279,12 @@ func (data *MonitorKafkaProducerResourceModel) applyWriteOnlySecrets(
 	m *monitor.KafkaProducer,
 	diags *diag.Diagnostics,
 ) {
-	setSASLOptions(m, writeOnlyOrPlanValue(ctx, config, "sasl_options", data.SASLOptions, diags), diags)
+	// sasl_options conflicts with sasl_options_wo, so a set sasl_options was already decoded
+	// when m was built.
+	if data.SASLOptions.IsNull() {
+		saslOptions := writeOnlyOrPlanValue(ctx, config, "sasl_options", data.SASLOptions, diags)
+		setSASLOptions(m, saslOptions, "sasl_options_wo", diags)
+	}
 }
 
 // populateKafkaProducerMonitorBaseFields populates the resource model with data from the Kafka Producer monitor API

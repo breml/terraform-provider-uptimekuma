@@ -142,7 +142,7 @@ resource "uptimekuma_monitor_rabbitmq" "write_only" {
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
-- `password` (String, Sensitive) Password for HTTP Basic authentication against the RabbitMQ management API Stored in state; use `password_wo` to keep it out of state.
+- `password` (String, Sensitive) Password for HTTP Basic authentication against the RabbitMQ management API. Stored in state; use `password_wo` to keep it out of state.
 - `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Password for HTTP Basic authentication against the RabbitMQ management API, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `password`; requires `password_wo_version`. An imported resource has no `password_wo_version` yet, so `terraform import` may store the server's value in `password` until the next apply with `password_wo` set removes it from state.
 - `password_wo_version` (String) Any value that changes whenever `password_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `password_wo`.
 - `resend_interval` (Number) Resend interval in seconds

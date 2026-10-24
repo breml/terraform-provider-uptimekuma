@@ -102,10 +102,10 @@ resource "uptimekuma_monitor_radius" "write_only" {
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `port` (Number) Radius server port
-- `radius_password` (String, Sensitive) Password for Radius authentication Stored in state; use `radius_password_wo` to keep it out of state.
+- `radius_password` (String, Sensitive) Password for Radius authentication. Stored in state; use `radius_password_wo` to keep it out of state.
 - `radius_password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Password for Radius authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `radius_password`; requires `radius_password_wo_version`. An imported resource has no `radius_password_wo_version` yet, so `terraform import` may store the server's value in `radius_password` until the next apply with `radius_password_wo` set removes it from state.
 - `radius_password_wo_version` (String) Any value that changes whenever `radius_password_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `radius_password_wo`.
-- `radius_secret` (String, Sensitive) Shared secret for the Radius server Stored in state; use `radius_secret_wo` to keep it out of state.
+- `radius_secret` (String, Sensitive) Shared secret for the Radius server. Stored in state; use `radius_secret_wo` to keep it out of state.
 - `radius_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Shared secret for the Radius server, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `radius_secret`; requires `radius_secret_wo_version`. An imported resource has no `radius_secret_wo_version` yet, so `terraform import` may store the server's value in `radius_secret` until the next apply with `radius_secret_wo` set removes it from state.
 - `radius_secret_wo_version` (String) Any value that changes whenever `radius_secret_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `radius_secret_wo`.
 - `resend_interval` (Number) Resend interval in seconds

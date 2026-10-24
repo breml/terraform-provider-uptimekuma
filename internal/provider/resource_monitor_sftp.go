@@ -151,9 +151,9 @@ func (*MonitorSFTPResource) Schema(
 				},
 			},
 			"ssh_private_key": schema.StringAttribute{
-				MarkdownDescription: "Private key in PEM or OpenSSH format. Required while " +
-					"`ssh_auth_method` is `privateKey` and not allowed otherwise, because password " +
-					"authentication ignores it.",
+				MarkdownDescription: "Private key in PEM or OpenSSH format. This or `ssh_private_key_wo` " +
+					"is required while `ssh_auth_method` is `privateKey` and not allowed otherwise, because " +
+					"password authentication ignores it.",
 				Optional:  true,
 				Sensitive: true,
 				Validators: []validator.String{
@@ -182,9 +182,12 @@ func (*MonitorSFTPResource) Schema(
 
 // withSFTPWriteOnlySecrets adds the write-only variants of the SSH credentials.
 func withSFTPWriteOnlySecrets(attrs map[string]schema.Attribute) map[string]schema.Attribute {
-	attrs = withWriteOnlySecret(attrs, "ssh_password", "Password for SSH authentication")
-	attrs = withWriteOnlySecret(attrs, "ssh_private_key", "Private key in PEM or OpenSSH format")
-	attrs = withWriteOnlySecret(attrs, "ssh_passphrase", "Passphrase of the private key")
+	attrs = withWriteOnlySecret(attrs, "ssh_password",
+		"Password for SSH authentication (only allowed while `ssh_auth_method` is `password`)")
+	attrs = withWriteOnlySecret(attrs, "ssh_private_key",
+		"Private key in PEM or OpenSSH format (only allowed while `ssh_auth_method` is `privateKey`)")
+	attrs = withWriteOnlySecret(attrs, "ssh_passphrase",
+		"Passphrase of the private key (only allowed while `ssh_auth_method` is `privateKey`)")
 
 	return attrs
 }
@@ -542,7 +545,8 @@ func populateSFTPModel(
 	data.SSHAuthMethod = types.StringValue(string(authMethod))
 
 	// The server returns the credentials to the owning user's socket, so they
-	// round-trip and an import picks them up as well.
+	// round-trip and an import picks them up as well, unless the matching
+	// _wo_version is set.
 	if data.SSHPasswordWOVersion.IsNull() {
 		data.SSHPassword = ptrToTypes(sftpMonitor.SSHPassword)
 	}
