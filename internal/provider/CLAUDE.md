@@ -5,7 +5,6 @@ This package implements the Terraform provider for Uptime Kuma, including all re
 ## Package Overview
 
 - **Package**: `internal/provider`
-- **Files**: 603 files total
 - **Resources**: 142 resource types
 - **Data Sources**: 142 data source types (mirroring resources)
 - **Size**: One of the largest packages in the codebase

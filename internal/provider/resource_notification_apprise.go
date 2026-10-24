@@ -63,6 +63,7 @@ func (*NotificationAppriseResource) Schema(
 			"apprise_url": schema.StringAttribute{
 				MarkdownDescription: "Apprise URL or comma-separated list of URLs",
 				Required:            true,
+				Sensitive:           true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},

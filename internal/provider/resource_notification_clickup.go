@@ -99,7 +99,7 @@ func (*NotificationClickUpResource) Schema(
 	resp.Schema.Attributes = withWriteOnlySecret(
 		resp.Schema.Attributes,
 		"token",
-		"The ClickUp personal access token (`pk_…`)",
+		"The ClickUp personal access token (`pk_…`), without a `Bearer` prefix",
 	)
 }
 

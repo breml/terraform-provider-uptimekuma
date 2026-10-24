@@ -50,6 +50,9 @@ func singleSecret(attr string, value string) map[string]string {
 	return map[string]string{attr: value}
 }
 
+// TestAccNotificationResourcesWriteOnly runs the shared write-only test for every notification with
+// write-only secrets; each such notification adds an entry here. The full set of transitions and
+// the validators are covered once, in TestAccNotificationSMTPResourcePasswordWO.
 func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 	tests := map[string]notificationWriteOnlyTest{
 		"uptimekuma_notification_46elks": {

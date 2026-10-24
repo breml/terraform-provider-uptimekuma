@@ -61,7 +61,7 @@ terraform-provider-uptimekuma/
 ├── internal/
 │   ├── client/                  # Client abstraction with pooling
 │   │   └── CLAUDE.md           # 📖 Client documentation
-│   └── provider/                # Provider implementation (603 files)
+│   └── provider/                # Provider implementation
 │       └── CLAUDE.md           # 📖 Provider documentation
 ├── docs/                        # Generated Terraform documentation
 ├── examples/                    # Terraform examples
