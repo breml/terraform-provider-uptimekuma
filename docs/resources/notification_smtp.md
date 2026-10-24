@@ -83,7 +83,7 @@ resource "uptimekuma_notification_smtp" "write_only_password" {
   to   = "alerts@example.com"
 
   username            = "smtp-user"
-  password_wo         = var.smtp_password
+  password_wo         = "smtp-password"
   password_wo_version = "1"
 
   is_active  = true
