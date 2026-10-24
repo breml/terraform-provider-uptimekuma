@@ -39,7 +39,7 @@ resource "uptimekuma_notification_clickup" "no_url" {
 
 - `channel_id` (String) The id of the chat channel the message is posted to, the segment of the channel URL right after `/chat/r/`.
 - `name` (String) Notification name
-- `token` (String, Sensitive) The ClickUp personal access token. Uptime Kuma sends it verbatim as the `Authorization` header, so it must not carry a `Bearer` prefix.
+- `token` (String, Sensitive) The ClickUp personal access token (`pk_…`). Uptime Kuma sends it verbatim as the `Authorization` header, so it must not carry a `Bearer` prefix.
 - `workspace_id` (String) The id of the workspace holding the chat channel, the segment of the workspace URL right after `app.clickup.com/`.
 
 ### Optional

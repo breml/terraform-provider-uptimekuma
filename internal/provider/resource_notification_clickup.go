@@ -62,7 +62,7 @@ func (*NotificationClickUpResource) Schema(
 			"notification is posted as a Markdown message into one of its chat channels.",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
 			"token": schema.StringAttribute{
-				MarkdownDescription: "The ClickUp personal access token. Uptime Kuma sends it verbatim as the " +
+				MarkdownDescription: "The ClickUp personal access token (`pk_…`). Uptime Kuma sends it verbatim as the " +
 					"`Authorization` header, so it must not carry a `Bearer` prefix.",
 				Required:  true,
 				Sensitive: true,

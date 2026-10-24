@@ -12,9 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// TestAccNotificationClickUpResource covers create, an update of every field and an import
-// round-trip. disable_url walks through unset, true, false and unset again: the server stores it
-// only when sent, so an unset value must stay null rather than read back as false.
+// TestAccNotificationClickUpResource covers create, an update of every ClickUp-specific field and
+// an import round-trip. disable_url walks through unset, true, false and unset again: the server
+// stores it only when sent, so an unset value must stay null rather than read back as false.
 func TestAccNotificationClickUpResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationClickUp")
 	nameUpdated := acctest.RandomWithPrefix("NotificationClickUpUpdated")
@@ -53,6 +53,16 @@ func TestAccNotificationClickUpResource(t *testing.T) {
 						"uptimekuma_notification_clickup.test",
 						tfjsonpath.New("is_active"),
 						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_clickup.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_clickup.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_clickup.test",
@@ -174,6 +184,15 @@ func TestAccNotificationClickUpResourceInvalidConfig(t *testing.T) {
 					token:       "pk_12345678_TESTTOKEN",
 					workspaceID: "9012345678",
 					channelID:   "",
+				}),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
+			},
+			{
+				Config: testAccNotificationClickUpResourceConfig(clickUpTestConfig{
+					name:        name,
+					token:       "pk_12345678_TESTTOKEN",
+					workspaceID: "",
+					channelID:   "abc12-345",
 				}),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
 			},
