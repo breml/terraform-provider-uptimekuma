@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -42,7 +43,11 @@ type MonitorRadiusResourceModel struct {
 	Port                     types.Int64  `tfsdk:"port"`
 	RadiusUsername           types.String `tfsdk:"radius_username"`
 	RadiusPassword           types.String `tfsdk:"radius_password"`
+	RadiusPasswordWO         types.String `tfsdk:"radius_password_wo"`
+	RadiusPasswordWOVersion  types.String `tfsdk:"radius_password_wo_version"`
 	RadiusSecret             types.String `tfsdk:"radius_secret"`
+	RadiusSecretWO           types.String `tfsdk:"radius_secret_wo"`
+	RadiusSecretWOVersion    types.String `tfsdk:"radius_secret_wo_version"`
 	CalledStationID          types.String `tfsdk:"called_station_id"`
 	CallingStationID         types.String `tfsdk:"calling_station_id"`
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
@@ -101,6 +106,18 @@ func (*MonitorRadiusResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"radius_password",
+		"Password for Radius authentication",
+	)
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"radius_secret",
+		"Shared secret for the Radius server",
+	)
 }
 
 // Configure configures the resource with the API client.
@@ -125,6 +142,7 @@ func (r *MonitorRadiusResource) Create(
 	}
 
 	radiusMonitor := buildRadiusMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &radiusMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -212,6 +230,18 @@ func buildRadiusMonitor(
 	return radiusMonitor
 }
 
+// applyWriteOnlySecrets replaces the secrets in m with their write-only variants where the
+// configuration sets them; only the configuration carries a write-only value.
+func (data *MonitorRadiusResourceModel) applyWriteOnlySecrets(
+	ctx context.Context,
+	config tfsdk.Config,
+	m *monitor.Radius,
+	diags *diag.Diagnostics,
+) {
+	m.Password = writeOnlyOrPlan(ctx, config, "radius_password", data.RadiusPassword, diags)
+	m.Secret = writeOnlyOrPlan(ctx, config, "radius_secret", data.RadiusSecret, diags)
+}
+
 // populateRadiusMonitorBaseFields populates the resource model with data from the Radius monitor API response.
 func populateRadiusMonitorBaseFields(radiusMonitor *monitor.Radius, m *MonitorRadiusResourceModel) {
 	m.Name = types.StringValue(radiusMonitor.Name)
@@ -234,11 +264,15 @@ func populateRadiusMonitorBaseFields(radiusMonitor *monitor.Radius, m *MonitorRa
 	// Preserve the existing state values to avoid erasing the configured
 	// secrets and to prevent perpetual diffs after a refresh.
 	if radiusMonitor.Password != "" {
-		m.RadiusPassword = types.StringValue(radiusMonitor.Password)
+		if m.RadiusPasswordWOVersion.IsNull() {
+			m.RadiusPassword = types.StringValue(radiusMonitor.Password)
+		}
 	}
 
 	if radiusMonitor.Secret != "" {
-		m.RadiusSecret = types.StringValue(radiusMonitor.Secret)
+		if m.RadiusSecretWOVersion.IsNull() {
+			m.RadiusSecret = types.StringValue(radiusMonitor.Secret)
+		}
 	}
 
 	m.CalledStationID = stringOrNullPtr(radiusMonitor.CalledStationID)
@@ -329,6 +363,7 @@ func (r *MonitorRadiusResource) Update(
 	}
 
 	radiusMonitor := buildRadiusMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &radiusMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

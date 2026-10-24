@@ -34,9 +34,11 @@ type MonitorMySQLResource struct {
 type MonitorMySQLResourceModel struct {
 	MonitorBaseModel
 
-	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
-	DatabaseQuery            types.String `tfsdk:"database_query"`
-	Conditions               types.List   `tfsdk:"conditions"`
+	DatabaseConnectionString          types.String `tfsdk:"database_connection_string"`
+	DatabaseConnectionStringWO        types.String `tfsdk:"database_connection_string_wo"`
+	DatabaseConnectionStringWOVersion types.String `tfsdk:"database_connection_string_wo_version"`
+	DatabaseQuery                     types.String `tfsdk:"database_query"`
+	Conditions                        types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -71,6 +73,12 @@ func (*MonitorMySQLResource) Schema(
 			"conditions": conditionsAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"database_connection_string",
+		"MySQL connection string (e.g., user:password@tcp(host:port)/database)",
+	)
 }
 
 // Configure configures the MySQL monitor resource with the API client.
@@ -108,9 +116,15 @@ func (r *MonitorMySQLResource) Create(
 			IsActive:       data.Active.ValueBool(),
 		},
 		MySQLDetails: monitor.MySQLDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            &databaseQuery,
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: &databaseQuery,
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -203,7 +217,10 @@ func (r *MonitorMySQLResource) Read(ctx context.Context, req resource.ReadReques
 	data.MaxRetries = types.Int64Value(mysqlMonitor.MaxRetries)
 	data.UpsideDown = types.BoolValue(mysqlMonitor.UpsideDown)
 	data.Active = types.BoolValue(mysqlMonitor.IsActive)
-	data.DatabaseConnectionString = types.StringValue(mysqlMonitor.DatabaseConnectionString)
+	if data.DatabaseConnectionStringWOVersion.IsNull() {
+		data.DatabaseConnectionString = types.StringValue(mysqlMonitor.DatabaseConnectionString)
+	}
+
 	if mysqlMonitor.DatabaseQuery != nil {
 		data.DatabaseQuery = types.StringValue(*mysqlMonitor.DatabaseQuery)
 	} else {
@@ -277,9 +294,15 @@ func (r *MonitorMySQLResource) Update(
 			IsActive:       data.Active.ValueBool(),
 		},
 		MySQLDetails: monitor.MySQLDetails{
-			DatabaseConnectionString: data.DatabaseConnectionString.ValueString(),
-			DatabaseQuery:            &databaseQuery,
-			Conditions:               buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			DatabaseConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			DatabaseQuery: &databaseQuery,
+			Conditions:    buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

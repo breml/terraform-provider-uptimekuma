@@ -105,6 +105,7 @@ func (r *MonitorHTTPKeywordResource) Create(
 	}
 
 	httpKeywordMonitor := buildHTTPKeywordMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &httpKeywordMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -259,16 +260,14 @@ func populateHTTPBaseFieldsForKeyword(httpMonitor *monitor.HTTP, m *MonitorHTTPK
 	m.Headers = stringOrNullKeyword(httpMonitor.Headers)
 	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
 	m.BasicAuthUser = stringOrNullKeyword(httpMonitor.BasicAuthUser)
-	m.BasicAuthPass = stringOrNullKeyword(httpMonitor.BasicAuthPass)
+	m.populateSecrets(&httpMonitor.HTTPDetails)
 	m.AuthDomain = stringOrNullKeyword(httpMonitor.AuthDomain)
 	m.AuthWorkstation = stringOrNullKeyword(httpMonitor.AuthWorkstation)
 	m.TLSCert = stringOrNullKeyword(httpMonitor.TLSCert)
-	m.TLSKey = stringOrNullKeyword(httpMonitor.TLSKey)
 	m.TLSCa = stringOrNullKeyword(httpMonitor.TLSCa)
 	m.OAuthAuthMethod = stringOrNullKeyword(httpMonitor.OAuthAuthMethod)
 	m.OAuthTokenURL = stringOrNullKeyword(httpMonitor.OAuthTokenURL)
 	m.OAuthClientID = stringOrNullKeyword(httpMonitor.OAuthClientID)
-	m.OAuthClientSecret = stringOrNullKeyword(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNullKeyword(httpMonitor.OAuthScopes)
 	m.OAuthAudience = stringOrNullKeyword(httpMonitor.OAuthAudience)
 	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
@@ -376,6 +375,7 @@ func (r *MonitorHTTPKeywordResource) Update(
 	}
 
 	httpKeywordMonitor := buildHTTPKeywordMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &httpKeywordMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

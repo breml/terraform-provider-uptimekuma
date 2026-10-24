@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -8,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+
+	kuma "github.com/breml/go-uptime-kuma-client"
 )
 
 func TestAccSettingsResource(t *testing.T) {
@@ -168,4 +171,43 @@ resource "uptimekuma_settings" "test" {
   trust_proxy            = false
 }
 `
+}
+
+// TestAccSettingsResourceWriteOnly runs non-parallel like every settings test, because settings
+// are a singleton. The last step clears the key again, as destroying the resource leaves the
+// server settings as they are.
+func TestAccSettingsResourceWriteOnly(t *testing.T) {
+	testCase := testAccWriteOnlyTestCase(t, writeOnlyTestCase{
+		addr:      "uptimekuma_settings.test",
+		attrs:     []string{"steam_api_key"},
+		singleton: true,
+		config: func(secret string, version string) string {
+			return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_settings" "test" {
+%s}
+`, writeOnlyAttrLines(secret, version, "steam_api_key"))
+		},
+		serverSecrets: func(ctx context.Context, kumaClient *kuma.Client, _ int64) (map[string]string, error) {
+			s, err := kumaClient.GetSettings(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("get settings: %w", err)
+			}
+
+			return map[string]string{"steam_api_key": s.SteamAPIKey}, nil
+		},
+	})
+
+	testCase.Steps = append(testCase.Steps, resource.TestStep{
+		Config: providerConfig() + `
+resource "uptimekuma_settings" "test" {
+  steam_api_key = ""
+}
+`,
+		ConfigStateChecks: []statecheck.StateCheck{
+			statecheck.ExpectKnownValue("uptimekuma_settings.test", tfjsonpath.New("steam_api_key"),
+				knownvalue.StringExact("")),
+		},
+	})
+
+	resource.Test(t, testCase)
 }

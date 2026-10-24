@@ -84,3 +84,12 @@ resource "uptimekuma_monitor_mongodb" "example_with_notification" {
 
   notification_ids = [uptimekuma_notification_slack.alerts.id]
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: database_connection_string_wo is never stored in
+# plan or state. Change database_connection_string_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_mongodb" "write_only" {
+  name = "MongoDB monitor with a write-only connection string"
+
+  database_connection_string_wo         = "mongodb://monitor:secret@mongodb.example.com:27017/app"
+  database_connection_string_wo_version = "1"
+}

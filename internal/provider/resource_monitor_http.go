@@ -79,6 +79,7 @@ func (r *MonitorHTTPResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	httpMonitor := buildHTTPMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &httpMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -238,16 +239,14 @@ func populateHTTPMonitorBaseFieldsForHTTP(httpMonitor *monitor.HTTP, m *MonitorH
 	m.Headers = stringOrNull(httpMonitor.Headers)
 	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
 	m.BasicAuthUser = stringOrNull(httpMonitor.BasicAuthUser)
-	m.BasicAuthPass = stringOrNull(httpMonitor.BasicAuthPass)
+	m.populateSecrets(&httpMonitor.HTTPDetails)
 	m.AuthDomain = stringOrNull(httpMonitor.AuthDomain)
 	m.AuthWorkstation = stringOrNull(httpMonitor.AuthWorkstation)
 	m.TLSCert = stringOrNull(httpMonitor.TLSCert)
-	m.TLSKey = stringOrNull(httpMonitor.TLSKey)
 	m.TLSCa = stringOrNull(httpMonitor.TLSCa)
 	m.OAuthAuthMethod = stringOrNull(httpMonitor.OAuthAuthMethod)
 	m.OAuthTokenURL = stringOrNull(httpMonitor.OAuthTokenURL)
 	m.OAuthClientID = stringOrNull(httpMonitor.OAuthClientID)
-	m.OAuthClientSecret = stringOrNull(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNull(httpMonitor.OAuthScopes)
 	m.OAuthAudience = stringOrNull(httpMonitor.OAuthAudience)
 	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
@@ -344,6 +343,7 @@ func (r *MonitorHTTPResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	httpMonitor := buildHTTPMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &httpMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

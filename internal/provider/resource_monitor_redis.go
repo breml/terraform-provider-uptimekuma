@@ -34,9 +34,11 @@ type MonitorRedisResource struct {
 type MonitorRedisResourceModel struct {
 	MonitorBaseModel
 
-	DatabaseConnectionString types.String `tfsdk:"database_connection_string"`
-	IgnoreTLS                types.Bool   `tfsdk:"ignore_tls"`
-	Conditions               types.List   `tfsdk:"conditions"`
+	DatabaseConnectionString          types.String `tfsdk:"database_connection_string"`
+	DatabaseConnectionStringWO        types.String `tfsdk:"database_connection_string_wo"`
+	DatabaseConnectionStringWOVersion types.String `tfsdk:"database_connection_string_wo_version"`
+	IgnoreTLS                         types.Bool   `tfsdk:"ignore_tls"`
+	Conditions                        types.List   `tfsdk:"conditions"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,12 @@ func (*MonitorRedisResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			"conditions": conditionsAttribute(),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"database_connection_string",
+		"Redis connection string (e.g., redis://user:password@host:port)",
+	)
 }
 
 // Configure configures the Redis monitor resource with the API client.
@@ -99,9 +107,15 @@ func (r *MonitorRedisResource) Create(ctx context.Context, req resource.CreateRe
 			IsActive:       data.Active.ValueBool(),
 		},
 		RedisDetails: monitor.RedisDetails{
-			ConnectionString: data.DatabaseConnectionString.ValueString(),
-			IgnoreTLS:        data.IgnoreTLS.ValueBool(),
-			Conditions:       buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			ConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			IgnoreTLS:  data.IgnoreTLS.ValueBool(),
+			Conditions: buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 
@@ -194,7 +208,10 @@ func (r *MonitorRedisResource) Read(ctx context.Context, req resource.ReadReques
 	data.MaxRetries = types.Int64Value(redisMonitor.MaxRetries)
 	data.UpsideDown = types.BoolValue(redisMonitor.UpsideDown)
 	data.Active = types.BoolValue(redisMonitor.IsActive)
-	data.DatabaseConnectionString = types.StringValue(redisMonitor.ConnectionString)
+	if data.DatabaseConnectionStringWOVersion.IsNull() {
+		data.DatabaseConnectionString = types.StringValue(redisMonitor.ConnectionString)
+	}
+
 	data.IgnoreTLS = types.BoolValue(redisMonitor.IgnoreTLS)
 
 	if redisMonitor.Parent != nil {
@@ -258,9 +275,15 @@ func (r *MonitorRedisResource) Update(ctx context.Context, req resource.UpdateRe
 			IsActive:       data.Active.ValueBool(),
 		},
 		RedisDetails: monitor.RedisDetails{
-			ConnectionString: data.DatabaseConnectionString.ValueString(),
-			IgnoreTLS:        data.IgnoreTLS.ValueBool(),
-			Conditions:       buildConditions(ctx, data.Conditions, &resp.Diagnostics),
+			ConnectionString: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"database_connection_string",
+				data.DatabaseConnectionString,
+				&resp.Diagnostics,
+			),
+			IgnoreTLS:  data.IgnoreTLS.ValueBool(),
+			Conditions: buildConditions(ctx, data.Conditions, &resp.Diagnostics),
 		},
 	}
 

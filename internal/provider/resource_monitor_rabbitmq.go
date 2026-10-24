@@ -34,10 +34,12 @@ type MonitorRabbitMQResource struct {
 type MonitorRabbitMQResourceModel struct {
 	MonitorBaseModel
 
-	Nodes    types.String  `tfsdk:"nodes"`
-	Username types.String  `tfsdk:"username"`
-	Password types.String  `tfsdk:"password"`
-	Timeout  types.Float64 `tfsdk:"timeout"`
+	Nodes             types.String  `tfsdk:"nodes"`
+	Username          types.String  `tfsdk:"username"`
+	Password          types.String  `tfsdk:"password"`
+	PasswordWO        types.String  `tfsdk:"password_wo"`
+	PasswordWOVersion types.String  `tfsdk:"password_wo_version"`
+	Timeout           types.Float64 `tfsdk:"timeout"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -81,6 +83,12 @@ func (*MonitorRabbitMQResource) Schema(
 			),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"password",
+		"Password for HTTP Basic authentication against the RabbitMQ management API",
+	)
 }
 
 // Configure configures the RabbitMQ monitor resource with the API client.
@@ -119,7 +127,7 @@ func (r *MonitorRabbitMQResource) Create(
 		RabbitMQDetails: monitor.RabbitMQDetails{
 			Nodes:    data.Nodes.ValueString(),
 			Username: strToPtr(data.Username),
-			Password: strToPtr(data.Password),
+			Password: strToPtr(writeOnlyOrPlanValue(ctx, req.Config, "password", data.Password, &resp.Diagnostics)),
 			Timeout:  float64ToPtr(data.Timeout),
 		},
 	}
@@ -215,7 +223,9 @@ func (r *MonitorRabbitMQResource) Read(
 	data.Active = types.BoolValue(rabbitMQMonitor.IsActive)
 	data.Nodes = types.StringValue(rabbitMQMonitor.Nodes)
 	data.Username = ptrToTypes(rabbitMQMonitor.Username)
-	data.Password = ptrToTypes(rabbitMQMonitor.Password)
+	if data.PasswordWOVersion.IsNull() {
+		data.Password = ptrToTypes(rabbitMQMonitor.Password)
+	}
 
 	data.Timeout = timeoutValueOrDefault(
 		ctx,
@@ -288,7 +298,7 @@ func (r *MonitorRabbitMQResource) Update(
 		RabbitMQDetails: monitor.RabbitMQDetails{
 			Nodes:    data.Nodes.ValueString(),
 			Username: strToPtr(data.Username),
-			Password: strToPtr(data.Password),
+			Password: strToPtr(writeOnlyOrPlanValue(ctx, req.Config, "password", data.Password, &resp.Diagnostics)),
 			Timeout:  float64ToPtr(data.Timeout),
 		},
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -37,18 +38,20 @@ type SettingsResource struct {
 
 // SettingsResourceModel describes the resource data model.
 type SettingsResourceModel struct {
-	ID                  types.String `tfsdk:"id"`
-	ServerTimezone      types.String `tfsdk:"server_timezone"`
-	KeepDataPeriodDays  types.Int64  `tfsdk:"keep_data_period_days"`
-	CheckUpdate         types.Bool   `tfsdk:"check_update"`
-	SearchEngineIndex   types.Bool   `tfsdk:"search_engine_index"`
-	EntryPage           types.String `tfsdk:"entry_page"`
-	NSCD                types.Bool   `tfsdk:"nscd"`
-	TLSExpiryNotifyDays types.List   `tfsdk:"tls_expiry_notify_days"`
-	TrustProxy          types.Bool   `tfsdk:"trust_proxy"`
-	PrimaryBaseURL      types.String `tfsdk:"primary_base_url"`
-	SteamAPIKey         types.String `tfsdk:"steam_api_key"`
-	ChromeExecutable    types.String `tfsdk:"chrome_executable"`
+	ID                   types.String `tfsdk:"id"`
+	ServerTimezone       types.String `tfsdk:"server_timezone"`
+	KeepDataPeriodDays   types.Int64  `tfsdk:"keep_data_period_days"`
+	CheckUpdate          types.Bool   `tfsdk:"check_update"`
+	SearchEngineIndex    types.Bool   `tfsdk:"search_engine_index"`
+	EntryPage            types.String `tfsdk:"entry_page"`
+	NSCD                 types.Bool   `tfsdk:"nscd"`
+	TLSExpiryNotifyDays  types.List   `tfsdk:"tls_expiry_notify_days"`
+	TrustProxy           types.Bool   `tfsdk:"trust_proxy"`
+	PrimaryBaseURL       types.String `tfsdk:"primary_base_url"`
+	SteamAPIKey          types.String `tfsdk:"steam_api_key"`
+	SteamAPIKeyWO        types.String `tfsdk:"steam_api_key_wo"`
+	SteamAPIKeyWOVersion types.String `tfsdk:"steam_api_key_wo_version"`
+	ChromeExecutable     types.String `tfsdk:"chrome_executable"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -167,6 +170,9 @@ func (*SettingsResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 		},
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "steam_api_key",
+		"Steam API key for Steam Game Server monitoring")
 }
 
 // Configure configures the resource with the API client and password.
@@ -208,7 +214,7 @@ func (r *SettingsResource) Create(ctx context.Context, req resource.CreateReques
 	// If no attributes are explicitly set, adopt existing server settings
 	// without performing a write (import-like behavior).
 	if hasExplicitlySetFields(&data) {
-		r.applySettings(ctx, &data, &resp.Diagnostics)
+		r.applySettings(ctx, req.Config, &data, &resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -253,7 +259,7 @@ func (r *SettingsResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	r.applySettings(ctx, &data, &resp.Diagnostics)
+	r.applySettings(ctx, req.Config, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -295,6 +301,7 @@ func hasExplicitlySetFields(data *SettingsResourceModel) bool {
 		(!data.TrustProxy.IsNull() && !data.TrustProxy.IsUnknown()) ||
 		(!data.PrimaryBaseURL.IsNull() && !data.PrimaryBaseURL.IsUnknown()) ||
 		(!data.SteamAPIKey.IsNull() && !data.SteamAPIKey.IsUnknown()) ||
+		!data.SteamAPIKeyWOVersion.IsNull() ||
 		(!data.ChromeExecutable.IsNull() && !data.ChromeExecutable.IsUnknown())
 }
 
@@ -302,6 +309,7 @@ func hasExplicitlySetFields(data *SettingsResourceModel) bool {
 // user-specified values from the plan, and writes them back.
 func (r *SettingsResource) applySettings(
 	ctx context.Context,
+	config tfsdk.Config,
 	data *SettingsResourceModel,
 	diags *diag.Diagnostics,
 ) {
@@ -322,7 +330,12 @@ func (r *SettingsResource) applySettings(
 		return
 	}
 
-	merged := mergeSettingsFromPlan(ctx, data, current, diags)
+	// steam_api_key_wo only exists in the configuration. The merge works on a copy, so the key
+	// never reaches data, which becomes state.
+	apiData := *data
+	apiData.SteamAPIKey = writeOnlyOrPlanValue(ctx, config, "steam_api_key", data.SteamAPIKey, diags)
+
+	merged := mergeSettingsFromPlan(ctx, &apiData, current, diags)
 	if diags.HasError() {
 		return
 	}
@@ -358,7 +371,12 @@ func (r *SettingsResource) readSettings(
 	data.NSCD = types.BoolValue(s.NSCD)
 	data.TrustProxy = types.BoolValue(s.TrustProxy)
 	data.PrimaryBaseURL = types.StringValue(s.PrimaryBaseURL)
-	data.SteamAPIKey = types.StringValue(s.SteamAPIKey)
+	// A steam_api_key_wo_version in state means steam_api_key_wo is in use, so state must not
+	// learn the key from the server. An import has no version yet and does pick the key up.
+	if data.SteamAPIKeyWOVersion.IsNull() {
+		data.SteamAPIKey = types.StringValue(s.SteamAPIKey)
+	}
+
 	data.ChromeExecutable = types.StringValue(s.ChromeExecutable)
 
 	tlsDays, tlsDiags := types.ListValueFrom(ctx, types.Int64Type, s.TLSExpiryNotifyDays)

@@ -25,3 +25,12 @@ resource "uptimekuma_monitor_sqlserver" "with_group" {
 resource "uptimekuma_monitor_group" "databases" {
   name = "Database Monitors"
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: database_connection_string_wo is never stored in
+# plan or state. Change database_connection_string_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_sqlserver" "write_only" {
+  name = "SQL Server monitor with a write-only connection string"
+
+  database_connection_string_wo         = "Server=sqlserver.example.com,1433;Database=app;User Id=monitor;Password=secret;"
+  database_connection_string_wo_version = "1"
+}

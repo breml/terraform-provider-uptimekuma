@@ -113,6 +113,7 @@ func (r *MonitorHTTPJSONQueryResource) Create(
 	}
 
 	httpJSONQueryMonitor := buildHTTPJSONQueryMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &httpJSONQueryMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -269,16 +270,14 @@ func populateHTTPBaseFieldsForJSONQuery(httpMonitor *monitor.HTTP, m *MonitorHTT
 	m.Headers = stringOrNullJSONQuery(httpMonitor.Headers)
 	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
 	m.BasicAuthUser = stringOrNullJSONQuery(httpMonitor.BasicAuthUser)
-	m.BasicAuthPass = stringOrNullJSONQuery(httpMonitor.BasicAuthPass)
+	m.populateSecrets(&httpMonitor.HTTPDetails)
 	m.AuthDomain = stringOrNullJSONQuery(httpMonitor.AuthDomain)
 	m.AuthWorkstation = stringOrNullJSONQuery(httpMonitor.AuthWorkstation)
 	m.TLSCert = stringOrNullJSONQuery(httpMonitor.TLSCert)
-	m.TLSKey = stringOrNullJSONQuery(httpMonitor.TLSKey)
 	m.TLSCa = stringOrNullJSONQuery(httpMonitor.TLSCa)
 	m.OAuthAuthMethod = stringOrNullJSONQuery(httpMonitor.OAuthAuthMethod)
 	m.OAuthTokenURL = stringOrNullJSONQuery(httpMonitor.OAuthTokenURL)
 	m.OAuthClientID = stringOrNullJSONQuery(httpMonitor.OAuthClientID)
-	m.OAuthClientSecret = stringOrNullJSONQuery(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNullJSONQuery(httpMonitor.OAuthScopes)
 	m.OAuthAudience = stringOrNullJSONQuery(httpMonitor.OAuthAudience)
 	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
@@ -391,6 +390,7 @@ func (r *MonitorHTTPJSONQueryResource) Update(
 	}
 
 	httpJSONQueryMonitor := buildHTTPJSONQueryMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &httpJSONQueryMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

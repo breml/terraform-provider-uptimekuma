@@ -102,6 +102,7 @@ func (r *MonitorWebsocketUpgradeResource) Create(
 	}
 
 	websocketUpgradeMonitor := buildWebsocketUpgradeMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &websocketUpgradeMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -258,16 +259,14 @@ func populateHTTPBaseFieldsForWebsocketUpgrade(httpMonitor *monitor.HTTP, m *Mon
 	m.Headers = stringOrNullWebsocketUpgrade(httpMonitor.Headers)
 	m.AuthMethod = types.StringValue(string(httpMonitor.AuthMethod))
 	m.BasicAuthUser = stringOrNullWebsocketUpgrade(httpMonitor.BasicAuthUser)
-	m.BasicAuthPass = stringOrNullWebsocketUpgrade(httpMonitor.BasicAuthPass)
+	m.populateSecrets(&httpMonitor.HTTPDetails)
 	m.AuthDomain = stringOrNullWebsocketUpgrade(httpMonitor.AuthDomain)
 	m.AuthWorkstation = stringOrNullWebsocketUpgrade(httpMonitor.AuthWorkstation)
 	m.TLSCert = stringOrNullWebsocketUpgrade(httpMonitor.TLSCert)
-	m.TLSKey = stringOrNullWebsocketUpgrade(httpMonitor.TLSKey)
 	m.TLSCa = stringOrNullWebsocketUpgrade(httpMonitor.TLSCa)
 	m.OAuthAuthMethod = stringOrNullWebsocketUpgrade(httpMonitor.OAuthAuthMethod)
 	m.OAuthTokenURL = stringOrNullWebsocketUpgrade(httpMonitor.OAuthTokenURL)
 	m.OAuthClientID = stringOrNullWebsocketUpgrade(httpMonitor.OAuthClientID)
-	m.OAuthClientSecret = stringOrNullWebsocketUpgrade(httpMonitor.OAuthClientSecret)
 	m.OAuthScopes = stringOrNullWebsocketUpgrade(httpMonitor.OAuthScopes)
 	m.OAuthAudience = stringOrNullWebsocketUpgrade(httpMonitor.OAuthAudience)
 	m.CacheBust = types.BoolValue(httpMonitor.CacheBust)
@@ -378,6 +377,7 @@ func (r *MonitorWebsocketUpgradeResource) Update(
 	}
 
 	websocketUpgradeMonitor := buildWebsocketUpgradeMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &websocketUpgradeMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

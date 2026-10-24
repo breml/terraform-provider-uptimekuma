@@ -95,3 +95,15 @@ resource "uptimekuma_monitor_rabbitmq" "example_fractional_timeout" {
   interval = 60
   active   = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: password_wo is never stored in
+# plan or state. Change password_wo_version whenever the secret changes.
+resource "uptimekuma_monitor_rabbitmq" "write_only" {
+  name = "RabbitMQ monitor with a write-only password"
+
+  nodes    = jsonencode(["https://rabbitmq.example.com:15672/"])
+  username = "monitor"
+
+  password_wo         = "rabbitmq-password"
+  password_wo_version = "1"
+}

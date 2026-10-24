@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -59,6 +60,8 @@ type MonitorKafkaProducerResourceModel struct {
 	SSL                    types.Bool    `tfsdk:"ssl"`
 	AllowAutoTopicCreation types.Bool    `tfsdk:"allow_auto_topic_creation"`
 	SASLOptions            types.String  `tfsdk:"sasl_options"`
+	SASLOptionsWO          types.String  `tfsdk:"sasl_options_wo"`
+	SASLOptionsWOVersion   types.String  `tfsdk:"sasl_options_wo_version"`
 	Timeout                types.Float64 `tfsdk:"timeout"`
 }
 
@@ -126,6 +129,9 @@ func (*MonitorKafkaProducerResource) Schema(
 			),
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "sasl_options",
+		"SASL authentication options as a JSON-encoded object")
 }
 
 // Configure configures the resource with the API client.
@@ -150,6 +156,7 @@ func (r *MonitorKafkaProducerResource) Create(
 	}
 
 	kafkaMonitor := buildKafkaProducerMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &kafkaMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -214,17 +221,9 @@ func buildKafkaProducerMonitor(
 		kafkaMonitor.Brokers = brokers
 	}
 
-	if !data.SASLOptions.IsNull() && !data.SASLOptions.IsUnknown() {
-		raw := data.SASLOptions.ValueString()
-
-		var saslOptions map[string]any
-		err := json.Unmarshal([]byte(raw), &saslOptions)
-		if err != nil {
-			diags.AddError("failed to parse sasl_options", fmt.Sprintf("must be valid JSON: %s", err.Error()))
-			return kafkaMonitor
-		}
-
-		kafkaMonitor.SASLOptions = &saslOptions
+	setSASLOptions(&kafkaMonitor, data.SASLOptions, diags)
+	if diags.HasError() {
+		return kafkaMonitor
 	}
 
 	if !data.Description.IsNull() {
@@ -246,6 +245,36 @@ func buildKafkaProducerMonitor(
 	}
 
 	return kafkaMonitor
+}
+
+// setSASLOptions decodes the JSON-encoded SASL options into m, nil when unset.
+func setSASLOptions(m *monitor.KafkaProducer, raw types.String, diags *diag.Diagnostics) {
+	m.SASLOptions = nil
+
+	if raw.IsNull() || raw.IsUnknown() {
+		return
+	}
+
+	var saslOptions map[string]any
+
+	err := json.Unmarshal([]byte(raw.ValueString()), &saslOptions)
+	if err != nil {
+		diags.AddError("failed to parse sasl_options", fmt.Sprintf("must be valid JSON: %s", err.Error()))
+		return
+	}
+
+	m.SASLOptions = &saslOptions
+}
+
+// applyWriteOnlySecrets replaces the secrets in m with their write-only variants where the
+// configuration sets them; only the configuration carries a write-only value.
+func (data *MonitorKafkaProducerResourceModel) applyWriteOnlySecrets(
+	ctx context.Context,
+	config tfsdk.Config,
+	m *monitor.KafkaProducer,
+	diags *diag.Diagnostics,
+) {
+	setSASLOptions(m, writeOnlyOrPlanValue(ctx, config, "sasl_options", data.SASLOptions, diags), diags)
 }
 
 // populateKafkaProducerMonitorBaseFields populates the resource model with data from the Kafka Producer monitor API
@@ -373,6 +402,7 @@ func (r *MonitorKafkaProducerResource) Update(
 	}
 
 	kafkaMonitor := buildKafkaProducerMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &kafkaMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -18,6 +18,9 @@ func TestValidateSFTPCredentials(t *testing.T) {
 		password          types.String
 		privateKey        types.String
 		passphrase        types.String
+		passwordWO        types.String
+		privateKeyWO      types.String
+		passphraseWO      types.String
 		expectedErrors    []string
 		expectedSummaries []string
 	}{
@@ -149,6 +152,28 @@ func TestValidateSFTPCredentials(t *testing.T) {
 			expectedSummaries: []string{"Missing Attribute Configuration", "Invalid Attribute Combination"},
 		},
 		{
+			name:         "private key, write-only key set",
+			authMethod:   types.StringValue("privateKey"),
+			privateKeyWO: types.StringValue("key"),
+		},
+		{
+			name:              "private key, write-only password set",
+			authMethod:        types.StringValue("privateKey"),
+			privateKeyWO:      types.StringValue("key"),
+			passwordWO:        types.StringValue("s3cret"),
+			expectedErrors:    []string{"ssh_password_wo"},
+			expectedSummaries: []string{"Invalid Attribute Combination"},
+		},
+		{
+			name:              "password, write-only key material set",
+			authMethod:        types.StringValue("password"),
+			passwordWO:        types.StringValue("s3cret"),
+			privateKeyWO:      types.StringValue("key"),
+			passphraseWO:      types.StringValue("phrase"),
+			expectedErrors:    []string{"ssh_private_key_wo", "ssh_passphrase_wo"},
+			expectedSummaries: []string{"Invalid Attribute Combination", "Invalid Attribute Combination"},
+		},
+		{
 			name:       "unexpected auth method is left to the schema validator",
 			authMethod: types.StringValue("publickey"),
 			privateKey: types.StringNull(),
@@ -163,6 +188,10 @@ func TestValidateSFTPCredentials(t *testing.T) {
 				SSHPassword:   tt.password,
 				SSHPrivateKey: tt.privateKey,
 				SSHPassphrase: tt.passphrase,
+
+				SSHPasswordWO:   tt.passwordWO,
+				SSHPrivateKeyWO: tt.privateKeyWO,
+				SSHPassphraseWO: tt.passphraseWO,
 			}
 
 			resp := &resource.ValidateConfigResponse{}

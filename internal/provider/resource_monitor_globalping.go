@@ -193,6 +193,7 @@ func (r *MonitorGlobalpingResource) Create(
 	}
 
 	globalpingMonitor := buildGlobalpingMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &globalpingMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -279,6 +280,7 @@ func (r *MonitorGlobalpingResource) Update(
 	}
 
 	globalpingMonitor := buildGlobalpingMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &globalpingMonitor.HTTPDetails, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -462,16 +464,14 @@ func populateGlobalpingModel(globalpingMonitor *monitor.Globalping, data *Monito
 	data.Headers = stringOrNull(globalpingMonitor.Headers)
 	data.AuthMethod = types.StringValue(string(globalpingMonitor.AuthMethod))
 	data.BasicAuthUser = stringOrNull(globalpingMonitor.BasicAuthUser)
-	data.BasicAuthPass = stringOrNull(globalpingMonitor.BasicAuthPass)
+	data.populateSecrets(&globalpingMonitor.HTTPDetails)
 	data.AuthDomain = stringOrNull(globalpingMonitor.AuthDomain)
 	data.AuthWorkstation = stringOrNull(globalpingMonitor.AuthWorkstation)
 	data.TLSCert = stringOrNull(globalpingMonitor.TLSCert)
-	data.TLSKey = stringOrNull(globalpingMonitor.TLSKey)
 	data.TLSCa = stringOrNull(globalpingMonitor.TLSCa)
 	data.OAuthAuthMethod = stringOrNull(globalpingMonitor.OAuthAuthMethod)
 	data.OAuthTokenURL = stringOrNull(globalpingMonitor.OAuthTokenURL)
 	data.OAuthClientID = stringOrNull(globalpingMonitor.OAuthClientID)
-	data.OAuthClientSecret = stringOrNull(globalpingMonitor.OAuthClientSecret)
 	data.OAuthScopes = stringOrNull(globalpingMonitor.OAuthScopes)
 	data.OAuthAudience = stringOrNull(globalpingMonitor.OAuthAudience)
 	data.CacheBust = types.BoolValue(globalpingMonitor.CacheBust)

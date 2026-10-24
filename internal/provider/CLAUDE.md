@@ -699,6 +699,72 @@ resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 This ensures Terraform sees explicit nulls instead of unknowns, preventing false diff detection.
 
+### Write-only Secrets
+
+[write_only.go](write_only.go)
+
+An attribute that holds a real secret should offer a write-only alternative (Terraform 1.11 /
+OpenTofu 1.11), so the secret never reaches plan or state:
+
+- `<name>` - the existing attribute, still stored in state
+- `<name>_wo` - write-only: Terraform sends it with every apply but never stores it
+- `<name>_wo_version` - stored stand-in; a change to it triggers the update that sends
+  `<name>_wo`, because a change to a write-only value alone produces no diff
+
+```go
+// Schema: after resp.Schema is built
+resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "API key")
+
+// Create/Update: before the HasError check that precedes the client call
+APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
+
+// Read/populate: never refresh the secret while the write-only variant is in use
+if data.APIKeyWOVersion.IsNull() {
+    data.APIKey = types.StringValue(apiObject.APIKey)
+}
+```
+
+- `withWriteOnlySecret()` adds `<name>_wo` and `<name>_wo_version` (each requires the other)
+  and adjusts `<name>`: a `Required` attribute becomes `Optional` with `ExactlyOneOf`, an
+  `Optional` one gets `ConflictsWith`. `<name>_wo` inherits the validators of `<name>`. It
+  panics on a missing or non-string attribute; `TestResourceSchemasValidate` builds and
+  validates every resource schema, so such a mistake fails `task test`.
+- `writeOnlyOrPlan()` returns `<name>_wo` from the configuration, or else the plan value.
+  `writeOnlyOrPlanValue()` returns a `types.String`, for API fields that tell an unset secret
+  from an empty one (`strToPtr(writeOnlyOrPlanValue(...))`).
+- The model gets `<Field>WO` and `<Field>WOVersion` fields. `<Field>WO` is always null outside
+  the configuration: only `req.Config` carries a write-only value, never the plan or state.
+- Never copy the resolved secret into the model that becomes state. Where a `build...()`
+  helper takes the model, resolve the secrets after it in an `applyWriteOnlySecrets()` method
+  on the model (see the SFTP, MQTT and RADIUS monitors and `MonitorHTTPBaseModel`).
+- A `Computed` secret without a default (settings `steam_api_key`) gets the
+  `nullWhileWriteOnly` plan modifier, so it plans null rather than its prior value while
+  `<name>_wo_version` is set.
+- A `ValidateConfig` that checks a secret must accept `<name>_wo` in its place (see
+  `validateSFTPCredentials()`).
+- Import has no `<name>_wo_version` to go by, so a Read that refreshes the secret stores the
+  server's value in `<name>` until the next apply with `<name>_wo` set. The generated
+  attribute description says so.
+
+**What counts as a secret**: passwords, tokens, API keys, shared secrets, private keys,
+connection strings with credentials, and webhook URLs whose path is the credential. Not:
+logins, usernames and account IDs, device or subscription identifiers, public keys and
+certificates, plain server base URLs, and server-generated values such as the push monitor's
+`push_token` (a write-only attribute cannot be `Computed`). The generic
+`uptimekuma_notification.config` is a whole JSON blob and has no write-only variant.
+
+**Testing**: [write_only_acc_test.go](write_only_acc_test.go) holds the shared acceptance
+helper. A resource test describes its secrets in a `writeOnlyTestCase` and passes
+`testAccWriteOnlyTestCase()` to `resource.ParallelTest` (or `resource.Test` for the
+non-parallel files listed under [Test Parallelism](#test-parallelism)). The case creates the
+resource with `<name>_wo`, checks that state holds neither the secret nor `<name>_wo`, that a
+changed write-only value alone plans nothing, and that a version bump sends it, reading the
+secret back from Uptime Kuma with `notificationSecrets()` or `monitorSecrets()`. Use
+`writeOnlyAttrLines()` for the HCL. The full set of transitions, validators and import is
+covered once, in `TestAccNotificationSMTPResourcePasswordWO`. Every write-only test needs
+Terraform 1.11 or later and is skipped below; locally, run them with
+`TF_ACC_TERRAFORM_VERSION=1.17.0`, which downloads that version.
+
 ## Resource Lifecycle Patterns
 
 ### Generic Resource Structure
@@ -862,7 +928,8 @@ func (r *{Type}Resource) Read(ctx context.Context, req resource.ReadRequest, res
     }
 
     // 4. Map API object to Terraform model
-    // Keep non-sensitive computed values from state if not returned by API
+    // Keep non-sensitive computed values from state if not returned by API.
+    // Skip a secret while its <name>_wo_version is set, see Write-only Secrets.
     mapAPIToModel(ctx, apiObject, &data, &resp.Diagnostics)
 
     // 5. Save state

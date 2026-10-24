@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -55,15 +56,21 @@ type MonitorSFTPResource struct {
 type MonitorSFTPResourceModel struct {
 	MonitorBaseModel
 
-	Hostname      types.String  `tfsdk:"hostname"`        // SFTP server to connect to.
-	Port          types.Int64   `tfsdk:"port"`            // TCP port of the SFTP server.
-	Timeout       types.Float64 `tfsdk:"timeout"`         // Connection timeout in seconds.
-	SSHUsername   types.String  `tfsdk:"ssh_username"`    // User to authenticate as.
-	SSHAuthMethod types.String  `tfsdk:"ssh_auth_method"` // password or privateKey.
-	SSHPassword   types.String  `tfsdk:"ssh_password"`    // Password for password authentication.
-	SSHPrivateKey types.String  `tfsdk:"ssh_private_key"` // Private key for key authentication.
-	SSHPassphrase types.String  `tfsdk:"ssh_passphrase"`  // Passphrase of the private key.
-	SFTPPath      types.String  `tfsdk:"sftp_path"`       // Remote path that must exist.
+	Hostname               types.String  `tfsdk:"hostname"`        // SFTP server to connect to.
+	Port                   types.Int64   `tfsdk:"port"`            // TCP port of the SFTP server.
+	Timeout                types.Float64 `tfsdk:"timeout"`         // Connection timeout in seconds.
+	SSHUsername            types.String  `tfsdk:"ssh_username"`    // User to authenticate as.
+	SSHAuthMethod          types.String  `tfsdk:"ssh_auth_method"` // password or privateKey.
+	SSHPassword            types.String  `tfsdk:"ssh_password"`    // Password for password authentication.
+	SSHPasswordWO          types.String  `tfsdk:"ssh_password_wo"`
+	SSHPasswordWOVersion   types.String  `tfsdk:"ssh_password_wo_version"`
+	SSHPrivateKey          types.String  `tfsdk:"ssh_private_key"` // Private key for key authentication.
+	SSHPrivateKeyWO        types.String  `tfsdk:"ssh_private_key_wo"`
+	SSHPrivateKeyWOVersion types.String  `tfsdk:"ssh_private_key_wo_version"`
+	SSHPassphrase          types.String  `tfsdk:"ssh_passphrase"` // Passphrase of the private key.
+	SSHPassphraseWO        types.String  `tfsdk:"ssh_passphrase_wo"`
+	SSHPassphraseWOVersion types.String  `tfsdk:"ssh_passphrase_wo_version"`
+	SFTPPath               types.String  `tfsdk:"sftp_path"` // Remote path that must exist.
 }
 
 // Metadata returns the metadata for the resource.
@@ -169,6 +176,17 @@ func (*MonitorSFTPResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withSFTPWriteOnlySecrets(resp.Schema.Attributes)
+}
+
+// withSFTPWriteOnlySecrets adds the write-only variants of the SSH credentials.
+func withSFTPWriteOnlySecrets(attrs map[string]schema.Attribute) map[string]schema.Attribute {
+	attrs = withWriteOnlySecret(attrs, "ssh_password", "Password for SSH authentication")
+	attrs = withWriteOnlySecret(attrs, "ssh_private_key", "Private key in PEM or OpenSSH format")
+	attrs = withWriteOnlySecret(attrs, "ssh_passphrase", "Passphrase of the private key")
+
+	return attrs
 }
 
 // Configure configures the SFTP monitor resource with the API client.
@@ -215,22 +233,25 @@ func validateSFTPCredentials(config *MonitorSFTPResourceModel, resp *resource.Va
 
 	switch authMethod {
 	case string(monitor.SFTPAuthMethodPrivateKey):
-		if config.SSHPrivateKey.IsNull() {
+		if config.SSHPrivateKey.IsNull() && config.SSHPrivateKeyWO.IsNull() {
 			resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
 				path.Root("ssh_private_key"),
 				"Missing Attribute Configuration",
 				"When \"ssh_auth_method\" is set to \"privateKey\", the attribute \"ssh_private_key\" "+
-					"must be set. Without it the check fails on every heartbeat.",
+					"or \"ssh_private_key_wo\" must be set. Without it the check fails on every heartbeat.",
 			))
 		}
 
 		rejectUnusedSFTPCredential(config.SSHPassword, "ssh_password", authMethod, resp)
+		rejectUnusedSFTPCredential(config.SSHPasswordWO, "ssh_password_wo", authMethod, resp)
 
 	case string(monitor.SFTPAuthMethodPassword):
 		// A missing ssh_password is accepted: an SSH server may allow login
 		// without one.
 		rejectUnusedSFTPCredential(config.SSHPrivateKey, "ssh_private_key", authMethod, resp)
 		rejectUnusedSFTPCredential(config.SSHPassphrase, "ssh_passphrase", authMethod, resp)
+		rejectUnusedSFTPCredential(config.SSHPrivateKeyWO, "ssh_private_key_wo", authMethod, resp)
+		rejectUnusedSFTPCredential(config.SSHPassphraseWO, "ssh_passphrase_wo", authMethod, resp)
 
 	default:
 		// An unexpected auth method is left to the schema validator.
@@ -274,6 +295,7 @@ func (r *MonitorSFTPResource) Create(
 	}
 
 	sftpMonitor := buildSFTPMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &sftpMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -357,6 +379,7 @@ func (r *MonitorSFTPResource) Update(
 	}
 
 	sftpMonitor := buildSFTPMonitor(ctx, &data, &resp.Diagnostics)
+	data.applyWriteOnlySecrets(ctx, req.Config, &sftpMonitor, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -469,6 +492,19 @@ func buildSFTPMonitor(
 	return sftpMonitor
 }
 
+// applyWriteOnlySecrets replaces the secrets in m with their write-only variants where the
+// configuration sets them; only the configuration carries a write-only value.
+func (data *MonitorSFTPResourceModel) applyWriteOnlySecrets(
+	ctx context.Context,
+	config tfsdk.Config,
+	m *monitor.SFTP,
+	diags *diag.Diagnostics,
+) {
+	m.SSHPassword = strToPtr(writeOnlyOrPlanValue(ctx, config, "ssh_password", data.SSHPassword, diags))
+	m.SSHPrivateKey = strToPtr(writeOnlyOrPlanValue(ctx, config, "ssh_private_key", data.SSHPrivateKey, diags))
+	m.SSHPassphrase = strToPtr(writeOnlyOrPlanValue(ctx, config, "ssh_passphrase", data.SSHPassphrase, diags))
+}
+
 // populateSFTPModel populates the base fields of the Terraform model from the API response.
 func populateSFTPModel(
 	ctx context.Context,
@@ -507,9 +543,18 @@ func populateSFTPModel(
 
 	// The server returns the credentials to the owning user's socket, so they
 	// round-trip and an import picks them up as well.
-	data.SSHPassword = ptrToTypes(sftpMonitor.SSHPassword)
-	data.SSHPrivateKey = ptrToTypes(sftpMonitor.SSHPrivateKey)
-	data.SSHPassphrase = ptrToTypes(sftpMonitor.SSHPassphrase)
+	if data.SSHPasswordWOVersion.IsNull() {
+		data.SSHPassword = ptrToTypes(sftpMonitor.SSHPassword)
+	}
+
+	if data.SSHPrivateKeyWOVersion.IsNull() {
+		data.SSHPrivateKey = ptrToTypes(sftpMonitor.SSHPrivateKey)
+	}
+
+	if data.SSHPassphraseWOVersion.IsNull() {
+		data.SSHPassphrase = ptrToTypes(sftpMonitor.SSHPassphrase)
+	}
+
 	data.SFTPPath = ptrToTypes(sftpMonitor.SFTPPath)
 }
 

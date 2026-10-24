@@ -45,3 +45,16 @@ resource "uptimekuma_proxy" "disabled_proxy" {
   protocol = "http"
   active   = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: password_wo is never stored in
+# plan or state. Change password_wo_version whenever the secret changes.
+resource "uptimekuma_proxy" "write_only" {
+  host     = "proxy.example.com"
+  port     = 3128
+  protocol = "http"
+  auth     = true
+  username = "proxyuser"
+
+  password_wo         = "proxy-password"
+  password_wo_version = "1"
+}
