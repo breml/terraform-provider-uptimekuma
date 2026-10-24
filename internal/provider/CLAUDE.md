@@ -762,8 +762,9 @@ changed write-only value alone plans nothing, and that a version bump sends it, 
 secret back from Uptime Kuma with `notificationSecrets()` or `monitorSecrets()`. Use
 `writeOnlyAttrLines()` for the HCL. The full set of transitions, validators and import is
 covered once, in `TestAccNotificationSMTPResourcePasswordWO`. Every write-only test needs
-Terraform 1.11 or later and is skipped below; locally, run them with
-`TF_ACC_TERRAFORM_VERSION=1.17.0`, which downloads that version.
+Terraform 1.11 or later and is skipped below. Locally, point `TF_ACC_TERRAFORM_PATH` at a
+Terraform 1.11+ binary. Do not use `TF_ACC_TERRAFORM_VERSION` for a parallel run: every test
+then downloads its own copy, and a run aborts on `text file busy`.
 
 ## Resource Lifecycle Patterns
 
