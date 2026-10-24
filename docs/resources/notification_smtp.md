@@ -122,7 +122,7 @@ resource "uptimekuma_notification_smtp" "write_only_password" {
 - `is_active` (Boolean)
 - `is_default` (Boolean)
 - `password` (String, Sensitive) SMTP password for authentication. Stored in state; use `password_wo` to keep it out of state.
-- `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) SMTP password for authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `password`; requires `password_wo_version`.
+- `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) SMTP password for authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `password`; requires `password_wo_version`. An imported notification has no `password_wo_version` yet, so `terraform import` stores the server's password in `password` until the next apply with `password_wo` set removes it from state.
 - `password_wo_version` (String) Any value that changes whenever `password_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `password_wo`.
 - `port` (Number) SMTP server port
 - `secure` (Boolean) Enable TLS/SSL for SMTP connection

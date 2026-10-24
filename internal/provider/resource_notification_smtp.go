@@ -222,7 +222,9 @@ func withSMTPPasswordWOAttributes(attrs map[string]schema.Attribute) map[string]
 	attrs["password_wo"] = schema.StringAttribute{
 		MarkdownDescription: "SMTP password for authentication, write-only: sent to Uptime Kuma on create " +
 			"and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or " +
-			"later. Conflicts with `password`; requires `password_wo_version`.",
+			"later. Conflicts with `password`; requires `password_wo_version`. An imported notification " +
+			"has no `password_wo_version` yet, so `terraform import` stores the server's password in " +
+			"`password` until the next apply with `password_wo` set removes it from state.",
 		Optional:  true,
 		Sensitive: true,
 		WriteOnly: true,
@@ -517,7 +519,9 @@ func populateSMTPModelFromAPI(
 		data.Username = types.StringValue(smtp.Username)
 	}
 
-	// With password_wo in use, state must not learn the password from the server.
+	// A password_wo_version in state means password_wo is in use, so state must not learn the
+	// password from the server. An import has no version yet and does pick the password up; the
+	// next apply with password_wo set removes it from state again.
 	if smtp.Password != "" && data.PasswordWOVersion.IsNull() {
 		data.Password = types.StringValue(smtp.Password)
 	}
