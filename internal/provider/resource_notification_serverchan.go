@@ -36,7 +36,9 @@ type NotificationServerChanResource struct {
 type NotificationServerChanResourceModel struct {
 	NotificationBaseModel
 
-	SendKey types.String `tfsdk:"send_key"`
+	SendKey          types.String `tfsdk:"send_key"`
+	SendKeyWO        types.String `tfsdk:"send_key_wo"`
+	SendKeyWOVersion types.String `tfsdk:"send_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationServerChanResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "send_key", "ServerChan send key")
 }
 
 // Configure configures the ServerChan notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationServerChanResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		ServerChanDetails: notification.ServerChanDetails{
-			SendKey: data.SendKey.ValueString(),
+			SendKey: writeOnlyOrPlan(ctx, req.Config, "send_key", data.SendKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, serverchan)
@@ -163,7 +171,9 @@ func (r *NotificationServerChanResource) Read(
 	data.IsDefault = types.BoolValue(serverchan.IsDefault)
 	data.ApplyExisting = types.BoolValue(serverchan.ApplyExisting)
 
-	data.SendKey = types.StringValue(serverchan.SendKey)
+	if data.SendKeyWOVersion.IsNull() {
+		data.SendKey = types.StringValue(serverchan.SendKey)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationServerChanResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		ServerChanDetails: notification.ServerChanDetails{
-			SendKey: data.SendKey.ValueString(),
+			SendKey: writeOnlyOrPlan(ctx, req.Config, "send_key", data.SendKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, serverchan)

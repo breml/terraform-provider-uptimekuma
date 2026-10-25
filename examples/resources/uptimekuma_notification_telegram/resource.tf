@@ -26,3 +26,14 @@ resource "uptimekuma_notification_telegram" "with_custom_server" {
   is_active  = true
   is_default = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: bot_token_wo is never stored in
+# plan or state. Change bot_token_wo_version whenever the secret changes.
+resource "uptimekuma_notification_telegram" "write_only" {
+  name = "Telegram with a write-only secret"
+
+  chat_id = "YOUR_CHAT_ID"
+
+  bot_token_wo         = "YOUR_BOT_TOKEN"
+  bot_token_wo_version = "1"
+}

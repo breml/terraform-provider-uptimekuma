@@ -36,7 +36,9 @@ type NotificationTeamsResource struct {
 type NotificationTeamsResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -58,13 +60,16 @@ func (*NotificationTeamsResource) Schema(
 		MarkdownDescription: "Notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
 			"webhook_url": schema.StringAttribute{
-				Required: true,
+				Required:  true,
+				Sensitive: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Microsoft Teams webhook URL")
 }
 
 // Configure configures the Teams notification resource with the API client.
@@ -98,8 +103,12 @@ func (r *NotificationTeamsResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		TeamsDetails: notification.TeamsDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, teams)
@@ -157,7 +166,9 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 	data.IsDefault = types.BoolValue(teams.IsDefault)
 	data.ApplyExisting = types.BoolValue(teams.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(teams.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(teams.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -186,8 +197,12 @@ func (r *NotificationTeamsResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		TeamsDetails: notification.TeamsDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, teams)

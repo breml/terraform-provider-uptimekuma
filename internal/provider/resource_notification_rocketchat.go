@@ -36,11 +36,13 @@ type NotificationRocketChatResource struct {
 type NotificationRocketChatResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
-	Username   types.String `tfsdk:"username"`
-	IconEmoji  types.String `tfsdk:"icon_emoji"`
-	Channel    types.String `tfsdk:"channel"`
-	Button     types.String `tfsdk:"button"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Username            types.String `tfsdk:"username"`
+	IconEmoji           types.String `tfsdk:"icon_emoji"`
+	Channel             types.String `tfsdk:"channel"`
+	Button              types.String `tfsdk:"button"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -87,6 +89,12 @@ func (*NotificationRocketChatResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"Rocket.Chat incoming webhook URL",
+	)
 }
 
 // Configure configures the RocketChat notification resource with the API client.
@@ -120,12 +128,16 @@ func (r *NotificationRocketChatResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		RocketChatDetails: notification.RocketChatDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:   data.Username.ValueString(),
 			IconEmoji:  data.IconEmoji.ValueString(),
 			Channel:    data.Channel.ValueString(),
 			Button:     data.Button.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, rocketChat)
@@ -187,7 +199,10 @@ func (r *NotificationRocketChatResource) Read(
 	data.IsDefault = types.BoolValue(rocketChat.IsDefault)
 	data.ApplyExisting = types.BoolValue(rocketChat.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(rocketChat.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(rocketChat.WebhookURL)
+	}
+
 	if rocketChat.Username != "" {
 		data.Username = types.StringValue(rocketChat.Username)
 	}
@@ -231,12 +246,16 @@ func (r *NotificationRocketChatResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		RocketChatDetails: notification.RocketChatDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:   data.Username.ValueString(),
 			IconEmoji:  data.IconEmoji.ValueString(),
 			Channel:    data.Channel.ValueString(),
 			Button:     data.Button.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, rocketChat)

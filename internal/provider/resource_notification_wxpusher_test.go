@@ -127,7 +127,7 @@ func TestAccNotificationWxPusherResourceMultipleTokens(t *testing.T) {
 }
 
 // TestAccNotificationWxPusherResourceInvalidConfig covers the spt length validator and the
-// required-argument error.
+// error for a configuration that sets neither spt nor spt_wo.
 func TestAccNotificationWxPusherResourceInvalidConfig(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationWxPusherInvalid")
 
@@ -141,7 +141,7 @@ func TestAccNotificationWxPusherResourceInvalidConfig(t *testing.T) {
 			},
 			{
 				Config:      testAccNotificationWxPusherResourceMissingSPTConfig(name),
-				ExpectError: regexp.MustCompile(`The argument "spt" is required`),
+				ExpectError: regexp.MustCompile(`one \(and only one\) of \[spt_wo\] is required`),
 			},
 		},
 	})

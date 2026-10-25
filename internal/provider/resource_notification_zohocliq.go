@@ -36,7 +36,9 @@ type NotificationZohoCliqResource struct {
 type NotificationZohoCliqResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationZohoCliqResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Zoho Cliq webhook URL")
 }
 
 // Configure configures the Zoho Cliq notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationZohoCliqResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		ZohoCliqDetails: notification.ZohoCliqDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, zohoCliq)
@@ -163,8 +171,10 @@ func (r *NotificationZohoCliqResource) Read(
 	data.IsDefault = types.BoolValue(zohoCliq.IsDefault)
 	data.ApplyExisting = types.BoolValue(zohoCliq.ApplyExisting)
 
-	if zohoCliq.WebhookURL != "" {
-		data.WebhookURL = types.StringValue(zohoCliq.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		if zohoCliq.WebhookURL != "" {
+			data.WebhookURL = types.StringValue(zohoCliq.WebhookURL)
+		}
 	}
 
 	// Populate state.
@@ -194,8 +204,12 @@ func (r *NotificationZohoCliqResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		ZohoCliqDetails: notification.ZohoCliqDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, zohoCliq)

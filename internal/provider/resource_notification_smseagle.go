@@ -42,6 +42,8 @@ type NotificationSMSEagleResourceModel struct {
 
 	URL              types.String `tfsdk:"url"`
 	Token            types.String `tfsdk:"token"`
+	TokenWO          types.String `tfsdk:"token_wo"`
+	TokenWOVersion   types.String `tfsdk:"token_wo_version"`
 	RecipientType    types.String `tfsdk:"recipient_type"`
 	Recipient        types.String `tfsdk:"recipient"`
 	RecipientTo      types.String `tfsdk:"recipient_to"`
@@ -75,6 +77,8 @@ func (*NotificationSMSEagleResource) Schema(
 			"that supports SMS, MMS, ring calls, and text-to-speech calls.",
 		Attributes: withNotificationBaseAttributes(smseagleSchemaAttributes()),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "token", "SMSEagle API access token")
 }
 
 func smseagleSchemaAttributes() map[string]schema.Attribute {
@@ -212,7 +216,7 @@ func (r *NotificationSMSEagleResource) Create(
 		},
 		SMSEagleDetails: notification.SMSEagleDetails{
 			URL:              data.URL.ValueString(),
-			Token:            data.Token.ValueString(),
+			Token:            writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 			RecipientType:    data.RecipientType.ValueString(),
 			Recipient:        data.Recipient.ValueString(),
 			RecipientTo:      data.RecipientTo.ValueString(),
@@ -225,6 +229,10 @@ func (r *NotificationSMSEagleResource) Create(
 			TtsModel:         int(data.TtsModel.ValueInt64()),
 			APIType:          data.APIType.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, smseagle)
@@ -290,7 +298,7 @@ func (r *NotificationSMSEagleResource) Read(
 		data.URL = types.StringValue(smseagle.URL)
 	}
 
-	if smseagle.Token != "" {
+	if data.TokenWOVersion.IsNull() && smseagle.Token != "" {
 		data.Token = types.StringValue(smseagle.Token)
 	}
 
@@ -355,7 +363,7 @@ func (r *NotificationSMSEagleResource) Update(
 		},
 		SMSEagleDetails: notification.SMSEagleDetails{
 			URL:              data.URL.ValueString(),
-			Token:            data.Token.ValueString(),
+			Token:            writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 			RecipientType:    data.RecipientType.ValueString(),
 			Recipient:        data.Recipient.ValueString(),
 			RecipientTo:      data.RecipientTo.ValueString(),
@@ -368,6 +376,10 @@ func (r *NotificationSMSEagleResource) Update(
 			TtsModel:         int(data.TtsModel.ValueInt64()),
 			APIType:          data.APIType.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, smseagle)

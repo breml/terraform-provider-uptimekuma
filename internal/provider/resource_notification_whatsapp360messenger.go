@@ -38,12 +38,14 @@ type NotificationWhatsapp360messengerResource struct {
 type NotificationWhatsapp360messengerResourceModel struct {
 	NotificationBaseModel
 
-	AuthToken   types.String `tfsdk:"auth_token"`
-	Recipient   types.String `tfsdk:"recipient"`
-	GroupIDs    types.List   `tfsdk:"group_ids"`
-	GroupID     types.String `tfsdk:"group_id"`
-	UseTemplate types.Bool   `tfsdk:"use_template"`
-	Template    types.String `tfsdk:"template"`
+	AuthToken          types.String `tfsdk:"auth_token"`
+	AuthTokenWO        types.String `tfsdk:"auth_token_wo"`
+	AuthTokenWOVersion types.String `tfsdk:"auth_token_wo_version"`
+	Recipient          types.String `tfsdk:"recipient"`
+	GroupIDs           types.List   `tfsdk:"group_ids"`
+	GroupID            types.String `tfsdk:"group_id"`
+	UseTemplate        types.Bool   `tfsdk:"use_template"`
+	Template           types.String `tfsdk:"template"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -107,6 +109,8 @@ func (*NotificationWhatsapp360messengerResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "auth_token", "360messenger auth token")
 }
 
 // Configure configures the WhatsApp 360messenger notification resource with the API client.
@@ -133,6 +137,9 @@ func (r *NotificationWhatsapp360messengerResource) Create(
 	}
 
 	whatsapp360messenger := whatsapp360messengerFromModel(ctx, &data, &resp.Diagnostics)
+	whatsapp360messenger.AuthToken = writeOnlyOrPlan(
+		ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics,
+	)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -203,7 +210,10 @@ func (r *NotificationWhatsapp360messengerResource) Read(
 	data.IsDefault = types.BoolValue(whatsapp360messenger.IsDefault)
 	data.ApplyExisting = types.BoolValue(whatsapp360messenger.ApplyExisting)
 
-	data.AuthToken = types.StringValue(whatsapp360messenger.AuthToken)
+	if data.AuthTokenWOVersion.IsNull() {
+		data.AuthToken = types.StringValue(whatsapp360messenger.AuthToken)
+	}
+
 	data.Recipient = types.StringValue(whatsapp360messenger.Recipient)
 	data.GroupID = ptrToTypes(whatsapp360messenger.GroupID)
 	data.UseTemplate = boolPtrToTypes(whatsapp360messenger.UseTemplate)
@@ -251,6 +261,9 @@ func (r *NotificationWhatsapp360messengerResource) Update(
 	}
 
 	whatsapp360messenger := whatsapp360messengerFromModel(ctx, &data, &resp.Diagnostics)
+	whatsapp360messenger.AuthToken = writeOnlyOrPlan(
+		ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics,
+	)
 	if resp.Diagnostics.HasError() {
 		return
 	}

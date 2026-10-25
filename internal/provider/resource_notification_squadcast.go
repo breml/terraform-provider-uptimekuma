@@ -36,7 +36,9 @@ type NotificationSquadcastResource struct {
 type NotificationSquadcastResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationSquadcastResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Squadcast webhook URL")
 }
 
 // Configure configures the Squadcast notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationSquadcastResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SquadcastDetails: notification.SquadcastDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, squadcast)
@@ -163,7 +171,9 @@ func (r *NotificationSquadcastResource) Read(
 	data.IsDefault = types.BoolValue(squadcast.IsDefault)
 	data.ApplyExisting = types.BoolValue(squadcast.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(squadcast.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(squadcast.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationSquadcastResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SquadcastDetails: notification.SquadcastDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, squadcast)

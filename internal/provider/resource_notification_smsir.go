@@ -36,9 +36,11 @@ type NotificationSMSIRResource struct {
 type NotificationSMSIRResourceModel struct {
 	NotificationBaseModel
 
-	APIKey   types.String `tfsdk:"api_key"`
-	Number   types.String `tfsdk:"number"`
-	Template types.String `tfsdk:"template"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Number          types.String `tfsdk:"number"`
+	Template        types.String `tfsdk:"template"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -84,6 +86,8 @@ func (*NotificationSMSIRResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "SMS.ir API key")
 }
 
 // Configure configures the SMS.ir notification resource with the API client.
@@ -110,6 +114,11 @@ func (r *NotificationSMSIRResource) Create(
 	}
 
 	smsir := smsirFromModel(&data)
+	smsir.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, smsir)
 	// Handle error.
@@ -166,7 +175,10 @@ func (r *NotificationSMSIRResource) Read(ctx context.Context, req resource.ReadR
 	data.IsDefault = types.BoolValue(smsir.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsir.ApplyExisting)
 
-	data.APIKey = types.StringValue(smsir.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(smsir.APIKey)
+	}
+
 	data.Number = types.StringValue(smsir.Number)
 	data.Template = types.StringValue(smsir.Template)
 
@@ -200,6 +212,11 @@ func (r *NotificationSMSIRResource) Update(
 
 	smsir := smsirFromModel(&data)
 	smsir.ID = id
+	smsir.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, smsir)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
@@ -249,7 +266,8 @@ func (*NotificationSMSIRResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-// smsirFromModel builds an SMSIR notification from the resource model.
+// smsirFromModel builds an SMSIR notification from the resource model. The caller resolves
+// api_key, which may be write-only and so is not in the model.
 func smsirFromModel(data *NotificationSMSIRResourceModel) notification.SMSIR {
 	return notification.SMSIR{
 		Base: notification.Base{
@@ -259,7 +277,6 @@ func smsirFromModel(data *NotificationSMSIRResourceModel) notification.SMSIR {
 			Name:          data.Name.ValueString(),
 		},
 		SMSIRDetails: notification.SMSIRDetails{
-			APIKey:   data.APIKey.ValueString(),
 			Number:   data.Number.ValueString(),
 			Template: data.Template.ValueString(),
 		},

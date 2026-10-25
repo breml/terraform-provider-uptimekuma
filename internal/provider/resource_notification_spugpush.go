@@ -36,7 +36,9 @@ type NotificationSpugPushResource struct {
 type NotificationSpugPushResourceModel struct {
 	NotificationBaseModel
 
-	TemplateKey types.String `tfsdk:"template_key"`
+	TemplateKey          types.String `tfsdk:"template_key"`
+	TemplateKeyWO        types.String `tfsdk:"template_key_wo"`
+	TemplateKeyWOVersion types.String `tfsdk:"template_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationSpugPushResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "template_key", "SpugPush template key")
 }
 
 // Configure configures the SpugPush notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationSpugPushResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SpugPushDetails: notification.SpugPushDetails{
-			TemplateKey: data.TemplateKey.ValueString(),
+			TemplateKey: writeOnlyOrPlan(ctx, req.Config, "template_key", data.TemplateKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, spugpush)
@@ -163,7 +171,7 @@ func (r *NotificationSpugPushResource) Read(
 	data.IsDefault = types.BoolValue(spugpush.IsDefault)
 	data.ApplyExisting = types.BoolValue(spugpush.ApplyExisting)
 
-	if spugpush.TemplateKey != "" {
+	if data.TemplateKeyWOVersion.IsNull() && spugpush.TemplateKey != "" {
 		data.TemplateKey = types.StringValue(spugpush.TemplateKey)
 	}
 
@@ -194,8 +202,12 @@ func (r *NotificationSpugPushResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SpugPushDetails: notification.SpugPushDetails{
-			TemplateKey: data.TemplateKey.ValueString(),
+			TemplateKey: writeOnlyOrPlan(ctx, req.Config, "template_key", data.TemplateKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, spugpush)

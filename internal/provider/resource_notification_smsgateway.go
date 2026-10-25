@@ -36,9 +36,11 @@ type NotificationSMSGatewayResource struct {
 type NotificationSMSGatewayResourceModel struct {
 	NotificationBaseModel
 
-	URL        types.String `tfsdk:"url"`
-	APIKey     types.String `tfsdk:"api_key"`
-	Recipients types.String `tfsdk:"recipients"`
+	URL             types.String `tfsdk:"url"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Recipients      types.String `tfsdk:"recipients"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -91,6 +93,8 @@ func (*NotificationSMSGatewayResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "SMS Gateway API key")
 }
 
 // Configure configures the SMS Gateway notification resource with the API client.
@@ -117,6 +121,11 @@ func (r *NotificationSMSGatewayResource) Create(
 	}
 
 	smsGateway := smsGatewayFromModel(&data)
+	smsGateway.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, smsGateway)
 	// Handle error.
@@ -178,7 +187,11 @@ func (r *NotificationSMSGatewayResource) Read(
 	data.ApplyExisting = types.BoolValue(smsGateway.ApplyExisting)
 
 	data.URL = types.StringValue(smsGateway.URL)
-	data.APIKey = types.StringValue(smsGateway.APIKey)
+
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(smsGateway.APIKey)
+	}
+
 	data.Recipients = types.StringValue(smsGateway.Recipients)
 
 	// Populate state.
@@ -211,6 +224,11 @@ func (r *NotificationSMSGatewayResource) Update(
 
 	smsGateway := smsGatewayFromModel(&data)
 	smsGateway.ID = id
+	smsGateway.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, smsGateway)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
@@ -260,7 +278,8 @@ func (*NotificationSMSGatewayResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-// smsGatewayFromModel builds an SMS Gateway notification from the resource model.
+// smsGatewayFromModel builds an SMS Gateway notification from the resource model. The caller resolves
+// api_key, which may be write-only and so is not in the model.
 func smsGatewayFromModel(data *NotificationSMSGatewayResourceModel) notification.SMSGateway {
 	return notification.SMSGateway{
 		Base: notification.Base{
@@ -271,7 +290,6 @@ func smsGatewayFromModel(data *NotificationSMSGatewayResourceModel) notification
 		},
 		SMSGatewayDetails: notification.SMSGatewayDetails{
 			URL:        data.URL.ValueString(),
-			APIKey:     data.APIKey.ValueString(),
 			Recipients: data.Recipients.ValueString(),
 		},
 	}

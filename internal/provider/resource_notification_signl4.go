@@ -36,7 +36,9 @@ type NotificationSIGNL4Resource struct {
 type NotificationSIGNL4ResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationSIGNL4Resource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "SIGNL4 webhook URL")
 }
 
 // Configure configures the SIGNL4 notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationSIGNL4Resource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SIGNL4Details: notification.SIGNL4Details{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, signl4)
@@ -163,7 +171,9 @@ func (r *NotificationSIGNL4Resource) Read(
 	data.IsDefault = types.BoolValue(signl4.IsDefault)
 	data.ApplyExisting = types.BoolValue(signl4.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(signl4.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(signl4.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationSIGNL4Resource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SIGNL4Details: notification.SIGNL4Details{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, signl4)

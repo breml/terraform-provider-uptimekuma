@@ -36,8 +36,10 @@ type NotificationWPushResource struct {
 type NotificationWPushResourceModel struct {
 	NotificationBaseModel
 
-	APIKey  types.String `tfsdk:"api_key"`
-	Channel types.String `tfsdk:"channel"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Channel         types.String `tfsdk:"channel"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -72,6 +74,8 @@ func (*NotificationWPushResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "WPush API key")
 }
 
 // Configure configures the WPush notification resource with the API client.
@@ -105,9 +109,13 @@ func (r *NotificationWPushResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		WPushDetails: notification.WPushDetails{
-			APIKey:  data.APIKey.ValueString(),
+			APIKey:  writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Channel: data.Channel.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, wpush)
@@ -169,8 +177,10 @@ func (r *NotificationWPushResource) Read(
 	data.IsDefault = types.BoolValue(wpush.IsDefault)
 	data.ApplyExisting = types.BoolValue(wpush.ApplyExisting)
 
-	if wpush.APIKey != "" {
-		data.APIKey = types.StringValue(wpush.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		if wpush.APIKey != "" {
+			data.APIKey = types.StringValue(wpush.APIKey)
+		}
 	}
 
 	if wpush.Channel != "" {
@@ -206,9 +216,13 @@ func (r *NotificationWPushResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		WPushDetails: notification.WPushDetails{
-			APIKey:  data.APIKey.ValueString(),
+			APIKey:  writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Channel: data.Channel.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, wpush)

@@ -36,9 +36,11 @@ type NotificationSevenioResource struct {
 type NotificationSevenioResourceModel struct {
 	NotificationBaseModel
 
-	APIKey types.String `tfsdk:"api_key"`
-	Sender types.String `tfsdk:"sender"`
-	To     types.String `tfsdk:"to"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Sender          types.String `tfsdk:"sender"`
+	To              types.String `tfsdk:"to"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -83,6 +85,8 @@ func (*NotificationSevenioResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "seven.io API key")
 }
 
 // Configure configures the Sevenio notification resource with the API client.
@@ -116,10 +120,14 @@ func (r *NotificationSevenioResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SevenIODetails: notification.SevenIODetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Sender: data.Sender.ValueString(),
 			To:     data.To.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, sevenio)
@@ -181,7 +189,7 @@ func (r *NotificationSevenioResource) Read(
 	data.IsDefault = types.BoolValue(sevenio.IsDefault)
 	data.ApplyExisting = types.BoolValue(sevenio.ApplyExisting)
 
-	if sevenio.APIKey != "" {
+	if data.APIKeyWOVersion.IsNull() && sevenio.APIKey != "" {
 		data.APIKey = types.StringValue(sevenio.APIKey)
 	}
 
@@ -215,10 +223,14 @@ func (r *NotificationSevenioResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SevenIODetails: notification.SevenIODetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Sender: data.Sender.ValueString(),
 			To:     data.To.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, sevenio)

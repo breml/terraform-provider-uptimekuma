@@ -36,7 +36,9 @@ type NotificationWeComResource struct {
 type NotificationWeComResourceModel struct {
 	NotificationBaseModel
 
-	BotKey types.String `tfsdk:"bot_key"`
+	BotKey          types.String `tfsdk:"bot_key"`
+	BotKeyWO        types.String `tfsdk:"bot_key_wo"`
+	BotKeyWOVersion types.String `tfsdk:"bot_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationWeComResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "bot_key", "WeCom bot key")
 }
 
 // Configure configures the WeCom notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationWeComResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		WeComDetails: notification.WeComDetails{
-			BotKey: data.BotKey.ValueString(),
+			BotKey: writeOnlyOrPlan(ctx, req.Config, "bot_key", data.BotKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, wecom)
@@ -163,7 +171,9 @@ func (r *NotificationWeComResource) Read(
 	data.IsDefault = types.BoolValue(wecom.IsDefault)
 	data.ApplyExisting = types.BoolValue(wecom.ApplyExisting)
 
-	data.BotKey = types.StringValue(wecom.BotKey)
+	if data.BotKeyWOVersion.IsNull() {
+		data.BotKey = types.StringValue(wecom.BotKey)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationWeComResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		WeComDetails: notification.WeComDetails{
-			BotKey: data.BotKey.ValueString(),
+			BotKey: writeOnlyOrPlan(ctx, req.Config, "bot_key", data.BotKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, wecom)

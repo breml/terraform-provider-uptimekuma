@@ -37,11 +37,13 @@ type NotificationSMSCResource struct {
 type NotificationSMSCResourceModel struct {
 	NotificationBaseModel
 
-	Login      types.String `tfsdk:"login"`
-	Password   types.String `tfsdk:"password"`
-	ToNumber   types.String `tfsdk:"to_number"`
-	SenderName types.String `tfsdk:"sender_name"`
-	Translit   types.String `tfsdk:"translit"`
+	Login             types.String `tfsdk:"login"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	ToNumber          types.String `tfsdk:"to_number"`
+	SenderName        types.String `tfsdk:"sender_name"`
+	Translit          types.String `tfsdk:"translit"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -102,6 +104,8 @@ func (*NotificationSMSCResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "SMSC password")
 }
 
 // Configure configures the SMSC notification resource with the API client.
@@ -136,11 +140,15 @@ func (r *NotificationSMSCResource) Create(
 		},
 		SMSCDetails: notification.SMSCDetails{
 			Login:      data.Login.ValueString(),
-			Password:   data.Password.ValueString(),
+			Password:   writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			ToNumber:   data.ToNumber.ValueString(),
 			SenderName: data.SenderName.ValueString(),
 			Translit:   data.Translit.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, smsc)
@@ -203,7 +211,11 @@ func (r *NotificationSMSCResource) Read(
 	data.ApplyExisting = types.BoolValue(smsc.ApplyExisting)
 
 	data.Login = types.StringValue(smsc.Login)
-	data.Password = types.StringValue(smsc.Password)
+
+	if data.PasswordWOVersion.IsNull() {
+		data.Password = types.StringValue(smsc.Password)
+	}
+
 	data.ToNumber = types.StringValue(smsc.ToNumber)
 	data.SenderName = types.StringValue(smsc.SenderName)
 	data.Translit = types.StringValue(smsc.Translit)
@@ -236,11 +248,15 @@ func (r *NotificationSMSCResource) Update(
 		},
 		SMSCDetails: notification.SMSCDetails{
 			Login:      data.Login.ValueString(),
-			Password:   data.Password.ValueString(),
+			Password:   writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			ToNumber:   data.ToNumber.ValueString(),
 			SenderName: data.SenderName.ValueString(),
 			Translit:   data.Translit.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, smsc)

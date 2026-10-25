@@ -17,3 +17,15 @@ resource "uptimekuma_notification_resend" "with_subject" {
   is_active  = true
   is_default = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
+# plan or state. Change api_key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_resend" "write_only" {
+  name = "Resend with a write-only secret"
+
+  from_email = "monitoring@example.com"
+  to_email   = "alerts@example.com"
+
+  api_key_wo         = "re_your_api_key_here"
+  api_key_wo_version = "1"
+}

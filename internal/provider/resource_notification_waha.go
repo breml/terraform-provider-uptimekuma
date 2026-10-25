@@ -36,10 +36,12 @@ type NotificationWAHAResource struct {
 type NotificationWAHAResourceModel struct {
 	NotificationBaseModel
 
-	APIURL  types.String `tfsdk:"api_url"`
-	Session types.String `tfsdk:"session"`
-	ChatID  types.String `tfsdk:"chat_id"`
-	APIKey  types.String `tfsdk:"api_key"`
+	APIURL          types.String `tfsdk:"api_url"`
+	Session         types.String `tfsdk:"session"`
+	ChatID          types.String `tfsdk:"chat_id"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -89,6 +91,8 @@ func (*NotificationWAHAResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "WAHA API key")
 }
 
 // Configure configures the WAHA notification resource with the API client.
@@ -125,8 +129,12 @@ func (r *NotificationWAHAResource) Create(
 			APIURL:  data.APIURL.ValueString(),
 			Session: data.Session.ValueString(),
 			ChatID:  data.ChatID.ValueString(),
-			APIKey:  data.APIKey.ValueString(),
+			APIKey:  writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, waha)
@@ -191,8 +199,10 @@ func (r *NotificationWAHAResource) Read(
 	data.APIURL = types.StringValue(waha.APIURL)
 	data.Session = types.StringValue(waha.Session)
 	data.ChatID = types.StringValue(waha.ChatID)
-	if waha.APIKey != "" {
-		data.APIKey = types.StringValue(waha.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		if waha.APIKey != "" {
+			data.APIKey = types.StringValue(waha.APIKey)
+		}
 	}
 
 	// Populate state.
@@ -225,8 +235,12 @@ func (r *NotificationWAHAResource) Update(
 			APIURL:  data.APIURL.ValueString(),
 			Session: data.Session.ValueString(),
 			ChatID:  data.ChatID.ValueString(),
-			APIKey:  data.APIKey.ValueString(),
+			APIKey:  writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, waha)

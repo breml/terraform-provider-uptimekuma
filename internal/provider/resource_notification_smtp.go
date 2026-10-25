@@ -38,28 +38,30 @@ type NotificationSMTPResource struct {
 type NotificationSMTPResourceModel struct {
 	NotificationBaseModel
 
-	Host                 types.String `tfsdk:"host"`
-	Port                 types.Int64  `tfsdk:"port"`
-	Secure               types.Bool   `tfsdk:"secure"`
-	IgnoreTLSError       types.Bool   `tfsdk:"ignore_tls_error"`
-	DkimDomain           types.String `tfsdk:"dkim_domain"`
-	DkimKeySelector      types.String `tfsdk:"dkim_key_selector"`
-	DkimPrivateKey       types.String `tfsdk:"dkim_private_key"`
-	DkimHashAlgo         types.String `tfsdk:"dkim_hash_algo"`
-	DkimHeaderFieldNames types.String `tfsdk:"dkim_header_field_names"`
-	DkimSkipFields       types.String `tfsdk:"dkim_skip_fields"`
-	Username             types.String `tfsdk:"username"`
-	Password             types.String `tfsdk:"password"`
-	PasswordWO           types.String `tfsdk:"password_wo"`
-	PasswordWOVersion    types.String `tfsdk:"password_wo_version"`
-	From                 types.String `tfsdk:"from"`
-	CC                   types.String `tfsdk:"cc"`
-	BCC                  types.String `tfsdk:"bcc"`
-	To                   types.String `tfsdk:"to"`
-	CustomSubject        types.String `tfsdk:"custom_subject"`
-	CustomBody           types.String `tfsdk:"custom_body"`
-	HTMLBody             types.Bool   `tfsdk:"html_body"`
-	AdditionalHeaders    types.String `tfsdk:"additional_headers"`
+	Host                    types.String `tfsdk:"host"`
+	Port                    types.Int64  `tfsdk:"port"`
+	Secure                  types.Bool   `tfsdk:"secure"`
+	IgnoreTLSError          types.Bool   `tfsdk:"ignore_tls_error"`
+	DkimDomain              types.String `tfsdk:"dkim_domain"`
+	DkimKeySelector         types.String `tfsdk:"dkim_key_selector"`
+	DkimPrivateKey          types.String `tfsdk:"dkim_private_key"`
+	DkimPrivateKeyWO        types.String `tfsdk:"dkim_private_key_wo"`
+	DkimPrivateKeyWOVersion types.String `tfsdk:"dkim_private_key_wo_version"`
+	DkimHashAlgo            types.String `tfsdk:"dkim_hash_algo"`
+	DkimHeaderFieldNames    types.String `tfsdk:"dkim_header_field_names"`
+	DkimSkipFields          types.String `tfsdk:"dkim_skip_fields"`
+	Username                types.String `tfsdk:"username"`
+	Password                types.String `tfsdk:"password"`
+	PasswordWO              types.String `tfsdk:"password_wo"`
+	PasswordWOVersion       types.String `tfsdk:"password_wo_version"`
+	From                    types.String `tfsdk:"from"`
+	CC                      types.String `tfsdk:"cc"`
+	BCC                     types.String `tfsdk:"bcc"`
+	To                      types.String `tfsdk:"to"`
+	CustomSubject           types.String `tfsdk:"custom_subject"`
+	CustomBody              types.String `tfsdk:"custom_body"`
+	HTMLBody                types.Bool   `tfsdk:"html_body"`
+	AdditionalHeaders       types.String `tfsdk:"additional_headers"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -167,6 +169,11 @@ func (*NotificationSMTPResource) Schema(
 	}
 
 	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "SMTP password for authentication")
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"dkim_private_key",
+		"DKIM private key for signing emails",
+	)
 }
 
 // withSMTPDkimAttributes adds the DKIM signing attributes to the provided attribute map, which
@@ -229,6 +236,8 @@ func (r *NotificationSMTPResource) Create(
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	password := writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+	dkimPrivateKey := writeOnlyOrPlan(ctx, req.Config, "dkim_private_key", data.DkimPrivateKey, &resp.Diagnostics)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -247,7 +256,7 @@ func (r *NotificationSMTPResource) Create(
 			IgnoreTLSError:       data.IgnoreTLSError.ValueBool(),
 			DkimDomain:           data.DkimDomain.ValueString(),
 			DkimKeySelector:      data.DkimKeySelector.ValueString(),
-			DkimPrivateKey:       data.DkimPrivateKey.ValueString(),
+			DkimPrivateKey:       dkimPrivateKey,
 			DkimHashAlgo:         data.DkimHashAlgo.ValueString(),
 			DkimHeaderFieldNames: data.DkimHeaderFieldNames.ValueString(),
 			DkimSkipFields:       data.DkimSkipFields.ValueString(),
@@ -334,6 +343,8 @@ func (r *NotificationSMTPResource) Update(
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	password := writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+	dkimPrivateKey := writeOnlyOrPlan(ctx, req.Config, "dkim_private_key", data.DkimPrivateKey, &resp.Diagnostics)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -353,7 +364,7 @@ func (r *NotificationSMTPResource) Update(
 			IgnoreTLSError:       data.IgnoreTLSError.ValueBool(),
 			DkimDomain:           data.DkimDomain.ValueString(),
 			DkimKeySelector:      data.DkimKeySelector.ValueString(),
-			DkimPrivateKey:       data.DkimPrivateKey.ValueString(),
+			DkimPrivateKey:       dkimPrivateKey,
 			DkimHashAlgo:         data.DkimHashAlgo.ValueString(),
 			DkimHeaderFieldNames: data.DkimHeaderFieldNames.ValueString(),
 			DkimSkipFields:       data.DkimSkipFields.ValueString(),
@@ -443,7 +454,7 @@ func populateSMTPModelFromAPI(
 		data.DkimKeySelector = types.StringValue(smtp.DkimKeySelector)
 	}
 
-	if smtp.DkimPrivateKey != "" {
+	if data.DkimPrivateKeyWOVersion.IsNull() && smtp.DkimPrivateKey != "" {
 		data.DkimPrivateKey = types.StringValue(smtp.DkimPrivateKey)
 	}
 

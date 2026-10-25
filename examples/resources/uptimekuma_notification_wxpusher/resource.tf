@@ -12,3 +12,12 @@ resource "uptimekuma_notification_wxpusher" "team" {
   is_active  = true
   is_default = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: spt_wo is never stored in
+# plan or state. Change spt_wo_version whenever the secret changes.
+resource "uptimekuma_notification_wxpusher" "write_only" {
+  name = "WxPusher with a write-only secret"
+
+  spt_wo         = "SPT_0123456789ab"
+  spt_wo_version = "1"
+}

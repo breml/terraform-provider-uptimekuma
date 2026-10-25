@@ -534,6 +534,304 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("api_key", n.APIKey)
 			}),
 		},
+		"uptimekuma_notification_resend": {
+			body: `
+  from_email = "monitoring@example.com"
+  to_email   = "alerts@example.com"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Resend) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_rocketchat": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.RocketChat) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_sendgrid": {
+			body: `
+  to_email   = "alerts@example.com"
+  from_email = "monitoring@example.com"
+  subject    = "Uptime Alert"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SendGrid) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_serverchan": {
+			attrs: []string{"send_key"},
+			serverSecrets: notificationSecrets(func(n *notification.ServerChan) map[string]string {
+				return singleSecret("send_key", n.SendKey)
+			}),
+		},
+		"uptimekuma_notification_serwersms": {
+			body: `
+  username     = "serwersms-user"
+  phone_number = "+48501234567"`,
+			attrs: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.SerwerSMS) map[string]string {
+				return singleSecret("password", n.Password)
+			}),
+		},
+		"uptimekuma_notification_sevenio": {
+			body: `
+  sender = "+491234567890"
+  to     = "+491111111111"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SevenIO) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_signl4": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.SIGNL4) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_slack": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Slack) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_smsc": {
+			body: `
+  login     = "smsc-user"
+  to_number = "77123456789"`,
+			attrs: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSC) map[string]string {
+				return singleSecret("password", n.Password)
+			}),
+		},
+		"uptimekuma_notification_smseagle": {
+			body: `
+  url            = "https://smseagle.example.com"
+  recipient_type = "smseagle-to"
+  recipient_to   = "+1234567890"`,
+			attrs: []string{"token"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSEagle) map[string]string {
+				return singleSecret("token", n.Token)
+			}),
+		},
+		"uptimekuma_notification_smsgateway": {
+			body: `
+  url        = "http://sms-gateway.example.com:8080"
+  recipients = "+15551234567"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSGateway) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_smsir": {
+			body: `
+  number   = "09123456789"
+  template = "123456"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSIR) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_smsmanager": {
+			body: `
+  numbers = "+41790000000"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSManager) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_smspartner": {
+			body: `
+  phone_number = "+33612345678"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSPartner) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_smsplanet": {
+			body: `
+  phone_numbers = "+48123456789"`,
+			attrs: []string{"api_token"},
+			serverSecrets: notificationSecrets(func(n *notification.SMSPlanet) map[string]string {
+				return singleSecret("api_token", n.APIToken)
+			}),
+		},
+		"uptimekuma_notification_smtp": {
+			body: `
+  host              = "smtp.example.com"
+  from              = "uptime-kuma@example.com"
+  to                = "admin@example.com"
+  dkim_domain       = "example.com"
+  dkim_key_selector = "default"`,
+			attrs: []string{"dkim_private_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SMTP) map[string]string {
+				return singleSecret("dkim_private_key", n.DkimPrivateKey)
+			}),
+		},
+		"uptimekuma_notification_splunk": {
+			body: `
+  severity     = "critical"
+  auto_resolve = "resolve"`,
+			attrs: []string{"rest_url", "integration_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Splunk) map[string]string {
+				return map[string]string{
+					"rest_url":        n.RestURL,
+					"integration_key": n.IntegrationKey,
+				}
+			}),
+		},
+		"uptimekuma_notification_spugpush": {
+			attrs: []string{"template_key"},
+			serverSecrets: notificationSecrets(func(n *notification.SpugPush) map[string]string {
+				return singleSecret("template_key", n.TemplateKey)
+			}),
+		},
+		"uptimekuma_notification_squadcast": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Squadcast) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_stackfield": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Stackfield) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_teams": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Teams) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_techuluspush": {
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.TechulusPush) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_telegram": {
+			body: `
+  chat_id = "123456789"`,
+			attrs: []string{"bot_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Telegram) map[string]string {
+				return singleSecret("bot_token", n.BotToken)
+			}),
+		},
+		"uptimekuma_notification_telnyx": {
+			body: `
+  phone_number = "+15550001111"
+  to_number    = "+15550002222"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Telnyx) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_teltonika": {
+			body: `
+  url          = "https://192.168.1.1"
+  username     = "admin"
+  phone_number = "+1234567890"`,
+			attrs: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.Teltonika) map[string]string {
+				return singleSecret("password", n.Password)
+			}),
+		},
+		"uptimekuma_notification_threema": {
+			body: `
+  sender_identity = "*ABCDEFG"
+  recipient       = "ECHOECHO"
+  recipient_type  = "identity"`,
+			attrs: []string{"secret"},
+			serverSecrets: notificationSecrets(func(n *notification.Threema) map[string]string {
+				return singleSecret("secret", n.Secret)
+			}),
+		},
+		"uptimekuma_notification_twilio": {
+			body: `
+  account_sid = "AC00000000000000000000000000000000"
+  to_number   = "+12025550123"
+  from_number = "+12025550456"`,
+			attrs: []string{"api_key", "auth_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Twilio) map[string]string {
+				return map[string]string{"api_key": n.APIKey, "auth_token": n.AuthToken}
+			}),
+		},
+		"uptimekuma_notification_vk": {
+			body: `
+  peer_id = "12345"`,
+			attrs: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.VK) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
+		"uptimekuma_notification_waha": {
+			body: `
+  api_url = "https://waha.example.com"
+  session = "default"
+  chat_id = "120363101234567890@g.us"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.WAHA) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_webhook": {
+			body: `
+  webhook_content_type = "json"`,
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Webhook) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_wecom": {
+			attrs: []string{"bot_key"},
+			serverSecrets: notificationSecrets(func(n *notification.WeCom) map[string]string {
+				return singleSecret("bot_key", n.BotKey)
+			}),
+		},
+		"uptimekuma_notification_whapi": {
+			body: `
+  api_url   = "https://gate.whapi.cloud"
+  recipient = "1234567890"`,
+			attrs: []string{"auth_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Whapi) map[string]string {
+				return singleSecret("auth_token", n.AuthToken)
+			}),
+		},
+		"uptimekuma_notification_whatsapp360messenger": {
+			body: `
+  recipient = "+15551234567"`,
+			attrs: []string{"auth_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Whatsapp360messenger) map[string]string {
+				return singleSecret("auth_token", n.AuthToken)
+			}),
+		},
+		"uptimekuma_notification_wpush": {
+			body: `
+  channel = "monitoring"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.WPush) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_wxpusher": {
+			attrs: []string{"spt"},
+			serverSecrets: notificationSecrets(func(n *notification.WxPusher) map[string]string {
+				return singleSecret("spt", n.SPT)
+			}),
+		},
+		"uptimekuma_notification_yzj": {
+			attrs: []string{"webhook_url", "token"},
+			serverSecrets: notificationSecrets(func(n *notification.YZJ) map[string]string {
+				return map[string]string{"webhook_url": n.WebHookURL, "token": n.Token}
+			}),
+		},
+		"uptimekuma_notification_zohocliq": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.ZohoCliq) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
 	}
 
 	for key, tc := range tests {

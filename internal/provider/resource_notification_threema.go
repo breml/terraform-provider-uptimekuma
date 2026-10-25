@@ -36,10 +36,12 @@ type NotificationThreemaResource struct {
 type NotificationThreemaResourceModel struct {
 	NotificationBaseModel
 
-	SenderIdentity types.String `tfsdk:"sender_identity"`
-	Secret         types.String `tfsdk:"secret"`
-	Recipient      types.String `tfsdk:"recipient"`
-	RecipientType  types.String `tfsdk:"recipient_type"`
+	SenderIdentity  types.String `tfsdk:"sender_identity"`
+	Secret          types.String `tfsdk:"secret"`
+	SecretWO        types.String `tfsdk:"secret_wo"`
+	SecretWOVersion types.String `tfsdk:"secret_wo_version"`
+	Recipient       types.String `tfsdk:"recipient"`
+	RecipientType   types.String `tfsdk:"recipient_type"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -92,6 +94,8 @@ func (*NotificationThreemaResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "secret", "Threema Gateway API secret")
 }
 
 // Configure configures the Threema notification resource with the API client.
@@ -126,10 +130,14 @@ func (r *NotificationThreemaResource) Create(
 		},
 		ThreemaDetails: notification.ThreemaDetails{
 			SenderIdentity: data.SenderIdentity.ValueString(),
-			Secret:         data.Secret.ValueString(),
+			Secret:         writeOnlyOrPlan(ctx, req.Config, "secret", data.Secret, &resp.Diagnostics),
 			Recipient:      data.Recipient.ValueString(),
 			RecipientType:  data.RecipientType.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, threema)
@@ -192,7 +200,10 @@ func (r *NotificationThreemaResource) Read(
 	data.ApplyExisting = types.BoolValue(threema.ApplyExisting)
 
 	data.SenderIdentity = types.StringValue(threema.SenderIdentity)
-	data.Secret = types.StringValue(threema.Secret)
+	if data.SecretWOVersion.IsNull() {
+		data.Secret = types.StringValue(threema.Secret)
+	}
+
 	data.Recipient = types.StringValue(threema.Recipient)
 	data.RecipientType = types.StringValue(threema.RecipientType)
 
@@ -224,10 +235,14 @@ func (r *NotificationThreemaResource) Update(
 		},
 		ThreemaDetails: notification.ThreemaDetails{
 			SenderIdentity: data.SenderIdentity.ValueString(),
-			Secret:         data.Secret.ValueString(),
+			Secret:         writeOnlyOrPlan(ctx, req.Config, "secret", data.Secret, &resp.Diagnostics),
 			Recipient:      data.Recipient.ValueString(),
 			RecipientType:  data.RecipientType.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, threema)

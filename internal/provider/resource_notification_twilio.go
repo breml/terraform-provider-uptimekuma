@@ -36,11 +36,15 @@ type NotificationTwilioResource struct {
 type NotificationTwilioResourceModel struct {
 	NotificationBaseModel
 
-	AccountSID types.String `tfsdk:"account_sid"`
-	APIKey     types.String `tfsdk:"api_key"`
-	AuthToken  types.String `tfsdk:"auth_token"`
-	ToNumber   types.String `tfsdk:"to_number"`
-	FromNumber types.String `tfsdk:"from_number"`
+	AccountSID         types.String `tfsdk:"account_sid"`
+	APIKey             types.String `tfsdk:"api_key"`
+	APIKeyWO           types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion    types.String `tfsdk:"api_key_wo_version"`
+	AuthToken          types.String `tfsdk:"auth_token"`
+	AuthTokenWO        types.String `tfsdk:"auth_token_wo"`
+	AuthTokenWOVersion types.String `tfsdk:"auth_token_wo_version"`
+	ToNumber           types.String `tfsdk:"to_number"`
+	FromNumber         types.String `tfsdk:"from_number"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -98,6 +102,10 @@ func (*NotificationTwilioResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Twilio API key")
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "auth_token", "Twilio auth token")
 }
 
 // Configure configures the Twilio notification resource with the API client.
@@ -132,11 +140,15 @@ func (r *NotificationTwilioResource) Create(
 		},
 		TwilioDetails: notification.TwilioDetails{
 			AccountSID: data.AccountSID.ValueString(),
-			APIKey:     data.APIKey.ValueString(),
-			AuthToken:  data.AuthToken.ValueString(),
+			APIKey:     writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
+			AuthToken:  writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			ToNumber:   data.ToNumber.ValueString(),
 			FromNumber: data.FromNumber.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, twilio)
@@ -199,13 +211,18 @@ func (r *NotificationTwilioResource) Read(
 	data.ApplyExisting = types.BoolValue(twilio.ApplyExisting)
 
 	data.AccountSID = types.StringValue(twilio.AccountSID)
-	if twilio.APIKey != "" {
-		data.APIKey = types.StringValue(twilio.APIKey)
-	} else {
-		data.APIKey = types.StringNull()
+	if data.APIKeyWOVersion.IsNull() {
+		if twilio.APIKey != "" {
+			data.APIKey = types.StringValue(twilio.APIKey)
+		} else {
+			data.APIKey = types.StringNull()
+		}
 	}
 
-	data.AuthToken = types.StringValue(twilio.AuthToken)
+	if data.AuthTokenWOVersion.IsNull() {
+		data.AuthToken = types.StringValue(twilio.AuthToken)
+	}
+
 	data.ToNumber = types.StringValue(twilio.ToNumber)
 	data.FromNumber = types.StringValue(twilio.FromNumber)
 
@@ -237,11 +254,15 @@ func (r *NotificationTwilioResource) Update(
 		},
 		TwilioDetails: notification.TwilioDetails{
 			AccountSID: data.AccountSID.ValueString(),
-			APIKey:     data.APIKey.ValueString(),
-			AuthToken:  data.AuthToken.ValueString(),
+			APIKey:     writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
+			AuthToken:  writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			ToNumber:   data.ToNumber.ValueString(),
 			FromNumber: data.FromNumber.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, twilio)

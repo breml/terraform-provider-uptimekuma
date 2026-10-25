@@ -36,9 +36,11 @@ type NotificationWhapiResource struct {
 type NotificationWhapiResourceModel struct {
 	NotificationBaseModel
 
-	APIURL    types.String `tfsdk:"api_url"`
-	AuthToken types.String `tfsdk:"auth_token"`
-	Recipient types.String `tfsdk:"recipient"`
+	APIURL             types.String `tfsdk:"api_url"`
+	AuthToken          types.String `tfsdk:"auth_token"`
+	AuthTokenWO        types.String `tfsdk:"auth_token_wo"`
+	AuthTokenWOVersion types.String `tfsdk:"auth_token_wo_version"`
+	Recipient          types.String `tfsdk:"recipient"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -84,6 +86,8 @@ func (*NotificationWhapiResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "auth_token", "Whapi auth token")
 }
 
 // Configure configures the Whapi notification resource with the API client.
@@ -118,9 +122,13 @@ func (r *NotificationWhapiResource) Create(
 		},
 		WhapiDetails: notification.WhapiDetails{
 			APIURL:    data.APIURL.ValueString(),
-			AuthToken: data.AuthToken.ValueString(),
+			AuthToken: writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			Recipient: data.Recipient.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, whapi)
@@ -183,7 +191,10 @@ func (r *NotificationWhapiResource) Read(
 	data.ApplyExisting = types.BoolValue(whapi.ApplyExisting)
 
 	data.APIURL = types.StringValue(whapi.APIURL)
-	data.AuthToken = types.StringValue(whapi.AuthToken)
+	if data.AuthTokenWOVersion.IsNull() {
+		data.AuthToken = types.StringValue(whapi.AuthToken)
+	}
+
 	data.Recipient = types.StringValue(whapi.Recipient)
 
 	// Populate state.
@@ -214,9 +225,13 @@ func (r *NotificationWhapiResource) Update(
 		},
 		WhapiDetails: notification.WhapiDetails{
 			APIURL:    data.APIURL.ValueString(),
-			AuthToken: data.AuthToken.ValueString(),
+			AuthToken: writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics),
 			Recipient: data.Recipient.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, whapi)

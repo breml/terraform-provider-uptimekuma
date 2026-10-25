@@ -36,11 +36,13 @@ type NotificationResendResource struct {
 type NotificationResendResourceModel struct {
 	NotificationBaseModel
 
-	APIKey    types.String `tfsdk:"api_key"`
-	FromEmail types.String `tfsdk:"from_email"`
-	FromName  types.String `tfsdk:"from_name"`
-	ToEmail   types.String `tfsdk:"to_email"`
-	Subject   types.String `tfsdk:"subject"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	FromEmail       types.String `tfsdk:"from_email"`
+	FromName        types.String `tfsdk:"from_name"`
+	ToEmail         types.String `tfsdk:"to_email"`
+	Subject         types.String `tfsdk:"subject"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -94,6 +96,8 @@ func (*NotificationResendResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Resend API key")
 }
 
 // Configure configures the Resend notification resource with the API client.
@@ -120,6 +124,11 @@ func (r *NotificationResendResource) Create(
 	}
 
 	resend := resendFromModel(&data)
+	resend.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, resend)
 	// Handle error.
@@ -176,7 +185,10 @@ func (r *NotificationResendResource) Read(ctx context.Context, req resource.Read
 	data.IsDefault = types.BoolValue(resend.IsDefault)
 	data.ApplyExisting = types.BoolValue(resend.ApplyExisting)
 
-	data.APIKey = types.StringValue(resend.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(resend.APIKey)
+	}
+
 	data.FromEmail = types.StringValue(resend.FromEmail)
 	data.ToEmail = types.StringValue(resend.ToEmail)
 
@@ -222,6 +234,11 @@ func (r *NotificationResendResource) Update(
 
 	resend := resendFromModel(&data)
 	resend.ID = id
+	resend.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, resend)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
@@ -271,7 +288,8 @@ func (*NotificationResendResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-// resendFromModel builds a Resend notification from the resource model.
+// resendFromModel builds a Resend notification from the resource model. The caller resolves
+// api_key, which may be write-only and so is not in the model.
 func resendFromModel(data *NotificationResendResourceModel) notification.Resend {
 	return notification.Resend{
 		Base: notification.Base{
@@ -281,7 +299,6 @@ func resendFromModel(data *NotificationResendResourceModel) notification.Resend 
 			Name:          data.Name.ValueString(),
 		},
 		ResendDetails: notification.ResendDetails{
-			APIKey:    data.APIKey.ValueString(),
 			FromEmail: data.FromEmail.ValueString(),
 			FromName:  data.FromName.ValueString(),
 			ToEmail:   data.ToEmail.ValueString(),
