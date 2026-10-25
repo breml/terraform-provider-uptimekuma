@@ -20,3 +20,16 @@ resource "uptimekuma_notification_teltonika" "self_signed" {
   unsafe_tls   = true
   is_active    = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: password_wo is never stored in
+# plan or state. Change password_wo_version whenever the secret changes.
+resource "uptimekuma_notification_teltonika" "write_only" {
+  name = "Teltonika with a write-only secret"
+
+  url          = "https://192.168.1.1"
+  username     = "admin"
+  phone_number = "+1234567890"
+
+  password_wo         = "your-router-password"
+  password_wo_version = "1"
+}

@@ -23,3 +23,16 @@ resource "uptimekuma_notification_smseagle" "ring" {
   api_type       = "smseagle-apiv2"
   is_active      = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: token_wo is never stored in
+# plan or state. Change token_wo_version whenever the secret changes.
+resource "uptimekuma_notification_smseagle" "write_only" {
+  name = "SMSEagle with a write-only secret"
+
+  url            = "https://smseagle.example.com"
+  recipient_type = "smseagle-to"
+  recipient_to   = "+1234567890"
+
+  token_wo         = "your-api-token"
+  token_wo_version = "1"
+}

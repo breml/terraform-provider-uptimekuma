@@ -37,11 +37,13 @@ type NotificationTechulusPushResource struct {
 type NotificationTechulusPushResourceModel struct {
 	NotificationBaseModel
 
-	APIKey        types.String `tfsdk:"api_key"`
-	Title         types.String `tfsdk:"title"`
-	Sound         types.String `tfsdk:"sound"`
-	Channel       types.String `tfsdk:"channel"`
-	TimeSensitive types.Bool   `tfsdk:"time_sensitive"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Title           types.String `tfsdk:"title"`
+	Sound           types.String `tfsdk:"sound"`
+	Channel         types.String `tfsdk:"channel"`
+	TimeSensitive   types.Bool   `tfsdk:"time_sensitive"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -90,6 +92,8 @@ func (*NotificationTechulusPushResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Techulus Push API key")
 }
 
 // Configure configures the TechulusPush notification resource with the API client.
@@ -123,12 +127,16 @@ func (r *NotificationTechulusPushResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		TechulusPushDetails: notification.TechulusPushDetails{
-			APIKey:        data.APIKey.ValueString(),
+			APIKey:        writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Title:         data.Title.ValueString(),
 			Sound:         data.Sound.ValueString(),
 			Channel:       data.Channel.ValueString(),
 			TimeSensitive: data.TimeSensitive.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, techulusPush)
@@ -190,7 +198,7 @@ func (r *NotificationTechulusPushResource) Read(
 	data.IsDefault = types.BoolValue(techulusPush.IsDefault)
 	data.ApplyExisting = types.BoolValue(techulusPush.ApplyExisting)
 
-	if techulusPush.APIKey != "" {
+	if data.APIKeyWOVersion.IsNull() && techulusPush.APIKey != "" {
 		data.APIKey = types.StringValue(techulusPush.APIKey)
 	}
 
@@ -241,12 +249,16 @@ func (r *NotificationTechulusPushResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		TechulusPushDetails: notification.TechulusPushDetails{
-			APIKey:        data.APIKey.ValueString(),
+			APIKey:        writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Title:         data.Title.ValueString(),
 			Sound:         data.Sound.ValueString(),
 			Channel:       data.Channel.ValueString(),
 			TimeSensitive: data.TimeSensitive.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, techulusPush)

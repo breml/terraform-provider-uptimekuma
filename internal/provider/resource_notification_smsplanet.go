@@ -36,9 +36,11 @@ type NotificationSMSPlanetResource struct {
 type NotificationSMSPlanetResourceModel struct {
 	NotificationBaseModel
 
-	APIToken     types.String `tfsdk:"api_token"`
-	PhoneNumbers types.String `tfsdk:"phone_numbers"`
-	SenderName   types.String `tfsdk:"sender_name"`
+	APIToken          types.String `tfsdk:"api_token"`
+	APITokenWO        types.String `tfsdk:"api_token_wo"`
+	APITokenWOVersion types.String `tfsdk:"api_token_wo_version"`
+	PhoneNumbers      types.String `tfsdk:"phone_numbers"`
+	SenderName        types.String `tfsdk:"sender_name"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -80,6 +82,8 @@ func (*NotificationSMSPlanetResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_token", "SMSPlanet API token")
 }
 
 // Configure configures the SMS Planet notification resource with the API client.
@@ -113,10 +117,14 @@ func (r *NotificationSMSPlanetResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SMSPlanetDetails: notification.SMSPlanetDetails{
-			APIToken:     data.APIToken.ValueString(),
+			APIToken:     writeOnlyOrPlan(ctx, req.Config, "api_token", data.APIToken, &resp.Diagnostics),
 			PhoneNumbers: data.PhoneNumbers.ValueString(),
 			SenderName:   data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, smsplanet)
@@ -178,7 +186,7 @@ func (r *NotificationSMSPlanetResource) Read(
 	data.IsDefault = types.BoolValue(smsplanet.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsplanet.ApplyExisting)
 
-	if smsplanet.APIToken != "" {
+	if data.APITokenWOVersion.IsNull() && smsplanet.APIToken != "" {
 		data.APIToken = types.StringValue(smsplanet.APIToken)
 	}
 
@@ -217,10 +225,14 @@ func (r *NotificationSMSPlanetResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SMSPlanetDetails: notification.SMSPlanetDetails{
-			APIToken:     data.APIToken.ValueString(),
+			APIToken:     writeOnlyOrPlan(ctx, req.Config, "api_token", data.APIToken, &resp.Diagnostics),
 			PhoneNumbers: data.PhoneNumbers.ValueString(),
 			SenderName:   data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, smsplanet)

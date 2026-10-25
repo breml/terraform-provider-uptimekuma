@@ -38,6 +38,8 @@ type NotificationWebhookResourceModel struct {
 	NotificationBaseModel
 
 	WebhookURL               types.String `tfsdk:"webhook_url"`
+	WebhookURLWO             types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion      types.String `tfsdk:"webhook_url_wo_version"`
 	WebhookContentType       types.String `tfsdk:"webhook_content_type"`
 	WebhookCustomBody        types.String `tfsdk:"webhook_custom_body"`
 	WebhookAdditionalHeaders types.Map    `tfsdk:"webhook_additional_headers"`
@@ -89,6 +91,8 @@ func (*NotificationWebhookResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Webhook URL")
 }
 
 // Configure configures the Webhook notification resource with the API client.
@@ -123,6 +127,8 @@ func (r *NotificationWebhookResource) Create(
 		}
 	}
 
+	webhookURL := writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+
 	webhook := notification.Webhook{
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
@@ -131,11 +137,15 @@ func (r *NotificationWebhookResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		WebhookDetails: notification.WebhookDetails{
-			WebhookURL:               data.WebhookURL.ValueString(),
+			WebhookURL:               webhookURL,
 			WebhookContentType:       data.WebhookContentType.ValueString(),
 			WebhookCustomBody:        data.WebhookCustomBody.ValueString(),
 			WebhookAdditionalHeaders: headers,
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, webhook)
@@ -193,7 +203,10 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	data.IsDefault = types.BoolValue(webhook.IsDefault)
 	data.ApplyExisting = types.BoolValue(webhook.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(webhook.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(webhook.WebhookURL)
+	}
+
 	data.WebhookContentType = types.StringValue(webhook.WebhookContentType)
 
 	if webhook.WebhookCustomBody != "" {
@@ -241,6 +254,8 @@ func (r *NotificationWebhookResource) Update(
 		}
 	}
 
+	webhookURL := writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+
 	webhook := notification.Webhook{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
@@ -250,11 +265,15 @@ func (r *NotificationWebhookResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		WebhookDetails: notification.WebhookDetails{
-			WebhookURL:               data.WebhookURL.ValueString(),
+			WebhookURL:               webhookURL,
 			WebhookContentType:       data.WebhookContentType.ValueString(),
 			WebhookCustomBody:        data.WebhookCustomBody.ValueString(),
 			WebhookAdditionalHeaders: headers,
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, webhook)

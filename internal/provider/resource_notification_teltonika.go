@@ -36,12 +36,14 @@ type NotificationTeltonikaResource struct {
 type NotificationTeltonikaResourceModel struct {
 	NotificationBaseModel
 
-	URL         types.String `tfsdk:"url"`
-	Username    types.String `tfsdk:"username"`
-	Password    types.String `tfsdk:"password"`
-	Modem       types.String `tfsdk:"modem"`
-	PhoneNumber types.String `tfsdk:"phone_number"`
-	UnsafeTLS   types.Bool   `tfsdk:"unsafe_tls"`
+	URL               types.String `tfsdk:"url"`
+	Username          types.String `tfsdk:"username"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	Modem             types.String `tfsdk:"modem"`
+	PhoneNumber       types.String `tfsdk:"phone_number"`
+	UnsafeTLS         types.Bool   `tfsdk:"unsafe_tls"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -64,6 +66,8 @@ func (*NotificationTeltonikaResource) Schema(
 			"SMS gateway over its HTTP API. This provider is only compatible with Teltonika RutOS >= 7.14.0 devices.",
 		Attributes: withNotificationBaseAttributes(teltonikaSchemaAttributes()),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "Teltonika router password")
 }
 
 func teltonikaSchemaAttributes() map[string]schema.Attribute {
@@ -136,6 +140,11 @@ func (r *NotificationTeltonikaResource) Create(
 	}
 
 	teltonika := teltonikaFromModel(&data)
+	teltonika.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, teltonika)
 	// Handle error.
@@ -207,8 +216,10 @@ func (r *NotificationTeltonikaResource) Read(
 
 	// Uptime Kuma does not return secret fields, so only overwrite the
 	// password in state if the API actually returned a non-empty value.
-	if teltonika.Password != "" {
-		data.Password = types.StringValue(teltonika.Password)
+	if data.PasswordWOVersion.IsNull() {
+		if teltonika.Password != "" {
+			data.Password = types.StringValue(teltonika.Password)
+		}
 	}
 
 	// Populate state.
@@ -241,6 +252,11 @@ func (r *NotificationTeltonikaResource) Update(
 
 	teltonika := teltonikaFromModel(&data)
 	teltonika.ID = id
+	teltonika.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, teltonika)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {

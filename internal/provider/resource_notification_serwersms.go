@@ -36,10 +36,12 @@ type NotificationSerwersmsResource struct {
 type NotificationSerwersmsResourceModel struct {
 	NotificationBaseModel
 
-	Username    types.String `tfsdk:"username"`
-	Password    types.String `tfsdk:"password"`
-	PhoneNumber types.String `tfsdk:"phone_number"`
-	SenderName  types.String `tfsdk:"sender_name"`
+	Username          types.String `tfsdk:"username"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	PhoneNumber       types.String `tfsdk:"phone_number"`
+	SenderName        types.String `tfsdk:"sender_name"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -89,6 +91,8 @@ func (*NotificationSerwersmsResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "password", "SerwerSMS API password")
 }
 
 // Configure configures the SerwerSMS notification resource with the API client.
@@ -123,10 +127,14 @@ func (r *NotificationSerwersmsResource) Create(
 		},
 		SerwerSMSDetails: notification.SerwerSMSDetails{
 			Username:    data.Username.ValueString(),
-			Password:    data.Password.ValueString(),
+			Password:    writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			PhoneNumber: data.PhoneNumber.ValueString(),
 			SenderName:  data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, serwersms)
@@ -194,7 +202,7 @@ func (r *NotificationSerwersmsResource) Read(
 	}
 
 	// Preserve password from state if API does not return it.
-	if serwersms.Password != "" {
+	if data.PasswordWOVersion.IsNull() && serwersms.Password != "" {
 		data.Password = types.StringValue(serwersms.Password)
 	}
 
@@ -234,10 +242,14 @@ func (r *NotificationSerwersmsResource) Update(
 		},
 		SerwerSMSDetails: notification.SerwerSMSDetails{
 			Username:    data.Username.ValueString(),
-			Password:    data.Password.ValueString(),
+			Password:    writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			PhoneNumber: data.PhoneNumber.ValueString(),
 			SenderName:  data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, serwersms)

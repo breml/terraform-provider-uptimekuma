@@ -15,3 +15,14 @@ resource "uptimekuma_notification_vk" "custom" {
   is_active        = true
   is_default       = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: access_token_wo is never stored in
+# plan or state. Change access_token_wo_version whenever the secret changes.
+resource "uptimekuma_notification_vk" "write_only" {
+  name = "VK with a write-only secret"
+
+  peer_id = "12345"
+
+  access_token_wo         = "vk1.a.YOUR_ACCESS_TOKEN"
+  access_token_wo_version = "1"
+}

@@ -41,6 +41,8 @@ type NotificationTelegramResourceModel struct {
 	NotificationBaseModel
 
 	BotToken          types.String `tfsdk:"bot_token"`
+	BotTokenWO        types.String `tfsdk:"bot_token_wo"`
+	BotTokenWOVersion types.String `tfsdk:"bot_token_wo_version"`
 	ChatID            types.String `tfsdk:"chat_id"`
 	ServerURL         types.String `tfsdk:"server_url"`
 	SendSilently      types.Bool   `tfsdk:"send_silently"`
@@ -130,6 +132,8 @@ func (*NotificationTelegramResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "bot_token", "Telegram bot token")
 }
 
 // Configure configures the Telegram notification resource with the API client.
@@ -163,7 +167,7 @@ func (r *NotificationTelegramResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		TelegramDetails: notification.TelegramDetails{
-			BotToken:          data.BotToken.ValueString(),
+			BotToken:          writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics),
 			ChatID:            data.ChatID.ValueString(),
 			ServerURL:         data.ServerURL.ValueString(),
 			SendSilently:      data.SendSilently.ValueBool(),
@@ -173,6 +177,10 @@ func (r *NotificationTelegramResource) Create(
 			Template:          data.Template.ValueString(),
 			TemplateParseMode: data.TemplateParseMode.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, telegram)
@@ -234,7 +242,10 @@ func (r *NotificationTelegramResource) Read(
 	data.IsDefault = types.BoolValue(telegram.IsDefault)
 	data.ApplyExisting = types.BoolValue(telegram.ApplyExisting)
 
-	data.BotToken = types.StringValue(telegram.BotToken)
+	if data.BotTokenWOVersion.IsNull() {
+		data.BotToken = types.StringValue(telegram.BotToken)
+	}
+
 	data.ChatID = types.StringValue(telegram.ChatID)
 	if telegram.ServerURL != "" {
 		data.ServerURL = types.StringValue(telegram.ServerURL)
@@ -286,7 +297,7 @@ func (r *NotificationTelegramResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		TelegramDetails: notification.TelegramDetails{
-			BotToken:          data.BotToken.ValueString(),
+			BotToken:          writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics),
 			ChatID:            data.ChatID.ValueString(),
 			ServerURL:         data.ServerURL.ValueString(),
 			SendSilently:      data.SendSilently.ValueBool(),
@@ -296,6 +307,10 @@ func (r *NotificationTelegramResource) Update(
 			Template:          data.Template.ValueString(),
 			TemplateParseMode: data.TemplateParseMode.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, telegram)

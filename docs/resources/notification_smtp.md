@@ -72,10 +72,11 @@ resource "uptimekuma_notification_smtp" "with_dkim" {
   is_default = false
 }
 
-# Requires Terraform or OpenTofu 1.11 or later: password_wo is never stored in
-# plan or state. Change password_wo_version whenever the password changes.
+# Requires Terraform or OpenTofu 1.11 or later: password_wo and
+# dkim_private_key_wo are never stored in plan or state. Change the matching
+# *_wo_version whenever a secret changes.
 resource "uptimekuma_notification_smtp" "write_only_password" {
-  name = "SMTP with a write-only password"
+  name = "SMTP with write-only secrets"
 
   host = "smtp.example.com"
   port = 587
@@ -85,6 +86,11 @@ resource "uptimekuma_notification_smtp" "write_only_password" {
   username            = "smtp-user"
   password_wo         = "smtp-password"
   password_wo_version = "1"
+
+  dkim_domain                 = "example.com"
+  dkim_key_selector           = "default"
+  dkim_private_key_wo         = "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+  dkim_private_key_wo_version = "1"
 
   is_active  = true
   is_default = false
@@ -115,7 +121,9 @@ resource "uptimekuma_notification_smtp" "write_only_password" {
 - `dkim_hash_algo` (String) DKIM hash algorithm (sha1, sha256)
 - `dkim_header_field_names` (String) DKIM header field names to sign
 - `dkim_key_selector` (String) DKIM key selector
-- `dkim_private_key` (String, Sensitive) DKIM private key for email signing
+- `dkim_private_key` (String, Sensitive) DKIM private key for email signing. Stored in state; use `dkim_private_key_wo` to keep it out of state.
+- `dkim_private_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) DKIM private key for signing emails, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `dkim_private_key`; requires `dkim_private_key_wo_version`. An imported resource has no `dkim_private_key_wo_version` yet, so `terraform import` may store the server's value in `dkim_private_key` until the next apply with `dkim_private_key_wo` set removes it from state.
+- `dkim_private_key_wo_version` (String) Any value that changes whenever `dkim_private_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `dkim_private_key_wo`.
 - `dkim_skip_fields` (String) DKIM fields to skip
 - `html_body` (Boolean) Enable HTML formatting in email body
 - `ignore_tls_error` (Boolean) Ignore TLS certificate errors

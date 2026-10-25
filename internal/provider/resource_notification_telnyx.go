@@ -37,6 +37,8 @@ type NotificationTelnyxResourceModel struct {
 	NotificationBaseModel
 
 	APIKey             types.String `tfsdk:"api_key"`
+	APIKeyWO           types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion    types.String `tfsdk:"api_key_wo_version"`
 	MessagingProfileID types.String `tfsdk:"messaging_profile_id"`
 	PhoneNumber        types.String `tfsdk:"phone_number"`
 	ToNumber           types.String `tfsdk:"to_number"`
@@ -88,6 +90,8 @@ func (*NotificationTelnyxResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Telnyx API key")
 }
 
 // Configure configures the Telnyx notification resource with the API client.
@@ -114,6 +118,12 @@ func (r *NotificationTelnyxResource) Create(
 	}
 
 	telnyx := telnyxFromModel(&data)
+
+	telnyx.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, telnyx)
 	// Handle error.
@@ -170,7 +180,10 @@ func (r *NotificationTelnyxResource) Read(ctx context.Context, req resource.Read
 	data.IsDefault = types.BoolValue(telnyx.IsDefault)
 	data.ApplyExisting = types.BoolValue(telnyx.ApplyExisting)
 
-	data.APIKey = types.StringValue(telnyx.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(telnyx.APIKey)
+	}
+
 	data.MessagingProfileID = ptrToTypes(telnyx.MessagingProfileID)
 	data.PhoneNumber = types.StringValue(telnyx.PhoneNumber)
 	data.ToNumber = types.StringValue(telnyx.ToNumber)
@@ -205,6 +218,12 @@ func (r *NotificationTelnyxResource) Update(
 
 	telnyx := telnyxFromModel(&data)
 	telnyx.ID = id
+
+	telnyx.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, telnyx)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
@@ -254,7 +273,8 @@ func (*NotificationTelnyxResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-// telnyxFromModel builds a Telnyx notification from the resource model.
+// telnyxFromModel builds a Telnyx notification from the resource model. The caller resolves
+// api_key, which may be write-only and so is not in the model.
 func telnyxFromModel(data *NotificationTelnyxResourceModel) notification.Telnyx {
 	return notification.Telnyx{
 		Base: notification.Base{
@@ -264,7 +284,6 @@ func telnyxFromModel(data *NotificationTelnyxResourceModel) notification.Telnyx 
 			Name:          data.Name.ValueString(),
 		},
 		TelnyxDetails: notification.TelnyxDetails{
-			APIKey:             data.APIKey.ValueString(),
 			MessagingProfileID: strToPtr(data.MessagingProfileID),
 			PhoneNumber:        data.PhoneNumber.ValueString(),
 			ToNumber:           data.ToNumber.ValueString(),

@@ -16,3 +16,12 @@ resource "uptimekuma_notification_techuluspush" "urgent" {
   is_active      = true
   is_default     = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
+# plan or state. Change api_key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_techuluspush" "write_only" {
+  name = "TechulusPush with a write-only secret"
+
+  api_key_wo         = "your-techulus-push-api-key"
+  api_key_wo_version = "1"
+}

@@ -15,3 +15,15 @@ resource "uptimekuma_notification_smsir" "multiple_recipients" {
   is_active  = true
   is_default = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
+# plan or state. Change api_key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_smsir" "write_only" {
+  name = "SMS.ir with a write-only secret"
+
+  number   = "09123456789"
+  template = "123456"
+
+  api_key_wo         = "your-smsir-api-key"
+  api_key_wo_version = "1"
+}

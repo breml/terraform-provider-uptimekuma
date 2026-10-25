@@ -36,7 +36,9 @@ type NotificationWxPusherResource struct {
 type NotificationWxPusherResourceModel struct {
 	NotificationBaseModel
 
-	SPT types.String `tfsdk:"spt"`
+	SPT          types.String `tfsdk:"spt"`
+	SPTWO        types.String `tfsdk:"spt_wo"`
+	SPTWOVersion types.String `tfsdk:"spt_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -71,6 +73,8 @@ func (*NotificationWxPusherResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "spt", "WxPusher SPT token")
 }
 
 // Configure configures the WxPusher notification resource with the API client.
@@ -97,6 +101,11 @@ func (r *NotificationWxPusherResource) Create(
 	}
 
 	wxPusher := wxPusherFromModel(&data)
+	wxPusher.SPT = writeOnlyOrPlan(ctx, req.Config, "spt", data.SPT, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, wxPusher)
 	// Handle error.
@@ -157,7 +166,9 @@ func (r *NotificationWxPusherResource) Read(
 	data.IsDefault = types.BoolValue(wxPusher.IsDefault)
 	data.ApplyExisting = types.BoolValue(wxPusher.ApplyExisting)
 
-	data.SPT = types.StringValue(wxPusher.SPT)
+	if data.SPTWOVersion.IsNull() {
+		data.SPT = types.StringValue(wxPusher.SPT)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -188,7 +199,12 @@ func (r *NotificationWxPusherResource) Update(
 	}
 
 	wxPusher := wxPusherFromModel(&data)
+	wxPusher.SPT = writeOnlyOrPlan(ctx, req.Config, "spt", data.SPT, &resp.Diagnostics)
 	wxPusher.ID = id
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, wxPusher)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {

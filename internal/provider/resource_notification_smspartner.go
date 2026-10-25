@@ -36,9 +36,11 @@ type NotificationSMSPartnerResource struct {
 type NotificationSMSPartnerResourceModel struct {
 	NotificationBaseModel
 
-	APIKey      types.String `tfsdk:"api_key"`
-	PhoneNumber types.String `tfsdk:"phone_number"`
-	SenderName  types.String `tfsdk:"sender_name"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	PhoneNumber     types.String `tfsdk:"phone_number"`
+	SenderName      types.String `tfsdk:"sender_name"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -80,6 +82,8 @@ func (*NotificationSMSPartnerResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "SMSPartner API key")
 }
 
 // Configure configures the SMS Partner notification resource with the API client.
@@ -113,10 +117,14 @@ func (r *NotificationSMSPartnerResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SMSPartnerDetails: notification.SMSPartnerDetails{
-			APIKey:      data.APIKey.ValueString(),
+			APIKey:      writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			PhoneNumber: data.PhoneNumber.ValueString(),
 			SenderName:  data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, smspartner)
@@ -178,7 +186,7 @@ func (r *NotificationSMSPartnerResource) Read(
 	data.IsDefault = types.BoolValue(smspartner.IsDefault)
 	data.ApplyExisting = types.BoolValue(smspartner.ApplyExisting)
 
-	if smspartner.APIKey != "" {
+	if data.APIKeyWOVersion.IsNull() && smspartner.APIKey != "" {
 		data.APIKey = types.StringValue(smspartner.APIKey)
 	}
 
@@ -217,10 +225,14 @@ func (r *NotificationSMSPartnerResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SMSPartnerDetails: notification.SMSPartnerDetails{
-			APIKey:      data.APIKey.ValueString(),
+			APIKey:      writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			PhoneNumber: data.PhoneNumber.ValueString(),
 			SenderName:  data.SenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, smspartner)

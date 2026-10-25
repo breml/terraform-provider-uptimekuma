@@ -36,10 +36,14 @@ type NotificationSplunkResource struct {
 type NotificationSplunkResourceModel struct {
 	NotificationBaseModel
 
-	RestURL        types.String `tfsdk:"rest_url"`
-	Severity       types.String `tfsdk:"severity"`
-	AutoResolve    types.String `tfsdk:"auto_resolve"`
-	IntegrationKey types.String `tfsdk:"integration_key"`
+	RestURL                 types.String `tfsdk:"rest_url"`
+	RestURLWO               types.String `tfsdk:"rest_url_wo"`
+	RestURLWOVersion        types.String `tfsdk:"rest_url_wo_version"`
+	Severity                types.String `tfsdk:"severity"`
+	AutoResolve             types.String `tfsdk:"auto_resolve"`
+	IntegrationKey          types.String `tfsdk:"integration_key"`
+	IntegrationKeyWO        types.String `tfsdk:"integration_key_wo"`
+	IntegrationKeyWOVersion types.String `tfsdk:"integration_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -92,6 +96,10 @@ func (*NotificationSplunkResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "rest_url", "Splunk REST URL")
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "integration_key", "Splunk integration key")
 }
 
 // Configure configures the Splunk notification resource with the API client.
@@ -125,11 +133,15 @@ func (r *NotificationSplunkResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SplunkDetails: notification.SplunkDetails{
-			RestURL:        data.RestURL.ValueString(),
+			RestURL:        writeOnlyOrPlan(ctx, req.Config, "rest_url", data.RestURL, &resp.Diagnostics),
 			Severity:       data.Severity.ValueString(),
 			AutoResolve:    data.AutoResolve.ValueString(),
-			IntegrationKey: data.IntegrationKey.ValueString(),
+			IntegrationKey: writeOnlyOrPlan(ctx, req.Config, "integration_key", data.IntegrationKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, splunk)
@@ -191,10 +203,16 @@ func (r *NotificationSplunkResource) Read(
 	data.IsDefault = types.BoolValue(splunk.IsDefault)
 	data.ApplyExisting = types.BoolValue(splunk.ApplyExisting)
 
-	data.RestURL = types.StringValue(splunk.RestURL)
+	if data.RestURLWOVersion.IsNull() {
+		data.RestURL = types.StringValue(splunk.RestURL)
+	}
+
 	data.Severity = types.StringValue(splunk.Severity)
 	data.AutoResolve = types.StringValue(splunk.AutoResolve)
-	data.IntegrationKey = types.StringValue(splunk.IntegrationKey)
+
+	if data.IntegrationKeyWOVersion.IsNull() {
+		data.IntegrationKey = types.StringValue(splunk.IntegrationKey)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -223,11 +241,15 @@ func (r *NotificationSplunkResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SplunkDetails: notification.SplunkDetails{
-			RestURL:        data.RestURL.ValueString(),
+			RestURL:        writeOnlyOrPlan(ctx, req.Config, "rest_url", data.RestURL, &resp.Diagnostics),
 			Severity:       data.Severity.ValueString(),
 			AutoResolve:    data.AutoResolve.ValueString(),
-			IntegrationKey: data.IntegrationKey.ValueString(),
+			IntegrationKey: writeOnlyOrPlan(ctx, req.Config, "integration_key", data.IntegrationKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, splunk)

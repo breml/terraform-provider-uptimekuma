@@ -28,3 +28,16 @@ resource "uptimekuma_notification_threema" "example_identity" {
   recipient       = "ECHOECHO"
   recipient_type  = "identity"
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: secret_wo is never stored in
+# plan or state. Change secret_wo_version whenever the secret changes.
+resource "uptimekuma_notification_threema" "write_only" {
+  name = "Threema with a write-only secret"
+
+  sender_identity = "YOUR_GATEWAY_ID"
+  recipient       = "ECHOECHO"
+  recipient_type  = "identity"
+
+  secret_wo         = "YOUR_API_SECRET"
+  secret_wo_version = "1"
+}

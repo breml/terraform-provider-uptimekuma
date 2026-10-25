@@ -37,10 +37,12 @@ type NotificationVKResource struct {
 type NotificationVKResourceModel struct {
 	NotificationBaseModel
 
-	AccessToken    types.String `tfsdk:"access_token"`
-	PeerID         types.String `tfsdk:"peer_id"`
-	APIVersion     types.String `tfsdk:"api_version"`
-	DontParseLinks types.Bool   `tfsdk:"dont_parse_links"`
+	AccessToken          types.String `tfsdk:"access_token"`
+	AccessTokenWO        types.String `tfsdk:"access_token_wo"`
+	AccessTokenWOVersion types.String `tfsdk:"access_token_wo_version"`
+	PeerID               types.String `tfsdk:"peer_id"`
+	APIVersion           types.String `tfsdk:"api_version"`
+	DontParseLinks       types.Bool   `tfsdk:"dont_parse_links"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -91,6 +93,8 @@ func (*NotificationVKResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "access_token", "VK access token")
 }
 
 // Configure configures the VK notification resource with the API client.
@@ -117,6 +121,11 @@ func (r *NotificationVKResource) Create(
 	}
 
 	vk := vkFromModel(&data)
+	vk.AccessToken = writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, vk)
 	// Handle error.
@@ -171,7 +180,10 @@ func (r *NotificationVKResource) Read(ctx context.Context, req resource.ReadRequ
 	data.IsDefault = types.BoolValue(vk.IsDefault)
 	data.ApplyExisting = types.BoolValue(vk.ApplyExisting)
 
-	data.AccessToken = types.StringValue(vk.AccessToken)
+	if data.AccessTokenWOVersion.IsNull() {
+		data.AccessToken = types.StringValue(vk.AccessToken)
+	}
+
 	data.PeerID = types.StringValue(vk.PeerID)
 	data.APIVersion = types.StringValue(vk.APIVersion)
 	data.DontParseLinks = types.BoolValue(vk.DontParseLinks)
@@ -205,7 +217,12 @@ func (r *NotificationVKResource) Update(
 	}
 
 	vk := vkFromModel(&data)
+	vk.AccessToken = writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics)
 	vk.ID = id
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, vk)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {

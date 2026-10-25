@@ -37,12 +37,14 @@ type NotificationSlackResource struct {
 type NotificationSlackResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL    types.String `tfsdk:"webhook_url"`
-	Username      types.String `tfsdk:"username"`
-	IconEmoji     types.String `tfsdk:"icon_emoji"`
-	Channel       types.String `tfsdk:"channel"`
-	RichMessage   types.Bool   `tfsdk:"rich_message"`
-	ChannelNotify types.Bool   `tfsdk:"channel_notify"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Username            types.String `tfsdk:"username"`
+	IconEmoji           types.String `tfsdk:"icon_emoji"`
+	Channel             types.String `tfsdk:"channel"`
+	RichMessage         types.Bool   `tfsdk:"rich_message"`
+	ChannelNotify       types.Bool   `tfsdk:"channel_notify"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -97,6 +99,8 @@ func (*NotificationSlackResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Slack incoming webhook URL")
 }
 
 // Configure configures the Slack notification resource with the API client.
@@ -130,13 +134,17 @@ func (r *NotificationSlackResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SlackDetails: notification.SlackDetails{
-			WebhookURL:    data.WebhookURL.ValueString(),
+			WebhookURL:    writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:      data.Username.ValueString(),
 			IconEmoji:     data.IconEmoji.ValueString(),
 			Channel:       data.Channel.ValueString(),
 			RichMessage:   data.RichMessage.ValueBool(),
 			ChannelNotify: data.ChannelNotify.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, slack)
@@ -194,7 +202,10 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 	data.IsDefault = types.BoolValue(slack.IsDefault)
 	data.ApplyExisting = types.BoolValue(slack.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(slack.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(slack.WebhookURL)
+	}
+
 	if slack.Username != "" {
 		data.Username = types.StringValue(slack.Username)
 	}
@@ -237,13 +248,17 @@ func (r *NotificationSlackResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SlackDetails: notification.SlackDetails{
-			WebhookURL:    data.WebhookURL.ValueString(),
+			WebhookURL:    writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:      data.Username.ValueString(),
 			IconEmoji:     data.IconEmoji.ValueString(),
 			Channel:       data.Channel.ValueString(),
 			RichMessage:   data.RichMessage.ValueBool(),
 			ChannelNotify: data.ChannelNotify.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, slack)

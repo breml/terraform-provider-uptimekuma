@@ -36,12 +36,14 @@ type NotificationSendgridResource struct {
 type NotificationSendgridResourceModel struct {
 	NotificationBaseModel
 
-	APIKey    types.String `tfsdk:"api_key"`
-	ToEmail   types.String `tfsdk:"to_email"`
-	FromEmail types.String `tfsdk:"from_email"`
-	Subject   types.String `tfsdk:"subject"`
-	CcEmail   types.String `tfsdk:"cc_email"`
-	BccEmail  types.String `tfsdk:"bcc_email"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	ToEmail         types.String `tfsdk:"to_email"`
+	FromEmail       types.String `tfsdk:"from_email"`
+	Subject         types.String `tfsdk:"subject"`
+	CcEmail         types.String `tfsdk:"cc_email"`
+	BccEmail        types.String `tfsdk:"bcc_email"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -101,6 +103,8 @@ func (*NotificationSendgridResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "SendGrid API key")
 }
 
 // Configure configures the SendGrid notification resource with the API client.
@@ -134,13 +138,17 @@ func (r *NotificationSendgridResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SendGridDetails: notification.SendGridDetails{
-			APIKey:    data.APIKey.ValueString(),
+			APIKey:    writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			ToEmail:   data.ToEmail.ValueString(),
 			FromEmail: data.FromEmail.ValueString(),
 			Subject:   data.Subject.ValueString(),
 			CcEmail:   data.CcEmail.ValueString(),
 			BccEmail:  data.BccEmail.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, sendgrid)
@@ -202,7 +210,10 @@ func (r *NotificationSendgridResource) Read(
 	data.IsDefault = types.BoolValue(sendgrid.IsDefault)
 	data.ApplyExisting = types.BoolValue(sendgrid.ApplyExisting)
 
-	data.APIKey = types.StringValue(sendgrid.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(sendgrid.APIKey)
+	}
+
 	data.ToEmail = types.StringValue(sendgrid.ToEmail)
 	data.FromEmail = types.StringValue(sendgrid.FromEmail)
 	data.Subject = types.StringValue(sendgrid.Subject)
@@ -246,13 +257,17 @@ func (r *NotificationSendgridResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SendGridDetails: notification.SendGridDetails{
-			APIKey:    data.APIKey.ValueString(),
+			APIKey:    writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			ToEmail:   data.ToEmail.ValueString(),
 			FromEmail: data.FromEmail.ValueString(),
 			Subject:   data.Subject.ValueString(),
 			CcEmail:   data.CcEmail.ValueString(),
 			BccEmail:  data.BccEmail.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, sendgrid)

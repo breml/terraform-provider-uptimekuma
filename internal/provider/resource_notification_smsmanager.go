@@ -37,9 +37,11 @@ type NotificationSMSManagerResource struct {
 type NotificationSMSManagerResourceModel struct {
 	NotificationBaseModel
 
-	APIKey      types.String `tfsdk:"api_key"`
-	Numbers     types.String `tfsdk:"numbers"`
-	MessageType types.String `tfsdk:"message_type"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Numbers         types.String `tfsdk:"numbers"`
+	MessageType     types.String `tfsdk:"message_type"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -83,6 +85,8 @@ func (*NotificationSMSManagerResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "SMSManager API key")
 }
 
 // Configure configures the SMS Manager notification resource with the API client.
@@ -116,10 +120,14 @@ func (r *NotificationSMSManagerResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		SMSManagerDetails: notification.SMSManagerDetails{
-			APIKey:      data.APIKey.ValueString(),
+			APIKey:      writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Numbers:     data.Numbers.ValueString(),
 			MessageType: data.MessageType.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, smsmanager)
@@ -182,7 +190,7 @@ func (r *NotificationSMSManagerResource) Read(
 	data.ApplyExisting = types.BoolValue(smsmanager.ApplyExisting)
 
 	// Preserve existing APIKey from state if the API does not return a usable value.
-	if smsmanager.APIKey != "" {
+	if data.APIKeyWOVersion.IsNull() && smsmanager.APIKey != "" {
 		data.APIKey = types.StringValue(smsmanager.APIKey)
 	}
 
@@ -216,10 +224,14 @@ func (r *NotificationSMSManagerResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		SMSManagerDetails: notification.SMSManagerDetails{
-			APIKey:      data.APIKey.ValueString(),
+			APIKey:      writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Numbers:     data.Numbers.ValueString(),
 			MessageType: data.MessageType.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, smsmanager)

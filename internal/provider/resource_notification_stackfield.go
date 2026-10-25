@@ -36,7 +36,9 @@ type NotificationStackfieldResource struct {
 type NotificationStackfieldResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationStackfieldResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Stackfield webhook URL")
 }
 
 // Configure configures the Stackfield notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationStackfieldResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		StackfieldDetails: notification.StackfieldDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, stackfield)
@@ -163,7 +171,9 @@ func (r *NotificationStackfieldResource) Read(
 	data.IsDefault = types.BoolValue(stackfield.IsDefault)
 	data.ApplyExisting = types.BoolValue(stackfield.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(stackfield.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(stackfield.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationStackfieldResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		StackfieldDetails: notification.StackfieldDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, stackfield)

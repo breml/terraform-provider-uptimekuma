@@ -16,3 +16,15 @@ resource "uptimekuma_notification_telnyx" "with_messaging_profile" {
   is_active            = true
   is_default           = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
+# plan or state. Change api_key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_telnyx" "write_only" {
+  name = "Telnyx with a write-only secret"
+
+  phone_number = "+15550001111"
+  to_number    = "+15550002222"
+
+  api_key_wo         = "KEY0123456789ABCDEF"
+  api_key_wo_version = "1"
+}

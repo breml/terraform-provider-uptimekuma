@@ -14,3 +14,14 @@ resource "uptimekuma_notification_smspartner" "production" {
   is_active    = true
   is_default   = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
+# plan or state. Change api_key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_smspartner" "write_only" {
+  name = "SMS Partner with a write-only secret"
+
+  phone_number = "+33612345678"
+
+  api_key_wo         = "your_smspartner_api_key"
+  api_key_wo_version = "1"
+}

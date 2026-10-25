@@ -36,8 +36,12 @@ type NotificationYZJResource struct {
 type NotificationYZJResourceModel struct {
 	NotificationBaseModel
 
-	WebHookURL types.String `tfsdk:"webhook_url"`
-	Token      types.String `tfsdk:"token"`
+	WebHookURL          types.String `tfsdk:"webhook_url"`
+	WebHookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebHookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Token               types.String `tfsdk:"token"`
+	TokenWO             types.String `tfsdk:"token_wo"`
+	TokenWOVersion      types.String `tfsdk:"token_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -76,6 +80,10 @@ func (*NotificationYZJResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "YZJ webhook URL")
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "token", "YZJ token")
 }
 
 // Configure configures the YZJ notification resource with the API client.
@@ -109,9 +117,13 @@ func (r *NotificationYZJResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		YZJDetails: notification.YZJDetails{
-			WebHookURL: data.WebHookURL.ValueString(),
-			Token:      data.Token.ValueString(),
+			WebHookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebHookURL, &resp.Diagnostics),
+			Token:      writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, yzj)
@@ -173,12 +185,16 @@ func (r *NotificationYZJResource) Read(
 	data.IsDefault = types.BoolValue(yzj.IsDefault)
 	data.ApplyExisting = types.BoolValue(yzj.ApplyExisting)
 
-	if yzj.WebHookURL != "" {
-		data.WebHookURL = types.StringValue(yzj.WebHookURL)
+	if data.WebHookURLWOVersion.IsNull() {
+		if yzj.WebHookURL != "" {
+			data.WebHookURL = types.StringValue(yzj.WebHookURL)
+		}
 	}
 
-	if yzj.Token != "" {
-		data.Token = types.StringValue(yzj.Token)
+	if data.TokenWOVersion.IsNull() {
+		if yzj.Token != "" {
+			data.Token = types.StringValue(yzj.Token)
+		}
 	}
 
 	// Populate state.
@@ -208,9 +224,13 @@ func (r *NotificationYZJResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		YZJDetails: notification.YZJDetails{
-			WebHookURL: data.WebHookURL.ValueString(),
-			Token:      data.Token.ValueString(),
+			WebHookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebHookURL, &resp.Diagnostics),
+			Token:      writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, yzj)
