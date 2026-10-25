@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -56,8 +57,10 @@ func singleSecret(attr string, value string) map[string]string {
 }
 
 // TestAccNotificationResourcesWriteOnly runs the shared write-only test for every notification with
-// write-only secrets; each such notification adds an entry here. The full set of transitions and
-// the validators are covered once, in TestAccNotificationSMTPResourcePasswordWO.
+// write-only secrets; each such notification adds an entry here. A notification whose secrets
+// cannot share one configuration adds one entry per variant, keyed "<resource type>/<variant>".
+// The full set of transitions and the validators are covered once, in
+// TestAccNotificationSMTPResourcePasswordWO.
 func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 	tests := map[string]notificationWriteOnlyTest{
 		"uptimekuma_notification_46elks": {
@@ -383,6 +386,16 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("access_token", n.AccessToken)
 			}),
 		},
+		"uptimekuma_notification_ntfy/usernamePassword": {
+			body: `
+  topic                 = "uptime_kuma"
+  authentication_method = "usernamePassword"
+  username              = "ntfy-user"`,
+			attrs: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.Ntfy) map[string]string {
+				return singleSecret("password", n.Password)
+			}),
+		},
 		"uptimekuma_notification_octopush": {
 			body: `
   version      = "2"
@@ -391,6 +404,16 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 			attrs: []string{"api_key"},
 			serverSecrets: notificationSecrets(func(n *notification.Octopush) map[string]string {
 				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_octopush/v1": {
+			body: `
+  version         = "1"
+  dm_login        = "octopush-user"
+  dm_phone_number = "+33600000000"`,
+			attrs: []string{"dm_api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Octopush) map[string]string {
+				return singleSecret("dm_api_key", n.DMAPIKey)
 			}),
 		},
 		"uptimekuma_notification_onebot": {
@@ -513,8 +536,9 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 		},
 	}
 
-	for resourceType, tc := range tests {
-		t.Run(resourceType, func(t *testing.T) {
+	for key, tc := range tests {
+		t.Run(key, func(t *testing.T) {
+			resourceType, _, _ := strings.Cut(key, "/")
 			testAccNotificationWriteOnly(t, resourceType, tc)
 		})
 	}
