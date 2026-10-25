@@ -165,72 +165,130 @@ func (*NotificationOctopushResource) ValidateConfig(
 		return
 	}
 
-	if config.Version.IsNull() || config.Version.IsUnknown() {
+	validateOctopushConfig(&config, resp)
+}
+
+// validateOctopushConfig checks that the fields of the configured version are set and that the
+// fields of the other version are not.
+func validateOctopushConfig(config *NotificationOctopushResourceModel, resp *resource.ValidateConfigResponse) {
+	if config.Version.IsUnknown() {
 		// If version is not known yet, defer validation.
 		return
 	}
 
-	version := config.Version.ValueString()
+	// Schema defaults are not applied to the configuration during validation, so a null version
+	// here is the schema default "2", which is also what Uptime Kuma uses for a missing version.
+	version := "2"
+	if !config.Version.IsNull() {
+		version = config.Version.ValueString()
+	}
 
 	switch version {
 	case "2":
-		// When using Octopush V2, V1 (Direct Mail) fields must not be set.
-		validateFieldNotSet(resp, config.DMAPIKey, path.Root("dm_api_key"),
-			"When \"version\" is set to \"2\", the attribute \"dm_api_key\" must not be set. Use \"api_key\" instead.")
-		validateFieldNotSet(
-			resp,
-			config.DMAPIKeyWO,
-			path.Root("dm_api_key_wo"),
-			"When \"version\" is set to \"2\", the attribute \"dm_api_key_wo\" must not be set. Use \"api_key_wo\" instead.",
-		)
-		validateFieldNotSet(resp, config.DMLogin, path.Root("dm_login"),
-			"When \"version\" is set to \"2\", the attribute \"dm_login\" must not be set. Use \"login\" instead.")
-		validateFieldNotSet(
-			resp,
-			config.DMPhoneNumber,
-			path.Root("dm_phone_number"),
-			"When \"version\" is set to \"2\", the attribute \"dm_phone_number\" must not be set. Use \"phone_number\" instead.",
-		)
-		validateFieldNotSet(resp, config.DMSMSType, path.Root("dm_sms_type"),
-			"When \"version\" is set to \"2\", the attribute \"dm_sms_type\" must not be set. Use \"sms_type\" instead.")
-		validateFieldNotSet(
-			resp,
-			config.DMSenderName,
-			path.Root("dm_sender_name"),
-			"When \"version\" is set to \"2\", the attribute \"dm_sender_name\" must not be set. Use \"sender_name\" instead.",
-		)
+		validateOctopushV2(config, resp)
 
 	case "1":
-		// When using Octopush V1 (Direct Mail), V2 fields must not be set.
-		validateFieldNotSet(resp, config.APIKey, path.Root("api_key"),
-			"When \"version\" is set to \"1\", the attribute \"api_key\" must not be set. Use \"dm_api_key\" instead.")
-		validateFieldNotSet(
-			resp,
-			config.APIKeyWO,
-			path.Root("api_key_wo"),
-			"When \"version\" is set to \"1\", the attribute \"api_key_wo\" must not be set. Use \"dm_api_key_wo\" instead.",
-		)
-		validateFieldNotSet(resp, config.Login, path.Root("login"),
-			"When \"version\" is set to \"1\", the attribute \"login\" must not be set. Use \"dm_login\" instead.")
-		validateFieldNotSet(
-			resp,
-			config.PhoneNumber,
-			path.Root("phone_number"),
-			"When \"version\" is set to \"1\", the attribute \"phone_number\" must not be set. Use \"dm_phone_number\" instead.",
-		)
-		validateFieldNotSet(resp, config.SMSType, path.Root("sms_type"),
-			"When \"version\" is set to \"1\", the attribute \"sms_type\" must not be set. Use \"dm_sms_type\" instead.")
-		validateFieldNotSet(
-			resp,
-			config.SenderName,
-			path.Root("sender_name"),
-			"When \"version\" is set to \"1\", the attribute \"sender_name\" must not be set. Use \"dm_sender_name\" instead.",
-		)
+		validateOctopushV1(config, resp)
 
 	default:
 		// If version has an unexpected value, assume other validators will handle it.
 		return
 	}
+}
+
+// validateOctopushV2 validates the configuration for Octopush V2. Uptime Kuma sends the API key,
+// login and phone number as they are, so each must be set.
+func validateOctopushV2(config *NotificationOctopushResourceModel, resp *resource.ValidateConfigResponse) {
+	const condition = ` when "version" is "2"`
+
+	validateWriteOnlySecretSet(&resp.Diagnostics, config.APIKey, config.APIKeyWO, "api_key", condition)
+	validateFieldSet(resp, config.Login, path.Root("login"),
+		"When \"version\" is \"2\", the attribute \"login\" must be set to a non-empty value.")
+	validateFieldSet(resp, config.PhoneNumber, path.Root("phone_number"),
+		"When \"version\" is \"2\", the attribute \"phone_number\" must be set to a non-empty value.")
+
+	// When using Octopush V2, V1 (Direct Mail) fields must not be set.
+	validateFieldNotSet(resp, config.DMAPIKey, path.Root("dm_api_key"),
+		"When \"version\" is set to \"2\", the attribute \"dm_api_key\" must not be set. Use \"api_key\" instead.")
+	validateFieldNotSet(
+		resp,
+		config.DMAPIKeyWO,
+		path.Root("dm_api_key_wo"),
+		"When \"version\" is set to \"2\", the attribute \"dm_api_key_wo\" must not be set. Use \"api_key_wo\" instead.",
+	)
+	validateFieldNotSet(resp, config.DMLogin, path.Root("dm_login"),
+		"When \"version\" is set to \"2\", the attribute \"dm_login\" must not be set. Use \"login\" instead.")
+	validateFieldNotSet(
+		resp,
+		config.DMPhoneNumber,
+		path.Root("dm_phone_number"),
+		"When \"version\" is set to \"2\", the attribute \"dm_phone_number\" must not be set. Use \"phone_number\" instead.",
+	)
+	validateFieldNotSet(resp, config.DMSMSType, path.Root("dm_sms_type"),
+		"When \"version\" is set to \"2\", the attribute \"dm_sms_type\" must not be set. Use \"sms_type\" instead.")
+	validateFieldNotSet(
+		resp,
+		config.DMSenderName,
+		path.Root("dm_sender_name"),
+		"When \"version\" is set to \"2\", the attribute \"dm_sender_name\" must not be set. Use \"sender_name\" instead.",
+	)
+}
+
+// validateOctopushV1 validates the configuration for Octopush V1 (Direct Mail). Uptime Kuma sends
+// the API key, login and phone number as they are, so each must be set.
+func validateOctopushV1(config *NotificationOctopushResourceModel, resp *resource.ValidateConfigResponse) {
+	const condition = ` when "version" is "1"`
+
+	validateWriteOnlySecretSet(&resp.Diagnostics, config.DMAPIKey, config.DMAPIKeyWO, "dm_api_key", condition)
+	validateFieldSet(resp, config.DMLogin, path.Root("dm_login"),
+		"When \"version\" is \"1\", the attribute \"dm_login\" must be set to a non-empty value.")
+	validateFieldSet(resp, config.DMPhoneNumber, path.Root("dm_phone_number"),
+		"When \"version\" is \"1\", the attribute \"dm_phone_number\" must be set to a non-empty value.")
+
+	// When using Octopush V1 (Direct Mail), V2 fields must not be set.
+	validateFieldNotSet(resp, config.APIKey, path.Root("api_key"),
+		"When \"version\" is set to \"1\", the attribute \"api_key\" must not be set. Use \"dm_api_key\" instead.")
+	validateFieldNotSet(
+		resp,
+		config.APIKeyWO,
+		path.Root("api_key_wo"),
+		"When \"version\" is set to \"1\", the attribute \"api_key_wo\" must not be set. Use \"dm_api_key_wo\" instead.",
+	)
+	validateFieldNotSet(resp, config.Login, path.Root("login"),
+		"When \"version\" is set to \"1\", the attribute \"login\" must not be set. Use \"dm_login\" instead.")
+	validateFieldNotSet(
+		resp,
+		config.PhoneNumber,
+		path.Root("phone_number"),
+		"When \"version\" is set to \"1\", the attribute \"phone_number\" must not be set. Use \"dm_phone_number\" instead.",
+	)
+	validateFieldNotSet(resp, config.SMSType, path.Root("sms_type"),
+		"When \"version\" is set to \"1\", the attribute \"sms_type\" must not be set. Use \"dm_sms_type\" instead.")
+	validateFieldNotSet(
+		resp,
+		config.SenderName,
+		path.Root("sender_name"),
+		"When \"version\" is set to \"1\", the attribute \"sender_name\" must not be set. Use \"dm_sender_name\" instead.",
+	)
+}
+
+// validateFieldSet reports an error if field is null or empty. An unknown value is accepted,
+// because its content is only known after apply.
+func validateFieldSet(
+	resp *resource.ValidateConfigResponse,
+	field types.String,
+	fieldPath path.Path,
+	message string,
+) {
+	if field.IsUnknown() || field.ValueString() != "" {
+		return
+	}
+
+	resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
+		fieldPath,
+		"Missing Attribute for Octopush Version",
+		message,
+	))
 }
 
 func validateFieldNotSet(

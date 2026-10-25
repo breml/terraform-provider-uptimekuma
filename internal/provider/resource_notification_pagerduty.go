@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	_ resource.Resource                = &NotificationPagerDutyResource{}
-	_ resource.ResourceWithImportState = &NotificationPagerDutyResource{}
+	_ resource.Resource                   = &NotificationPagerDutyResource{}
+	_ resource.ResourceWithImportState    = &NotificationPagerDutyResource{}
+	_ resource.ResourceWithValidateConfig = &NotificationPagerDutyResource{}
 )
 
 // NewNotificationPagerDutyResource returns a new instance of the PagerDuty notification resource.
@@ -111,6 +112,41 @@ func (r *NotificationPagerDutyResource) Configure(
 	resp *resource.ConfigureResponse,
 ) {
 	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
+}
+
+// ValidateConfig validates the configuration for the PagerDuty notification resource.
+func (*NotificationPagerDutyResource) ValidateConfig(
+	ctx context.Context,
+	req resource.ValidateConfigRequest,
+	resp *resource.ValidateConfigResponse,
+) {
+	var config NotificationPagerDutyResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	validatePagerDutySecrets(&config, resp)
+}
+
+// validatePagerDutySecrets checks that the integration URL and key are set. Uptime Kuma posts to
+// the integration URL with the integration key as they are, so an omitted one fails every send.
+func validatePagerDutySecrets(config *NotificationPagerDutyResourceModel, resp *resource.ValidateConfigResponse) {
+	validateWriteOnlySecretSet(
+		&resp.Diagnostics,
+		config.IntegrationURL,
+		config.IntegrationURLWO,
+		"integration_url",
+		"",
+	)
+	validateWriteOnlySecretSet(
+		&resp.Diagnostics,
+		config.IntegrationKey,
+		config.IntegrationKeyWO,
+		"integration_key",
+		"",
+	)
 }
 
 // Create creates a new PagerDuty notification resource.

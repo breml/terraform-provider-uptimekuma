@@ -135,6 +135,37 @@ func writeOnlyOrPlanValue(
 	return plan
 }
 
+// validateWriteOnlySecretSet reports the secret name when neither the stored attribute nor its
+// write-only variant <name>_wo is set to a non-empty value in config. An unknown value of either
+// is accepted, because its content is only known after apply.
+//
+// condition says when the secret is needed, for example ` when "version" is "2"`; it is empty
+// for a secret that is always needed.
+func validateWriteOnlySecretSet(
+	diags *diag.Diagnostics,
+	stored types.String,
+	writeOnly types.String,
+	name string,
+	condition string,
+) {
+	if stored.IsUnknown() || writeOnly.IsUnknown() {
+		return
+	}
+
+	if stored.ValueString() != "" || writeOnly.ValueString() != "" {
+		return
+	}
+
+	diags.Append(diag.NewAttributeErrorDiagnostic(
+		path.Root(name),
+		"Missing Attribute Configuration",
+		fmt.Sprintf(
+			"The attribute %q or %q must be set to a non-empty value%s.",
+			name, name+writeOnlySuffix, condition,
+		),
+	))
+}
+
 // writeOnlyComputedPlan plans a computed secret attribute that has no default:
 //   - null while its write-only variant is in use, which a set <name>_wo_version signals. Read
 //     does not refresh the attribute then, so any other planned value would not match the state
