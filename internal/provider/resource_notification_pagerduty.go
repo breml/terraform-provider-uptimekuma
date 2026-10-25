@@ -36,10 +36,14 @@ type NotificationPagerDutyResource struct {
 type NotificationPagerDutyResourceModel struct {
 	NotificationBaseModel
 
-	IntegrationURL types.String `tfsdk:"integration_url"`
-	IntegrationKey types.String `tfsdk:"integration_key"`
-	Priority       types.String `tfsdk:"priority"`
-	AutoResolve    types.String `tfsdk:"auto_resolve"`
+	IntegrationURL          types.String `tfsdk:"integration_url"`
+	IntegrationURLWO        types.String `tfsdk:"integration_url_wo"`
+	IntegrationURLWOVersion types.String `tfsdk:"integration_url_wo_version"`
+	IntegrationKey          types.String `tfsdk:"integration_key"`
+	IntegrationKeyWO        types.String `tfsdk:"integration_key_wo"`
+	IntegrationKeyWOVersion types.String `tfsdk:"integration_key_wo_version"`
+	Priority                types.String `tfsdk:"priority"`
+	AutoResolve             types.String `tfsdk:"auto_resolve"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -86,6 +90,18 @@ func (*NotificationPagerDutyResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"integration_url",
+		"PagerDuty integration URL",
+	)
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"integration_key",
+		"PagerDuty integration key",
+	)
 }
 
 // Configure configures the PagerDuty notification resource with the API client.
@@ -119,11 +135,15 @@ func (r *NotificationPagerDutyResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PagerDutyDetails: notification.PagerDutyDetails{
-			IntegrationURL: data.IntegrationURL.ValueString(),
-			IntegrationKey: data.IntegrationKey.ValueString(),
+			IntegrationURL: writeOnlyOrPlan(ctx, req.Config, "integration_url", data.IntegrationURL, &resp.Diagnostics),
+			IntegrationKey: writeOnlyOrPlan(ctx, req.Config, "integration_key", data.IntegrationKey, &resp.Diagnostics),
 			Priority:       data.Priority.ValueString(),
 			AutoResolve:    data.AutoResolve.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pagerduty)
@@ -185,16 +205,18 @@ func (r *NotificationPagerDutyResource) Read(
 	data.IsDefault = types.BoolValue(pagerduty.IsDefault)
 	data.ApplyExisting = types.BoolValue(pagerduty.ApplyExisting)
 
-	if pagerduty.IntegrationURL != "" {
-		data.IntegrationURL = types.StringValue(pagerduty.IntegrationURL)
-	} else {
+	if data.IntegrationURLWOVersion.IsNull() {
 		data.IntegrationURL = types.StringNull()
+		if pagerduty.IntegrationURL != "" {
+			data.IntegrationURL = types.StringValue(pagerduty.IntegrationURL)
+		}
 	}
 
-	if pagerduty.IntegrationKey != "" {
-		data.IntegrationKey = types.StringValue(pagerduty.IntegrationKey)
-	} else {
+	if data.IntegrationKeyWOVersion.IsNull() {
 		data.IntegrationKey = types.StringNull()
+		if pagerduty.IntegrationKey != "" {
+			data.IntegrationKey = types.StringValue(pagerduty.IntegrationKey)
+		}
 	}
 
 	if pagerduty.Priority != "" {
@@ -236,11 +258,15 @@ func (r *NotificationPagerDutyResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PagerDutyDetails: notification.PagerDutyDetails{
-			IntegrationURL: data.IntegrationURL.ValueString(),
-			IntegrationKey: data.IntegrationKey.ValueString(),
+			IntegrationURL: writeOnlyOrPlan(ctx, req.Config, "integration_url", data.IntegrationURL, &resp.Diagnostics),
+			IntegrationKey: writeOnlyOrPlan(ctx, req.Config, "integration_key", data.IntegrationKey, &resp.Diagnostics),
 			Priority:       data.Priority.ValueString(),
 			AutoResolve:    data.AutoResolve.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pagerduty)

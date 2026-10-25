@@ -36,7 +36,9 @@ type NotificationPushbulletResource struct {
 type NotificationPushbulletResourceModel struct {
 	NotificationBaseModel
 
-	AccessToken types.String `tfsdk:"access_token"`
+	AccessToken          types.String `tfsdk:"access_token"`
+	AccessTokenWO        types.String `tfsdk:"access_token_wo"`
+	AccessTokenWOVersion types.String `tfsdk:"access_token_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationPushbulletResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "access_token", "Pushbullet access token")
 }
 
 // Configure configures the Pushbullet notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationPushbulletResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PushbulletDetails: notification.PushbulletDetails{
-			AccessToken: data.AccessToken.ValueString(),
+			AccessToken: writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pushbullet)
@@ -163,7 +171,9 @@ func (r *NotificationPushbulletResource) Read(
 	data.IsDefault = types.BoolValue(pushbullet.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushbullet.ApplyExisting)
 
-	data.AccessToken = types.StringValue(pushbullet.AccessToken)
+	if data.AccessTokenWOVersion.IsNull() {
+		data.AccessToken = types.StringValue(pushbullet.AccessToken)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +202,12 @@ func (r *NotificationPushbulletResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PushbulletDetails: notification.PushbulletDetails{
-			AccessToken: data.AccessToken.ValueString(),
+			AccessToken: writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pushbullet)

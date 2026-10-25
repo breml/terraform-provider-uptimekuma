@@ -36,7 +36,9 @@ type NotificationPumbleResource struct {
 type NotificationPumbleResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,12 @@ func (*NotificationPumbleResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"Pumble webhook URL for sending notifications",
+	)
 }
 
 // Configure configures the Pumble notification resource with the API client.
@@ -100,8 +108,12 @@ func (r *NotificationPumbleResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PumbleDetails: notification.PumbleDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pumble)
@@ -163,7 +175,9 @@ func (r *NotificationPumbleResource) Read(
 	data.IsDefault = types.BoolValue(pumble.IsDefault)
 	data.ApplyExisting = types.BoolValue(pumble.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(pumble.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(pumble.WebhookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +206,12 @@ func (r *NotificationPumbleResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PumbleDetails: notification.PumbleDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pumble)

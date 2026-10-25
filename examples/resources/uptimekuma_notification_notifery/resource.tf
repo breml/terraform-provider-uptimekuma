@@ -14,3 +14,12 @@ resource "uptimekuma_notification_notifery" "with_group" {
   is_active  = true
   is_default = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in plan
+# or state. Change the matching *_wo_version whenever a secret changes.
+resource "uptimekuma_notification_notifery" "write_only" {
+  name = "Notifery with write-only secret"
+
+  api_key_wo         = "your-notifery-api-key"
+  api_key_wo_version = "1"
+}

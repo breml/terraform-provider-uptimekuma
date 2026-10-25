@@ -89,12 +89,16 @@ type NotificationNtfyResourceModel struct {
 	NotificationBaseModel
 
 	AccessToken          types.String `tfsdk:"access_token"`
+	AccessTokenWO        types.String `tfsdk:"access_token_wo"`
+	AccessTokenWOVersion types.String `tfsdk:"access_token_wo_version"`
 	AuthenticationMethod types.String `tfsdk:"authentication_method"`
 	Call                 types.String `tfsdk:"call"`
 	CustomMessage        types.String `tfsdk:"custom_message"`
 	CustomTitle          types.String `tfsdk:"custom_title"`
 	Icon                 types.String `tfsdk:"icon"`
 	Password             types.String `tfsdk:"password"`
+	PasswordWO           types.String `tfsdk:"password_wo"`
+	PasswordWOVersion    types.String `tfsdk:"password_wo_version"`
 	Priority             types.Int64  `tfsdk:"priority"`
 	PriorityDown         types.Int64  `tfsdk:"priority_down"`
 	ServerURL            types.String `tfsdk:"server_url"`
@@ -207,6 +211,17 @@ func (*NotificationNtfyResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"access_token",
+		"ntfy access token, used when `authentication_method` is `accessToken`",
+	)
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"password",
+		"ntfy password, used when `authentication_method` is `usernamePassword`",
+	)
 }
 
 // Configure configures the ntfy notification resource with the API client.
@@ -258,19 +273,23 @@ func validateNtfyAuthentication(config *NotificationNtfyResourceModel, resp *res
 
 	switch authenticationMethod {
 	case "accessToken":
-		validateNtfyFieldSet(resp, config.AccessToken, path.Root("access_token"), "accessToken")
+		validateNtfySecretSet(resp, config.AccessToken, config.AccessTokenWO, "access_token", "accessToken")
 		validateNtfyFieldNotSet(resp, config.Username, path.Root("username"), "accessToken")
 		validateNtfyFieldNotSet(resp, config.Password, path.Root("password"), "accessToken")
+		validateNtfyFieldNotSet(resp, config.PasswordWO, path.Root("password_wo"), "accessToken")
 
 	case "usernamePassword":
 		validateNtfyFieldSet(resp, config.Username, path.Root("username"), "usernamePassword")
-		validateNtfyFieldSet(resp, config.Password, path.Root("password"), "usernamePassword")
+		validateNtfySecretSet(resp, config.Password, config.PasswordWO, "password", "usernamePassword")
 		validateNtfyFieldNotSet(resp, config.AccessToken, path.Root("access_token"), "usernamePassword")
+		validateNtfyFieldNotSet(resp, config.AccessTokenWO, path.Root("access_token_wo"), "usernamePassword")
 
 	case "none":
 		validateNtfyFieldNotSet(resp, config.AccessToken, path.Root("access_token"), "none")
+		validateNtfyFieldNotSet(resp, config.AccessTokenWO, path.Root("access_token_wo"), "none")
 		validateNtfyFieldNotSet(resp, config.Username, path.Root("username"), "none")
 		validateNtfyFieldNotSet(resp, config.Password, path.Root("password"), "none")
+		validateNtfyFieldNotSet(resp, config.PasswordWO, path.Root("password_wo"), "none")
 
 	default:
 		// If the authentication method has an unexpected value, assume other validators handle it.
@@ -302,6 +321,33 @@ func validateNtfyFieldSet(
 			),
 		))
 	}
+}
+
+// validateNtfySecretSet reports a secret the authentication method needs when neither the
+// stored attribute name nor its write-only variant <name>_wo is set to a non-empty value.
+func validateNtfySecretSet(
+	resp *resource.ValidateConfigResponse,
+	stored types.String,
+	writeOnly types.String,
+	name string,
+	authenticationMethod string,
+) {
+	if stored.IsUnknown() || writeOnly.IsUnknown() {
+		return
+	}
+
+	if stored.ValueString() != "" || writeOnly.ValueString() != "" {
+		return
+	}
+
+	resp.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(
+		path.Root(name),
+		"Missing Attribute for ntfy Authentication Method",
+		fmt.Sprintf(
+			"With %q set to %q, the attribute %q or %q must be set to a non-empty value.",
+			"authentication_method", authenticationMethod, name, name+writeOnlySuffix,
+		),
+	))
 }
 
 // validateNtfyFieldNotSet reports an error if field is set for the given authentication method.
@@ -362,10 +408,16 @@ func updateNtfyFields(data *NotificationNtfyResourceModel, ntfy *notification.Nt
 	data.ServerURL = types.StringValue(ntfy.ServerURL)
 	data.Topic = types.StringValue(ntfy.Topic)
 
-	data.AccessToken = stringOrNull(ntfy.AccessToken)
 	data.Icon = stringOrNullPreserveEmpty(ntfy.Icon, data.Icon)
-	data.Password = stringOrNull(ntfy.Password)
 	data.Username = stringOrNull(ntfy.Username)
+
+	if data.AccessTokenWOVersion.IsNull() {
+		data.AccessToken = stringOrNull(ntfy.AccessToken)
+	}
+
+	if data.PasswordWOVersion.IsNull() {
+		data.Password = stringOrNull(ntfy.Password)
+	}
 
 	data.Call = ptrToTypes(ntfy.Call)
 	data.CustomMessage = ptrToTypes(ntfy.CustomMessage)
@@ -401,6 +453,13 @@ func (r *NotificationNtfyResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		NtfyDetails: buildNtfyDetails(&data),
+	}
+
+	ntfy.AccessToken = writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics)
+	ntfy.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, ntfy)
@@ -486,6 +545,13 @@ func (r *NotificationNtfyResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		NtfyDetails: buildNtfyDetails(&data),
+	}
+
+	ntfy.AccessToken = writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics)
+	ntfy.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, ntfy)

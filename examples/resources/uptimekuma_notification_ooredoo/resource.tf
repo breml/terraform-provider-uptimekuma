@@ -33,3 +33,17 @@ resource "uptimekuma_notification_ooredoo" "custom_endpoint" {
   is_active    = true
   is_default   = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: access_key_wo and bearer_token_wo
+# are never stored in plan or state. Change the matching *_wo_version whenever a
+# secret changes.
+resource "uptimekuma_notification_ooredoo" "write_only" {
+  name      = "Ooredoo with write-only secrets"
+  username  = "bulk-sms-user"
+  to_number = "9601234567"
+
+  access_key_wo           = "0123456789abcdef"
+  access_key_wo_version   = "1"
+  bearer_token_wo         = "0123456789abcdef0123456789abcdef"
+  bearer_token_wo_version = "1"
+}

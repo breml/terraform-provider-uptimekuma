@@ -36,10 +36,12 @@ type NotificationOneBotResource struct {
 type NotificationOneBotResourceModel struct {
 	NotificationBaseModel
 
-	HTTPAddr    types.String `tfsdk:"http_addr"`
-	AccessToken types.String `tfsdk:"access_token"`
-	MsgType     types.String `tfsdk:"msg_type"`
-	ReceiverID  types.String `tfsdk:"receiver_id"`
+	HTTPAddr             types.String `tfsdk:"http_addr"`
+	AccessToken          types.String `tfsdk:"access_token"`
+	AccessTokenWO        types.String `tfsdk:"access_token_wo"`
+	AccessTokenWOVersion types.String `tfsdk:"access_token_wo_version"`
+	MsgType              types.String `tfsdk:"msg_type"`
+	ReceiverID           types.String `tfsdk:"receiver_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -88,6 +90,12 @@ func (*NotificationOneBotResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"access_token",
+		"Access token for authentication with the OneBot service",
+	)
 }
 
 // Configure configures the OneBot notification resource with the API client.
@@ -122,10 +130,14 @@ func (r *NotificationOneBotResource) Create(
 		},
 		OneBotDetails: notification.OneBotDetails{
 			HTTPAddr:    data.HTTPAddr.ValueString(),
-			AccessToken: data.AccessToken.ValueString(),
+			AccessToken: writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 			MsgType:     data.MsgType.ValueString(),
 			ReceiverID:  data.ReceiverID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, onebot)
@@ -215,10 +227,14 @@ func (r *NotificationOneBotResource) Update(
 		},
 		OneBotDetails: notification.OneBotDetails{
 			HTTPAddr:    data.HTTPAddr.ValueString(),
-			AccessToken: data.AccessToken.ValueString(),
+			AccessToken: writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 			MsgType:     data.MsgType.ValueString(),
 			ReceiverID:  data.ReceiverID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, onebot)

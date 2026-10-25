@@ -36,11 +36,15 @@ type NotificationOoredooResource struct {
 type NotificationOoredooResourceModel struct {
 	NotificationBaseModel
 
-	Username    types.String `tfsdk:"username"`
-	AccessKey   types.String `tfsdk:"access_key"`
-	BearerToken types.String `tfsdk:"bearer_token"`
-	ToNumber    types.String `tfsdk:"to_number"`
-	ServerURL   types.String `tfsdk:"server_url"`
+	Username             types.String `tfsdk:"username"`
+	AccessKey            types.String `tfsdk:"access_key"`
+	AccessKeyWO          types.String `tfsdk:"access_key_wo"`
+	AccessKeyWOVersion   types.String `tfsdk:"access_key_wo_version"`
+	BearerToken          types.String `tfsdk:"bearer_token"`
+	BearerTokenWO        types.String `tfsdk:"bearer_token_wo"`
+	BearerTokenWOVersion types.String `tfsdk:"bearer_token_wo_version"`
+	ToNumber             types.String `tfsdk:"to_number"`
+	ServerURL            types.String `tfsdk:"server_url"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -107,6 +111,14 @@ func (*NotificationOoredooResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "access_key", "The Ooredoo account access key")
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"bearer_token",
+		"The token authenticating the request against the gateway",
+	)
 }
 
 // Configure configures the Ooredoo notification resource with the API client.
@@ -133,6 +145,12 @@ func (r *NotificationOoredooResource) Create(
 	}
 
 	ooredoo := ooredooFromModel(&data)
+	ooredoo.AccessKey = writeOnlyOrPlan(ctx, req.Config, "access_key", data.AccessKey, &resp.Diagnostics)
+	ooredoo.BearerToken = writeOnlyOrPlan(ctx, req.Config, "bearer_token", data.BearerToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, ooredoo)
 	// Handle error.
@@ -194,8 +212,15 @@ func (r *NotificationOoredooResource) Read(
 	data.ApplyExisting = types.BoolValue(ooredoo.ApplyExisting)
 
 	data.Username = types.StringValue(ooredoo.Username)
-	data.AccessKey = types.StringValue(ooredoo.AccessKey)
-	data.BearerToken = types.StringValue(ooredoo.BearerToken)
+
+	if data.AccessKeyWOVersion.IsNull() {
+		data.AccessKey = types.StringValue(ooredoo.AccessKey)
+	}
+
+	if data.BearerTokenWOVersion.IsNull() {
+		data.BearerToken = types.StringValue(ooredoo.BearerToken)
+	}
+
 	data.ToNumber = types.StringValue(ooredoo.ToNumber)
 
 	// ooredooServerUrl is a *string, so omitempty drops it only when it is nil, not when it points
@@ -237,6 +262,12 @@ func (r *NotificationOoredooResource) Update(
 
 	ooredoo := ooredooFromModel(&data)
 	ooredoo.ID = id
+	ooredoo.AccessKey = writeOnlyOrPlan(ctx, req.Config, "access_key", data.AccessKey, &resp.Diagnostics)
+	ooredoo.BearerToken = writeOnlyOrPlan(ctx, req.Config, "bearer_token", data.BearerToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, ooredoo)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {

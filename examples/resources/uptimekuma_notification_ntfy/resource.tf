@@ -45,3 +45,15 @@ resource "uptimekuma_notification_ntfy" "username_password" {
   custom_title   = "{{ name }} is {{ status }}"
   custom_message = "{{ msg }}"
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: access_token_wo is never stored in
+# plan or state. Change the matching *_wo_version whenever a secret changes.
+resource "uptimekuma_notification_ntfy" "write_only" {
+  name       = "ntfy with write-only secret"
+  topic      = "uptime_kuma"
+  server_url = "https://ntfy.example.com"
+
+  authentication_method   = "accessToken"
+  access_token_wo         = var.ntfy_access_token
+  access_token_wo_version = "1"
+}

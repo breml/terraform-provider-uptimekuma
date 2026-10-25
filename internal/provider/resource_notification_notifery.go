@@ -36,9 +36,11 @@ type NotificationNotiferyResource struct {
 type NotificationNotiferyResourceModel struct {
 	NotificationBaseModel
 
-	APIKey types.String `tfsdk:"api_key"`
-	Title  types.String `tfsdk:"title"`
-	Group  types.String `tfsdk:"group"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Title           types.String `tfsdk:"title"`
+	Group           types.String `tfsdk:"group"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -77,6 +79,12 @@ func (*NotificationNotiferyResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"api_key",
+		"API key for authentication with Notifery service",
+	)
 }
 
 // Configure configures the Notifery notification resource with the API client.
@@ -110,10 +118,14 @@ func (r *NotificationNotiferyResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		NotiferyDetails: notification.NotiferyDetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Title:  data.Title.ValueString(),
 			Group:  data.Group.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, notifery)
@@ -175,7 +187,9 @@ func (r *NotificationNotiferyResource) Read(
 	data.IsDefault = types.BoolValue(notifery.IsDefault)
 	data.ApplyExisting = types.BoolValue(notifery.ApplyExisting)
 
-	data.APIKey = types.StringValue(notifery.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(notifery.APIKey)
+	}
 
 	if notifery.Title != "" {
 		data.Title = types.StringValue(notifery.Title)
@@ -216,10 +230,14 @@ func (r *NotificationNotiferyResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		NotiferyDetails: notification.NotiferyDetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Title:  data.Title.ValueString(),
 			Group:  data.Group.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, notifery)

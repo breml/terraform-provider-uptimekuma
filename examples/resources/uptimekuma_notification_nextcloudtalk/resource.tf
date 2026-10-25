@@ -19,3 +19,14 @@ resource "uptimekuma_notification_nextcloudtalk" "silent" {
   is_active          = true
   is_default         = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: bot_secret_wo is never stored in
+# plan or state. Change the matching *_wo_version whenever a secret changes.
+resource "uptimekuma_notification_nextcloudtalk" "write_only" {
+  name               = "Nextcloud Talk with write-only secret"
+  host               = "https://nextcloud.example.com"
+  conversation_token = "abc123token"
+
+  bot_secret_wo         = "your-bot-secret"
+  bot_secret_wo_version = "1"
+}

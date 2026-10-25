@@ -38,17 +38,21 @@ type NotificationOctopushResource struct {
 type NotificationOctopushResourceModel struct {
 	NotificationBaseModel
 
-	Version       types.String `tfsdk:"version"`
-	APIKey        types.String `tfsdk:"api_key"`
-	Login         types.String `tfsdk:"login"`
-	PhoneNumber   types.String `tfsdk:"phone_number"`
-	SMSType       types.String `tfsdk:"sms_type"`
-	SenderName    types.String `tfsdk:"sender_name"`
-	DMLogin       types.String `tfsdk:"dm_login"`
-	DMAPIKey      types.String `tfsdk:"dm_api_key"`
-	DMPhoneNumber types.String `tfsdk:"dm_phone_number"`
-	DMSMSType     types.String `tfsdk:"dm_sms_type"`
-	DMSenderName  types.String `tfsdk:"dm_sender_name"`
+	Version           types.String `tfsdk:"version"`
+	APIKey            types.String `tfsdk:"api_key"`
+	APIKeyWO          types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion   types.String `tfsdk:"api_key_wo_version"`
+	Login             types.String `tfsdk:"login"`
+	PhoneNumber       types.String `tfsdk:"phone_number"`
+	SMSType           types.String `tfsdk:"sms_type"`
+	SenderName        types.String `tfsdk:"sender_name"`
+	DMLogin           types.String `tfsdk:"dm_login"`
+	DMAPIKey          types.String `tfsdk:"dm_api_key"`
+	DMAPIKeyWO        types.String `tfsdk:"dm_api_key_wo"`
+	DMAPIKeyWOVersion types.String `tfsdk:"dm_api_key_wo_version"`
+	DMPhoneNumber     types.String `tfsdk:"dm_phone_number"`
+	DMSMSType         types.String `tfsdk:"dm_sms_type"`
+	DMSenderName      types.String `tfsdk:"dm_sender_name"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -124,6 +128,18 @@ func (*NotificationOctopushResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"api_key",
+		"API key for Octopush V2 API authentication",
+	)
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"dm_api_key",
+		"API key for Octopush V1 (Direct Mail) API",
+	)
 }
 
 // Configure configures the Octopush notification resource with the API client.
@@ -161,6 +177,12 @@ func (*NotificationOctopushResource) ValidateConfig(
 		// When using Octopush V2, V1 (Direct Mail) fields must not be set.
 		validateFieldNotSet(resp, config.DMAPIKey, path.Root("dm_api_key"),
 			"When \"version\" is set to \"2\", the attribute \"dm_api_key\" must not be set. Use \"api_key\" instead.")
+		validateFieldNotSet(
+			resp,
+			config.DMAPIKeyWO,
+			path.Root("dm_api_key_wo"),
+			"When \"version\" is set to \"2\", the attribute \"dm_api_key_wo\" must not be set. Use \"api_key_wo\" instead.",
+		)
 		validateFieldNotSet(resp, config.DMLogin, path.Root("dm_login"),
 			"When \"version\" is set to \"2\", the attribute \"dm_login\" must not be set. Use \"login\" instead.")
 		validateFieldNotSet(
@@ -182,6 +204,12 @@ func (*NotificationOctopushResource) ValidateConfig(
 		// When using Octopush V1 (Direct Mail), V2 fields must not be set.
 		validateFieldNotSet(resp, config.APIKey, path.Root("api_key"),
 			"When \"version\" is set to \"1\", the attribute \"api_key\" must not be set. Use \"dm_api_key\" instead.")
+		validateFieldNotSet(
+			resp,
+			config.APIKeyWO,
+			path.Root("api_key_wo"),
+			"When \"version\" is set to \"1\", the attribute \"api_key_wo\" must not be set. Use \"dm_api_key_wo\" instead.",
+		)
 		validateFieldNotSet(resp, config.Login, path.Root("login"),
 			"When \"version\" is set to \"1\", the attribute \"login\" must not be set. Use \"dm_login\" instead.")
 		validateFieldNotSet(
@@ -243,17 +271,21 @@ func (r *NotificationOctopushResource) Create(
 		},
 		OctopushDetails: notification.OctopushDetails{
 			Version:       data.Version.ValueString(),
-			APIKey:        data.APIKey.ValueString(),
+			APIKey:        writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Login:         data.Login.ValueString(),
 			PhoneNumber:   data.PhoneNumber.ValueString(),
 			SMSType:       data.SMSType.ValueString(),
 			SenderName:    data.SenderName.ValueString(),
 			DMLogin:       data.DMLogin.ValueString(),
-			DMAPIKey:      data.DMAPIKey.ValueString(),
+			DMAPIKey:      writeOnlyOrPlan(ctx, req.Config, "dm_api_key", data.DMAPIKey, &resp.Diagnostics),
 			DMPhoneNumber: data.DMPhoneNumber.ValueString(),
 			DMSMSType:     data.DMSMSType.ValueString(),
 			DMSenderName:  data.DMSenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, octopush)
@@ -325,10 +357,11 @@ func (r *NotificationOctopushResource) Read(
 func updateOctopushFields(data *NotificationOctopushResourceModel, octopush *notification.Octopush) {
 	data.Version = types.StringValue(octopush.Version)
 
-	if octopush.APIKey != "" {
-		data.APIKey = types.StringValue(octopush.APIKey)
-	} else {
+	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringNull()
+		if octopush.APIKey != "" {
+			data.APIKey = types.StringValue(octopush.APIKey)
+		}
 	}
 
 	if octopush.Login != "" {
@@ -361,10 +394,11 @@ func updateOctopushFields(data *NotificationOctopushResourceModel, octopush *not
 		data.DMLogin = types.StringNull()
 	}
 
-	if octopush.DMAPIKey != "" {
-		data.DMAPIKey = types.StringValue(octopush.DMAPIKey)
-	} else {
+	if data.DMAPIKeyWOVersion.IsNull() {
 		data.DMAPIKey = types.StringNull()
+		if octopush.DMAPIKey != "" {
+			data.DMAPIKey = types.StringValue(octopush.DMAPIKey)
+		}
 	}
 
 	if octopush.DMPhoneNumber != "" {
@@ -410,17 +444,21 @@ func (r *NotificationOctopushResource) Update(
 		},
 		OctopushDetails: notification.OctopushDetails{
 			Version:       data.Version.ValueString(),
-			APIKey:        data.APIKey.ValueString(),
+			APIKey:        writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Login:         data.Login.ValueString(),
 			PhoneNumber:   data.PhoneNumber.ValueString(),
 			SMSType:       data.SMSType.ValueString(),
 			SenderName:    data.SenderName.ValueString(),
 			DMLogin:       data.DMLogin.ValueString(),
-			DMAPIKey:      data.DMAPIKey.ValueString(),
+			DMAPIKey:      writeOnlyOrPlan(ctx, req.Config, "dm_api_key", data.DMAPIKey, &resp.Diagnostics),
 			DMPhoneNumber: data.DMPhoneNumber.ValueString(),
 			DMSMSType:     data.DMSMSType.ValueString(),
 			DMSenderName:  data.DMSenderName.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, octopush)

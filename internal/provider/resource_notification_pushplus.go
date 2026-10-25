@@ -36,7 +36,9 @@ type NotificationPushPlusResource struct {
 type NotificationPushPlusResourceModel struct {
 	NotificationBaseModel
 
-	SendKey types.String `tfsdk:"send_key"`
+	SendKey          types.String `tfsdk:"send_key"`
+	SendKeyWO        types.String `tfsdk:"send_key_wo"`
+	SendKeyWOVersion types.String `tfsdk:"send_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,12 @@ func (*NotificationPushPlusResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"send_key",
+		"PushPlus send key for authentication",
+	)
 }
 
 // Configure configures the PushPlus notification resource with the API client.
@@ -100,8 +108,12 @@ func (r *NotificationPushPlusResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PushPlusDetails: notification.PushPlusDetails{
-			SendKey: data.SendKey.ValueString(),
+			SendKey: writeOnlyOrPlan(ctx, req.Config, "send_key", data.SendKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pushplus)
@@ -163,7 +175,9 @@ func (r *NotificationPushPlusResource) Read(
 	data.IsDefault = types.BoolValue(pushplus.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushplus.ApplyExisting)
 
-	data.SendKey = types.StringValue(pushplus.SendKey)
+	if data.SendKeyWOVersion.IsNull() {
+		data.SendKey = types.StringValue(pushplus.SendKey)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -192,8 +206,12 @@ func (r *NotificationPushPlusResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PushPlusDetails: notification.PushPlusDetails{
-			SendKey: data.SendKey.ValueString(),
+			SendKey: writeOnlyOrPlan(ctx, req.Config, "send_key", data.SendKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pushplus)

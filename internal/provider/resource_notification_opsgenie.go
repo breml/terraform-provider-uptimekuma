@@ -38,9 +38,11 @@ type NotificationOpsgenieResource struct {
 type NotificationOpsgenieResourceModel struct {
 	NotificationBaseModel
 
-	APIKey   types.String `tfsdk:"api_key"`
-	Region   types.String `tfsdk:"region"`
-	Priority types.Int64  `tfsdk:"priority"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Region          types.String `tfsdk:"region"`
+	Priority        types.Int64  `tfsdk:"priority"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -88,6 +90,8 @@ func (*NotificationOpsgenieResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "OpsGenie API key")
 }
 
 // Configure configures the OpsGenie notification resource with the API client.
@@ -121,10 +125,14 @@ func (r *NotificationOpsgenieResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		OpsgenieDetails: notification.OpsgenieDetails{
-			APIKey:   data.APIKey.ValueString(),
+			APIKey:   writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Region:   data.Region.ValueString(),
 			Priority: int(data.Priority.ValueInt64()),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, opsgenie)
@@ -186,7 +194,10 @@ func (r *NotificationOpsgenieResource) Read(
 	data.IsDefault = types.BoolValue(opsgenie.IsDefault)
 	data.ApplyExisting = types.BoolValue(opsgenie.ApplyExisting)
 
-	data.APIKey = types.StringValue(opsgenie.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(opsgenie.APIKey)
+	}
+
 	data.Region = types.StringValue(opsgenie.Region)
 	data.Priority = types.Int64Value(int64(opsgenie.Priority))
 
@@ -217,10 +228,14 @@ func (r *NotificationOpsgenieResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		OpsgenieDetails: notification.OpsgenieDetails{
-			APIKey:   data.APIKey.ValueString(),
+			APIKey:   writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Region:   data.Region.ValueString(),
 			Priority: int(data.Priority.ValueInt64()),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, opsgenie)

@@ -36,9 +36,11 @@ type NotificationOneChatResource struct {
 type NotificationOneChatResourceModel struct {
 	NotificationBaseModel
 
-	AccessToken types.String `tfsdk:"access_token"`
-	ReceiverID  types.String `tfsdk:"receiver_id"`
-	BotID       types.String `tfsdk:"bot_id"`
+	AccessToken          types.String `tfsdk:"access_token"`
+	AccessTokenWO        types.String `tfsdk:"access_token_wo"`
+	AccessTokenWOVersion types.String `tfsdk:"access_token_wo_version"`
+	ReceiverID           types.String `tfsdk:"receiver_id"`
+	BotID                types.String `tfsdk:"bot_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -83,6 +85,12 @@ func (*NotificationOneChatResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"access_token",
+		"Access token for authentication with the OneChat API",
+	)
 }
 
 // Configure configures the OneChat notification resource with the API client.
@@ -116,10 +124,14 @@ func (r *NotificationOneChatResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		OneChatDetails: notification.OneChatDetails{
-			AccessToken: data.AccessToken.ValueString(),
+			AccessToken: writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 			ReceiverID:  data.ReceiverID.ValueString(),
 			BotID:       data.BotID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, onechat)
@@ -177,7 +189,10 @@ func (r *NotificationOneChatResource) Read(ctx context.Context, req resource.Rea
 	data.IsDefault = types.BoolValue(onechat.IsDefault)
 	data.ApplyExisting = types.BoolValue(onechat.ApplyExisting)
 
-	data.AccessToken = types.StringValue(onechat.AccessToken)
+	if data.AccessTokenWOVersion.IsNull() {
+		data.AccessToken = types.StringValue(onechat.AccessToken)
+	}
+
 	data.ReceiverID = types.StringValue(onechat.ReceiverID)
 	data.BotID = types.StringValue(onechat.BotID)
 
@@ -208,10 +223,14 @@ func (r *NotificationOneChatResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		OneChatDetails: notification.OneChatDetails{
-			AccessToken: data.AccessToken.ValueString(),
+			AccessToken: writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 			ReceiverID:  data.ReceiverID.ValueString(),
 			BotID:       data.BotID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, onechat)

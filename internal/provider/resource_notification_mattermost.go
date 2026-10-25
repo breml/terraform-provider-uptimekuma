@@ -36,11 +36,13 @@ type NotificationMattermostResource struct {
 type NotificationMattermostResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
-	Username   types.String `tfsdk:"username"`
-	Channel    types.String `tfsdk:"channel"`
-	IconEmoji  types.String `tfsdk:"icon_emoji"`
-	IconURL    types.String `tfsdk:"icon_url"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Username            types.String `tfsdk:"username"`
+	Channel             types.String `tfsdk:"channel"`
+	IconEmoji           types.String `tfsdk:"icon_emoji"`
+	IconURL             types.String `tfsdk:"icon_url"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -87,6 +89,8 @@ func (*NotificationMattermostResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Mattermost webhook URL")
 }
 
 // Configure configures the Mattermost notification resource with the API client.
@@ -120,12 +124,16 @@ func (r *NotificationMattermostResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		MattermostDetails: notification.MattermostDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:   data.Username.ValueString(),
 			Channel:    data.Channel.ValueString(),
 			IconEmoji:  data.IconEmoji.ValueString(),
 			IconURL:    data.IconURL.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, mattermost)
@@ -187,7 +195,10 @@ func (r *NotificationMattermostResource) Read(
 	data.IsDefault = types.BoolValue(mattermost.IsDefault)
 	data.ApplyExisting = types.BoolValue(mattermost.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(mattermost.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(mattermost.WebhookURL)
+	}
+
 	if mattermost.Username != "" {
 		data.Username = types.StringValue(mattermost.Username)
 	}
@@ -231,12 +242,16 @@ func (r *NotificationMattermostResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		MattermostDetails: notification.MattermostDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
 			Username:   data.Username.ValueString(),
 			Channel:    data.Channel.ValueString(),
 			IconEmoji:  data.IconEmoji.ValueString(),
 			IconURL:    data.IconURL.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, mattermost)

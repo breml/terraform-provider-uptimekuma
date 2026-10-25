@@ -36,9 +36,11 @@ type NotificationMatrixResource struct {
 type NotificationMatrixResourceModel struct {
 	NotificationBaseModel
 
-	HomeserverURL  types.String `tfsdk:"homeserver_url"`
-	InternalRoomID types.String `tfsdk:"internal_room_id"`
-	AccessToken    types.String `tfsdk:"access_token"`
+	HomeserverURL        types.String `tfsdk:"homeserver_url"`
+	InternalRoomID       types.String `tfsdk:"internal_room_id"`
+	AccessToken          types.String `tfsdk:"access_token"`
+	AccessTokenWO        types.String `tfsdk:"access_token_wo"`
+	AccessTokenWOVersion types.String `tfsdk:"access_token_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -83,6 +85,12 @@ func (*NotificationMatrixResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"access_token",
+		"Matrix access token for authentication",
+	)
 }
 
 // Configure configures the Matrix notification resource with the API client.
@@ -118,8 +126,12 @@ func (r *NotificationMatrixResource) Create(
 		MatrixDetails: notification.MatrixDetails{
 			HomeserverURL:  data.HomeserverURL.ValueString(),
 			InternalRoomID: data.InternalRoomID.ValueString(),
-			AccessToken:    data.AccessToken.ValueString(),
+			AccessToken:    writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, matrix)
@@ -183,7 +195,10 @@ func (r *NotificationMatrixResource) Read(
 
 	data.HomeserverURL = types.StringValue(matrix.HomeserverURL)
 	data.InternalRoomID = types.StringValue(matrix.InternalRoomID)
-	data.AccessToken = types.StringValue(matrix.AccessToken)
+
+	if data.AccessTokenWOVersion.IsNull() {
+		data.AccessToken = types.StringValue(matrix.AccessToken)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -214,8 +229,12 @@ func (r *NotificationMatrixResource) Update(
 		MatrixDetails: notification.MatrixDetails{
 			HomeserverURL:  data.HomeserverURL.ValueString(),
 			InternalRoomID: data.InternalRoomID.ValueString(),
-			AccessToken:    data.AccessToken.ValueString(),
+			AccessToken:    writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, matrix)

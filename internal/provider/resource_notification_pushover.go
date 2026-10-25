@@ -36,14 +36,16 @@ type NotificationPushoverResource struct {
 type NotificationPushoverResourceModel struct {
 	NotificationBaseModel
 
-	UserKey  types.String `tfsdk:"user_key"`
-	AppToken types.String `tfsdk:"app_token"`
-	Sounds   types.String `tfsdk:"sounds"`
-	SoundsUp types.String `tfsdk:"sounds_up"`
-	Priority types.String `tfsdk:"priority"`
-	Title    types.String `tfsdk:"title"`
-	Device   types.String `tfsdk:"device"`
-	TTL      types.String `tfsdk:"ttl"`
+	UserKey           types.String `tfsdk:"user_key"`
+	AppToken          types.String `tfsdk:"app_token"`
+	AppTokenWO        types.String `tfsdk:"app_token_wo"`
+	AppTokenWOVersion types.String `tfsdk:"app_token_wo_version"`
+	Sounds            types.String `tfsdk:"sounds"`
+	SoundsUp          types.String `tfsdk:"sounds_up"`
+	Priority          types.String `tfsdk:"priority"`
+	Title             types.String `tfsdk:"title"`
+	Device            types.String `tfsdk:"device"`
+	TTL               types.String `tfsdk:"ttl"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -106,6 +108,8 @@ func (*NotificationPushoverResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "app_token", "Pushover application token")
 }
 
 // Configure configures the Pushover notification resource with the API client.
@@ -140,7 +144,7 @@ func (r *NotificationPushoverResource) Create(
 		},
 		PushoverDetails: notification.PushoverDetails{
 			UserKey:  data.UserKey.ValueString(),
-			AppToken: data.AppToken.ValueString(),
+			AppToken: writeOnlyOrPlan(ctx, req.Config, "app_token", data.AppToken, &resp.Diagnostics),
 			Sounds:   data.Sounds.ValueString(),
 			SoundsUp: data.SoundsUp.ValueString(),
 			Priority: data.Priority.ValueString(),
@@ -148,6 +152,10 @@ func (r *NotificationPushoverResource) Create(
 			Device:   data.Device.ValueString(),
 			TTL:      data.TTL.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pushover)
@@ -210,7 +218,10 @@ func (r *NotificationPushoverResource) Read(
 	data.ApplyExisting = types.BoolValue(pushover.ApplyExisting)
 
 	data.UserKey = types.StringValue(pushover.UserKey)
-	data.AppToken = types.StringValue(pushover.AppToken)
+
+	if data.AppTokenWOVersion.IsNull() {
+		data.AppToken = types.StringValue(pushover.AppToken)
+	}
 
 	if pushover.Sounds != "" {
 		data.Sounds = types.StringValue(pushover.Sounds)
@@ -276,7 +287,7 @@ func (r *NotificationPushoverResource) Update(
 		},
 		PushoverDetails: notification.PushoverDetails{
 			UserKey:  data.UserKey.ValueString(),
-			AppToken: data.AppToken.ValueString(),
+			AppToken: writeOnlyOrPlan(ctx, req.Config, "app_token", data.AppToken, &resp.Diagnostics),
 			Sounds:   data.Sounds.ValueString(),
 			SoundsUp: data.SoundsUp.ValueString(),
 			Priority: data.Priority.ValueString(),
@@ -284,6 +295,10 @@ func (r *NotificationPushoverResource) Update(
 			Device:   data.Device.ValueString(),
 			TTL:      data.TTL.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pushover)

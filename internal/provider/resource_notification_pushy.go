@@ -36,8 +36,10 @@ type NotificationPushyResource struct {
 type NotificationPushyResourceModel struct {
 	NotificationBaseModel
 
-	APIKey types.String `tfsdk:"api_key"`
-	Token  types.String `tfsdk:"token"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Token           types.String `tfsdk:"token"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -76,6 +78,8 @@ func (*NotificationPushyResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Pushy API secret key")
 }
 
 // Configure configures the Pushy notification resource with the API client.
@@ -109,9 +113,13 @@ func (r *NotificationPushyResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PushyDetails: notification.PushyDetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Token:  data.Token.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pushy)
@@ -169,7 +177,10 @@ func (r *NotificationPushyResource) Read(ctx context.Context, req resource.ReadR
 	data.IsDefault = types.BoolValue(pushy.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushy.ApplyExisting)
 
-	data.APIKey = types.StringValue(pushy.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(pushy.APIKey)
+	}
+
 	data.Token = types.StringValue(pushy.Token)
 
 	// Populate state.
@@ -199,9 +210,13 @@ func (r *NotificationPushyResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PushyDetails: notification.PushyDetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Token:  data.Token.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pushy)

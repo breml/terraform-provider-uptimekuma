@@ -36,10 +36,12 @@ type NotificationOnesenderResource struct {
 type NotificationOnesenderResourceModel struct {
 	NotificationBaseModel
 
-	URL          types.String `tfsdk:"url"`
-	Token        types.String `tfsdk:"token"`
-	Receiver     types.String `tfsdk:"receiver"`
-	TypeReceiver types.String `tfsdk:"type_receiver"`
+	URL            types.String `tfsdk:"url"`
+	Token          types.String `tfsdk:"token"`
+	TokenWO        types.String `tfsdk:"token_wo"`
+	TokenWOVersion types.String `tfsdk:"token_wo_version"`
+	Receiver       types.String `tfsdk:"receiver"`
+	TypeReceiver   types.String `tfsdk:"type_receiver"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -92,6 +94,12 @@ func (*NotificationOnesenderResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"token",
+		"API token for authentication with OneSender service",
+	)
 }
 
 // Configure configures the OneSender notification resource with the API client.
@@ -126,10 +134,14 @@ func (r *NotificationOnesenderResource) Create(
 		},
 		OneSenderDetails: notification.OneSenderDetails{
 			URL:          data.URL.ValueString(),
-			Token:        data.Token.ValueString(),
+			Token:        writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 			Receiver:     data.Receiver.ValueString(),
 			TypeReceiver: data.TypeReceiver.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, onesender)
@@ -192,7 +204,11 @@ func (r *NotificationOnesenderResource) Read(
 	data.ApplyExisting = types.BoolValue(onesender.ApplyExisting)
 
 	data.URL = types.StringValue(onesender.URL)
-	data.Token = types.StringValue(onesender.Token)
+
+	if data.TokenWOVersion.IsNull() {
+		data.Token = types.StringValue(onesender.Token)
+	}
+
 	data.Receiver = types.StringValue(onesender.Receiver)
 	data.TypeReceiver = types.StringValue(onesender.TypeReceiver)
 
@@ -224,10 +240,14 @@ func (r *NotificationOnesenderResource) Update(
 		},
 		OneSenderDetails: notification.OneSenderDetails{
 			URL:          data.URL.ValueString(),
-			Token:        data.Token.ValueString(),
+			Token:        writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics),
 			Receiver:     data.Receiver.ValueString(),
 			TypeReceiver: data.TypeReceiver.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, onesender)

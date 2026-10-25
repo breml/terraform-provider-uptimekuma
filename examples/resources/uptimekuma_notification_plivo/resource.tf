@@ -22,3 +22,16 @@ resource "uptimekuma_notification_plivo" "voice_call" {
   is_active    = true
   is_default   = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: auth_token_wo is never stored in
+# plan or state. Change auth_token_wo_version whenever the secret changes.
+resource "uptimekuma_notification_plivo" "write_only" {
+  name = "Plivo with a write-only secret"
+
+  auth_id     = "MA0123456789ABCDEFGH"
+  from_number = "+15550001111"
+  to_number   = "+15550002222"
+
+  auth_token_wo         = "your-plivo-auth-token"
+  auth_token_wo_version = "1"
+}

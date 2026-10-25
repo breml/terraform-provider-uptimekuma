@@ -36,8 +36,10 @@ type NotificationKookResource struct {
 type NotificationKookResourceModel struct {
 	NotificationBaseModel
 
-	BotToken types.String `tfsdk:"bot_token"`
-	GuildID  types.String `tfsdk:"guild_id"`
+	BotToken          types.String `tfsdk:"bot_token"`
+	BotTokenWO        types.String `tfsdk:"bot_token_wo"`
+	BotTokenWOVersion types.String `tfsdk:"bot_token_wo_version"`
+	GuildID           types.String `tfsdk:"guild_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -75,6 +77,8 @@ func (*NotificationKookResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "bot_token", "Kook bot token for authentication")
 }
 
 // Configure configures the Kook notification resource with the API client.
@@ -108,9 +112,13 @@ func (r *NotificationKookResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		KookDetails: notification.KookDetails{
-			BotToken: data.BotToken.ValueString(),
+			BotToken: writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics),
 			GuildID:  data.GuildID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, kook)
@@ -172,7 +180,10 @@ func (r *NotificationKookResource) Read(
 	data.IsDefault = types.BoolValue(kook.IsDefault)
 	data.ApplyExisting = types.BoolValue(kook.ApplyExisting)
 
-	data.BotToken = types.StringValue(kook.BotToken)
+	if data.BotTokenWOVersion.IsNull() {
+		data.BotToken = types.StringValue(kook.BotToken)
+	}
+
 	data.GuildID = types.StringValue(kook.GuildID)
 
 	// Populate state.
@@ -202,9 +213,13 @@ func (r *NotificationKookResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		KookDetails: notification.KookDetails{
-			BotToken: data.BotToken.ValueString(),
+			BotToken: writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics),
 			GuildID:  data.GuildID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, kook)
