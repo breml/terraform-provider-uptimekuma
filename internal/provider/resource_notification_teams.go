@@ -60,7 +60,8 @@ func (*NotificationTeamsResource) Schema(
 		MarkdownDescription: "Notification resource",
 		Attributes: withNotificationBaseAttributes(map[string]schema.Attribute{
 			"webhook_url": schema.StringAttribute{
-				Required: true,
+				Required:  true,
+				Sensitive: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},

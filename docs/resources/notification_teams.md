@@ -44,7 +44,7 @@ resource "uptimekuma_notification_teams" "write_only" {
 - `apply_existing` (Boolean)
 - `is_active` (Boolean)
 - `is_default` (Boolean)
-- `webhook_url` (String) Stored in state; use `webhook_url_wo` to keep it out of state.
+- `webhook_url` (String, Sensitive) Stored in state; use `webhook_url_wo` to keep it out of state.
 - `webhook_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Microsoft Teams webhook URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `webhook_url`; requires `webhook_url_wo_version`. An imported resource has no `webhook_url_wo_version` yet, so `terraform import` may store the server's value in `webhook_url` until the next apply with `webhook_url_wo` set removes it from state.
 - `webhook_url_wo_version` (String) Any value that changes whenever `webhook_url_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `webhook_url_wo`.
 
