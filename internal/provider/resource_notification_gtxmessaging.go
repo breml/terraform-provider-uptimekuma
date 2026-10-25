@@ -36,9 +36,11 @@ type NotificationGTXMessagingResource struct {
 type NotificationGTXMessagingResourceModel struct {
 	NotificationBaseModel
 
-	APIKey types.String `tfsdk:"api_key"`
-	From   types.String `tfsdk:"from"`
-	To     types.String `tfsdk:"to"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	From            types.String `tfsdk:"from"`
+	To              types.String `tfsdk:"to"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -83,6 +85,8 @@ func (*NotificationGTXMessagingResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "GTX Messaging API key")
 }
 
 // Configure configures the GTX Messaging notification resource with the API client.
@@ -116,10 +120,14 @@ func (r *NotificationGTXMessagingResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		GTXMessagingDetails: notification.GTXMessagingDetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			From:   data.From.ValueString(),
 			To:     data.To.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, gtxmessaging)
@@ -177,7 +185,10 @@ func (r *NotificationGTXMessagingResource) Read(
 	data.IsDefault = types.BoolValue(gtxmessaging.IsDefault)
 	data.ApplyExisting = types.BoolValue(gtxmessaging.ApplyExisting)
 
-	data.APIKey = types.StringValue(gtxmessaging.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(gtxmessaging.APIKey)
+	}
+
 	data.From = types.StringValue(gtxmessaging.From)
 	data.To = types.StringValue(gtxmessaging.To)
 
@@ -207,10 +218,14 @@ func (r *NotificationGTXMessagingResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		GTXMessagingDetails: notification.GTXMessagingDetails{
-			APIKey: data.APIKey.ValueString(),
+			APIKey: writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			From:   data.From.ValueString(),
 			To:     data.To.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, gtxmessaging)

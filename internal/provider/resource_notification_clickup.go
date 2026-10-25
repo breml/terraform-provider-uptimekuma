@@ -36,10 +36,12 @@ type NotificationClickUpResource struct {
 type NotificationClickUpResourceModel struct {
 	NotificationBaseModel
 
-	Token       types.String `tfsdk:"token"`
-	WorkspaceID types.String `tfsdk:"workspace_id"`
-	ChannelID   types.String `tfsdk:"channel_id"`
-	DisableURL  types.Bool   `tfsdk:"disable_url"`
+	Token          types.String `tfsdk:"token"`
+	TokenWO        types.String `tfsdk:"token_wo"`
+	TokenWOVersion types.String `tfsdk:"token_wo_version"`
+	WorkspaceID    types.String `tfsdk:"workspace_id"`
+	ChannelID      types.String `tfsdk:"channel_id"`
+	DisableURL     types.Bool   `tfsdk:"disable_url"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -93,6 +95,12 @@ func (*NotificationClickUpResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"token",
+		"The ClickUp personal access token (`pk_…`), without a `Bearer` prefix",
+	)
 }
 
 // Configure configures the ClickUp notification resource with the API client.
@@ -119,6 +127,11 @@ func (r *NotificationClickUpResource) Create(
 	}
 
 	clickUp := clickUpFromModel(&data)
+	clickUp.Token = writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, clickUp)
 	// Handle error.
@@ -179,7 +192,10 @@ func (r *NotificationClickUpResource) Read(
 	data.IsDefault = types.BoolValue(clickUp.IsDefault)
 	data.ApplyExisting = types.BoolValue(clickUp.ApplyExisting)
 
-	data.Token = types.StringValue(clickUp.Token)
+	if data.TokenWOVersion.IsNull() {
+		data.Token = types.StringValue(clickUp.Token)
+	}
+
 	data.WorkspaceID = types.StringValue(clickUp.WorkspaceID)
 	data.ChannelID = types.StringValue(clickUp.ChannelID)
 	data.DisableURL = boolPtrToTypes(clickUp.DisableURL)
@@ -213,6 +229,12 @@ func (r *NotificationClickUpResource) Update(
 	}
 
 	clickUp := clickUpFromModel(&data)
+	clickUp.Token = writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	clickUp.ID = id
 
 	err := r.client.UpdateNotification(ctx, clickUp)

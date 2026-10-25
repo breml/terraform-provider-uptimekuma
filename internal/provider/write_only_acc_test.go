@@ -54,8 +54,13 @@ type writeOnlyTestCase struct {
 }
 
 // writeOnlyTestSecret derives a distinct secret per attribute, so that a resource sending one
-// attribute's value for another fails the server check.
+// attribute's value for another fails the server check. A secret attribute named *url, such as
+// a webhook URL, gets a URL, which the attribute's validators may require.
 func writeOnlyTestSecret(attr string, secret string) string {
+	if strings.HasSuffix(attr, "url") {
+		return "https://example.com/" + attr + "-" + secret
+	}
+
 	return attr + "-" + secret
 }
 

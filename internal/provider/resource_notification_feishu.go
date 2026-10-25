@@ -36,7 +36,9 @@ type NotificationFeishuResource struct {
 type NotificationFeishuResourceModel struct {
 	NotificationBaseModel
 
-	WebHookURL types.String `tfsdk:"webhook_url"`
+	WebHookURL          types.String `tfsdk:"webhook_url"`
+	WebHookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebHookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -67,6 +69,8 @@ func (*NotificationFeishuResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Feishu webhook URL")
 }
 
 // Configure configures the Feishu notification resource with the API client.
@@ -100,8 +104,12 @@ func (r *NotificationFeishuResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		FeishuDetails: notification.FeishuDetails{
-			WebHookURL: data.WebHookURL.ValueString(),
+			WebHookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebHookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, feishu)
@@ -159,7 +167,9 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 	data.IsDefault = types.BoolValue(feishu.IsDefault)
 	data.ApplyExisting = types.BoolValue(feishu.ApplyExisting)
 
-	data.WebHookURL = types.StringValue(feishu.WebHookURL)
+	if data.WebHookURLWOVersion.IsNull() {
+		data.WebHookURL = types.StringValue(feishu.WebHookURL)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -188,8 +198,12 @@ func (r *NotificationFeishuResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		FeishuDetails: notification.FeishuDetails{
-			WebHookURL: data.WebHookURL.ValueString(),
+			WebHookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebHookURL, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, feishu)

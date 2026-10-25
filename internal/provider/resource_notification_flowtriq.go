@@ -36,8 +36,12 @@ type NotificationFlowtriqResource struct {
 type NotificationFlowtriqResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
-	APIKey     types.String `tfsdk:"api_key"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	APIKey              types.String `tfsdk:"api_key"`
+	APIKeyWO            types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion     types.String `tfsdk:"api_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -79,6 +83,18 @@ func (*NotificationFlowtriqResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"The Flowtriq webhook endpoint the notification is posted to",
+	)
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"api_key",
+		"The API key authenticating the request against Flowtriq",
+	)
 }
 
 // Configure configures the Flowtriq notification resource with the API client.
@@ -105,6 +121,12 @@ func (r *NotificationFlowtriqResource) Create(
 	}
 
 	flowtriq := flowtriqFromModel(&data)
+	flowtriq.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+	flowtriq.APIKey = strToPtr(writeOnlyOrPlanValue(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics))
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, flowtriq)
 	// Handle error.
@@ -165,15 +187,18 @@ func (r *NotificationFlowtriqResource) Read(
 	data.IsDefault = types.BoolValue(flowtriq.IsDefault)
 	data.ApplyExisting = types.BoolValue(flowtriq.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(flowtriq.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(flowtriq.WebhookURL)
+	}
 
 	// flowtriqApiKey is a *string, so omitempty drops it only when it is nil, not when it points at
 	// the empty string. A notification whose API key was cleared in the Uptime Kuma UI comes back as
 	// "", and keeping that in state against a null configuration would be a perpetual diff.
-	if flowtriq.APIKey == nil || *flowtriq.APIKey == "" {
+	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringNull()
-	} else {
-		data.APIKey = types.StringValue(*flowtriq.APIKey)
+		if flowtriq.APIKey != nil && *flowtriq.APIKey != "" {
+			data.APIKey = types.StringValue(*flowtriq.APIKey)
+		}
 	}
 
 	// Populate state.
@@ -205,6 +230,13 @@ func (r *NotificationFlowtriqResource) Update(
 	}
 
 	flowtriq := flowtriqFromModel(&data)
+	flowtriq.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+	flowtriq.APIKey = strToPtr(writeOnlyOrPlanValue(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics))
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	flowtriq.ID = id
 
 	err := r.client.UpdateNotification(ctx, flowtriq)

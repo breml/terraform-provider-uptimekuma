@@ -36,11 +36,13 @@ type NotificationAlertaResource struct {
 type NotificationAlertaResourceModel struct {
 	NotificationBaseModel
 
-	APIEndpoint  types.String `tfsdk:"api_endpoint"`
-	APIKey       types.String `tfsdk:"api_key"`
-	Environment  types.String `tfsdk:"environment"`
-	AlertState   types.String `tfsdk:"alert_state"`
-	RecoverState types.String `tfsdk:"recover_state"`
+	APIEndpoint     types.String `tfsdk:"api_endpoint"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	Environment     types.String `tfsdk:"environment"`
+	AlertState      types.String `tfsdk:"alert_state"`
+	RecoverState    types.String `tfsdk:"recover_state"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -90,6 +92,8 @@ func (*NotificationAlertaResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Alerta API key")
 }
 
 // Configure configures the Alerta notification resource with the API client.
@@ -124,11 +128,15 @@ func (r *NotificationAlertaResource) Create(
 		},
 		AlertaDetails: notification.AlertaDetails{
 			APIEndpoint:  data.APIEndpoint.ValueString(),
-			APIKey:       data.APIKey.ValueString(),
+			APIKey:       writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Environment:  data.Environment.ValueString(),
 			AlertState:   data.AlertState.ValueString(),
 			RecoverState: data.RecoverState.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, alerta)
@@ -191,7 +199,10 @@ func (r *NotificationAlertaResource) Read(
 	data.ApplyExisting = types.BoolValue(alerta.ApplyExisting)
 
 	data.APIEndpoint = types.StringValue(alerta.APIEndpoint)
-	data.APIKey = types.StringValue(alerta.APIKey)
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(alerta.APIKey)
+	}
+
 	if alerta.Environment != "" {
 		data.Environment = types.StringValue(alerta.Environment)
 	}
@@ -232,11 +243,15 @@ func (r *NotificationAlertaResource) Update(
 		},
 		AlertaDetails: notification.AlertaDetails{
 			APIEndpoint:  data.APIEndpoint.ValueString(),
-			APIKey:       data.APIKey.ValueString(),
+			APIKey:       writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			Environment:  data.Environment.ValueString(),
 			AlertState:   data.AlertState.ValueString(),
 			RecoverState: data.RecoverState.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, alerta)

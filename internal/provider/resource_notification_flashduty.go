@@ -37,8 +37,10 @@ type NotificationFlashDutyResource struct {
 type NotificationFlashDutyResourceModel struct {
 	NotificationBaseModel
 
-	IntegrationKey types.String `tfsdk:"integration_key"`
-	Severity       types.String `tfsdk:"severity"`
+	IntegrationKey          types.String `tfsdk:"integration_key"`
+	IntegrationKeyWO        types.String `tfsdk:"integration_key_wo"`
+	IntegrationKeyWOVersion types.String `tfsdk:"integration_key_wo_version"`
+	Severity                types.String `tfsdk:"severity"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -78,6 +80,12 @@ func (*NotificationFlashDutyResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"integration_key",
+		"FlashDuty integration key or webhook URL",
+	)
 }
 
 // Configure configures the FlashDuty notification resource with the API client.
@@ -111,9 +119,13 @@ func (r *NotificationFlashDutyResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		FlashDutyDetails: notification.FlashDutyDetails{
-			IntegrationKey: data.IntegrationKey.ValueString(),
+			IntegrationKey: writeOnlyOrPlan(ctx, req.Config, "integration_key", data.IntegrationKey, &resp.Diagnostics),
 			Severity:       data.Severity.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, flashduty)
@@ -175,7 +187,10 @@ func (r *NotificationFlashDutyResource) Read(
 	data.IsDefault = types.BoolValue(flashduty.IsDefault)
 	data.ApplyExisting = types.BoolValue(flashduty.ApplyExisting)
 
-	data.IntegrationKey = types.StringValue(flashduty.IntegrationKey)
+	if data.IntegrationKeyWOVersion.IsNull() {
+		data.IntegrationKey = types.StringValue(flashduty.IntegrationKey)
+	}
+
 	data.Severity = types.StringValue(flashduty.Severity)
 
 	// Populate state.
@@ -205,9 +220,13 @@ func (r *NotificationFlashDutyResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		FlashDutyDetails: notification.FlashDutyDetails{
-			IntegrationKey: data.IntegrationKey.ValueString(),
+			IntegrationKey: writeOnlyOrPlan(ctx, req.Config, "integration_key", data.IntegrationKey, &resp.Diagnostics),
 			Severity:       data.Severity.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, flashduty)
