@@ -38,3 +38,15 @@ resource "uptimekuma_notification_octopush" "example_v1" {
 
   is_active = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in plan
+# or state. Change the matching *_wo_version whenever a secret changes.
+resource "uptimekuma_notification_octopush" "write_only" {
+  name         = "Octopush with write-only secret"
+  version      = "2"
+  login        = "your-login"
+  phone_number = "+1234567890"
+
+  api_key_wo         = "your-api-key"
+  api_key_wo_version = "1"
+}

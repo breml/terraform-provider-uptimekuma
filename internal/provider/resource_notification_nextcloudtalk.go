@@ -37,11 +37,13 @@ type NotificationNextcloudTalkResource struct {
 type NotificationNextcloudTalkResourceModel struct {
 	NotificationBaseModel
 
-	Host              types.String `tfsdk:"host"`
-	ConversationToken types.String `tfsdk:"conversation_token"`
-	BotSecret         types.String `tfsdk:"bot_secret"`
-	SendSilentUp      types.Bool   `tfsdk:"send_silent_up"`
-	SendSilentDown    types.Bool   `tfsdk:"send_silent_down"`
+	Host               types.String `tfsdk:"host"`
+	ConversationToken  types.String `tfsdk:"conversation_token"`
+	BotSecret          types.String `tfsdk:"bot_secret"`
+	BotSecretWO        types.String `tfsdk:"bot_secret_wo"`
+	BotSecretWOVersion types.String `tfsdk:"bot_secret_wo_version"`
+	SendSilentUp       types.Bool   `tfsdk:"send_silent_up"`
+	SendSilentDown     types.Bool   `tfsdk:"send_silent_down"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -99,6 +101,12 @@ func (*NotificationNextcloudTalkResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"bot_secret",
+		"Bot secret for authentication and message signing",
+	)
 }
 
 // Configure configures the Nextcloud Talk notification resource with the API client.
@@ -134,10 +142,14 @@ func (r *NotificationNextcloudTalkResource) Create(
 		NextcloudTalkDetails: notification.NextcloudTalkDetails{
 			Host:              data.Host.ValueString(),
 			ConversationToken: data.ConversationToken.ValueString(),
-			BotSecret:         data.BotSecret.ValueString(),
+			BotSecret:         writeOnlyOrPlan(ctx, req.Config, "bot_secret", data.BotSecret, &resp.Diagnostics),
 			SendSilentUp:      data.SendSilentUp.ValueBool(),
 			SendSilentDown:    data.SendSilentDown.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, nextcloudTalk)
@@ -197,7 +209,11 @@ func (r *NotificationNextcloudTalkResource) Read(
 
 	data.Host = types.StringValue(nextcloudTalk.Host)
 	data.ConversationToken = types.StringValue(nextcloudTalk.ConversationToken)
-	data.BotSecret = types.StringValue(nextcloudTalk.BotSecret)
+
+	if data.BotSecretWOVersion.IsNull() {
+		data.BotSecret = types.StringValue(nextcloudTalk.BotSecret)
+	}
+
 	data.SendSilentUp = types.BoolValue(nextcloudTalk.SendSilentUp)
 	data.SendSilentDown = types.BoolValue(nextcloudTalk.SendSilentDown)
 
@@ -229,10 +245,14 @@ func (r *NotificationNextcloudTalkResource) Update(
 		NextcloudTalkDetails: notification.NextcloudTalkDetails{
 			Host:              data.Host.ValueString(),
 			ConversationToken: data.ConversationToken.ValueString(),
-			BotSecret:         data.BotSecret.ValueString(),
+			BotSecret:         writeOnlyOrPlan(ctx, req.Config, "bot_secret", data.BotSecret, &resp.Diagnostics),
 			SendSilentUp:      data.SendSilentUp.ValueBool(),
 			SendSilentDown:    data.SendSilentDown.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, nextcloudTalk)

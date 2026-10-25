@@ -18,8 +18,10 @@ func TestValidateNtfyAuthentication(t *testing.T) {
 		name                 string
 		authenticationMethod types.String
 		accessToken          types.String
+		accessTokenWO        types.String
 		username             types.String
 		password             types.String
+		passwordWO           types.String
 		expectedErrors       []string
 	}{
 		{
@@ -84,6 +86,29 @@ func TestValidateNtfyAuthentication(t *testing.T) {
 			expectedErrors:       []string{"access_token"},
 		},
 		{
+			name:                 "accessToken, write-only access token set",
+			authenticationMethod: types.StringValue("accessToken"),
+			accessTokenWO:        types.StringValue("tk_token"),
+		},
+		{
+			name:                 "accessToken, write-only access token unknown",
+			authenticationMethod: types.StringValue("accessToken"),
+			accessTokenWO:        types.StringUnknown(),
+		},
+		{
+			name:                 "accessToken, write-only access token empty",
+			authenticationMethod: types.StringValue("accessToken"),
+			accessTokenWO:        types.StringValue(""),
+			expectedErrors:       []string{"access_token"},
+		},
+		{
+			name:                 "accessToken, write-only password also set",
+			authenticationMethod: types.StringValue("accessToken"),
+			accessToken:          types.StringValue("tk_token"),
+			passwordWO:           types.StringValue("secret"),
+			expectedErrors:       []string{"password_wo"},
+		},
+		{
 			name:                 "accessToken, username and password also set",
 			authenticationMethod: types.StringValue("accessToken"),
 			accessToken:          types.StringValue("tk_token"),
@@ -105,6 +130,25 @@ func TestValidateNtfyAuthentication(t *testing.T) {
 			password:             types.StringValue("secret"),
 		},
 		{
+			name:                 "usernamePassword, username and write-only password set",
+			authenticationMethod: types.StringValue("usernamePassword"),
+			username:             types.StringValue("user"),
+			passwordWO:           types.StringValue("secret"),
+		},
+		{
+			name:                 "usernamePassword, write-only password unknown",
+			authenticationMethod: types.StringValue("usernamePassword"),
+			username:             types.StringValue("user"),
+			passwordWO:           types.StringUnknown(),
+		},
+		{
+			name:                 "usernamePassword, write-only password empty",
+			authenticationMethod: types.StringValue("usernamePassword"),
+			username:             types.StringValue("user"),
+			passwordWO:           types.StringValue(""),
+			expectedErrors:       []string{"password"},
+		},
+		{
 			name:                 "usernamePassword, password missing",
 			authenticationMethod: types.StringValue("usernamePassword"),
 			username:             types.StringValue("user"),
@@ -124,6 +168,21 @@ func TestValidateNtfyAuthentication(t *testing.T) {
 			expectedErrors:       []string{"access_token"},
 		},
 		{
+			name:                 "usernamePassword, write-only access token also set",
+			authenticationMethod: types.StringValue("usernamePassword"),
+			username:             types.StringValue("user"),
+			password:             types.StringValue("secret"),
+			accessTokenWO:        types.StringValue("tk_token"),
+			expectedErrors:       []string{"access_token_wo"},
+		},
+		{
+			name:                 "none, write-only credentials set",
+			authenticationMethod: types.StringValue("none"),
+			accessTokenWO:        types.StringValue("tk_token"),
+			passwordWO:           types.StringValue("secret"),
+			expectedErrors:       []string{"access_token_wo", "password_wo"},
+		},
+		{
 			name:                 "unexpected method is left to the schema validator",
 			authenticationMethod: types.StringValue("bogus"),
 			accessToken:          types.StringValue("tk_token"),
@@ -135,9 +194,11 @@ func TestValidateNtfyAuthentication(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := NotificationNtfyResourceModel{
 				AccessToken:          tt.accessToken,
+				AccessTokenWO:        tt.accessTokenWO,
 				AuthenticationMethod: tt.authenticationMethod,
 				Username:             tt.username,
 				Password:             tt.password,
+				PasswordWO:           tt.passwordWO,
 			}
 
 			resp := &resource.ValidateConfigResponse{}

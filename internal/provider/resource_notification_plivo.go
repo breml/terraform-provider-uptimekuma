@@ -38,12 +38,14 @@ type NotificationPlivoResource struct {
 type NotificationPlivoResourceModel struct {
 	NotificationBaseModel
 
-	AuthID      types.String `tfsdk:"auth_id"`
-	AuthToken   types.String `tfsdk:"auth_token"`
-	FromNumber  types.String `tfsdk:"from_number"`
-	ToNumber    types.String `tfsdk:"to_number"`
-	MessageType types.String `tfsdk:"message_type"`
-	AnswerURL   types.String `tfsdk:"answer_url"`
+	AuthID             types.String `tfsdk:"auth_id"`
+	AuthToken          types.String `tfsdk:"auth_token"`
+	AuthTokenWO        types.String `tfsdk:"auth_token_wo"`
+	AuthTokenWOVersion types.String `tfsdk:"auth_token_wo_version"`
+	FromNumber         types.String `tfsdk:"from_number"`
+	ToNumber           types.String `tfsdk:"to_number"`
+	MessageType        types.String `tfsdk:"message_type"`
+	AnswerURL          types.String `tfsdk:"answer_url"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -117,6 +119,12 @@ func (*NotificationPlivoResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"auth_token",
+		"The Plivo auth token used to authenticate requests",
+	)
 }
 
 // Configure configures the Plivo notification resource with the API client.
@@ -203,6 +211,11 @@ func (r *NotificationPlivoResource) Create(
 	}
 
 	plivo := plivoFromModel(&data)
+	plivo.AuthToken = writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, plivo)
 	// Handle error.
@@ -260,7 +273,11 @@ func (r *NotificationPlivoResource) Read(ctx context.Context, req resource.ReadR
 	data.ApplyExisting = types.BoolValue(plivo.ApplyExisting)
 
 	data.AuthID = types.StringValue(plivo.AuthID)
-	data.AuthToken = types.StringValue(plivo.AuthToken)
+
+	if data.AuthTokenWOVersion.IsNull() {
+		data.AuthToken = types.StringValue(plivo.AuthToken)
+	}
+
 	data.FromNumber = types.StringValue(plivo.FromNumber)
 	data.ToNumber = types.StringValue(plivo.ToNumber)
 
@@ -311,6 +328,11 @@ func (r *NotificationPlivoResource) Update(
 
 	plivo := plivoFromModel(&data)
 	plivo.ID = id
+	plivo.AuthToken = writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := r.client.UpdateNotification(ctx, plivo)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update notification") {
@@ -360,7 +382,8 @@ func (*NotificationPlivoResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
-// plivoFromModel builds a Plivo notification from the resource model.
+// plivoFromModel builds a Plivo notification from the resource model. The caller resolves
+// auth_token, which may be write-only and so is not in the model.
 //
 // plivoMessageType and plivoAnswerUrl are omitempty on the wire, so a null message_type maps to the
 // zero value and a null answer_url to nil, which keeps them out of the request entirely.
@@ -374,7 +397,6 @@ func plivoFromModel(data *NotificationPlivoResourceModel) notification.Plivo {
 		},
 		PlivoDetails: notification.PlivoDetails{
 			AuthID:      data.AuthID.ValueString(),
-			AuthToken:   data.AuthToken.ValueString(),
 			FromNumber:  data.FromNumber.ValueString(),
 			ToNumber:    data.ToNumber.ValueString(),
 			MessageType: notification.PlivoMessageType(data.MessageType.ValueString()),

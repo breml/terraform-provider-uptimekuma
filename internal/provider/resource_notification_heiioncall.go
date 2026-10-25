@@ -37,8 +37,10 @@ type NotificationHeiiOnCallResource struct {
 type NotificationHeiiOnCallResourceModel struct {
 	NotificationBaseModel
 
-	APIKey    types.String `tfsdk:"api_key"`
-	TriggerID types.String `tfsdk:"trigger_id"`
+	APIKey          types.String `tfsdk:"api_key"`
+	APIKeyWO        types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion types.String `tfsdk:"api_key_wo_version"`
+	TriggerID       types.String `tfsdk:"trigger_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -76,6 +78,12 @@ func (*NotificationHeiiOnCallResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"api_key",
+		"Heii On-Call API key for authentication",
+	)
 }
 
 // Configure configures the Heii On-Call notification resource with the API client.
@@ -109,9 +117,13 @@ func (r *NotificationHeiiOnCallResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		HeiiOnCallDetails: notification.HeiiOnCallDetails{
-			APIKey:    data.APIKey.ValueString(),
+			APIKey:    writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			TriggerID: data.TriggerID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, heiiOnCall)
@@ -174,7 +186,7 @@ func (r *NotificationHeiiOnCallResource) Read(
 	data.ApplyExisting = types.BoolValue(heiiOnCall.ApplyExisting)
 
 	// Preserve existing APIKey from state if the API does not return a usable value.
-	if heiiOnCall.APIKey != "" {
+	if data.APIKeyWOVersion.IsNull() && heiiOnCall.APIKey != "" {
 		data.APIKey = types.StringValue(heiiOnCall.APIKey)
 	}
 
@@ -207,9 +219,13 @@ func (r *NotificationHeiiOnCallResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		HeiiOnCallDetails: notification.HeiiOnCallDetails{
-			APIKey:    data.APIKey.ValueString(),
+			APIKey:    writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 			TriggerID: data.TriggerID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, heiiOnCall)

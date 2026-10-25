@@ -38,12 +38,14 @@ type NotificationPromoSMSResource struct {
 type NotificationPromoSMSResourceModel struct {
 	NotificationBaseModel
 
-	Login        types.String `tfsdk:"login"`
-	Password     types.String `tfsdk:"password"`
-	PhoneNumber  types.String `tfsdk:"phone_number"`
-	SenderName   types.String `tfsdk:"sender_name"`
-	SMSType      types.String `tfsdk:"sms_type"`
-	AllowLongSMS types.Bool   `tfsdk:"allow_long_sms"`
+	Login             types.String `tfsdk:"login"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.String `tfsdk:"password_wo_version"`
+	PhoneNumber       types.String `tfsdk:"phone_number"`
+	SenderName        types.String `tfsdk:"sender_name"`
+	SMSType           types.String `tfsdk:"sms_type"`
+	AllowLongSMS      types.Bool   `tfsdk:"allow_long_sms"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -107,6 +109,12 @@ func (*NotificationPromoSMSResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"password",
+		"PromoSMS password for authentication",
+	)
 }
 
 // Configure configures the PromoSMS notification resource with the API client.
@@ -141,12 +149,16 @@ func (r *NotificationPromoSMSResource) Create(
 		},
 		PromoSMSDetails: notification.PromoSMSDetails{
 			Login:        data.Login.ValueString(),
-			Password:     data.Password.ValueString(),
+			Password:     writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			PhoneNumber:  data.PhoneNumber.ValueString(),
 			SenderName:   data.SenderName.ValueString(),
 			SMSType:      data.SMSType.ValueString(),
 			AllowLongSMS: data.AllowLongSMS.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, promosms)
@@ -209,7 +221,11 @@ func (r *NotificationPromoSMSResource) Read(
 	data.ApplyExisting = types.BoolValue(promosms.ApplyExisting)
 
 	data.Login = types.StringValue(promosms.Login)
-	data.Password = types.StringValue(promosms.Password)
+
+	if data.PasswordWOVersion.IsNull() {
+		data.Password = types.StringValue(promosms.Password)
+	}
+
 	data.PhoneNumber = types.StringValue(promosms.PhoneNumber)
 	data.SenderName = types.StringValue(promosms.SenderName)
 	data.SMSType = types.StringValue(promosms.SMSType)
@@ -243,12 +259,16 @@ func (r *NotificationPromoSMSResource) Update(
 		},
 		PromoSMSDetails: notification.PromoSMSDetails{
 			Login:        data.Login.ValueString(),
-			Password:     data.Password.ValueString(),
+			Password:     writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics),
 			PhoneNumber:  data.PhoneNumber.ValueString(),
 			SenderName:   data.SenderName.ValueString(),
 			SMSType:      data.SMSType.ValueString(),
 			AllowLongSMS: data.AllowLongSMS.ValueBool(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, promosms)

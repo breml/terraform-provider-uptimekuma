@@ -36,9 +36,13 @@ type NotificationHaloPSAResource struct {
 type NotificationHaloPSAResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
-	Username   types.String `tfsdk:"username"`
-	Password   types.String `tfsdk:"password"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	Username            types.String `tfsdk:"username"`
+	Password            types.String `tfsdk:"password"`
+	PasswordWO          types.String `tfsdk:"password_wo"`
+	PasswordWOVersion   types.String `tfsdk:"password_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -84,6 +88,18 @@ func (*NotificationHaloPSAResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"webhook_url",
+		"The HaloPSA webhook URL to which notifications will be sent",
+	)
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"password",
+		"The password for HaloPSA authentication",
+	)
 }
 
 // Configure configures the HaloPSA notification resource with the API client.
@@ -110,6 +126,12 @@ func (r *NotificationHaloPSAResource) Create(
 	}
 
 	haloPSA := haloPSAFromModel(&data)
+	haloPSA.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+	haloPSA.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, haloPSA)
 	// Handle error.
@@ -166,7 +188,10 @@ func (r *NotificationHaloPSAResource) Read(ctx context.Context, req resource.Rea
 	data.IsDefault = types.BoolValue(haloPSA.IsDefault)
 	data.ApplyExisting = types.BoolValue(haloPSA.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(haloPSA.WebhookURL)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(haloPSA.WebhookURL)
+	}
+
 	data.Username = types.StringValue(haloPSA.Username)
 
 	// Populate state.
@@ -198,6 +223,13 @@ func (r *NotificationHaloPSAResource) Update(
 	}
 
 	haloPSA := haloPSAFromModel(&data)
+	haloPSA.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
+	haloPSA.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	haloPSA.ID = id
 
 	err := r.client.UpdateNotification(ctx, haloPSA)

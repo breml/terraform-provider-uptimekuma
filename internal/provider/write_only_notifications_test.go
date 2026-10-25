@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -21,6 +22,10 @@ type notificationWriteOnlyTest struct {
 
 	// serverSecrets reads the secrets back from Uptime Kuma.
 	serverSecrets serverSecretsFunc
+
+	// importOmits are the attributes of attrs whose Read never refreshes the secret, see
+	// writeOnlyTestCase.importOmits.
+	importOmits []string
 }
 
 // testAccNotificationWriteOnly runs the shared write-only test for the notification resource
@@ -42,6 +47,7 @@ resource %q "test" {
 `, resourceType, name, tc.body, writeOnlyAttrLines(secret, version, tc.attrs...))
 		},
 		serverSecrets: tc.serverSecrets,
+		importOmits:   tc.importOmits,
 	}))
 }
 
@@ -51,8 +57,10 @@ func singleSecret(attr string, value string) map[string]string {
 }
 
 // TestAccNotificationResourcesWriteOnly runs the shared write-only test for every notification with
-// write-only secrets; each such notification adds an entry here. The full set of transitions and
-// the validators are covered once, in TestAccNotificationSMTPResourcePasswordWO.
+// write-only secrets; each such notification adds an entry here. A notification whose secrets
+// cannot share one configuration adds one entry per variant, keyed "<resource type>/<variant>".
+// The full set of transitions and the validators are covered once, in
+// TestAccNotificationSMTPResourcePasswordWO.
 func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 	tests := map[string]notificationWriteOnlyTest{
 		"uptimekuma_notification_46elks": {
@@ -259,10 +267,278 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("api_key", n.APIKey)
 			}),
 		},
+		"uptimekuma_notification_halopsa": {
+			body: `
+  username = "halo-user"`,
+			attrs:       []string{"webhook_url", "password"},
+			importOmits: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.HaloPSA) map[string]string {
+				return map[string]string{
+					"webhook_url": n.WebhookURL,
+					"password":    n.Password,
+				}
+			}),
+		},
+		"uptimekuma_notification_heiioncall": {
+			body: `
+  trigger_id = "trigger-123"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.HeiiOnCall) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_homeassistant": {
+			body: `
+  home_assistant_url   = "https://homeassistant.example.com"
+  notification_service = "notify.mobile_app"`,
+			attrs: []string{"long_lived_access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.HomeAssistant) map[string]string {
+				return singleSecret("long_lived_access_token", n.LongLivedAccessToken)
+			}),
+		},
+		"uptimekuma_notification_jiraservicemanagement": {
+			body: `
+  cloud_id = "jsm-cloud-id"
+  email    = "ops@example.com"`,
+			attrs: []string{"api_token"},
+			serverSecrets: notificationSecrets(func(n *notification.JiraServiceManagement) map[string]string {
+				return singleSecret("api_token", n.APIToken)
+			}),
+		},
+		"uptimekuma_notification_keep": {
+			attrs: []string{"webhook_url", "api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Keep) map[string]string {
+				return map[string]string{
+					"webhook_url": n.WebhookURL,
+					"api_key":     n.APIKey,
+				}
+			}),
+		},
+		"uptimekuma_notification_kook": {
+			body: `
+  guild_id = "382941547624206336"`,
+			attrs: []string{"bot_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Kook) map[string]string {
+				return singleSecret("bot_token", n.BotToken)
+			}),
+		},
+		"uptimekuma_notification_line": {
+			body: `
+  user_id = "U0000000000"`,
+			attrs: []string{"channel_access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Line) map[string]string {
+				return singleSecret("channel_access_token", n.ChannelAccessToken)
+			}),
+		},
+		"uptimekuma_notification_matrix": {
+			body: `
+  homeserver_url   = "https://matrix.example.com"
+  internal_room_id = "!abc123:example.com"`,
+			attrs: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Matrix) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
+		"uptimekuma_notification_mattermost": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Mattermost) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_max": {
+			body: `
+  chat_id = "-123456789"`,
+			attrs: []string{"bot_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Max) map[string]string {
+				return singleSecret("bot_token", n.BotToken)
+			}),
+		},
+		"uptimekuma_notification_nextcloudtalk": {
+			body: `
+  host               = "https://nextcloud.example.com"
+  conversation_token = "room-token"`,
+			attrs: []string{"bot_secret"},
+			serverSecrets: notificationSecrets(func(n *notification.NextcloudTalk) map[string]string {
+				return singleSecret("bot_secret", n.BotSecret)
+			}),
+		},
+		"uptimekuma_notification_nostr": {
+			body: `
+  recipients = "npub1qypt4l5elx7qjxapqvzc3gw7nj5zxwq5r5rzc5yqgj5j5j5j5j5j5j5j5j5j"
+  relays     = "wss://relay.example.com"`,
+			attrs: []string{"sender"},
+			serverSecrets: notificationSecrets(func(n *notification.Nostr) map[string]string {
+				return singleSecret("sender", n.Sender)
+			}),
+		},
+		"uptimekuma_notification_notifery": {
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Notifery) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_ntfy": {
+			body: `
+  topic                 = "uptime_kuma"
+  authentication_method = "accessToken"`,
+			attrs: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Ntfy) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
+		"uptimekuma_notification_ntfy/usernamePassword": {
+			body: `
+  topic                 = "uptime_kuma"
+  authentication_method = "usernamePassword"
+  username              = "ntfy-user"`,
+			attrs: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.Ntfy) map[string]string {
+				return singleSecret("password", n.Password)
+			}),
+		},
+		"uptimekuma_notification_octopush": {
+			body: `
+  version      = "2"
+  login        = "octopush-user"
+  phone_number = "+33600000000"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Octopush) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_octopush/v1": {
+			body: `
+  version         = "1"
+  dm_login        = "octopush-user"
+  dm_phone_number = "+33600000000"`,
+			attrs: []string{"dm_api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Octopush) map[string]string {
+				return singleSecret("dm_api_key", n.DMAPIKey)
+			}),
+		},
+		"uptimekuma_notification_onebot": {
+			body: `
+  http_addr   = "http://localhost:5700"
+  msg_type    = "group"
+  receiver_id = "123456789"`,
+			attrs:       []string{"access_token"},
+			importOmits: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.OneBot) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
+		"uptimekuma_notification_onechat": {
+			body: `
+  receiver_id = "user123"
+  bot_id      = "bot-001"`,
+			attrs: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.OneChat) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
+		"uptimekuma_notification_onesender": {
+			body: `
+  url           = "https://onesender.example.com/api/v1/send"
+  receiver      = "+6281234567890"
+  type_receiver = "private"`,
+			attrs: []string{"token"},
+			serverSecrets: notificationSecrets(func(n *notification.OneSender) map[string]string {
+				return singleSecret("token", n.Token)
+			}),
+		},
+		"uptimekuma_notification_ooredoo": {
+			body: `
+  username  = "bulk-sms-user"
+  to_number = "9601234567"`,
+			attrs: []string{"access_key", "bearer_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Ooredoo) map[string]string {
+				return map[string]string{"access_key": n.AccessKey, "bearer_token": n.BearerToken}
+			}),
+		},
+		"uptimekuma_notification_opsgenie": {
+			body: `
+  region = "us"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Opsgenie) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
+		"uptimekuma_notification_pagerduty": {
+			attrs: []string{"integration_url", "integration_key"},
+			serverSecrets: notificationSecrets(func(n *notification.PagerDuty) map[string]string {
+				return map[string]string{"integration_url": n.IntegrationURL, "integration_key": n.IntegrationKey}
+			}),
+		},
+		"uptimekuma_notification_pagertree": {
+			attrs: []string{"integration_url"},
+			serverSecrets: notificationSecrets(func(n *notification.PagerTree) map[string]string {
+				return singleSecret("integration_url", n.IntegrationURL)
+			}),
+		},
+		"uptimekuma_notification_plivo": {
+			body: `
+  auth_id     = "MA0123456789ABCDEFGH"
+  from_number = "+15550001111"
+  to_number   = "+15550002222"`,
+			attrs: []string{"auth_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Plivo) map[string]string {
+				return singleSecret("auth_token", n.AuthToken)
+			}),
+		},
+		"uptimekuma_notification_promosms": {
+			body: `
+  login        = "promosms-user"
+  phone_number = "+48501234567"`,
+			attrs: []string{"password"},
+			serverSecrets: notificationSecrets(func(n *notification.PromoSMS) map[string]string {
+				return singleSecret("password", n.Password)
+			}),
+		},
+		"uptimekuma_notification_pumble": {
+			attrs: []string{"webhook_url"},
+			serverSecrets: notificationSecrets(func(n *notification.Pumble) map[string]string {
+				return singleSecret("webhook_url", n.WebhookURL)
+			}),
+		},
+		"uptimekuma_notification_pushbullet": {
+			attrs: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Pushbullet) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
+		"uptimekuma_notification_pushdeer": {
+			attrs: []string{"key"},
+			serverSecrets: notificationSecrets(func(n *notification.PushDeer) map[string]string {
+				return singleSecret("key", n.Key)
+			}),
+		},
+		"uptimekuma_notification_pushover": {
+			body: `
+  user_key = "pushover-user-key"`,
+			attrs: []string{"app_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Pushover) map[string]string {
+				return singleSecret("app_token", n.AppToken)
+			}),
+		},
+		"uptimekuma_notification_pushplus": {
+			attrs: []string{"send_key"},
+			serverSecrets: notificationSecrets(func(n *notification.PushPlus) map[string]string {
+				return singleSecret("send_key", n.SendKey)
+			}),
+		},
+		"uptimekuma_notification_pushy": {
+			body: `
+  token = "pushy-device-token"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Pushy) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
 	}
 
-	for resourceType, tc := range tests {
-		t.Run(resourceType, func(t *testing.T) {
+	for key, tc := range tests {
+		t.Run(key, func(t *testing.T) {
+			resourceType, _, _ := strings.Cut(key, "/")
 			testAccNotificationWriteOnly(t, resourceType, tc)
 		})
 	}

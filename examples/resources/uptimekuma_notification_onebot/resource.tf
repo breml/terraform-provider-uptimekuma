@@ -17,3 +17,15 @@ resource "uptimekuma_notification_onebot" "private_message" {
   is_active    = true
   is_default   = false
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: access_token_wo is never stored in
+# plan or state. Change the matching *_wo_version whenever a secret changes.
+resource "uptimekuma_notification_onebot" "write_only" {
+  name        = "OneBot with write-only secret"
+  http_addr   = "http://localhost:5700"
+  msg_type    = "group"
+  receiver_id = "123456789"
+
+  access_token_wo         = "your-access-token"
+  access_token_wo_version = "1"
+}

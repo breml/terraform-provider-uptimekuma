@@ -37,8 +37,10 @@ type NotificationPushDeerResource struct {
 type NotificationPushDeerResourceModel struct {
 	NotificationBaseModel
 
-	Key    types.String `tfsdk:"key"`
-	Server types.String `tfsdk:"server"`
+	Key          types.String `tfsdk:"key"`
+	KeyWO        types.String `tfsdk:"key_wo"`
+	KeyWOVersion types.String `tfsdk:"key_wo_version"`
+	Server       types.String `tfsdk:"server"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -79,6 +81,8 @@ func (*NotificationPushDeerResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "key", "PushDeer push key")
 }
 
 // Configure configures the PushDeer notification resource with the API client.
@@ -112,9 +116,13 @@ func (r *NotificationPushDeerResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PushDeerDetails: notification.PushDeerDetails{
-			Key:    data.Key.ValueString(),
+			Key:    writeOnlyOrPlan(ctx, req.Config, "key", data.Key, &resp.Diagnostics),
 			Server: data.Server.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pushDeer)
@@ -172,7 +180,10 @@ func (r *NotificationPushDeerResource) Read(
 	data.IsDefault = types.BoolValue(pushDeer.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushDeer.ApplyExisting)
 
-	data.Key = types.StringValue(pushDeer.Key)
+	if data.KeyWOVersion.IsNull() {
+		data.Key = types.StringValue(pushDeer.Key)
+	}
+
 	data.Server = types.StringValue(pushDeer.Server)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -201,9 +212,13 @@ func (r *NotificationPushDeerResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PushDeerDetails: notification.PushDeerDetails{
-			Key:    data.Key.ValueString(),
+			Key:    writeOnlyOrPlan(ctx, req.Config, "key", data.Key, &resp.Diagnostics),
 			Server: data.Server.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pushDeer)

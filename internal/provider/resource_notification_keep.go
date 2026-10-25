@@ -36,8 +36,12 @@ type NotificationKeepResource struct {
 type NotificationKeepResourceModel struct {
 	NotificationBaseModel
 
-	WebhookURL types.String `tfsdk:"webhook_url"`
-	APIKey     types.String `tfsdk:"api_key"`
+	WebhookURL          types.String `tfsdk:"webhook_url"`
+	WebhookURLWO        types.String `tfsdk:"webhook_url_wo"`
+	WebhookURLWOVersion types.String `tfsdk:"webhook_url_wo_version"`
+	APIKey              types.String `tfsdk:"api_key"`
+	APIKeyWO            types.String `tfsdk:"api_key_wo"`
+	APIKeyWOVersion     types.String `tfsdk:"api_key_wo_version"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -76,6 +80,10 @@ func (*NotificationKeepResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "webhook_url", "Keep webhook URL")
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_key", "Keep API key for authentication")
 }
 
 // Configure configures the Keep notification resource with the API client.
@@ -109,9 +117,13 @@ func (r *NotificationKeepResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		KeepDetails: notification.KeepDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
-			APIKey:     data.APIKey.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
+			APIKey:     writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, keep)
@@ -169,8 +181,13 @@ func (r *NotificationKeepResource) Read(ctx context.Context, req resource.ReadRe
 	data.IsDefault = types.BoolValue(keep.IsDefault)
 	data.ApplyExisting = types.BoolValue(keep.ApplyExisting)
 
-	data.WebhookURL = types.StringValue(keep.WebhookURL)
-	data.APIKey = types.StringValue(keep.APIKey)
+	if data.WebhookURLWOVersion.IsNull() {
+		data.WebhookURL = types.StringValue(keep.WebhookURL)
+	}
+
+	if data.APIKeyWOVersion.IsNull() {
+		data.APIKey = types.StringValue(keep.APIKey)
+	}
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -199,9 +216,13 @@ func (r *NotificationKeepResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		KeepDetails: notification.KeepDetails{
-			WebhookURL: data.WebhookURL.ValueString(),
-			APIKey:     data.APIKey.ValueString(),
+			WebhookURL: writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics),
+			APIKey:     writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, keep)

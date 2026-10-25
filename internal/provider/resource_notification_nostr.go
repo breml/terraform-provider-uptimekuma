@@ -36,9 +36,11 @@ type NotificationNostrResource struct {
 type NotificationNostrResourceModel struct {
 	NotificationBaseModel
 
-	Sender     types.String `tfsdk:"sender"`
-	Recipients types.String `tfsdk:"recipients"`
-	Relays     types.String `tfsdk:"relays"`
+	Sender          types.String `tfsdk:"sender"`
+	SenderWO        types.String `tfsdk:"sender_wo"`
+	SenderWOVersion types.String `tfsdk:"sender_wo_version"`
+	Recipients      types.String `tfsdk:"recipients"`
+	Relays          types.String `tfsdk:"relays"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -83,6 +85,12 @@ func (*NotificationNostrResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"sender",
+		"Sender private key in Nostr format (nsec encoded)",
+	)
 }
 
 // Configure configures the Nostr notification resource with the API client.
@@ -116,10 +124,14 @@ func (r *NotificationNostrResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		NostrDetails: notification.NostrDetails{
-			Sender:     data.Sender.ValueString(),
+			Sender:     writeOnlyOrPlan(ctx, req.Config, "sender", data.Sender, &resp.Diagnostics),
 			Recipients: data.Recipients.ValueString(),
 			Relays:     data.Relays.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, nostr)
@@ -181,7 +193,10 @@ func (r *NotificationNostrResource) Read(
 	data.IsDefault = types.BoolValue(nostr.IsDefault)
 	data.ApplyExisting = types.BoolValue(nostr.ApplyExisting)
 
-	data.Sender = types.StringValue(nostr.Sender)
+	if data.SenderWOVersion.IsNull() {
+		data.Sender = types.StringValue(nostr.Sender)
+	}
+
 	data.Recipients = types.StringValue(nostr.Recipients)
 	data.Relays = types.StringValue(nostr.Relays)
 
@@ -212,10 +227,14 @@ func (r *NotificationNostrResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		NostrDetails: notification.NostrDetails{
-			Sender:     data.Sender.ValueString(),
+			Sender:     writeOnlyOrPlan(ctx, req.Config, "sender", data.Sender, &resp.Diagnostics),
 			Recipients: data.Recipients.ValueString(),
 			Relays:     data.Relays.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, nostr)

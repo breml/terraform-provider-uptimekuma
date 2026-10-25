@@ -39,10 +39,12 @@ type NotificationJiraServiceManagementResource struct {
 type NotificationJiraServiceManagementResourceModel struct {
 	NotificationBaseModel
 
-	CloudID  types.String `tfsdk:"cloud_id"`
-	Email    types.String `tfsdk:"email"`
-	APIToken types.String `tfsdk:"api_token"`
-	Priority types.Int64  `tfsdk:"priority"`
+	CloudID           types.String `tfsdk:"cloud_id"`
+	Email             types.String `tfsdk:"email"`
+	APIToken          types.String `tfsdk:"api_token"`
+	APITokenWO        types.String `tfsdk:"api_token_wo"`
+	APITokenWOVersion types.String `tfsdk:"api_token_wo_version"`
+	Priority          types.Int64  `tfsdk:"priority"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -96,6 +98,8 @@ func (*NotificationJiraServiceManagementResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "api_token", "Atlassian API token")
 }
 
 // Configure configures the Jira Service Management notification resource with the API client.
@@ -131,9 +135,13 @@ func (r *NotificationJiraServiceManagementResource) Create(
 		JiraServiceManagementDetails: notification.JiraServiceManagementDetails{
 			CloudID:  data.CloudID.ValueString(),
 			Email:    data.Email.ValueString(),
-			APIToken: data.APIToken.ValueString(),
+			APIToken: writeOnlyOrPlan(ctx, req.Config, "api_token", data.APIToken, &resp.Diagnostics),
 			Priority: int(data.Priority.ValueInt64()),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, jiraServiceManagement)
@@ -206,7 +214,11 @@ func (r *NotificationJiraServiceManagementResource) Read(
 
 	data.CloudID = types.StringValue(jiraServiceManagement.CloudID)
 	data.Email = types.StringValue(jiraServiceManagement.Email)
-	data.APIToken = types.StringValue(jiraServiceManagement.APIToken)
+
+	if data.APITokenWOVersion.IsNull() {
+		data.APIToken = types.StringValue(jiraServiceManagement.APIToken)
+	}
+
 	data.Priority = types.Int64Value(int64(jiraServiceManagement.Priority))
 
 	// Populate state.
@@ -238,9 +250,13 @@ func (r *NotificationJiraServiceManagementResource) Update(
 		JiraServiceManagementDetails: notification.JiraServiceManagementDetails{
 			CloudID:  data.CloudID.ValueString(),
 			Email:    data.Email.ValueString(),
-			APIToken: data.APIToken.ValueString(),
+			APIToken: writeOnlyOrPlan(ctx, req.Config, "api_token", data.APIToken, &resp.Diagnostics),
 			Priority: int(data.Priority.ValueInt64()),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, jiraServiceManagement)

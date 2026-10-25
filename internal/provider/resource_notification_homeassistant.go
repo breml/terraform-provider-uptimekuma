@@ -36,9 +36,11 @@ type NotificationHomeAssistantResource struct {
 type NotificationHomeAssistantResourceModel struct {
 	NotificationBaseModel
 
-	HomeAssistantURL     types.String `tfsdk:"home_assistant_url"`
-	LongLivedAccessToken types.String `tfsdk:"long_lived_access_token"`
-	NotificationService  types.String `tfsdk:"notification_service"`
+	HomeAssistantURL              types.String `tfsdk:"home_assistant_url"`
+	LongLivedAccessToken          types.String `tfsdk:"long_lived_access_token"`
+	LongLivedAccessTokenWO        types.String `tfsdk:"long_lived_access_token_wo"`
+	LongLivedAccessTokenWOVersion types.String `tfsdk:"long_lived_access_token_wo_version"`
+	NotificationService           types.String `tfsdk:"notification_service"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -84,6 +86,12 @@ func (*NotificationHomeAssistantResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"long_lived_access_token",
+		"Home Assistant long-lived access token",
+	)
 }
 
 // Configure configures the Home Assistant notification resource with the API client.
@@ -117,10 +125,20 @@ func (r *NotificationHomeAssistantResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		HomeAssistantDetails: notification.HomeAssistantDetails{
-			HomeAssistantURL:     data.HomeAssistantURL.ValueString(),
-			LongLivedAccessToken: data.LongLivedAccessToken.ValueString(),
-			NotificationService:  data.NotificationService.ValueString(),
+			HomeAssistantURL: data.HomeAssistantURL.ValueString(),
+			LongLivedAccessToken: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"long_lived_access_token",
+				data.LongLivedAccessToken,
+				&resp.Diagnostics,
+			),
+			NotificationService: data.NotificationService.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, homeAssistant)
@@ -183,7 +201,11 @@ func (r *NotificationHomeAssistantResource) Read(
 	data.ApplyExisting = types.BoolValue(homeAssistant.ApplyExisting)
 
 	data.HomeAssistantURL = types.StringValue(homeAssistant.HomeAssistantURL)
-	data.LongLivedAccessToken = types.StringValue(homeAssistant.LongLivedAccessToken)
+
+	if data.LongLivedAccessTokenWOVersion.IsNull() {
+		data.LongLivedAccessToken = types.StringValue(homeAssistant.LongLivedAccessToken)
+	}
+
 	data.NotificationService = types.StringValue(homeAssistant.NotificationService)
 
 	// Populate state.
@@ -213,10 +235,20 @@ func (r *NotificationHomeAssistantResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		HomeAssistantDetails: notification.HomeAssistantDetails{
-			HomeAssistantURL:     data.HomeAssistantURL.ValueString(),
-			LongLivedAccessToken: data.LongLivedAccessToken.ValueString(),
-			NotificationService:  data.NotificationService.ValueString(),
+			HomeAssistantURL: data.HomeAssistantURL.ValueString(),
+			LongLivedAccessToken: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"long_lived_access_token",
+				data.LongLivedAccessToken,
+				&resp.Diagnostics,
+			),
+			NotificationService: data.NotificationService.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, homeAssistant)

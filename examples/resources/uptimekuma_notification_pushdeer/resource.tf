@@ -12,3 +12,12 @@ resource "uptimekuma_notification_pushdeer" "custom_server" {
   server    = "https://custom.pushdeer.server.com"
   is_active = true
 }
+
+# Requires Terraform or OpenTofu 1.11 or later: key_wo is never stored in
+# plan or state. Change key_wo_version whenever the secret changes.
+resource "uptimekuma_notification_pushdeer" "write_only" {
+  name = "PushDeer with a write-only secret"
+
+  key_wo         = "your-pushdeer-push-key"
+  key_wo_version = "1"
+}

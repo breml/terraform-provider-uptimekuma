@@ -40,12 +40,14 @@ type NotificationMaxResource struct {
 type NotificationMaxResourceModel struct {
 	NotificationBaseModel
 
-	APIURL         types.String `tfsdk:"api_url"`
-	BotToken       types.String `tfsdk:"bot_token"`
-	ChatID         types.String `tfsdk:"chat_id"`
-	UseTemplate    types.Bool   `tfsdk:"use_template"`
-	Template       types.String `tfsdk:"template"`
-	TemplateFormat types.String `tfsdk:"template_format"`
+	APIURL            types.String `tfsdk:"api_url"`
+	BotToken          types.String `tfsdk:"bot_token"`
+	BotTokenWO        types.String `tfsdk:"bot_token_wo"`
+	BotTokenWOVersion types.String `tfsdk:"bot_token_wo_version"`
+	ChatID            types.String `tfsdk:"chat_id"`
+	UseTemplate       types.Bool   `tfsdk:"use_template"`
+	Template          types.String `tfsdk:"template"`
+	TemplateFormat    types.String `tfsdk:"template_format"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -103,6 +105,8 @@ func (*NotificationMaxResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(resp.Schema.Attributes, "bot_token", "MAX messenger bot token")
 }
 
 // Configure configures the MAX messenger notification resource with the API client.
@@ -129,6 +133,11 @@ func (r *NotificationMaxResource) Create(
 	}
 
 	maxNotification := maxFromModel(&data)
+	maxNotification.BotToken = writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	id, err := r.client.CreateNotification(ctx, maxNotification)
 	// Handle error.
@@ -186,7 +195,11 @@ func (r *NotificationMaxResource) Read(ctx context.Context, req resource.ReadReq
 	data.ApplyExisting = types.BoolValue(maxNotification.ApplyExisting)
 
 	data.APIURL = types.StringValue(maxNotification.APIURL)
-	data.BotToken = types.StringValue(maxNotification.BotToken)
+
+	if data.BotTokenWOVersion.IsNull() {
+		data.BotToken = types.StringValue(maxNotification.BotToken)
+	}
+
 	data.ChatID = types.StringValue(maxNotification.ChatID)
 	data.UseTemplate = types.BoolValue(maxNotification.UseTemplate)
 
@@ -221,6 +234,12 @@ func (r *NotificationMaxResource) Update(
 	}
 
 	maxNotification := maxFromModel(&data)
+	maxNotification.BotToken = writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	maxNotification.ID = data.ID.ValueInt64()
 
 	err := r.client.UpdateNotification(ctx, maxNotification)

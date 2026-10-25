@@ -36,8 +36,10 @@ type NotificationLineResource struct {
 type NotificationLineResourceModel struct {
 	NotificationBaseModel
 
-	ChannelAccessToken types.String `tfsdk:"channel_access_token"`
-	UserID             types.String `tfsdk:"user_id"`
+	ChannelAccessToken          types.String `tfsdk:"channel_access_token"`
+	ChannelAccessTokenWO        types.String `tfsdk:"channel_access_token_wo"`
+	ChannelAccessTokenWOVersion types.String `tfsdk:"channel_access_token_wo_version"`
+	UserID                      types.String `tfsdk:"user_id"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -75,6 +77,12 @@ func (*NotificationLineResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"channel_access_token",
+		"LINE channel access token",
+	)
 }
 
 // Configure configures the LINE notification resource with the API client.
@@ -108,9 +116,19 @@ func (r *NotificationLineResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		LineDetails: notification.LineDetails{
-			ChannelAccessToken: data.ChannelAccessToken.ValueString(),
-			UserID:             data.UserID.ValueString(),
+			ChannelAccessToken: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"channel_access_token",
+				data.ChannelAccessToken,
+				&resp.Diagnostics,
+			),
+			UserID: data.UserID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, line)
@@ -172,7 +190,10 @@ func (r *NotificationLineResource) Read(
 	data.IsDefault = types.BoolValue(line.IsDefault)
 	data.ApplyExisting = types.BoolValue(line.ApplyExisting)
 
-	data.ChannelAccessToken = types.StringValue(line.ChannelAccessToken)
+	if data.ChannelAccessTokenWOVersion.IsNull() {
+		data.ChannelAccessToken = types.StringValue(line.ChannelAccessToken)
+	}
+
 	data.UserID = types.StringValue(line.LineDetails.UserID)
 
 	// Populate state.
@@ -202,9 +223,19 @@ func (r *NotificationLineResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		LineDetails: notification.LineDetails{
-			ChannelAccessToken: data.ChannelAccessToken.ValueString(),
-			UserID:             data.UserID.ValueString(),
+			ChannelAccessToken: writeOnlyOrPlan(
+				ctx,
+				req.Config,
+				"channel_access_token",
+				data.ChannelAccessToken,
+				&resp.Diagnostics,
+			),
+			UserID: data.UserID.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, line)

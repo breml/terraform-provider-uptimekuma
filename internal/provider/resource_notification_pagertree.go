@@ -36,9 +36,11 @@ type NotificationPagerTreeResource struct {
 type NotificationPagerTreeResourceModel struct {
 	NotificationBaseModel
 
-	IntegrationURL types.String `tfsdk:"integration_url"`
-	Urgency        types.String `tfsdk:"urgency"`
-	AutoResolve    types.String `tfsdk:"auto_resolve"`
+	IntegrationURL          types.String `tfsdk:"integration_url"`
+	IntegrationURLWO        types.String `tfsdk:"integration_url_wo"`
+	IntegrationURLWOVersion types.String `tfsdk:"integration_url_wo_version"`
+	Urgency                 types.String `tfsdk:"urgency"`
+	AutoResolve             types.String `tfsdk:"auto_resolve"`
 }
 
 // Metadata returns the metadata for the resource.
@@ -77,6 +79,12 @@ func (*NotificationPagerTreeResource) Schema(
 			},
 		}),
 	}
+
+	resp.Schema.Attributes = withWriteOnlySecret(
+		resp.Schema.Attributes,
+		"integration_url",
+		"PagerTree integration endpoint URL",
+	)
 }
 
 // Configure configures the PagerTree notification resource with the API client.
@@ -110,10 +118,14 @@ func (r *NotificationPagerTreeResource) Create(
 			Name:          data.Name.ValueString(),
 		},
 		PagerTreeDetails: notification.PagerTreeDetails{
-			IntegrationURL: data.IntegrationURL.ValueString(),
+			IntegrationURL: writeOnlyOrPlan(ctx, req.Config, "integration_url", data.IntegrationURL, &resp.Diagnostics),
 			Urgency:        data.Urgency.ValueString(),
 			AutoResolve:    data.AutoResolve.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	id, err := r.client.CreateNotification(ctx, pagertree)
@@ -175,10 +187,11 @@ func (r *NotificationPagerTreeResource) Read(
 	data.IsDefault = types.BoolValue(pagertree.IsDefault)
 	data.ApplyExisting = types.BoolValue(pagertree.ApplyExisting)
 
-	if pagertree.IntegrationURL != "" {
-		data.IntegrationURL = types.StringValue(pagertree.IntegrationURL)
-	} else {
+	if data.IntegrationURLWOVersion.IsNull() {
 		data.IntegrationURL = types.StringNull()
+		if pagertree.IntegrationURL != "" {
+			data.IntegrationURL = types.StringValue(pagertree.IntegrationURL)
+		}
 	}
 
 	if pagertree.Urgency != "" {
@@ -220,10 +233,14 @@ func (r *NotificationPagerTreeResource) Update(
 			Name:          data.Name.ValueString(),
 		},
 		PagerTreeDetails: notification.PagerTreeDetails{
-			IntegrationURL: data.IntegrationURL.ValueString(),
+			IntegrationURL: writeOnlyOrPlan(ctx, req.Config, "integration_url", data.IntegrationURL, &resp.Diagnostics),
 			Urgency:        data.Urgency.ValueString(),
 			AutoResolve:    data.AutoResolve.ValueString(),
 		},
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	err := r.client.UpdateNotification(ctx, pagertree)
