@@ -747,6 +747,16 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("secret", n.Secret)
 			}),
 		},
+		"uptimekuma_notification_turbosmtp": {
+			body: `
+  consumer_key = "turbosmtp-consumer-key"
+  from_email   = "alerts@example.com"
+  to_email     = "oncall@example.com"`,
+			attrs: []string{"consumer_secret"},
+			serverSecrets: notificationSecrets(func(n *notification.TurboSMTP) map[string]string {
+				return singleSecret("consumer_secret", n.ConsumerSecret)
+			}),
+		},
 		"uptimekuma_notification_twilio": {
 			body: `
   account_sid = "AC00000000000000000000000000000000"
