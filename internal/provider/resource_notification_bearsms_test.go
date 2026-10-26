@@ -77,9 +77,9 @@ func TestAccNotificationBearSMSResourceSenderID(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccNotificationBearSMSResourceSenderConfig(name, "Ops"),
+				Config: testAccNotificationBearSMSResourceSenderConfig(name, "UptimeKuma1"),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(addr, tfjsonpath.New("sender_id"), knownvalue.StringExact("Ops")),
+					statecheck.ExpectKnownValue(addr, tfjsonpath.New("sender_id"), knownvalue.StringExact("UptimeKuma1")),
 				},
 			},
 			{
@@ -107,7 +107,7 @@ func TestAccNotificationBearSMSResourceSenderIDTooLong(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNotificationBearSMSResourceSenderConfig(name, "TwelveChars!"),
-				ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
+				ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Value Length.*sender_id`),
 			},
 		},
 	})

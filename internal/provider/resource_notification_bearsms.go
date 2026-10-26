@@ -81,8 +81,8 @@ func (*NotificationBearSMSResource) Schema(
 			"sender_id": schema.StringAttribute{
 				MarkdownDescription: "The sender name or number shown to the recipient, at most 11 characters. " +
 					"The sender has to be approved in the BearSMS account. The length limit mirrors the " +
-					"Uptime Kuma web UI; the server itself enforces neither. If unset, Uptime Kuma sends " +
-					"no sender with the request.",
+					"Uptime Kuma web UI; Uptime Kuma's server enforces neither. If unset, Uptime Kuma sends " +
+					"no sender with the request and BearSMS uses the account's default sender.",
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 11),
@@ -201,9 +201,8 @@ func (r *NotificationBearSMSResource) Read(
 		data.HashKey = types.StringValue(bearSMS.HashKey)
 	}
 
-	// bearsmsSenderId is a *string, so omitempty drops it only when it is nil, not when it points at
-	// the empty string. A sender cleared in the Uptime Kuma UI comes back as "", and keeping that in
-	// state against a null configuration would be a perpetual diff.
+	// A sender cleared in the Uptime Kuma UI is stored as "" and decodes to a non-nil pointer to "".
+	// stringOrNullPtr maps that to null, so a null configuration does not show a perpetual diff.
 	data.SenderID = stringOrNullPtr(bearSMS.SenderID)
 	data.PhoneNumber = types.StringValue(bearSMS.PhoneNumber)
 
@@ -292,7 +291,8 @@ func (*NotificationBearSMSResource) ImportState(
 }
 
 // bearSMSFromModel builds a BearSMS notification from the resource model. The caller resolves
-// hash_key, which may be write-only and so is not in the model.
+// hash_key, because its value may come from the write-only hash_key_wo, which is only in the
+// config, not in the plan.
 //
 // bearsmsSenderId is omitempty on the wire, so a null sender maps to nil, which keeps it out of the
 // request entirely.

@@ -63,7 +63,7 @@ resource "uptimekuma_notification_bearsms" "write_only" {
 - `hash_key_wo_version` (String) Any value that changes whenever `hash_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `hash_key_wo`.
 - `is_active` (Boolean)
 - `is_default` (Boolean)
-- `sender_id` (String) The sender name or number shown to the recipient, at most 11 characters. The sender has to be approved in the BearSMS account. The length limit mirrors the Uptime Kuma web UI; the server itself enforces neither. If unset, Uptime Kuma sends no sender with the request.
+- `sender_id` (String) The sender name or number shown to the recipient, at most 11 characters. The sender has to be approved in the BearSMS account. The length limit mirrors the Uptime Kuma web UI; Uptime Kuma's server enforces neither. If unset, Uptime Kuma sends no sender with the request and BearSMS uses the account's default sender.
 
 ### Read-Only
 
