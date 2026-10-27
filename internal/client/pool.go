@@ -47,17 +47,22 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	if p.client != nil {
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
-				"pool config mismatch: existing endpoint=%q username=%q timeout=%s per_attempt_timeout=%s"+
-					" operation_timeout=%s max_retries=%d, requested endpoint=%q username=%q timeout=%s"+
+				"pool config mismatch: existing endpoint=%q username=%q totp_secret=%s session_token=%s"+
+					" timeout=%s per_attempt_timeout=%s operation_timeout=%s max_retries=%d,"+
+					" requested endpoint=%q username=%q totp_secret=%s session_token=%s timeout=%s"+
 					" per_attempt_timeout=%s operation_timeout=%s max_retries=%d",
 				p.config.Endpoint,
 				p.config.Username,
+				secretState(p.config.TOTPSecret),
+				secretState(p.config.SessionToken),
 				effectiveTimeout(p.config.ConnectTimeout),
 				p.config.PerAttemptTimeout,
 				effectiveOperationTimeout(p.config.OperationTimeout),
 				effectiveMaxRetries(p.config.MaxRetries),
 				config.Endpoint,
 				config.Username,
+				secretState(config.TOTPSecret),
+				secretState(config.SessionToken),
 				effectiveTimeout(config.ConnectTimeout),
 				config.PerAttemptTimeout,
 				effectiveOperationTimeout(config.OperationTimeout),
@@ -150,11 +155,26 @@ func (p *Pool) closeLocked() error {
 	return nil
 }
 
+// secretState renders whether a credential is configured, for the config
+// mismatch message. The values themselves stay out of it, the way the password
+// does: the message reaches the user through a Terraform diagnostic.
+func secretState(secret string) string {
+	if secret == "" {
+		return "unset"
+	}
+
+	return "set"
+}
+
 // configMatches checks if the provided config matches the pool's config.
 // Only connection-critical fields (endpoint, credentials, timeout,
 // per_attempt_timeout, max_retries) are compared. LogLevel and
 // EnableConnectionPool are intentionally excluded as they don't affect the
 // connection identity - the first connection's LogLevel is used.
+//
+// The TOTP secret and the session token are part of that identity as much as
+// the password is: two provider blocks authenticating as different accounts
+// must not share one connection just because neither names a username.
 func (p *Pool) configMatches(config *Config) bool {
 	if p.config == nil {
 		return false
@@ -163,6 +183,8 @@ func (p *Pool) configMatches(config *Config) bool {
 	return p.config.Endpoint == config.Endpoint &&
 		p.config.Username == config.Username &&
 		p.config.Password == config.Password &&
+		p.config.TOTPSecret == config.TOTPSecret &&
+		p.config.SessionToken == config.SessionToken &&
 		effectiveTimeout(p.config.ConnectTimeout) == effectiveTimeout(config.ConnectTimeout) &&
 		p.config.PerAttemptTimeout == config.PerAttemptTimeout &&
 		effectiveOperationTimeout(p.config.OperationTimeout) ==
