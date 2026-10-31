@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// TestAccNotificationSignalgridResource covers create, an update of all attributes, and an import
-// round-trip.
+// TestAccNotificationSignalgridResource covers create, an update of all attributes except
+// apply_existing, and an import round-trip.
 func TestAccNotificationSignalgridResource(t *testing.T) {
 	name := acctest.RandomWithPrefix("NotificationSignalgrid")
 	nameUpdated := acctest.RandomWithPrefix("NotificationSignalgridUpdated")
@@ -58,12 +58,22 @@ func TestAccNotificationSignalgridResource(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccNotificationSignalgridResourceConfig(nameUpdated, "client-key-2", "operations"),
+				Config: testAccNotificationSignalgridResourceUpdatedConfig(nameUpdated, "client-key-2", "operations"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_signalgrid.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_signalgrid.test",
+						tfjsonpath.New("is_default"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"uptimekuma_notification_signalgrid.test",
+						tfjsonpath.New("apply_existing"),
+						knownvalue.Bool(false),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_signalgrid.test",
@@ -119,6 +129,17 @@ func testAccNotificationSignalgridResourceConfig(name string, clientKey string, 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_signalgrid" "test" {
   name       = %[1]q
+  client_key = %[2]q
+  channel    = %[3]q
+}
+`, name, clientKey, channel)
+}
+
+func testAccNotificationSignalgridResourceUpdatedConfig(name string, clientKey string, channel string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_notification_signalgrid" "test" {
+  name       = %[1]q
+  is_default = true
   client_key = %[2]q
   channel    = %[3]q
 }

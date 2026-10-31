@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -35,6 +36,20 @@ func TestAccNotificationSignalgridDataSource(t *testing.T) {
 						"data.uptimekuma_notification_signalgrid.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
+					),
+					statecheck.CompareValuePairs(
+						"uptimekuma_notification_signalgrid.test",
+						tfjsonpath.New("id"),
+						"data.uptimekuma_notification_signalgrid.by_name",
+						tfjsonpath.New("id"),
+						compare.ValuesSame(),
+					),
+					statecheck.CompareValuePairs(
+						"uptimekuma_notification_signalgrid.test",
+						tfjsonpath.New("id"),
+						"data.uptimekuma_notification_signalgrid.by_id",
+						tfjsonpath.New("id"),
+						compare.ValuesSame(),
 					),
 				},
 			},

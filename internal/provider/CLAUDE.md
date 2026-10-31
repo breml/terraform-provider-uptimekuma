@@ -1586,7 +1586,7 @@ Testing framework providing:
 
 Most files are 200-400 lines. Large files:
 
-- `provider.go` (750 lines) - 148 resource + 148 data source registrations
+- `provider.go` (~760 lines) - 148 resource + 148 data source registrations
 - `resource_monitor_http.go` (300+ lines) - Heavily documented
 - `resource_monitor_http_base.go` (300+ lines) - Many HTTP configuration options
 - `resource_status_page.go` (350+ lines) - Complex nested structures
