@@ -2,11 +2,13 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -27,7 +29,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 					description,
 					"smtp.example.com",
 					587,
-					"STARTTLS",
+					"starttls",
 					true,
 				),
 				ExpectNonEmptyPlan: false,
@@ -55,7 +57,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
 						tfjsonpath.New("smtp_security"),
-						knownvalue.StringExact("STARTTLS"),
+						knownvalue.StringExact("starttls"),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
@@ -75,7 +77,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 					descriptionUpdated,
 					"mail.example.com",
 					465,
-					"TLS",
+					"secure",
 					false,
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -102,7 +104,7 @@ func TestAccMonitorSMTPResource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
 						tfjsonpath.New("smtp_security"),
-						knownvalue.StringExact("TLS"),
+						knownvalue.StringExact("secure"),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
@@ -174,7 +176,7 @@ func TestAccMonitorSMTPResourceMinimal(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
 						tfjsonpath.New("smtp_security"),
-						knownvalue.StringExact("None"),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
@@ -245,7 +247,7 @@ func TestAccMonitorSMTPResourceWithAllOptions(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
 						tfjsonpath.New("smtp_security"),
-						knownvalue.StringExact("TLS"),
+						knownvalue.StringExact("secure"),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
@@ -290,7 +292,7 @@ resource "uptimekuma_monitor_smtp" "test" {
   description     = %[2]q
   hostname        = "smtp.example.com"
   port            = 465
-  smtp_security   = "TLS"
+  smtp_security   = "secure"
   interval        = 120
   retry_interval  = 90
   resend_interval = 0
@@ -302,7 +304,7 @@ resource "uptimekuma_monitor_smtp" "test" {
 }
 
 func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
-	securityModes := []string{"None", "STARTTLS", "TLS", "nostarttls"}
+	securityModes := []string{"secure", "starttls", "nostarttls"}
 
 	for _, mode := range securityModes {
 		t.Run(mode, func(t *testing.T) {
@@ -355,4 +357,68 @@ resource "uptimekuma_monitor_smtp" "test" {
   smtp_security = %[3]q
 }
 `, name, hostname, securityMode)
+}
+
+// TestAccMonitorSMTPResourceSecure covers issue #470: an SMTPS monitor can be
+// described, survives an import without a diff, and is cleared by removing the
+// attribute.
+func TestAccMonitorSMTPResourceSecure(t *testing.T) {
+	name := acctest.RandomWithPrefix("TestSMTPMonitorSecure")
+	config := testAccMonitorSMTPResourceConfigSecurityMode(name, "smtp.example.com", "secure")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_smtp.test",
+						tfjsonpath.New("smtp_security"),
+						knownvalue.StringExact("secure"),
+					),
+				},
+			},
+			{
+				ResourceName:      "uptimekuma_monitor_smtp.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				Config: testAccMonitorSMTPResourceConfigMinimal(name, "smtp.example.com"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"uptimekuma_monitor_smtp.test",
+						tfjsonpath.New("smtp_security"),
+						knownvalue.Null(),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestAccMonitorSMTPResourceLegacySecurityModesRejected(t *testing.T) {
+	for _, mode := range []string{"None", "STARTTLS", "TLS"} {
+		t.Run(mode, func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      testAccMonitorSMTPResourceConfigSecurityMode("unused", "smtp.example.com", mode),
+						PlanOnly:    true,
+						ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+					},
+				},
+			})
+		})
+	}
 }

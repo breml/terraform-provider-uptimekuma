@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -38,6 +39,8 @@ type MonitorTCPPortResourceModel struct {
 
 	Hostname                 types.String `tfsdk:"hostname"`
 	Port                     types.Int64  `tfsdk:"port"`
+	SMTPSecurity             types.String `tfsdk:"smtp_security"`
+	ExpiryNotification       types.Bool   `tfsdk:"expiry_notification"`
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
@@ -72,6 +75,22 @@ func (*MonitorTCPPortResource) Schema(
 				Validators: []validator.Int64{
 					int64validator.Between(1, 65535),
 				},
+			},
+			"smtp_security": schema.StringAttribute{
+				MarkdownDescription: "TLS mode, the \"SSL/TLS\" option in the Uptime Kuma web UI: `nostarttls` " +
+					"(None), `secure` (SSL) or `starttls` (STARTTLS). When unset, the check is plain TCP, and " +
+					"a value set on the monitor outside Terraform is cleared on the next apply. Uptime Kuma " +
+					"only performs the TLS check for `secure` and `starttls` while `expiry_notification` is " +
+					"`true`.",
+				Optional:   true,
+				Validators: smtpSecurityValidators(),
+			},
+			"expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable the TLS check and certificate expiry notification. Only has an " +
+					"effect while `smtp_security` is `secure` or `starttls`.",
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(false),
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
@@ -114,6 +133,8 @@ func (r *MonitorTCPPortResource) Create(
 		TCPPortDetails: monitor.TCPPortDetails{
 			Hostname:                 data.Hostname.ValueString(),
 			Port:                     int(data.Port.ValueInt64()),
+			SMTPSecurity:             strToPtr(data.SMTPSecurity),
+			ExpiryNotification:       data.ExpiryNotification.ValueBool(),
 			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}
@@ -205,6 +226,8 @@ func (r *MonitorTCPPortResource) Read(ctx context.Context, req resource.ReadRequ
 	data.Active = types.BoolValue(tcpPortMonitor.IsActive)
 	data.Hostname = types.StringValue(tcpPortMonitor.Hostname)
 	data.Port = types.Int64Value(int64(tcpPortMonitor.Port))
+	data.SMTPSecurity = ptrToTypes(tcpPortMonitor.SMTPSecurity)
+	data.ExpiryNotification = types.BoolValue(tcpPortMonitor.ExpiryNotification)
 	data.DomainExpiryNotification = types.BoolValue(tcpPortMonitor.DomainExpiryNotification)
 
 	if tcpPortMonitor.Parent != nil {
@@ -269,6 +292,8 @@ func (r *MonitorTCPPortResource) Update(
 		TCPPortDetails: monitor.TCPPortDetails{
 			Hostname:                 data.Hostname.ValueString(),
 			Port:                     int(data.Port.ValueInt64()),
+			SMTPSecurity:             strToPtr(data.SMTPSecurity),
+			ExpiryNotification:       data.ExpiryNotification.ValueBool(),
 			DomainExpiryNotification: data.DomainExpiryNotification.ValueBool(),
 		},
 	}

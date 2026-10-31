@@ -23,5 +23,7 @@ Get TCP Port monitor information by ID or name
 ### Read-Only
 
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification
+- `expiry_notification` (Boolean) Enable the TLS check and certificate expiry notification
 - `hostname` (String) Hostname to monitor
 - `port` (Number) Port number
+- `smtp_security` (String) TLS mode: `nostarttls`, `secure` or `starttls`. Null when unset
