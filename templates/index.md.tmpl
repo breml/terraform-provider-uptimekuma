@@ -60,6 +60,16 @@ This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run a
 - `uptimekuma_notification_openwa` needs Uptime Kuma 2.5.1 or later. Uptime Kuma 2.5.0 saves the
   notification without complaint, but fails every send with `Notification type is not supported`.
 
+## Upgrading: `is_active` removed from notifications
+
+All notification resources no longer have an `is_active` attribute. Delete it from your
+configurations, along with any references to it, because Terraform rejects both. Existing state needs
+no action.
+
+Uptime Kuma does not store this value and does not check it when sending alerts, so
+`is_active = false` never silenced a notification. To stop alerts, remove the notification from the
+`notification_ids` of its monitors.
+
 ## Upgrading: `smtp_security` values
 
 `smtp_security` on `uptimekuma_monitor_smtp` now accepts only the values Uptime Kuma recognises.

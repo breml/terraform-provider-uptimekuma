@@ -16,6 +16,11 @@ import (
 )
 
 // NotificationBaseModel describes the base data model for all notification types.
+//
+// There is deliberately no is_active attribute: Uptime Kuma does not store a
+// notification's active value and does not check it when sending alerts. Create
+// and Update always send IsActive: true, so notifications stay enabled if a
+// server version starts honoring the field. See #478.
 type NotificationBaseModel struct {
 	ID            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`

@@ -67,9 +67,9 @@ resource "uptimekuma_monitor_http" "example" {
 
 ```hcl
 resource "uptimekuma_notification_webhook" "example" {
-  name   = "Slack Webhook"
-  url    = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-  method = "POST"
+  name                 = "Slack Webhook"
+  webhook_url          = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+  webhook_content_type = "json"
 }
 ```
 

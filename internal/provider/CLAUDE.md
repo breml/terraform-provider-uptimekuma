@@ -353,6 +353,9 @@ type NotificationBaseModel struct {
 }
 ```
 
+There is deliberately no `is_active` attribute: Uptime Kuma ignores the value, so Create and Update
+always send `IsActive: true`. New notification resources do the same.
+
 **Helper Function**: `withNotificationBaseAttributes(attrs map[string]schema.Attribute)` ([resource_notification_base.go:22](resource_notification_base.go))
 
 **Usage Pattern**:
