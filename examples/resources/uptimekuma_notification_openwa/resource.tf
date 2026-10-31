@@ -17,7 +17,7 @@ resource "uptimekuma_notification_openwa" "custom_message" {
   session            = "default"
   chat_id            = "00117612345678@c.us"
   use_custom_message = true
-  custom_message     = "{{ NAME }} is {{ STATUS }}: {{ msg }}"
+  custom_message     = "{{ name }} is {{ status }}: {{ msg }}"
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in

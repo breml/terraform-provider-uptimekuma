@@ -97,8 +97,8 @@ func (*NotificationOpenWaResource) Schema(
 				},
 			},
 			"use_custom_message": schema.BoolAttribute{
-				MarkdownDescription: "Render `custom_message` instead of sending the default message. " +
-					"If unset, Uptime Kuma sends the default message.",
+				MarkdownDescription: "If `true`, render `custom_message` instead of sending the default message " +
+					"(see `custom_message`). If `false` or unset, Uptime Kuma sends the default message.",
 				Optional: true,
 			},
 			"custom_message": schema.StringAttribute{
@@ -288,7 +288,8 @@ func (*NotificationOpenWaResource) ImportState(
 }
 
 // openWaFromModel builds an OpenWA notification from the resource model. The caller resolves
-// api_key, which may be write-only and so is not in the model.
+// api_key: a write-only value is only available in the config, not in the plan this model is
+// read from.
 //
 // Both optional fields are omitempty pointers on the wire: null maps to nil, which keeps them out of
 // the request entirely, whereas an explicit false or empty string is sent as is.

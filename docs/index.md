@@ -57,6 +57,8 @@ This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run a
   `^[a-zA-Z0-9._\-@]+$`, which matches the server side check added in 2.5.0. On Windows the
   Service Control Manager does not accept `@`, so a name containing it is accepted here but
   fails when the check runs.
+- `uptimekuma_notification_openwa` needs Uptime Kuma 2.5.1 or later. Uptime Kuma 2.5.0 saves the
+  notification without complaint, but fails every send with `Notification type is not supported`.
 
 ## Upgrading: `smtp_security` values
 

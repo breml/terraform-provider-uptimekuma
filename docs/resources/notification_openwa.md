@@ -32,7 +32,7 @@ resource "uptimekuma_notification_openwa" "custom_message" {
   session            = "default"
   chat_id            = "00117612345678@c.us"
   use_custom_message = true
-  custom_message     = "{{ NAME }} is {{ STATUS }}: {{ msg }}"
+  custom_message     = "{{ name }} is {{ status }}: {{ msg }}"
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
@@ -70,7 +70,7 @@ resource "uptimekuma_notification_openwa" "write_only" {
 - `custom_message` (String) Custom message template. Uptime Kuma only renders it if `use_custom_message` is `true` and the trimmed template is not empty, otherwise it sends the default message.
 - `is_active` (Boolean)
 - `is_default` (Boolean)
-- `use_custom_message` (Boolean) Render `custom_message` instead of sending the default message. If unset, Uptime Kuma sends the default message.
+- `use_custom_message` (Boolean) If `true`, render `custom_message` instead of sending the default message (see `custom_message`). If `false` or unset, Uptime Kuma sends the default message.
 
 ### Read-Only
 
