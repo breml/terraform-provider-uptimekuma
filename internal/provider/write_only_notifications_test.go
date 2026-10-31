@@ -396,6 +396,14 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("api_key", n.APIKey)
 			}),
 		},
+		"uptimekuma_notification_notifyapp": {
+			body: `
+  device_id = "ABC12345"`,
+			attrs: []string{"token"},
+			serverSecrets: notificationSecrets(func(n *notification.NotifyApp) map[string]string {
+				return singleSecret("token", n.Token)
+			}),
+		},
 		"uptimekuma_notification_ntfy": {
 			body: `
   topic                 = "uptime_kuma"
