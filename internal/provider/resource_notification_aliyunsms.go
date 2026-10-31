@@ -133,7 +133,7 @@ func (r *NotificationAliyunsmsResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		AliyunSMSDetails: notification.AliyunSMSDetails{
@@ -204,7 +204,6 @@ func (r *NotificationAliyunsmsResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(aliyunsms.Name)
-	data.IsActive = types.BoolValue(aliyunsms.IsActive)
 	data.IsDefault = types.BoolValue(aliyunsms.IsDefault)
 	data.ApplyExisting = types.BoolValue(aliyunsms.ApplyExisting)
 
@@ -240,7 +239,7 @@ func (r *NotificationAliyunsmsResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		AliyunSMSDetails: notification.AliyunSMSDetails{

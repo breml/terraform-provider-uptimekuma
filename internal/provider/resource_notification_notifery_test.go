@@ -41,11 +41,6 @@ func TestAccNotificationNotiferyResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_notifery.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_notifery.test",
 						tfjsonpath.New("title"),
 						knownvalue.StringExact("Test Alert"),
 					),
@@ -76,11 +71,6 @@ func TestAccNotificationNotiferyResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_notifery.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_notifery.test",
 						tfjsonpath.New("title"),
 						knownvalue.StringExact("Updated Alert"),
 					),
@@ -107,7 +97,6 @@ func testAccNotificationNotiferyResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_notifery" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = %[2]q
   title     = %[3]q
   group     = %[4]q

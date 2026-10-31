@@ -104,7 +104,7 @@ func (r *NotificationGoogleSheetsResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GoogleSheetsDetails: notification.GoogleSheetsDetails{
@@ -171,7 +171,6 @@ func (r *NotificationGoogleSheetsResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(googleSheets.Name)
-	data.IsActive = types.BoolValue(googleSheets.IsActive)
 	data.IsDefault = types.BoolValue(googleSheets.IsDefault)
 	data.ApplyExisting = types.BoolValue(googleSheets.ApplyExisting)
 
@@ -202,7 +201,7 @@ func (r *NotificationGoogleSheetsResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GoogleSheetsDetails: notification.GoogleSheetsDetails{

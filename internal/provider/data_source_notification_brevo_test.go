@@ -68,7 +68,6 @@ func testAccNotificationBrevoDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_brevo" "test" {
   name       = %[1]q
-  is_active  = true
   api_key    = %[2]q
   to_email   = %[3]q
   from_email = %[4]q

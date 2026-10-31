@@ -14,8 +14,7 @@ Web Push (W3C Push API) notification resource
 
 ```terraform
 resource "uptimekuma_notification_webpush" "example" {
-  name      = "Web Push Notifications"
-  is_active = true
+  name = "Web Push Notifications"
 
   subscription = {
     endpoint = "https://fcm.googleapis.com/fcm/send/abc123"
@@ -38,7 +37,6 @@ resource "uptimekuma_notification_webpush" "example" {
 ### Optional
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

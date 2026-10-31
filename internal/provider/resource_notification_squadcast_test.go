@@ -35,11 +35,6 @@ func TestAccNotificationSquadcastResource(t *testing.T) {
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURL),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_squadcast.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -54,11 +49,6 @@ func TestAccNotificationSquadcastResource(t *testing.T) {
 						"uptimekuma_notification_squadcast.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURLUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_squadcast.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -82,7 +72,6 @@ func testAccNotificationSquadcastResourceConfig(name string, webhookURL string) 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_squadcast" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)

@@ -54,7 +54,6 @@ func testAccNotificationWhapiDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_whapi" "test" {
   name       = %[1]q
-  is_active  = true
   api_url    = %[2]q
   auth_token = %[3]q
   recipient  = %[4]q

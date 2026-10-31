@@ -41,7 +41,6 @@ func testAccNotificationNotiferyDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_notifery" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = "test-api-key-12345"
 }
 

@@ -15,7 +15,6 @@ Jira Service Management notification resource
 ```terraform
 resource "uptimekuma_notification_jiraservicemanagement" "example" {
   name      = "Jira Service Management Example"
-  is_active = true
   cloud_id  = "your-jsm-cloud-id"
   email     = "you@example.com"
   api_token = "your-jsm-api-token"
@@ -51,7 +50,6 @@ resource "uptimekuma_notification_jiraservicemanagement" "write_only" {
 - `api_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Atlassian API token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `api_token`; requires `api_token_wo_version`. An imported resource has no `api_token_wo_version` yet, so `terraform import` may store the server's value in `api_token` until the next apply with `api_token_wo` set removes it from state.
 - `api_token_wo_version` (String) Any value that changes whenever `api_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_token_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `priority` (Number) Alert priority (1-5)
 

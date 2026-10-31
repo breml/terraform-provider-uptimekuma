@@ -228,7 +228,6 @@ func (r *NotificationTurboSMTPResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(turboSMTP.Name)
-	data.IsActive = types.BoolValue(turboSMTP.IsActive)
 	data.IsDefault = types.BoolValue(turboSMTP.IsDefault)
 	data.ApplyExisting = types.BoolValue(turboSMTP.ApplyExisting)
 
@@ -352,7 +351,7 @@ func turboSMTPFromModel(data *NotificationTurboSMTPResourceModel) notification.T
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TurboSMTPDetails: notification.TurboSMTPDetails{

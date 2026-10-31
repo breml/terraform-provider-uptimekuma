@@ -46,7 +46,6 @@ func testAccNotificationSMSGatewayDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsgateway" "test" {
   name       = %[1]q
-  is_active  = true
   url        = "http://localhost:8080"
   api_key    = "test-api-key"
   recipients = "+15551234567"

@@ -108,7 +108,7 @@ func (r *NotificationKookResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		KookDetails: notification.KookDetails{
@@ -176,7 +176,6 @@ func (r *NotificationKookResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(kook.Name)
-	data.IsActive = types.BoolValue(kook.IsActive)
 	data.IsDefault = types.BoolValue(kook.IsDefault)
 	data.ApplyExisting = types.BoolValue(kook.ApplyExisting)
 
@@ -209,7 +208,7 @@ func (r *NotificationKookResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		KookDetails: notification.KookDetails{

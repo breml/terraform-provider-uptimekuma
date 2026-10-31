@@ -53,11 +53,6 @@ func TestAccNotificationWhapiResource(t *testing.T) {
 						tfjsonpath.New("recipient"),
 						knownvalue.StringExact(recipient),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_whapi.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -88,11 +83,6 @@ func TestAccNotificationWhapiResource(t *testing.T) {
 						tfjsonpath.New("recipient"),
 						knownvalue.StringExact(recipientUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_whapi.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -113,7 +103,6 @@ func testAccNotificationWhapiResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_whapi" "test" {
   name       = %[1]q
-  is_active  = true
   api_url    = %[2]q
   auth_token = %[3]q
   recipient  = %[4]q

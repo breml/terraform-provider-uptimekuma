@@ -15,7 +15,6 @@ Gotify notification resource
 ```terraform
 resource "uptimekuma_notification_gotify" "example" {
   name              = "Gotify Notifications"
-  is_active         = true
   is_default        = false
   apply_existing    = false
   server_url        = "https://gotify.example.com"
@@ -51,7 +50,6 @@ resource "uptimekuma_notification_gotify" "write_only" {
 - `application_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Gotify application token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `application_token`; requires `application_token_wo_version`. An imported resource has no `application_token_wo_version` yet, so `terraform import` may store the server's value in `application_token` until the next apply with `application_token_wo` set removes it from state.
 - `application_token_wo_version` (String) Any value that changes whenever `application_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `application_token_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `priority` (Number) Gotify message priority (1-10, default 8)
 

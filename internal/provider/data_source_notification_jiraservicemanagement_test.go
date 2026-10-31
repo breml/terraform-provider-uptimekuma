@@ -47,7 +47,6 @@ func testAccNotificationJiraServiceManagementDataSourceConfig(name string, apiTo
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_jiraservicemanagement" "test" {
   name      = %[1]q
-  is_active = true
   cloud_id  = "cloud-id-123"
   email     = "user@example.com"
   api_token = %[2]q

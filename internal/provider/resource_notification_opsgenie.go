@@ -121,7 +121,7 @@ func (r *NotificationOpsgenieResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OpsgenieDetails: notification.OpsgenieDetails{
@@ -190,7 +190,6 @@ func (r *NotificationOpsgenieResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(opsgenie.Name)
-	data.IsActive = types.BoolValue(opsgenie.IsActive)
 	data.IsDefault = types.BoolValue(opsgenie.IsDefault)
 	data.ApplyExisting = types.BoolValue(opsgenie.ApplyExisting)
 
@@ -224,7 +223,7 @@ func (r *NotificationOpsgenieResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OpsgenieDetails: notification.OpsgenieDetails{

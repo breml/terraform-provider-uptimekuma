@@ -3,7 +3,6 @@ resource "uptimekuma_notification_smsgateway" "example" {
   url        = "http://sms-gateway.example.com:8080"
   api_key    = "your-sms-gateway-api-key"
   recipients = "+15551234567"
-  is_active  = true
   is_default = false
 }
 
@@ -13,7 +12,6 @@ resource "uptimekuma_notification_smsgateway" "team" {
   url        = "http://sms-gateway.example.com:8080"
   api_key    = "your-sms-gateway-api-key"
   recipients = "+15551234567, +15559876543"
-  is_active  = true
   is_default = false
 }
 

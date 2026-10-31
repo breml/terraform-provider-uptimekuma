@@ -17,7 +17,6 @@ resource "uptimekuma_notification_notifery" "example" {
   name       = "Notifery Notifications"
   api_key    = "your-notifery-api-key"
   title      = "Uptime Kuma Alert"
-  is_active  = true
   is_default = false
 }
 
@@ -26,7 +25,6 @@ resource "uptimekuma_notification_notifery" "with_group" {
   api_key    = "your-notifery-api-key"
   title      = "Uptime Kuma Alert"
   group      = "infrastructure"
-  is_active  = true
   is_default = false
 }
 
@@ -56,7 +54,6 @@ resource "uptimekuma_notification_notifery" "write_only" {
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
 - `group` (String) Notification group for organizing notifications
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `title` (String) Title of the notification
 

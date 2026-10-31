@@ -108,7 +108,7 @@ func (r *NotificationFreemobileResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FreeMobileDetails: notification.FreeMobileDetails{
@@ -176,7 +176,6 @@ func (r *NotificationFreemobileResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(freemobile.Name)
-	data.IsActive = types.BoolValue(freemobile.IsActive)
 	data.IsDefault = types.BoolValue(freemobile.IsDefault)
 	data.ApplyExisting = types.BoolValue(freemobile.ApplyExisting)
 
@@ -208,7 +207,7 @@ func (r *NotificationFreemobileResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FreeMobileDetails: notification.FreeMobileDetails{

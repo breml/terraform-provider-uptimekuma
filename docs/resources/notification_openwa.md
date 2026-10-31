@@ -20,7 +20,6 @@ resource "uptimekuma_notification_openwa" "example" {
   api_key    = "your-openwa-api-key"
   session    = "default"
   chat_id    = "00117612345678@c.us,123456789012345678@g.us,1234567890@lid"
-  is_active  = true
   is_default = false
 }
 
@@ -68,7 +67,6 @@ resource "uptimekuma_notification_openwa" "write_only" {
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
 - `custom_message` (String) Custom message template. Uptime Kuma only renders it if `use_custom_message` is `true` and the trimmed template is not empty, otherwise it sends the default message.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `use_custom_message` (Boolean) If `true`, render `custom_message` instead of sending the default message (see `custom_message`). If `false` or unset, Uptime Kuma sends the default message.
 

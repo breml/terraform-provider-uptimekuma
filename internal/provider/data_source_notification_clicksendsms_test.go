@@ -41,7 +41,6 @@ func testAccNotificationClicksendSmsDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_clicksendsms" "test" {
   name        = %[1]q
-  is_active   = true
   login       = "test@example.com"
   password    = "testApiKey123"
   to_number   = "+61412345678"

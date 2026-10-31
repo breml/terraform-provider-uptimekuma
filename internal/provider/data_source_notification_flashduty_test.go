@@ -42,7 +42,6 @@ func testAccNotificationFlashDutyDataSourceConfig(name string, integrationKey st
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_flashduty" "test" {
   name            = %[1]q
-  is_active       = true
   integration_key = %[2]q
   severity        = "Critical"
 }

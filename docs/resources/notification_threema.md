@@ -19,7 +19,6 @@ Threema notification resource
 
 resource "uptimekuma_notification_threema" "example_email" {
   name            = "Threema Email Recipient"
-  is_active       = true
   sender_identity = "YOUR_GATEWAY_ID"
   secret          = "YOUR_API_SECRET" # Sensitive field
   recipient       = "user@example.com"
@@ -28,7 +27,6 @@ resource "uptimekuma_notification_threema" "example_email" {
 
 resource "uptimekuma_notification_threema" "example_phone" {
   name            = "Threema Phone Recipient"
-  is_active       = true
   sender_identity = "YOUR_GATEWAY_ID"
   secret          = "YOUR_API_SECRET" # Sensitive field
   recipient       = "+41791234567"
@@ -37,7 +35,6 @@ resource "uptimekuma_notification_threema" "example_phone" {
 
 resource "uptimekuma_notification_threema" "example_identity" {
   name            = "Threema Identity Recipient"
-  is_active       = true
   sender_identity = "YOUR_GATEWAY_ID"
   secret          = "YOUR_API_SECRET" # Sensitive field
   recipient       = "ECHOECHO"
@@ -73,7 +70,6 @@ resource "uptimekuma_notification_threema" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `secret` (String, Sensitive) Threema API secret for authentication. Stored in state; use `secret_wo` to keep it out of state.
 - `secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Threema Gateway API secret, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `secret`; requires `secret_wo_version`. An imported resource has no `secret_wo_version` yet, so `terraform import` may store the server's value in `secret` until the next apply with `secret_wo` set removes it from state.

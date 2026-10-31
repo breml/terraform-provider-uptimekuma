@@ -46,7 +46,6 @@ func testAccNotificationGrafanaOncallDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_grafanaoncall" "test" {
   name               = %[1]q
-  is_active          = true
   grafana_oncall_url = "https://grafana-oncall.example.com/integrations/v1/webhook/abc123/"
 }
 

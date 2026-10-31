@@ -15,7 +15,6 @@ Mattermost notification resource
 ```terraform
 resource "uptimekuma_notification_mattermost" "example" {
   name        = "Mattermost Example"
-  is_active   = true
   webhook_url = "https://mattermost.example.com/hooks/xxx"
   username    = "Uptime Kuma"
   channel     = "#alerts"
@@ -48,7 +47,6 @@ resource "uptimekuma_notification_mattermost" "write_only" {
 - `channel` (String) Channel name to send notifications to
 - `icon_emoji` (String) Icon emoji to display in Mattermost
 - `icon_url` (String) Icon URL to display in Mattermost
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `username` (String) Username to display in Mattermost
 - `webhook_url` (String, Sensitive) Mattermost webhook URL. Stored in state; use `webhook_url_wo` to keep it out of state.

@@ -19,7 +19,6 @@ resource "uptimekuma_notification_ntfy" "example" {
   priority   = 5
   server_url = "https://ntfy.sh"
   icon       = "https://example.com/icon.png"
-  is_active  = true
   is_default = false
 }
 
@@ -28,7 +27,6 @@ resource "uptimekuma_notification_ntfy" "high_priority" {
   topic      = "critical_alerts"
   priority   = 1
   server_url = "https://ntfy.sh"
-  is_active  = true
   is_default = true
 }
 
@@ -95,7 +93,6 @@ resource "uptimekuma_notification_ntfy" "write_only" {
 - `custom_message` (String) Custom message template. Only used if `use_template` is `true`.
 - `custom_title` (String) Custom title template. Only used if `use_template` is `true`.
 - `icon` (String) URL of the icon attached to the notification.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `password` (String, Sensitive) ntfy password, used when `authentication_method` is `usernamePassword`. Stored in state; use `password_wo` to keep it out of state.
 - `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) ntfy password, used when `authentication_method` is `usernamePassword`, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `password`; requires `password_wo_version`. An imported resource has no `password_wo_version` yet, so `terraform import` may store the server's value in `password` until the next apply with `password_wo` set removes it from state.

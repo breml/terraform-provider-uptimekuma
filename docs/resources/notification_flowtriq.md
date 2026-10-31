@@ -16,7 +16,6 @@ Flowtriq notification resource. Flowtriq is a DDoS detection and incident platfo
 resource "uptimekuma_notification_flowtriq" "example" {
   name        = "Flowtriq Notifications"
   webhook_url = "https://app.flowtriq.com/api/webhooks/0123456789abcdef"
-  is_active   = true
   is_default  = false
 }
 
@@ -26,7 +25,6 @@ resource "uptimekuma_notification_flowtriq" "authenticated" {
   name        = "Flowtriq Authenticated"
   webhook_url = "https://app.flowtriq.com/api/webhooks/0123456789abcdef"
   api_key     = "0123456789abcdef0123456789abcdef"
-  is_active   = true
   is_default  = false
 }
 
@@ -58,7 +56,6 @@ resource "uptimekuma_notification_flowtriq" "write_only" {
 - `api_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The API key authenticating the request against Flowtriq, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `api_key`; requires `api_key_wo_version`. An imported resource has no `api_key_wo_version` yet, so `terraform import` may store the server's value in `api_key` until the next apply with `api_key_wo` set removes it from state.
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `webhook_url` (String, Sensitive) The Flowtriq webhook endpoint the notification is posted to, for example `https://app.flowtriq.com/api/webhooks/0123456789abcdef`. Stored in state; use `webhook_url_wo` to keep it out of state.
 - `webhook_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The Flowtriq webhook endpoint the notification is posted to, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `webhook_url`; requires `webhook_url_wo_version`. An imported resource has no `webhook_url_wo_version` yet, so `terraform import` may store the server's value in `webhook_url` until the next apply with `webhook_url_wo` set removes it from state.

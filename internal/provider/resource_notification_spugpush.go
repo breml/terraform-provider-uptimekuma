@@ -100,7 +100,7 @@ func (r *NotificationSpugPushResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SpugPushDetails: notification.SpugPushDetails{
@@ -167,7 +167,6 @@ func (r *NotificationSpugPushResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(spugpush.Name)
-	data.IsActive = types.BoolValue(spugpush.IsActive)
 	data.IsDefault = types.BoolValue(spugpush.IsDefault)
 	data.ApplyExisting = types.BoolValue(spugpush.ApplyExisting)
 
@@ -198,7 +197,7 @@ func (r *NotificationSpugPushResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SpugPushDetails: notification.SpugPushDetails{

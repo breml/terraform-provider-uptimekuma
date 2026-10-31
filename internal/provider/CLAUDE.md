@@ -348,11 +348,13 @@ Common fields for ALL notification types:
 type NotificationBaseModel struct {
     ID            types.Int64  // Computed
     Name          types.String // Required: Notification name
-    IsActive      types.Bool   // Active status (default: true)
     IsDefault     types.Bool   // Default notification for new monitors (default: false)
     ApplyExisting types.Bool   // Apply to existing monitors retroactively (default: false)
 }
 ```
+
+There is deliberately no `is_active` attribute: Uptime Kuma ignores the value, so Create and Update
+always send `IsActive: true`. New notification resources do the same.
 
 **Helper Function**: `withNotificationBaseAttributes(attrs map[string]schema.Attribute)` ([resource_notification_base.go:22](resource_notification_base.go))
 

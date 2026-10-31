@@ -42,11 +42,6 @@ func TestAccNotificationSignalResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_signal.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_signal.test",
 						tfjsonpath.New("number"),
 						knownvalue.StringExact("+1234567890"),
 					),
@@ -74,11 +69,6 @@ func TestAccNotificationSignalResource(t *testing.T) {
 						"uptimekuma_notification_signal.test",
 						tfjsonpath.New("url"),
 						knownvalue.StringExact(urlUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_signal.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_signal.test",
@@ -114,7 +104,6 @@ func testAccNotificationSignalResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_signal" "test" {
   name       = %[1]q
-  is_active  = true
   url        = %[2]q
   number     = %[3]q
   recipients = %[4]q

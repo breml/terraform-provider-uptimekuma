@@ -33,11 +33,6 @@ func TestAccNotificationNtfyResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						notificationNtfyResourceName,
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						notificationNtfyResourceName,
 						tfjsonpath.New("authentication_method"),
 						knownvalue.StringExact("none"),
 					),
@@ -91,11 +86,6 @@ func TestAccNotificationNtfyResource(t *testing.T) {
 						notificationNtfyResourceName,
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						notificationNtfyResourceName,
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						notificationNtfyResourceName,
@@ -370,7 +360,6 @@ func testAccNotificationNtfyResourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ntfy" "test" {
   name      = %[1]q
-  is_active = true
 
   authentication_method = "none"
   server_url            = "https://ntfy.sh"
@@ -384,7 +373,6 @@ func testAccNotificationNtfyResourceConfigAccessToken(name string, topic string,
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ntfy" "test" {
   name      = %[1]q
-  is_active = true
 
   authentication_method = "accessToken"
   access_token          = %[3]q
@@ -400,7 +388,6 @@ func testAccNotificationNtfyResourceConfigUsernamePassword(name string, topic st
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ntfy" "test" {
   name      = %[1]q
-  is_active = true
 
   authentication_method = "usernamePassword"
   username              = "ntfy-user"
@@ -416,7 +403,6 @@ func testAccNotificationNtfyResourceConfigTemplate(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ntfy" "test" {
   name      = %[1]q
-  is_active = true
 
   server_url     = "https://ntfy.sh"
   topic          = %[1]q

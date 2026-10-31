@@ -34,11 +34,6 @@ func TestAccNotificationVKResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_vk.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_vk.test",
 						tfjsonpath.New("access_token"),
 						knownvalue.StringExact(accessToken),
 					),
@@ -135,7 +130,6 @@ func testAccNotificationVKResourceConfigMinimal(name string, accessToken string,
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_vk" "test" {
   name         = %[1]q
-  is_active    = true
   access_token = %[2]q
   peer_id      = %[3]q
 }
@@ -148,7 +142,6 @@ func testAccNotificationVKResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_vk" "test" {
   name             = %[1]q
-  is_active        = true
   access_token     = %[2]q
   peer_id          = %[3]q
   api_version      = %[4]q

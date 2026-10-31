@@ -52,11 +52,6 @@ func TestAccNotificationTelegramResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_telegram.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_telegram.test",
 						tfjsonpath.New("send_silently"),
 						knownvalue.Bool(false),
 					),
@@ -163,7 +158,6 @@ func testAccNotificationTelegramResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_telegram" "test" {
   name                = %[1]q
-  is_active           = true
   bot_token           = %[2]q
   chat_id             = %[3]q
   send_silently       = %[4]t

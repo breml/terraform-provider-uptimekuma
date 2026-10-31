@@ -112,7 +112,7 @@ func (r *NotificationLineResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		LineDetails: notification.LineDetails{
@@ -186,7 +186,6 @@ func (r *NotificationLineResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(line.Name)
-	data.IsActive = types.BoolValue(line.IsActive)
 	data.IsDefault = types.BoolValue(line.IsDefault)
 	data.ApplyExisting = types.BoolValue(line.ApplyExisting)
 
@@ -219,7 +218,7 @@ func (r *NotificationLineResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		LineDetails: notification.LineDetails{

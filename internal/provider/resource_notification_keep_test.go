@@ -45,11 +45,6 @@ func TestAccNotificationKeepResource(t *testing.T) {
 						tfjsonpath.New("api_key"),
 						knownvalue.StringExact(apiKey),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_keep.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -74,11 +69,6 @@ func TestAccNotificationKeepResource(t *testing.T) {
 						tfjsonpath.New("api_key"),
 						knownvalue.StringExact(apiKeyUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_keep.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -97,7 +87,6 @@ func testAccNotificationKeepResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_keep" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
   api_key     = %[3]q
 }

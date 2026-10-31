@@ -100,7 +100,7 @@ func (r *NotificationSIGNL4Resource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SIGNL4Details: notification.SIGNL4Details{
@@ -167,7 +167,6 @@ func (r *NotificationSIGNL4Resource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(signl4.Name)
-	data.IsActive = types.BoolValue(signl4.IsActive)
 	data.IsDefault = types.BoolValue(signl4.IsDefault)
 	data.ApplyExisting = types.BoolValue(signl4.ApplyExisting)
 
@@ -198,7 +197,7 @@ func (r *NotificationSIGNL4Resource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SIGNL4Details: notification.SIGNL4Details{

@@ -15,7 +15,6 @@ Brevo notification resource
 ```terraform
 resource "uptimekuma_notification_brevo" "example" {
   name       = "Brevo Email Alerts"
-  is_active  = true
   api_key    = "your_brevo_api_key_here"
   to_email   = "alerts@example.com"
   from_email = "monitoring@example.com"
@@ -25,7 +24,6 @@ resource "uptimekuma_notification_brevo" "example" {
 
 resource "uptimekuma_notification_brevo" "with_cc" {
   name       = "Brevo Email Alerts with CC"
-  is_active  = true
   api_key    = "your_brevo_api_key_here"
   to_email   = "alerts@example.com"
   from_email = "monitoring@example.com"
@@ -68,7 +66,6 @@ resource "uptimekuma_notification_brevo" "write_only" {
 - `bcc_email` (String) Comma-separated list of BCC email addresses
 - `cc_email` (String) Comma-separated list of CC email addresses
 - `from_name` (String) Sender name
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `subject` (String) Email subject line
 

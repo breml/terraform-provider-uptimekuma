@@ -16,14 +16,12 @@ CallMeBot notification resource
 resource "uptimekuma_notification_callmebot" "example" {
   name       = "CallMeBot WhatsApp"
   endpoint   = "https://api.callmebot.com/whatsapp.php?phone=YOUR_PHONE&text="
-  is_active  = true
   is_default = false
 }
 
 resource "uptimekuma_notification_callmebot" "telegram_example" {
   name       = "CallMeBot Telegram"
   endpoint   = "https://api.callmebot.com/telegram.php?token=YOUR_TOKEN&chat_id=YOUR_CHAT_ID&text="
-  is_active  = true
   is_default = false
 }
 
@@ -52,7 +50,6 @@ resource "uptimekuma_notification_callmebot" "write_only" {
 - `endpoint` (String, Sensitive) CallMeBot endpoint URL where notifications will be sent. Stored in state; use `endpoint_wo` to keep it out of state.
 - `endpoint_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) CallMeBot endpoint URL where notifications will be sent, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `endpoint`; requires `endpoint_wo_version`. An imported resource has no `endpoint_wo_version` yet, so `terraform import` may store the server's value in `endpoint` until the next apply with `endpoint_wo` set removes it from state.
 - `endpoint_wo_version` (String) Any value that changes whenever `endpoint_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `endpoint_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

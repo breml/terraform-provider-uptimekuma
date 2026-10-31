@@ -41,7 +41,6 @@ func testAccNotificationKeepDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_keep" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://api.keephq.dev/alerts/alert"
   api_key     = "test-api-key"
 }

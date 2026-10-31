@@ -56,7 +56,6 @@ func testAccNotificationMatrixDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_matrix" "test" {
   name               = %[1]q
-  is_active          = true
   homeserver_url     = %[2]q
   internal_room_id   = %[3]q
   access_token       = %[4]q

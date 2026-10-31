@@ -41,7 +41,6 @@ func testAccNotificationEvolutionDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_evolution" "test" {
   name          = %[1]q
-  is_active     = true
   api_url       = "https://api.evolution.example.com"
   instance_name = "testinstance"
   auth_token    = "testAuthToken123"

@@ -15,7 +15,6 @@ Keep notification resource
 ```terraform
 resource "uptimekuma_notification_keep" "example" {
   name        = "Keep Notifications"
-  is_active   = true
   webhook_url = "https://api.keephq.dev/alerts/alert"
   api_key     = "your-keep-api-key"
 }
@@ -48,7 +47,6 @@ resource "uptimekuma_notification_keep" "write_only" {
 - `api_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Keep API key for authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `api_key`; requires `api_key_wo_version`. An imported resource has no `api_key_wo_version` yet, so `terraform import` may store the server's value in `api_key` until the next apply with `api_key_wo` set removes it from state.
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `webhook_url` (String, Sensitive) Keep webhook URL. Stored in state; use `webhook_url_wo` to keep it out of state.
 - `webhook_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Keep webhook URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `webhook_url`; requires `webhook_url_wo_version`. An imported resource has no `webhook_url_wo_version` yet, so `terraform import` may store the server's value in `webhook_url` until the next apply with `webhook_url_wo` set removes it from state.

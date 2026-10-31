@@ -46,7 +46,6 @@ func testAccNotificationTurboSMTPDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_turbosmtp" "test" {
   name            = %[1]q
-  is_active       = true
   consumer_key    = "consumer-key"
   consumer_secret = "consumer-secret"
   from_email      = "alerts@example.com"

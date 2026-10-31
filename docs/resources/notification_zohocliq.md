@@ -16,14 +16,12 @@ Zoho Cliq notification resource
 resource "uptimekuma_notification_zohocliq" "example" {
   name        = "Zoho Cliq Notifications"
   webhook_url = "https://cliq.zoho.com/company/api/v2/channelsbyname/general/message?zapikey=your-api-key"
-  is_active   = true
   is_default  = false
 }
 
 resource "uptimekuma_notification_zohocliq" "backup" {
   name        = "Zoho Cliq Backup"
   webhook_url = "https://cliq.zoho.com/company/api/v2/channelsbyname/alerts/message?zapikey=your-backup-key"
-  is_active   = true
   is_default  = false
 }
 
@@ -49,7 +47,6 @@ resource "uptimekuma_notification_zohocliq" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `webhook_url` (String, Sensitive) Zoho Cliq webhook URL. Stored in state; use `webhook_url_wo` to keep it out of state.
 - `webhook_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Zoho Cliq webhook URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `webhook_url`; requires `webhook_url_wo_version`. An imported resource has no `webhook_url_wo_version` yet, so `terraform import` may store the server's value in `webhook_url` until the next apply with `webhook_url_wo` set removes it from state.

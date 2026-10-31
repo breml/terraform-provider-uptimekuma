@@ -123,7 +123,7 @@ func (r *NotificationAlertaResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		AlertaDetails: notification.AlertaDetails{
@@ -194,7 +194,6 @@ func (r *NotificationAlertaResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(alerta.Name)
-	data.IsActive = types.BoolValue(alerta.IsActive)
 	data.IsDefault = types.BoolValue(alerta.IsDefault)
 	data.ApplyExisting = types.BoolValue(alerta.ApplyExisting)
 
@@ -238,7 +237,7 @@ func (r *NotificationAlertaResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		AlertaDetails: notification.AlertaDetails{

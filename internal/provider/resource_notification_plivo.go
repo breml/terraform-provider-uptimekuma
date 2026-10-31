@@ -268,7 +268,6 @@ func (r *NotificationPlivoResource) Read(ctx context.Context, req resource.ReadR
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(plivo.Name)
-	data.IsActive = types.BoolValue(plivo.IsActive)
 	data.IsDefault = types.BoolValue(plivo.IsDefault)
 	data.ApplyExisting = types.BoolValue(plivo.ApplyExisting)
 
@@ -392,7 +391,7 @@ func plivoFromModel(data *NotificationPlivoResourceModel) notification.Plivo {
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PlivoDetails: notification.PlivoDetails{

@@ -117,7 +117,7 @@ func (r *NotificationWhapiResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WhapiDetails: notification.WhapiDetails{
@@ -186,7 +186,6 @@ func (r *NotificationWhapiResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(whapi.Name)
-	data.IsActive = types.BoolValue(whapi.IsActive)
 	data.IsDefault = types.BoolValue(whapi.IsDefault)
 	data.ApplyExisting = types.BoolValue(whapi.ApplyExisting)
 
@@ -220,7 +219,7 @@ func (r *NotificationWhapiResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WhapiDetails: notification.WhapiDetails{

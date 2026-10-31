@@ -42,11 +42,6 @@ func TestAccNotificationBarkResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_bark.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_bark.test",
 						tfjsonpath.New("group"),
 						knownvalue.StringExact("test-group"),
 					),
@@ -80,11 +75,6 @@ func TestAccNotificationBarkResource(t *testing.T) {
 						"uptimekuma_notification_bark.test",
 						tfjsonpath.New("endpoint"),
 						knownvalue.NotNull(),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_bark.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_bark.test",
@@ -122,7 +112,6 @@ func testAccNotificationBarkResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bark" "test" {
   name        = %[1]q
-  is_active   = true
   endpoint    = %[2]q
   group       = %[3]q
   sound       = %[4]q

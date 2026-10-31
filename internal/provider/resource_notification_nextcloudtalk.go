@@ -136,7 +136,7 @@ func (r *NotificationNextcloudTalkResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		NextcloudTalkDetails: notification.NextcloudTalkDetails{
@@ -203,7 +203,6 @@ func (r *NotificationNextcloudTalkResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(nextcloudTalk.Name)
-	data.IsActive = types.BoolValue(nextcloudTalk.IsActive)
 	data.IsDefault = types.BoolValue(nextcloudTalk.IsDefault)
 	data.ApplyExisting = types.BoolValue(nextcloudTalk.ApplyExisting)
 
@@ -239,7 +238,7 @@ func (r *NotificationNextcloudTalkResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		NextcloudTalkDetails: notification.NextcloudTalkDetails{

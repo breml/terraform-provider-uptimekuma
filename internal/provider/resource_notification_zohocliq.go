@@ -100,7 +100,7 @@ func (r *NotificationZohoCliqResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ZohoCliqDetails: notification.ZohoCliqDetails{
@@ -167,7 +167,6 @@ func (r *NotificationZohoCliqResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(zohoCliq.Name)
-	data.IsActive = types.BoolValue(zohoCliq.IsActive)
 	data.IsDefault = types.BoolValue(zohoCliq.IsDefault)
 	data.ApplyExisting = types.BoolValue(zohoCliq.ApplyExisting)
 
@@ -200,7 +199,7 @@ func (r *NotificationZohoCliqResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ZohoCliqDetails: notification.ZohoCliqDetails{

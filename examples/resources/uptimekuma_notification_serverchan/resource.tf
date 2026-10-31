@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_serverchan" "example" {
   name       = "ServerChan Notification"
-  is_active  = true
   is_default = false
 
   # ServerChan send key for authentication

@@ -17,7 +17,6 @@ resource "uptimekuma_notification_whatsapp360messenger" "example" {
   name       = "WhatsApp 360messenger Notifications"
   auth_token = "YOUR_360MESSENGER_AUTH_TOKEN"
   recipient  = "+15551234567,+15557654321"
-  is_active  = true
   is_default = false
 }
 
@@ -28,7 +27,6 @@ resource "uptimekuma_notification_whatsapp360messenger" "with_template" {
   group_ids    = ["120363012345678901", "120363098765432109"]
   use_template = true
   template     = "{{ name }} is {{ status }}"
-  is_active    = true
   is_default   = false
 }
 
@@ -62,7 +60,6 @@ resource "uptimekuma_notification_whatsapp360messenger" "write_only" {
 - `auth_token_wo_version` (String) Any value that changes whenever `auth_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `auth_token_wo`.
 - `group_id` (String) Legacy single WhatsApp group ID, kept for backwards compatibility. Conflicts with `group_ids`.
 - `group_ids` (List of String) A list of WhatsApp group IDs to send notifications to. Conflicts with `group_id`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `template` (String) The custom message template for WhatsApp notifications.
 - `use_template` (Boolean) If true, use a custom message template for WhatsApp notifications.

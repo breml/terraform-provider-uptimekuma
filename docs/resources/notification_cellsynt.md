@@ -15,7 +15,6 @@ Cellsynt SMS notification resource
 ```terraform
 resource "uptimekuma_notification_cellsynt" "example" {
   name            = "Cellsynt SMS Notification"
-  is_active       = true
   login           = "your_cellsynt_username"
   password        = "your_cellsynt_password"
   destination     = "+46701234567"
@@ -54,7 +53,6 @@ resource "uptimekuma_notification_cellsynt" "write_only" {
 
 - `allow_long_sms` (Boolean) Allow sending SMS messages longer than 160 characters
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `originator_type` (String) Type of originator (Numeric or Alphanumeric)
 - `password` (String, Sensitive) Cellsynt account password. Stored in state; use `password_wo` to keep it out of state.

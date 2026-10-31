@@ -167,7 +167,7 @@ func (r *NotificationPagerDutyResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PagerDutyDetails: notification.PagerDutyDetails{
@@ -237,7 +237,6 @@ func (r *NotificationPagerDutyResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pagerduty.Name)
-	data.IsActive = types.BoolValue(pagerduty.IsActive)
 	data.IsDefault = types.BoolValue(pagerduty.IsDefault)
 	data.ApplyExisting = types.BoolValue(pagerduty.ApplyExisting)
 
@@ -290,7 +289,7 @@ func (r *NotificationPagerDutyResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PagerDutyDetails: notification.PagerDutyDetails{

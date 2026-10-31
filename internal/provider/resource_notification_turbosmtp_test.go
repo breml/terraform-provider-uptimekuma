@@ -33,7 +33,6 @@ func TestAccNotificationTurboSMTPResource(t *testing.T) {
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_default"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("apply_existing"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("id"), knownvalue.NotNull()),
@@ -172,7 +171,6 @@ func testAccNotificationTurboSMTPResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_turbosmtp" "test" {
   name            = %[1]q
-  is_active       = true
   consumer_key    = %[2]q
   consumer_secret = %[3]q
   from_email      = %[4]q
@@ -187,7 +185,6 @@ func testAccNotificationTurboSMTPResourceEUConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_turbosmtp" "eu" {
   name            = %[1]q
-  is_active       = true
   consumer_key    = "consumer-key-eu"
   consumer_secret = "consumer-secret-eu"
   region          = "eu"
@@ -204,7 +201,6 @@ func testAccNotificationTurboSMTPResourceClearedConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_turbosmtp" "eu" {
   name            = %[1]q
-  is_active       = true
   consumer_key    = "consumer-key-eu"
   consumer_secret = "consumer-secret-eu"
   from_email      = "alerts@example.eu"

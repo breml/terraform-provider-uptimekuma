@@ -4,7 +4,6 @@ resource "uptimekuma_notification_twilio" "example" {
   auth_token  = "your-auth-token"
   to_number   = "+12025550123"
   from_number = "+12025550456"
-  is_active   = true
   is_default  = false
 }
 
@@ -15,7 +14,6 @@ resource "uptimekuma_notification_twilio" "with_api_key" {
   auth_token  = "your-auth-token"
   to_number   = "+12025550123"
   from_number = "+12025550456"
-  is_active   = true
   is_default  = false
 }
 

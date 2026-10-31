@@ -17,7 +17,6 @@ resource "uptimekuma_notification_flashduty" "example" {
   name            = "FlashDuty Notifications"
   integration_key = "https://api.flashduty.com/webhook/events/YOUR_INTEGRATION_KEY"
   severity        = "Critical"
-  is_active       = true
   is_default      = false
 }
 
@@ -25,7 +24,6 @@ resource "uptimekuma_notification_flashduty" "warning_alerts" {
   name            = "FlashDuty Warning Alerts"
   integration_key = "https://api.flashduty.com/webhook/events/YOUR_INTEGRATION_KEY"
   severity        = "Warning"
-  is_active       = true
   is_default      = false
 }
 
@@ -54,7 +52,6 @@ resource "uptimekuma_notification_flashduty" "write_only" {
 - `integration_key` (String, Sensitive) FlashDuty integration key or webhook URL. Stored in state; use `integration_key_wo` to keep it out of state.
 - `integration_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) FlashDuty integration key or webhook URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `integration_key`; requires `integration_key_wo_version`. An imported resource has no `integration_key_wo_version` yet, so `terraform import` may store the server's value in `integration_key` until the next apply with `integration_key_wo` set removes it from state.
 - `integration_key_wo_version` (String) Any value that changes whenever `integration_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `integration_key_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `severity` (String) Alert severity level (Info, Warning, Critical, Ok)
 

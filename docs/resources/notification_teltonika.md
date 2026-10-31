@@ -20,7 +20,6 @@ resource "uptimekuma_notification_teltonika" "sms" {
   username     = "admin"
   password     = "your-router-password"
   phone_number = "+1234567890"
-  is_active    = true
   is_default   = false
 }
 
@@ -33,7 +32,6 @@ resource "uptimekuma_notification_teltonika" "self_signed" {
   modem        = "1-1"
   phone_number = "+1234567890,+1234567891"
   unsafe_tls   = true
-  is_active    = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: password_wo is never stored in
@@ -65,7 +63,6 @@ resource "uptimekuma_notification_teltonika" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `modem` (String) The modem identifier on the router (e.g., "1-1").
 - `password` (String, Sensitive) The password for the router user. Stored in state; use `password_wo` to keep it out of state.

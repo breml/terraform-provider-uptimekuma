@@ -46,7 +46,6 @@ func testAccNotificationResendDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_resend" "test" {
   name       = %[1]q
-  is_active  = true
   api_key    = "re_test_apikey"
   from_email = "monitoring@example.com"
   to_email   = "alerts@example.com"

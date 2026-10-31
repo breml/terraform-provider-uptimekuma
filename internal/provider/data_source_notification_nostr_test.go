@@ -46,7 +46,6 @@ func testAccNotificationNostrDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_nostr" "test" {
   name       = %[1]q
-  is_active  = true
   sender     = %[2]q
   recipients = %[3]q
   relays     = %[4]q

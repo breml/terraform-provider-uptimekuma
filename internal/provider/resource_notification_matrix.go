@@ -120,7 +120,7 @@ func (r *NotificationMatrixResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		MatrixDetails: notification.MatrixDetails{
@@ -189,7 +189,6 @@ func (r *NotificationMatrixResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(matrix.Name)
-	data.IsActive = types.BoolValue(matrix.IsActive)
 	data.IsDefault = types.BoolValue(matrix.IsDefault)
 	data.ApplyExisting = types.BoolValue(matrix.ApplyExisting)
 
@@ -223,7 +222,7 @@ func (r *NotificationMatrixResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		MatrixDetails: notification.MatrixDetails{

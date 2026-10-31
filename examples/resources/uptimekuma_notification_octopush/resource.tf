@@ -13,7 +13,6 @@ resource "uptimekuma_notification_octopush" "example_v2" {
   sender_name  = "MyApp"
 
   # Optional: Enable or disable the notification
-  is_active = true
 
   # Optional: Mark as default notification
   is_default = false
@@ -36,7 +35,6 @@ resource "uptimekuma_notification_octopush" "example_v1" {
   dm_sms_type     = "your-sms-type"
   dm_sender_name  = "MyApp"
 
-  is_active = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in plan

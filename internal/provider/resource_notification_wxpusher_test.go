@@ -32,11 +32,6 @@ func TestAccNotificationWxPusherResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_wxpusher.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_wxpusher.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -151,7 +146,6 @@ func testAccNotificationWxPusherResourceConfig(name string, spt string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_wxpusher" "test" {
   name      = %[1]q
-  is_active = true
   spt       = %[2]q
 }
 `, name, spt)

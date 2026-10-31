@@ -41,7 +41,6 @@ func testAccNotificationSMSPlanetDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsplanet" "test" {
   name          = %[1]q
-  is_active     = true
   api_token     = "test-api-token-datasource"
   phone_numbers = "+48123456789"
 }

@@ -31,11 +31,6 @@ func TestAccNotificationTeamsResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_teams.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_teams.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURL),
 					),
@@ -48,11 +43,6 @@ func TestAccNotificationTeamsResource(t *testing.T) {
 						"uptimekuma_notification_teams.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_teams.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_teams.test",
@@ -69,7 +59,6 @@ func testAccNotificationTeamsResourceConfig(name string, webhookURL string) stri
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_teams" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)

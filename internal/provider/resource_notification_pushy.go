@@ -109,7 +109,7 @@ func (r *NotificationPushyResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushyDetails: notification.PushyDetails{
@@ -173,7 +173,6 @@ func (r *NotificationPushyResource) Read(ctx context.Context, req resource.ReadR
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushy.Name)
-	data.IsActive = types.BoolValue(pushy.IsActive)
 	data.IsDefault = types.BoolValue(pushy.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushy.ApplyExisting)
 
@@ -206,7 +205,7 @@ func (r *NotificationPushyResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushyDetails: notification.PushyDetails{

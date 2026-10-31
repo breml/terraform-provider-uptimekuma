@@ -174,7 +174,6 @@ func (r *NotificationPingletResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pinglet.Name)
-	data.IsActive = types.BoolValue(pinglet.IsActive)
 	data.IsDefault = types.BoolValue(pinglet.IsDefault)
 	data.ApplyExisting = types.BoolValue(pinglet.ApplyExisting)
 
@@ -276,7 +275,7 @@ func pingletFromModel(data *NotificationPingletResourceModel) notification.Pingl
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PingletDetails: notification.PingletDetails{

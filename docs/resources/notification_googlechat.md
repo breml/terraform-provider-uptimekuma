@@ -16,7 +16,6 @@ Google Chat notification resource
 resource "uptimekuma_notification_googlechat" "example" {
   name        = "My Google Chat Notification"
   webhook_url = "https://chat.googleapis.com/v1/spaces/SPACE_ID/messages?key=KEY&token=TOKEN"
-  is_active   = true
 
   # Optional: Use a custom message template
   use_template = true
@@ -45,7 +44,6 @@ resource "uptimekuma_notification_googlechat" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `template` (String) Custom message template for notifications
 - `use_template` (Boolean) Enable custom message template

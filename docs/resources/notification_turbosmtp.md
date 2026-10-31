@@ -19,7 +19,6 @@ resource "uptimekuma_notification_turbosmtp" "example" {
   consumer_secret = "your-turbosmtp-consumer-secret"
   from_email      = "uptime-kuma@example.com"
   to_email        = "oncall@example.com"
-  is_active       = true
   is_default      = false
 }
 
@@ -34,7 +33,6 @@ resource "uptimekuma_notification_turbosmtp" "eu" {
   cc_email        = "team-lead@example.eu"
   bcc_email       = "audit@example.eu"
   subject         = "Uptime Kuma alert"
-  is_active       = true
   is_default      = false
 }
 
@@ -72,7 +70,6 @@ resource "uptimekuma_notification_turbosmtp" "write_only" {
 - `consumer_secret` (String, Sensitive) The TurboSMTP consumer secret used to authenticate requests. Stored in state; use `consumer_secret_wo` to keep it out of state.
 - `consumer_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The TurboSMTP consumer secret used to authenticate requests, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `consumer_secret`; requires `consumer_secret_wo_version`. An imported resource has no `consumer_secret_wo_version` yet, so `terraform import` may store the server's value in `consumer_secret` until the next apply with `consumer_secret_wo` set removes it from state.
 - `consumer_secret_wo_version` (String) Any value that changes whenever `consumer_secret_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `consumer_secret_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `region` (String) The TurboSMTP API region, either `us` or `eu`. If unset, Uptime Kuma sends the alert through the US API host.
 - `subject` (String) The subject of the email. If unset, Uptime Kuma uses `Notification from Your Uptime Kuma`.

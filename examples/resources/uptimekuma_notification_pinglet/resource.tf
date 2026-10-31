@@ -2,7 +2,6 @@ resource "uptimekuma_notification_pinglet" "example" {
   name        = "Pinglet Notifications"
   publish_url = "https://app.pinglet.co.uk/your-namespace/alerts"
   api_key     = "your-pinglet-api-key"
-  is_active   = true
   is_default  = false
 }
 

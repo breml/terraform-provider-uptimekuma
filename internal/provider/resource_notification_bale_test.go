@@ -43,11 +43,6 @@ func TestAccNotificationBaleResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_bale.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_bale.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -81,11 +76,6 @@ func TestAccNotificationBaleResource(t *testing.T) {
 						tfjsonpath.New("chat_id"),
 						knownvalue.StringExact(chatIDUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_bale.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -102,7 +92,6 @@ func testAccNotificationBaleResourceConfig(name string, botToken string, chatID 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bale" "test" {
   name      = %[1]q
-  is_active = true
   bot_token = %[2]q
   chat_id   = %[3]q
 }

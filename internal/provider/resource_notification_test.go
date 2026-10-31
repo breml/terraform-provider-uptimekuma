@@ -31,11 +31,6 @@ func TestAccNotificationResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification.test",
 						tfjsonpath.New("type"),
 						knownvalue.StringExact("ntfy"),
 					),
@@ -84,11 +79,6 @@ func TestAccNotificationResource(t *testing.T) {
 						"uptimekuma_notification.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification.test",
@@ -141,7 +131,6 @@ func testAccNotificationResourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification" "test" {
   name      = %[1]q
-  is_active = true
   type      = "ntfy"
   config = jsonencode({
     ntfyAuthenticationMethod = "none"

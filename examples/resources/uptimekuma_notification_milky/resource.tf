@@ -6,7 +6,6 @@ resource "uptimekuma_notification_milky" "group" {
   access_token = "your-milky-access-token"
   msg_type     = "group"
   receiver_id  = "123456789"
-  is_active    = true
   is_default   = false
 }
 

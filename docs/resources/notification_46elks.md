@@ -15,7 +15,6 @@ description: |-
 ```terraform
 resource "uptimekuma_notification_46elks" "example" {
   name        = "46elks SMS Notification"
-  is_active   = true
   username    = "your_46elks_username"
   auth_token  = "your_46elks_auth_token"
   from_number = "+1234567890"
@@ -54,7 +53,6 @@ resource "uptimekuma_notification_46elks" "write_only" {
 - `auth_token` (String, Sensitive) 46elks authentication token. Stored in state; use `auth_token_wo` to keep it out of state.
 - `auth_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) 46elks authentication token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `auth_token`; requires `auth_token_wo_version`. An imported resource has no `auth_token_wo_version` yet, so `terraform import` may store the server's value in `auth_token` until the next apply with `auth_token_wo` set removes it from state.
 - `auth_token_wo_version` (String) Any value that changes whenever `auth_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `auth_token_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

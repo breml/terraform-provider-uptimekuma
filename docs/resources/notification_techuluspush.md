@@ -18,7 +18,6 @@ resource "uptimekuma_notification_techuluspush" "example" {
   api_key    = "your-techulus-push-api-key"
   title      = "Uptime Kuma Alert"
   channel    = "monitoring"
-  is_active  = true
   is_default = false
 }
 
@@ -28,7 +27,6 @@ resource "uptimekuma_notification_techuluspush" "urgent" {
   title          = "URGENT: Uptime Kuma"
   sound          = "alarm"
   time_sensitive = true
-  is_active      = true
   is_default     = true
 }
 
@@ -58,7 +56,6 @@ resource "uptimekuma_notification_techuluspush" "write_only" {
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
 - `channel` (String) Push notification channel
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `sound` (String) Notification sound identifier
 - `time_sensitive` (Boolean) Whether the notification is time-sensitive

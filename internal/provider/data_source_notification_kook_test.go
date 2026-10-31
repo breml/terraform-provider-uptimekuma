@@ -43,7 +43,6 @@ func testAccNotificationKookDataSourceConfig(name string, botToken string, guild
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_kook" "test" {
   name      = %[1]q
-  is_active = true
   bot_token = %[2]q
   guild_id  = %[3]q
 }

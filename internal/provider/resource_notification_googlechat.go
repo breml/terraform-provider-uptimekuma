@@ -117,7 +117,7 @@ func (r *NotificationGoogleChatResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GoogleChatDetails: notification.GoogleChatDetails{
@@ -186,7 +186,6 @@ func (r *NotificationGoogleChatResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(googleChat.Name)
-	data.IsActive = types.BoolValue(googleChat.IsActive)
 	data.IsDefault = types.BoolValue(googleChat.IsDefault)
 	data.ApplyExisting = types.BoolValue(googleChat.ApplyExisting)
 
@@ -225,7 +224,7 @@ func (r *NotificationGoogleChatResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GoogleChatDetails: notification.GoogleChatDetails{

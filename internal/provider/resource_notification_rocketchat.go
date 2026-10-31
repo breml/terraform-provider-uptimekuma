@@ -124,7 +124,7 @@ func (r *NotificationRocketChatResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		RocketChatDetails: notification.RocketChatDetails{
@@ -195,7 +195,6 @@ func (r *NotificationRocketChatResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(rocketChat.Name)
-	data.IsActive = types.BoolValue(rocketChat.IsActive)
 	data.IsDefault = types.BoolValue(rocketChat.IsDefault)
 	data.ApplyExisting = types.BoolValue(rocketChat.ApplyExisting)
 
@@ -242,7 +241,7 @@ func (r *NotificationRocketChatResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		RocketChatDetails: notification.RocketChatDetails{

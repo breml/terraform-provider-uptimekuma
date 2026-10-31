@@ -17,7 +17,6 @@ resource "uptimekuma_notification_dingding" "example" {
   name        = "DingDing Notifications"
   webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   secret_key  = "SECxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  is_active   = true
   is_default  = false
 }
 
@@ -26,7 +25,6 @@ resource "uptimekuma_notification_dingding" "critical" {
   webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=critical-token"
   secret_key  = "SECcritical-secret-key"
   mentioning  = "@all"
-  is_active   = true
   is_default  = true
 }
 
@@ -55,7 +53,6 @@ resource "uptimekuma_notification_dingding" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `mentioning` (String) Users to mention in the notification
 - `secret_key` (String, Sensitive) DingDing secret key for signature verification. Stored in state; use `secret_key_wo` to keep it out of state.

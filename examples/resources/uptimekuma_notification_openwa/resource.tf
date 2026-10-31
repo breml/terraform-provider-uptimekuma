@@ -5,7 +5,6 @@ resource "uptimekuma_notification_openwa" "example" {
   api_key    = "your-openwa-api-key"
   session    = "default"
   chat_id    = "00117612345678@c.us,123456789012345678@g.us,1234567890@lid"
-  is_active  = true
   is_default = false
 }
 

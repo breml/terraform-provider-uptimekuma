@@ -63,11 +63,6 @@ func TestAccNotificationTwilioResource(t *testing.T) {
 						tfjsonpath.New("from_number"),
 						knownvalue.StringExact(fromNumber),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_twilio.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -109,11 +104,6 @@ func TestAccNotificationTwilioResource(t *testing.T) {
 						"uptimekuma_notification_twilio.test",
 						tfjsonpath.New("api_key"),
 						knownvalue.StringExact("test_api_key"),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_twilio.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -157,11 +147,6 @@ func TestAccNotificationTwilioResource(t *testing.T) {
 						tfjsonpath.New("api_key"),
 						knownvalue.Null(),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_twilio.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -192,7 +177,6 @@ func testAccNotificationTwilioResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_twilio" "test" {
   name           = %[1]q
-  is_active      = true
   account_sid    = %[2]q
   auth_token     = %[3]q
   to_number      = %[4]q

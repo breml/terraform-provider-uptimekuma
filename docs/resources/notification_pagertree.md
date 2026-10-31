@@ -15,7 +15,6 @@ PagerTree notification resource
 ```terraform
 resource "uptimekuma_notification_pagertree" "example" {
   name            = "PagerTree Notification"
-  is_active       = true
   integration_url = "https://alerts.pagertree.com/api/v2/incidents"
   urgency         = "high"
   auto_resolve    = "resolve"
@@ -48,7 +47,6 @@ resource "uptimekuma_notification_pagertree" "write_only" {
 - `integration_url` (String, Sensitive) PagerTree integration endpoint URL. Stored in state; use `integration_url_wo` to keep it out of state.
 - `integration_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) PagerTree integration endpoint URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `integration_url`; requires `integration_url_wo_version`. An imported resource has no `integration_url_wo_version` yet, so `terraform import` may store the server's value in `integration_url` until the next apply with `integration_url_wo` set removes it from state.
 - `integration_url_wo_version` (String) Any value that changes whenever `integration_url_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `integration_url_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `urgency` (String) Urgency level of the alert (e.g., high, medium, low)
 

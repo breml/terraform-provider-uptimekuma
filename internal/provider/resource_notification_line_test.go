@@ -45,11 +45,6 @@ func TestAccNotificationLineResource(t *testing.T) {
 						tfjsonpath.New("user_id"),
 						knownvalue.StringExact(userID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_line.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -74,11 +69,6 @@ func TestAccNotificationLineResource(t *testing.T) {
 						tfjsonpath.New("user_id"),
 						knownvalue.StringExact(userIDUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_line.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 		},
@@ -89,7 +79,6 @@ func testAccNotificationLineResourceConfig(name string, channelAccessToken strin
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_line" "test" {
   name                   = %[1]q
-  is_active              = true
   channel_access_token   = %[2]q
   user_id                = %[3]q
 }

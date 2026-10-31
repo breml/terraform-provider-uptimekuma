@@ -36,11 +36,6 @@ func TestAccNotificationFlowtriqResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_flowtriq.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_flowtriq.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -176,7 +171,6 @@ func testAccNotificationFlowtriqResourceConfig(name string, webhookURL string) s
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_flowtriq" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)
@@ -186,7 +180,6 @@ func testAccNotificationFlowtriqResourceAPIKeyConfig(name string, apiKey string)
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_flowtriq" "with_key" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://app.flowtriq.com/api/webhooks/0123456789abcdef"
   api_key     = %[2]q
 }
@@ -197,7 +190,6 @@ func testAccNotificationFlowtriqResourceNoAPIKeyConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_flowtriq" "with_key" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://app.flowtriq.com/api/webhooks/0123456789abcdef"
 }
 `, name)

@@ -18,7 +18,6 @@ resource "uptimekuma_notification_signal" "example" {
   url        = "http://signal.example.com:8080"
   number     = "+1234567890"
   recipients = "+9876543210,+1111111111"
-  is_active  = true
   is_default = false
 }
 
@@ -27,7 +26,6 @@ resource "uptimekuma_notification_signal" "with_single_recipient" {
   url        = "http://signal.example.com:8080"
   number     = "+1234567890"
   recipients = "+9876543210"
-  is_active  = true
   is_default = false
 }
 ```
@@ -45,7 +43,6 @@ resource "uptimekuma_notification_signal" "with_single_recipient" {
 ### Optional
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

@@ -41,7 +41,6 @@ func testAccNotificationSerwersmsDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_serwersms" "test" {
   name         = %[1]q
-  is_active    = true
   username     = "testuser"
   password     = "testpass123"
   phone_number = "+48501234567"

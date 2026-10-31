@@ -58,11 +58,6 @@ func TestAccNotificationPagerDutyResource(t *testing.T) {
 						tfjsonpath.New("auto_resolve"),
 						knownvalue.StringExact("resolved"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pagerduty.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -99,11 +94,6 @@ func TestAccNotificationPagerDutyResource(t *testing.T) {
 						tfjsonpath.New("auto_resolve"),
 						knownvalue.StringExact("triggered"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pagerduty.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -130,7 +120,6 @@ func testAccNotificationPagerDutyResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pagerduty" "test" {
   name              = %[1]q
-  is_active         = true
   integration_url   = %[2]q
   integration_key   = %[3]q
   priority          = %[4]q

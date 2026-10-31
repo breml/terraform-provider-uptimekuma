@@ -46,7 +46,6 @@ func testAccNotificationOoredooDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ooredoo" "test" {
   name         = %[1]q
-  is_active    = true
   username     = "ooredoo-user"
   access_key   = "accesskey0000000000"
   bearer_token = "bearertoken0000000000000000"

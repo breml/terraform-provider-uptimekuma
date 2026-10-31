@@ -207,7 +207,6 @@ func (r *NotificationOoredooResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(ooredoo.Name)
-	data.IsActive = types.BoolValue(ooredoo.IsActive)
 	data.IsDefault = types.BoolValue(ooredoo.IsDefault)
 	data.ApplyExisting = types.BoolValue(ooredoo.ApplyExisting)
 
@@ -326,7 +325,7 @@ func ooredooFromModel(data *NotificationOoredooResourceModel) notification.Oored
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OoredooDetails: notification.OoredooDetails{

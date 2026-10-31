@@ -41,7 +41,6 @@ func testAccNotificationTeamsDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_teams" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://example.webhook.office.com/webhookb2/example"
 }
 

@@ -46,7 +46,6 @@ func testAccNotificationClickUpDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_clickup" "test" {
   name         = %[1]q
-  is_active    = true
   token        = "pk_12345678_TESTTOKEN"
   workspace_id = "9012345678"
   channel_id   = "abc12-345"

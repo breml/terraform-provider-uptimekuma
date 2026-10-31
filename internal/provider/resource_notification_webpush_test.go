@@ -35,11 +35,6 @@ func TestAccNotificationWebpushResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_webpush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_webpush.test",
 						tfjsonpath.New("subscription").AtMapKey("endpoint"),
 						knownvalue.StringExact(pushEndpoint),
 					),
@@ -93,7 +88,6 @@ func testAccNotificationWebpushResourceConfig(name string, endpoint string, p256
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webpush" "test" {
   name      = %[1]q
-  is_active = true
 
   subscription = {
     endpoint = %[2]q

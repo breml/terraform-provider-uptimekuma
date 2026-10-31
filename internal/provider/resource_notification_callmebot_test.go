@@ -34,11 +34,6 @@ func TestAccNotificationCallMeBotResource(t *testing.T) {
 						tfjsonpath.New("endpoint"),
 						knownvalue.StringExact(endpointURL),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_callmebot.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -53,11 +48,6 @@ func TestAccNotificationCallMeBotResource(t *testing.T) {
 						"uptimekuma_notification_callmebot.test",
 						tfjsonpath.New("endpoint"),
 						knownvalue.StringExact(endpointURLUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_callmebot.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -75,7 +65,6 @@ func testAccNotificationCallMeBotResourceConfig(name string, endpoint string) st
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_callmebot" "test" {
   name     = %[1]q
-  is_active = true
   endpoint = %[2]q
 }
 `, name, endpoint)

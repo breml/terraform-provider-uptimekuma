@@ -176,7 +176,6 @@ func (r *NotificationVKResource) Read(ctx context.Context, req resource.ReadRequ
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(vk.Name)
-	data.IsActive = types.BoolValue(vk.IsActive)
 	data.IsDefault = types.BoolValue(vk.IsDefault)
 	data.ApplyExisting = types.BoolValue(vk.ApplyExisting)
 
@@ -278,7 +277,7 @@ func vkFromModel(data *NotificationVKResourceModel) notification.VK {
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		VKDetails: notification.VKDetails{

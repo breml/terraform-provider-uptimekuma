@@ -18,7 +18,6 @@ resource "uptimekuma_notification_smsgateway" "example" {
   url        = "http://sms-gateway.example.com:8080"
   api_key    = "your-sms-gateway-api-key"
   recipients = "+15551234567"
-  is_active  = true
   is_default = false
 }
 
@@ -28,7 +27,6 @@ resource "uptimekuma_notification_smsgateway" "team" {
   url        = "http://sms-gateway.example.com:8080"
   api_key    = "your-sms-gateway-api-key"
   recipients = "+15551234567, +15559876543"
-  is_active  = true
   is_default = false
 }
 
@@ -62,7 +60,6 @@ resource "uptimekuma_notification_smsgateway" "write_only" {
 - `api_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) SMS Gateway API key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `api_key`; requires `api_key_wo_version`. An imported resource has no `api_key_wo_version` yet, so `terraform import` may store the server's value in `api_key` until the next apply with `api_key_wo` set removes it from state.
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

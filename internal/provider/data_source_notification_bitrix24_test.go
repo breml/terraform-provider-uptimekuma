@@ -43,7 +43,6 @@ func testAccNotificationBitrix24DataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bitrix24" "test" {
   name                    = %[1]q
-  is_active               = true
   webhook_url             = "https://your-bitrix24-domain.bitrix24.com/rest/1/webhook-key"
   notification_user_id    = "123"
 }

@@ -46,7 +46,6 @@ func testAccNotificationPlivoDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_plivo" "test" {
   name        = %[1]q
-  is_active   = true
   auth_id     = "MAXXXXXXXXXXXXXXXXXX"
   auth_token  = "authtoken0000000000000000000000000000000"
   from_number = "+15550001111"

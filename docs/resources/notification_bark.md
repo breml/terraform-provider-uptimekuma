@@ -15,7 +15,6 @@ Bark notification resource
 ```terraform
 resource "uptimekuma_notification_bark" "example" {
   name        = "Bark Notification"
-  is_active   = true
   endpoint    = "https://api.bark.com"
   group       = "monitoring"
   sound       = "default"
@@ -49,7 +48,6 @@ resource "uptimekuma_notification_bark" "write_only" {
 - `endpoint_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Bark server endpoint URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `endpoint`; requires `endpoint_wo_version`. An imported resource has no `endpoint_wo_version` yet, so `terraform import` may store the server's value in `endpoint` until the next apply with `endpoint_wo` set removes it from state.
 - `endpoint_wo_version` (String) Any value that changes whenever `endpoint_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `endpoint_wo`.
 - `group` (String) Notification group name
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `sound` (String) Notification sound
 

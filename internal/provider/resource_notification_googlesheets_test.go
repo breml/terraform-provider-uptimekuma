@@ -36,11 +36,6 @@ func TestAccNotificationGoogleSheetsResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlesheets.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_googlesheets.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -71,11 +66,6 @@ func TestAccNotificationGoogleSheetsResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlesheets.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_googlesheets.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -100,7 +90,6 @@ func testAccNotificationGoogleSheetsResourceConfig(name string, webhookURL strin
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_googlesheets" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)

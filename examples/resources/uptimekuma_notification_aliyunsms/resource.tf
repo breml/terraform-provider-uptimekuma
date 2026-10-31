@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_aliyunsms" "example" {
   name              = "Aliyun SMS Notification"
-  is_active         = true
   is_default        = false
   access_key_id     = "your-access-key-id"
   secret_access_key = "your-secret-access-key"

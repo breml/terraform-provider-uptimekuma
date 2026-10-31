@@ -68,11 +68,6 @@ func TestAccNotificationTeltonikaResource(t *testing.T) {
 						tfjsonpath.New("unsafe_tls"),
 						knownvalue.Bool(false),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_teltonika.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			// Full config: set all optional fields.
@@ -152,7 +147,6 @@ func testAccNotificationTeltonikaResourceConfigMinimal(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_teltonika" "test" {
   name         = %[1]q
-  is_active    = true
   url          = %[2]q
   username     = %[3]q
   password     = %[4]q
@@ -167,7 +161,6 @@ func testAccNotificationTeltonikaResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_teltonika" "test" {
   name         = %[1]q
-  is_active    = true
   url          = %[2]q
   username     = %[3]q
   password     = %[4]q

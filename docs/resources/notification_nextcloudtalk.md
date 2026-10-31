@@ -19,7 +19,6 @@ resource "uptimekuma_notification_nextcloudtalk" "example" {
   host               = "https://nextcloud.example.com"
   conversation_token = "abc123token"
   bot_secret         = "your-bot-secret"
-  is_active          = true
   is_default         = false
 }
 
@@ -31,7 +30,6 @@ resource "uptimekuma_notification_nextcloudtalk" "silent" {
   bot_secret         = "another-bot-secret"
   send_silent_up     = true
   send_silent_down   = false
-  is_active          = true
   is_default         = false
 }
 
@@ -64,7 +62,6 @@ resource "uptimekuma_notification_nextcloudtalk" "write_only" {
 - `bot_secret` (String, Sensitive) Bot secret for authentication and message signing. Stored in state; use `bot_secret_wo` to keep it out of state.
 - `bot_secret_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Bot secret for authentication and message signing, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `bot_secret`; requires `bot_secret_wo_version`. An imported resource has no `bot_secret_wo_version` yet, so `terraform import` may store the server's value in `bot_secret` until the next apply with `bot_secret_wo` set removes it from state.
 - `bot_secret_wo_version` (String) Any value that changes whenever `bot_secret_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `bot_secret_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `send_silent_down` (Boolean) Send DOWN notifications silently.
 - `send_silent_up` (Boolean) Send UP notifications silently.

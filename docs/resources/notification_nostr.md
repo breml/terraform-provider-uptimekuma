@@ -28,7 +28,6 @@ resource "uptimekuma_notification_nostr" "example" {
   relays = "wss://relay.example.com\nwss://relay2.example.com"
 
   # Optional: Enable or disable the notification
-  is_active = true
 
   # Optional: Mark as default notification
   is_default = false
@@ -63,7 +62,6 @@ resource "uptimekuma_notification_nostr" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `sender` (String, Sensitive) Sender private key in Nostr format (nsec encoded). Stored in state; use `sender_wo` to keep it out of state.
 - `sender_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sender private key in Nostr format (nsec encoded), write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `sender`; requires `sender_wo_version`. An imported resource has no `sender_wo_version` yet, so `terraform import` may store the server's value in `sender` until the next apply with `sender_wo` set removes it from state.

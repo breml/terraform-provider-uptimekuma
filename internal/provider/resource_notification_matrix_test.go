@@ -49,11 +49,6 @@ func TestAccNotificationMatrixResource(t *testing.T) {
 						tfjsonpath.New("internal_room_id"),
 						knownvalue.StringExact(internalRoomID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_matrix.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -79,11 +74,6 @@ func TestAccNotificationMatrixResource(t *testing.T) {
 						tfjsonpath.New("internal_room_id"),
 						knownvalue.StringExact(internalRoomIDUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_matrix.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -103,7 +93,6 @@ func testAccNotificationMatrixResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_matrix" "test" {
   name               = %[1]q
-  is_active          = true
   homeserver_url     = %[2]q
   internal_room_id   = %[3]q
   access_token       = %[4]q

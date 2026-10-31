@@ -129,7 +129,7 @@ func (r *NotificationJiraServiceManagementResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		JiraServiceManagementDetails: notification.JiraServiceManagementDetails{
@@ -208,7 +208,6 @@ func (r *NotificationJiraServiceManagementResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(jiraServiceManagement.Name)
-	data.IsActive = types.BoolValue(jiraServiceManagement.IsActive)
 	data.IsDefault = types.BoolValue(jiraServiceManagement.IsDefault)
 	data.ApplyExisting = types.BoolValue(jiraServiceManagement.ApplyExisting)
 
@@ -244,7 +243,7 @@ func (r *NotificationJiraServiceManagementResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		JiraServiceManagementDetails: notification.JiraServiceManagementDetails{

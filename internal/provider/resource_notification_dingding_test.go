@@ -31,11 +31,6 @@ func TestAccNotificationDingDingResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_dingding.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_dingding.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact("https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"),
 					),
@@ -58,11 +53,6 @@ func TestAccNotificationDingDingResource(t *testing.T) {
 						"uptimekuma_notification_dingding.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_dingding.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_dingding.test",
@@ -91,11 +81,6 @@ func TestAccNotificationDingDingResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_dingding.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_dingding.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact("https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"),
 					),
@@ -119,7 +104,6 @@ func testAccNotificationDingDingResourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_dingding" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"
 }
 `, name)
@@ -133,7 +117,6 @@ func testAccNotificationDingDingResourceConfigWithOptionalFields(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_dingding" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"
   secret_key  = %[2]q
   mentioning  = %[3]q

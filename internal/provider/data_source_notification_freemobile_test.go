@@ -41,7 +41,6 @@ func testAccNotificationFreemobileDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_freemobile" "test" {
   name      = %[1]q
-  is_active = true
   user      = "1234567890"
   pass      = "test_api_key"
 }

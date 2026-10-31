@@ -41,7 +41,6 @@ func testAccNotificationPushbulletDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushbullet" "test" {
   name         = %[1]q
-  is_active    = true
   access_token = "o.test1234567890abcdefghijklmnopqrst"
 }
 

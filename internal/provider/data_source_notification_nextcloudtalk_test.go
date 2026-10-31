@@ -41,7 +41,6 @@ func testAccNotificationNextcloudTalkDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_nextcloudtalk" "test" {
   name               = %[1]q
-  is_active          = true
   host               = "https://nextcloud.example.com"
   conversation_token = "test-token-123"
   bot_secret         = "test-secret-456"

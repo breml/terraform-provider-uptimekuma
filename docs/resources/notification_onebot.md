@@ -19,7 +19,6 @@ resource "uptimekuma_notification_onebot" "group_message" {
   access_token = "your-access-token"
   msg_type     = "group"
   receiver_id  = "123456789"
-  is_active    = true
   is_default   = false
 }
 
@@ -29,7 +28,6 @@ resource "uptimekuma_notification_onebot" "private_message" {
   access_token = "your-access-token"
   msg_type     = "private"
   receiver_id  = "987654321"
-  is_active    = true
   is_default   = false
 }
 
@@ -64,7 +62,6 @@ resource "uptimekuma_notification_onebot" "write_only" {
 - `access_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Access token for authentication with the OneBot service, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `access_token`; requires `access_token_wo_version`. An imported resource has no `access_token_wo_version` yet, so `terraform import` may store the server's value in `access_token` until the next apply with `access_token_wo` set removes it from state.
 - `access_token_wo_version` (String) Any value that changes whenever `access_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `access_token_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

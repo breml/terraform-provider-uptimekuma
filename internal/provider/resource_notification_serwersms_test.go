@@ -61,11 +61,6 @@ func TestAccNotificationSerwersmsResource(t *testing.T) {
 						tfjsonpath.New("sender_name"),
 						knownvalue.StringExact(senderName),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_serwersms.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -102,11 +97,6 @@ func TestAccNotificationSerwersmsResource(t *testing.T) {
 						tfjsonpath.New("sender_name"),
 						knownvalue.StringExact(senderNameUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_serwersms.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -125,7 +115,6 @@ func testAccNotificationSerwersmsResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_serwersms" "test" {
   name         = %[1]q
-  is_active    = true
   username     = %[2]q
   password     = %[3]q
   phone_number = %[4]q

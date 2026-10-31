@@ -19,7 +19,6 @@ resource "uptimekuma_notification_onesender" "private" {
   token         = "your-api-token"
   receiver      = "+6281234567890"
   type_receiver = "private"
-  is_active     = true
   is_default    = false
 }
 
@@ -29,7 +28,6 @@ resource "uptimekuma_notification_onesender" "group" {
   token         = "your-api-token"
   receiver      = "group-id-123"
   type_receiver = "group"
-  is_active     = true
   is_default    = false
 }
 
@@ -61,7 +59,6 @@ resource "uptimekuma_notification_onesender" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `token` (String, Sensitive) API token for authentication with OneSender service. Stored in state; use `token_wo` to keep it out of state.
 - `token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) API token for authentication with OneSender service, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `token`; requires `token_wo_version`. An imported resource has no `token_wo_version` yet, so `terraform import` may store the server's value in `token` until the next apply with `token_wo` set removes it from state.

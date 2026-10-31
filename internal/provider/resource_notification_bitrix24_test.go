@@ -46,11 +46,6 @@ func TestAccNotificationBitrix24Resource(t *testing.T) {
 						tfjsonpath.New("notification_user_id"),
 						knownvalue.StringExact(userID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_bitrix24.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -75,11 +70,6 @@ func TestAccNotificationBitrix24Resource(t *testing.T) {
 						tfjsonpath.New("notification_user_id"),
 						knownvalue.StringExact(userIDUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_bitrix24.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -100,7 +90,6 @@ func testAccNotificationBitrix24ResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bitrix24" "test" {
   name                    = %[1]q
-  is_active               = true
   webhook_url             = %[2]q
   notification_user_id    = %[3]q
 }

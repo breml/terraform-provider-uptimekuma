@@ -198,7 +198,6 @@ func (r *NotificationOpenWaResource) Read(ctx context.Context, req resource.Read
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(openWa.Name)
-	data.IsActive = types.BoolValue(openWa.IsActive)
 	data.IsDefault = types.BoolValue(openWa.IsDefault)
 	data.ApplyExisting = types.BoolValue(openWa.ApplyExisting)
 
@@ -298,7 +297,7 @@ func openWaFromModel(data *NotificationOpenWaResourceModel) notification.OpenWa 
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OpenWaDetails: notification.OpenWaDetails{

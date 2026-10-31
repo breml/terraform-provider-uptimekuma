@@ -47,7 +47,6 @@ func testAccNotificationOpsgenieDataSourceConfig(name string, apiKey string) str
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_opsgenie" "test" {
   name     = %[1]q
-  is_active = true
   api_key  = %[2]q
   region   = "us"
   priority = 1

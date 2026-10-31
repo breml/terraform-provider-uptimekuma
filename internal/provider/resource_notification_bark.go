@@ -115,7 +115,7 @@ func (r *NotificationBarkResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		BarkDetails: notification.BarkDetails{
@@ -181,7 +181,6 @@ func (r *NotificationBarkResource) Read(ctx context.Context, req resource.ReadRe
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(bark.Name)
-	data.IsActive = types.BoolValue(bark.IsActive)
 	data.IsDefault = types.BoolValue(bark.IsDefault)
 	data.ApplyExisting = types.BoolValue(bark.ApplyExisting)
 
@@ -230,7 +229,7 @@ func (r *NotificationBarkResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		BarkDetails: notification.BarkDetails{

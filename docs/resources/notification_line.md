@@ -17,7 +17,6 @@ resource "uptimekuma_notification_line" "example" {
   name                 = "LINE Notification"
   channel_access_token = "your_channel_access_token"
   user_id              = "your_user_id"
-  is_active            = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: channel_access_token_wo is never
@@ -48,7 +47,6 @@ resource "uptimekuma_notification_line" "write_only" {
 - `channel_access_token` (String, Sensitive) LINE channel access token. Stored in state; use `channel_access_token_wo` to keep it out of state.
 - `channel_access_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) LINE channel access token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `channel_access_token`; requires `channel_access_token_wo_version`. An imported resource has no `channel_access_token_wo_version` yet, so `terraform import` may store the server's value in `channel_access_token` until the next apply with `channel_access_token_wo` set removes it from state.
 - `channel_access_token_wo_version` (String) Any value that changes whenever `channel_access_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `channel_access_token_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

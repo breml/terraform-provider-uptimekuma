@@ -47,7 +47,6 @@ func testAccNotificationLineDataSourceConfig(name string, channelAccessToken str
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_line" "test" {
   name                   = %[1]q
-  is_active              = true
   channel_access_token   = %[2]q
   user_id                = %[3]q
 }

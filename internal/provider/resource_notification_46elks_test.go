@@ -61,11 +61,6 @@ func TestAccNotification46ElksResource(t *testing.T) {
 						tfjsonpath.New("to_number"),
 						knownvalue.StringExact(toNumber),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_46elks.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -123,7 +118,6 @@ func testAccNotification46ElksResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_46elks" "test" {
   name        = %[1]q
-  is_active   = true
   username    = %[2]q
   auth_token  = %[3]q
   from_number = %[4]q

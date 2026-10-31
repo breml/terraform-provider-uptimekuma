@@ -17,7 +17,6 @@ resource "uptimekuma_notification_max" "example" {
   name      = "MAX Notifications"
   bot_token = "your-bot-token"
   chat_id   = "-123456789"
-  is_active = true
 
   # Optional: Use a custom message template
   use_template    = true
@@ -53,7 +52,6 @@ resource "uptimekuma_notification_max" "write_only" {
 - `bot_token` (String, Sensitive) MAX messenger bot token. Stored in state; use `bot_token_wo` to keep it out of state.
 - `bot_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) MAX messenger bot token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `bot_token`; requires `bot_token_wo_version`. An imported resource has no `bot_token_wo_version` yet, so `terraform import` may store the server's value in `bot_token` until the next apply with `bot_token_wo` set removes it from state.
 - `bot_token_wo_version` (String) Any value that changes whenever `bot_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `bot_token_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `template` (String) Custom message template for notifications
 - `template_format` (String) Format of the custom message template (e.g. `markdown`)

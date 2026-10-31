@@ -30,11 +30,6 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_apprise.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_apprise.test",
 						tfjsonpath.New("apprise_url"),
 						knownvalue.StringExact("discord://webhook_id/webhook_token"),
 					),
@@ -52,11 +47,6 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 						"uptimekuma_notification_apprise.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_apprise.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_apprise.test",
@@ -80,11 +70,6 @@ func TestAccNotificationAppriseResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_apprise.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_apprise.test",
 						tfjsonpath.New("apprise_url"),
 						knownvalue.StringExact("discord://webhook_id/webhook_token"),
 					),
@@ -103,7 +88,6 @@ func testAccNotificationAppriseResourceConfig(name string, title string) string 
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q
-  is_active   = true
   apprise_url = "discord://webhook_id/webhook_token"
 `, name)
 
@@ -121,7 +105,6 @@ func testAccNotificationAppriseResourceConfigWithTitle(name string, title string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q
-  is_active   = true
   apprise_url = "discord://webhook_id/webhook_token"
   title       = %[2]q
 }

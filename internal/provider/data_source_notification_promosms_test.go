@@ -41,7 +41,6 @@ func testAccNotificationPromoSMSDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_promosms" "test" {
   name           = %[1]q
-  is_active      = true
   login          = "testuser"
   password       = "testpass123"
   phone_number   = "+48501234567"

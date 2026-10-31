@@ -113,7 +113,7 @@ func (r *NotificationSMSPartnerResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSPartnerDetails: notification.SMSPartnerDetails{
@@ -182,7 +182,6 @@ func (r *NotificationSMSPartnerResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smspartner.Name)
-	data.IsActive = types.BoolValue(smspartner.IsActive)
 	data.IsDefault = types.BoolValue(smspartner.IsDefault)
 	data.ApplyExisting = types.BoolValue(smspartner.ApplyExisting)
 
@@ -221,7 +220,7 @@ func (r *NotificationSMSPartnerResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSPartnerDetails: notification.SMSPartnerDetails{

@@ -46,7 +46,6 @@ func testAccNotificationPingletDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pinglet" "test" {
   name        = %[1]q
-  is_active   = true
   publish_url = "https://app.pinglet.co.uk/test-namespace/alerts"
   api_key     = "pinglet-api-key"
 }

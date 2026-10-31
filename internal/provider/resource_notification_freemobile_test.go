@@ -40,11 +40,6 @@ func TestAccNotificationFreemobileResource(t *testing.T) {
 						tfjsonpath.New("user"),
 						knownvalue.StringExact(user),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_freemobile.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -63,11 +58,6 @@ func TestAccNotificationFreemobileResource(t *testing.T) {
 						"uptimekuma_notification_freemobile.test",
 						tfjsonpath.New("user"),
 						knownvalue.StringExact(userUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_freemobile.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -89,7 +79,6 @@ func testAccNotificationFreemobileResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_freemobile" "test" {
   name      = %[1]q
-  is_active = true
   user      = %[2]q
   pass      = %[3]q
 }

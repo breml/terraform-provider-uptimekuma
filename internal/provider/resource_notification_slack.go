@@ -130,7 +130,7 @@ func (r *NotificationSlackResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SlackDetails: notification.SlackDetails{
@@ -198,7 +198,6 @@ func (r *NotificationSlackResource) Read(ctx context.Context, req resource.ReadR
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(slack.Name)
-	data.IsActive = types.BoolValue(slack.IsActive)
 	data.IsDefault = types.BoolValue(slack.IsDefault)
 	data.ApplyExisting = types.BoolValue(slack.ApplyExisting)
 
@@ -244,7 +243,7 @@ func (r *NotificationSlackResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SlackDetails: notification.SlackDetails{

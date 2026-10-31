@@ -100,7 +100,7 @@ func (r *NotificationPushbulletResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushbulletDetails: notification.PushbulletDetails{
@@ -167,7 +167,6 @@ func (r *NotificationPushbulletResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushbullet.Name)
-	data.IsActive = types.BoolValue(pushbullet.IsActive)
 	data.IsDefault = types.BoolValue(pushbullet.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushbullet.ApplyExisting)
 
@@ -198,7 +197,7 @@ func (r *NotificationPushbulletResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushbulletDetails: notification.PushbulletDetails{

@@ -184,7 +184,6 @@ func (r *NotificationHaloPSAResource) Read(ctx context.Context, req resource.Rea
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(haloPSA.Name)
-	data.IsActive = types.BoolValue(haloPSA.IsActive)
 	data.IsDefault = types.BoolValue(haloPSA.IsDefault)
 	data.ApplyExisting = types.BoolValue(haloPSA.ApplyExisting)
 
@@ -286,7 +285,7 @@ func haloPSAFromModel(data *NotificationHaloPSAResourceModel) notification.HaloP
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		HaloPSADetails: notification.HaloPSADetails{

@@ -41,7 +41,6 @@ func testAccNotificationAliyunsmsDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_aliyunsms" "test" {
   name               = %[1]q
-  is_active          = true
   access_key_id      = "test-access-key-id"
   secret_access_key  = "test-secret-access-key"
   phone_number       = "+1234567890"

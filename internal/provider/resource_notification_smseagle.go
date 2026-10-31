@@ -211,7 +211,7 @@ func (r *NotificationSMSEagleResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSEagleDetails: notification.SMSEagleDetails{
@@ -290,7 +290,6 @@ func (r *NotificationSMSEagleResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smseagle.Name)
-	data.IsActive = types.BoolValue(smseagle.IsActive)
 	data.IsDefault = types.BoolValue(smseagle.IsDefault)
 	data.ApplyExisting = types.BoolValue(smseagle.ApplyExisting)
 
@@ -358,7 +357,7 @@ func (r *NotificationSMSEagleResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSEagleDetails: notification.SMSEagleDetails{

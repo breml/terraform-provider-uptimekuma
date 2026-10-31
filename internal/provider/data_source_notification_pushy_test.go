@@ -41,7 +41,6 @@ func testAccNotificationPushyDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushy" "test" {
   name     = %[1]q
-  is_active = true
   api_key  = "test-api-key-123456789"
   token    = "test-device-token-abc123"
 }

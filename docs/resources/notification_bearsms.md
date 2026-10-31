@@ -18,7 +18,6 @@ resource "uptimekuma_notification_bearsms" "example" {
   username     = "your-bearsms-username"
   hash_key     = "your-bearsms-hash-key"
   phone_number = "9725XXXXXXXX"
-  is_active    = true
   is_default   = false
 }
 
@@ -61,7 +60,6 @@ resource "uptimekuma_notification_bearsms" "write_only" {
 - `hash_key` (String, Sensitive) The BearSMS hash key belonging to the account. Stored in state; use `hash_key_wo` to keep it out of state.
 - `hash_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The BearSMS hash key belonging to the account, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `hash_key`; requires `hash_key_wo_version`. An imported resource has no `hash_key_wo_version` yet, so `terraform import` may store the server's value in `hash_key` until the next apply with `hash_key_wo` set removes it from state.
 - `hash_key_wo_version` (String) Any value that changes whenever `hash_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `hash_key_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `sender_id` (String) The sender name or number shown to the recipient, at most 11 characters. The sender has to be approved in the BearSMS account. The length limit mirrors the Uptime Kuma web UI; Uptime Kuma's server enforces neither. If unset, Uptime Kuma sends no sender with the request and BearSMS uses the account's default sender.
 

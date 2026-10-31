@@ -100,7 +100,7 @@ func (r *NotificationServerChanResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ServerChanDetails: notification.ServerChanDetails{
@@ -167,7 +167,6 @@ func (r *NotificationServerChanResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(serverchan.Name)
-	data.IsActive = types.BoolValue(serverchan.IsActive)
 	data.IsDefault = types.BoolValue(serverchan.IsDefault)
 	data.ApplyExisting = types.BoolValue(serverchan.ApplyExisting)
 
@@ -198,7 +197,7 @@ func (r *NotificationServerChanResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ServerChanDetails: notification.ServerChanDetails{

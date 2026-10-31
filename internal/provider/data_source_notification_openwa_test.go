@@ -61,7 +61,6 @@ func testAccNotificationOpenWaDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_openwa" "test" {
   name      = %[1]q
-  is_active = true
   api_url   = "http://localhost:2785/"
   api_key   = "openwa-api-key"
   session   = "default"

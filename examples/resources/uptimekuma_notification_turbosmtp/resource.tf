@@ -4,7 +4,6 @@ resource "uptimekuma_notification_turbosmtp" "example" {
   consumer_secret = "your-turbosmtp-consumer-secret"
   from_email      = "uptime-kuma@example.com"
   to_email        = "oncall@example.com"
-  is_active       = true
   is_default      = false
 }
 
@@ -19,7 +18,6 @@ resource "uptimekuma_notification_turbosmtp" "eu" {
   cc_email        = "team-lead@example.eu"
   bcc_email       = "audit@example.eu"
   subject         = "Uptime Kuma alert"
-  is_active       = true
   is_default      = false
 }
 

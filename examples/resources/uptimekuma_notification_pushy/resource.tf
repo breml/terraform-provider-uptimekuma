@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_pushy" "example" {
   name       = "My Pushy Notification"
-  is_active  = true
   is_default = false
 
   # Pushy API secret key (sensitive)

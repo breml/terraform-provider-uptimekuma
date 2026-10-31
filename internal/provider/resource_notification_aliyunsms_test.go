@@ -70,11 +70,6 @@ func TestAccNotificationAliyunsmsResource(t *testing.T) {
 						tfjsonpath.New("template_code"),
 						knownvalue.StringExact(templateCode),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_aliyunsms.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -117,11 +112,6 @@ func TestAccNotificationAliyunsmsResource(t *testing.T) {
 						tfjsonpath.New("template_code"),
 						knownvalue.StringExact(templateCodeUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_aliyunsms.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -151,7 +141,6 @@ func testAccNotificationAliyunsmsResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_aliyunsms" "test" {
   name               = %[1]q
-  is_active          = true
   access_key_id      = %[2]q
   secret_access_key  = %[3]q
   phone_number       = %[4]q

@@ -53,11 +53,6 @@ func TestAccNotificationNostrResource(t *testing.T) {
 						tfjsonpath.New("relays"),
 						knownvalue.StringExact(relays),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_nostr.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -88,11 +83,6 @@ func TestAccNotificationNostrResource(t *testing.T) {
 						tfjsonpath.New("relays"),
 						knownvalue.StringExact(relaysUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_nostr.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -110,7 +100,6 @@ func testAccNotificationNostrResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_nostr" "test" {
   name       = %[1]q
-  is_active  = true
   sender     = %[2]q
   recipients = %[3]q
   relays     = %[4]q

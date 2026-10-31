@@ -45,11 +45,6 @@ func TestAccNotificationWPushResource(t *testing.T) {
 						tfjsonpath.New("channel"),
 						knownvalue.StringExact(channel),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_wpush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -74,11 +69,6 @@ func TestAccNotificationWPushResource(t *testing.T) {
 						tfjsonpath.New("channel"),
 						knownvalue.StringExact(channelUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_wpush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -99,7 +89,6 @@ func testAccNotificationWPushResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_wpush" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = %[2]q
   channel   = %[3]q
 }

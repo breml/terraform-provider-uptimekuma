@@ -34,11 +34,6 @@ func TestAccNotificationPushPlusResource(t *testing.T) {
 						tfjsonpath.New("send_key"),
 						knownvalue.StringExact(sendKey),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushplus.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -53,11 +48,6 @@ func TestAccNotificationPushPlusResource(t *testing.T) {
 						"uptimekuma_notification_pushplus.test",
 						tfjsonpath.New("send_key"),
 						knownvalue.StringExact(sendKeyUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushplus.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -90,7 +80,6 @@ func testAccNotificationPushPlusResourceConfig(name string, sendKey string) stri
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushplus" "test" {
   name     = %[1]q
-  is_active = true
   send_key = %[2]q
 }
 `, name, sendKey)

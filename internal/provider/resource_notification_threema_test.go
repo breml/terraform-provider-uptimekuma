@@ -61,11 +61,6 @@ func TestAccNotificationThreemaResource(t *testing.T) {
 						tfjsonpath.New("recipient_type"),
 						knownvalue.StringExact(recipientType),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_threema.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -101,11 +96,6 @@ func TestAccNotificationThreemaResource(t *testing.T) {
 						"uptimekuma_notification_threema.test",
 						tfjsonpath.New("recipient_type"),
 						knownvalue.StringExact(recipientTypeUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_threema.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -159,7 +149,6 @@ func testAccNotificationThreemaResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_threema" "test" {
   name               = %[1]q
-  is_active          = true
   sender_identity    = %[2]q
   secret             = %[3]q
   recipient          = %[4]q
@@ -178,7 +167,6 @@ func testAccNotificationThreemaDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_threema" "test" {
   name               = %[1]q
-  is_active          = true
   sender_identity    = %[2]q
   secret             = %[3]q
   recipient          = %[4]q

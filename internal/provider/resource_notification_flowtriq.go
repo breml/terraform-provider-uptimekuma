@@ -183,7 +183,6 @@ func (r *NotificationFlowtriqResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(flowtriq.Name)
-	data.IsActive = types.BoolValue(flowtriq.IsActive)
 	data.IsDefault = types.BoolValue(flowtriq.IsDefault)
 	data.ApplyExisting = types.BoolValue(flowtriq.ApplyExisting)
 
@@ -296,7 +295,7 @@ func flowtriqFromModel(data *NotificationFlowtriqResourceModel) notification.Flo
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FlowtriqDetails: notification.FlowtriqDetails{

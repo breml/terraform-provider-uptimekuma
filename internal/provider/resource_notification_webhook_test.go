@@ -39,11 +39,6 @@ func TestAccNotificationWebhookResource(t *testing.T) {
 						tfjsonpath.New("webhook_content_type"),
 						knownvalue.StringExact("json"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_webhook.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -144,7 +139,6 @@ resource "uptimekuma_notification_webhook" "test" {
   name                 = %[1]q
   webhook_url          = %[2]q
   webhook_content_type = %[3]q
-  is_active            = true
 }
 `, name, webhookURL, contentType)
 }
@@ -159,7 +153,6 @@ resource "uptimekuma_notification_webhook" "test" {
     "Authorization" = "Bearer secret-token"
     "X-App-ID"      = "uptime-kuma"
   }
-  is_active = true
 }
 `, name, webhookURL)
 }
@@ -174,7 +167,6 @@ resource "uptimekuma_notification_webhook" "test" {
     "title"   = "Alert - $${monitorJSON['name']}"
     "message" = "$${msg}"
   })
-  is_active = true
 }
 `, name, webhookURL)
 }

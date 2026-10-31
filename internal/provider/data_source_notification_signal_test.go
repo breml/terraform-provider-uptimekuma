@@ -41,7 +41,6 @@ func testAccNotificationSignalDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_signal" "test" {
   name       = %[1]q
-  is_active  = true
   url        = "http://signal.example.com:8080"
   number     = "+1234567890"
   recipients = "+9876543210"

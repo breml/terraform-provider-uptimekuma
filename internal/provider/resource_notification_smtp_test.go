@@ -88,11 +88,6 @@ func TestAccNotificationSMTPResource(t *testing.T) {
 						tfjsonpath.New("html_body"),
 						knownvalue.Bool(false),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smtp.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -165,11 +160,6 @@ func TestAccNotificationSMTPResource(t *testing.T) {
 						tfjsonpath.New("html_body"),
 						knownvalue.Bool(true),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smtp.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 		},
@@ -192,7 +182,6 @@ func testAccNotificationSMTPResourceConfig(
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smtp" "test" {
   name              = %[1]q
-  is_active         = true
   host              = %[2]q
   port              = %[3]d
   secure            = %[4]t

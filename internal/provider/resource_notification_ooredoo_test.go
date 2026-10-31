@@ -38,11 +38,6 @@ func TestAccNotificationOoredooResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_ooredoo.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_ooredoo.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -214,7 +209,6 @@ func testAccNotificationOoredooResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ooredoo" "test" {
   name         = %[1]q
-  is_active    = true
   username     = %[2]q
   access_key   = %[3]q
   bearer_token = %[4]q
@@ -227,7 +221,6 @@ func testAccNotificationOoredooResourceServerURLConfig(name string, serverURL st
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ooredoo" "custom" {
   name         = %[1]q
-  is_active    = true
   username     = "ooredoo-user"
   access_key   = "accesskey0000000000"
   bearer_token = "bearertoken0000000000000000"
@@ -241,7 +234,6 @@ func testAccNotificationOoredooResourceDefaultServerURLConfig(name string) strin
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ooredoo" "custom" {
   name         = %[1]q
-  is_active    = true
   username     = "ooredoo-user"
   access_key   = "accesskey0000000000"
   bearer_token = "bearertoken0000000000000000"

@@ -426,7 +426,6 @@ resource "uptimekuma_monitor_group" "test" {
 resource "uptimekuma_notification_webhook" "test" {
   name        = %[2]q
   webhook_url = "https://example.com/webhook"
-  is_active   = true
 }
 
 resource "uptimekuma_tag" "test" {

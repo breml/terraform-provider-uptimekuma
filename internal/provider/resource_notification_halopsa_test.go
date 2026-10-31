@@ -41,11 +41,6 @@ func TestAccNotificationHaloPSAResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_halopsa.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_halopsa.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -86,11 +81,6 @@ func TestAccNotificationHaloPSAResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_halopsa.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_halopsa.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -117,7 +107,6 @@ func testAccNotificationHaloPSAResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_halopsa" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
   username    = %[3]q
   password    = %[4]q

@@ -43,11 +43,6 @@ func TestAccNotificationTechulusPushResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_techuluspush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_techuluspush.test",
 						tfjsonpath.New("title"),
 						knownvalue.StringExact("Alert Title"),
 					),
@@ -90,11 +85,6 @@ func TestAccNotificationTechulusPushResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_techuluspush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_techuluspush.test",
 						tfjsonpath.New("title"),
 						knownvalue.StringExact("Updated Title"),
 					),
@@ -132,7 +122,6 @@ func testAccNotificationTechulusPushResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_techuluspush" "test" {
   name           = %[1]q
-  is_active      = true
   api_key        = %[2]q
   title          = %[3]q
   sound          = %[4]q

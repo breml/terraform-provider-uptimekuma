@@ -46,7 +46,6 @@ func testAccNotificationPagerDutyDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pagerduty" "test" {
   name              = %[1]q
-  is_active         = true
   integration_url   = "https://events.pagerduty.com/integration/test/enqueue"
   integration_key   = "test-key-123456789"
   priority          = "high"

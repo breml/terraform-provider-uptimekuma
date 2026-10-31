@@ -62,7 +62,6 @@ func testAccNotification46ElksDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_46elks" "test" {
   name        = %[1]q
-  is_active   = true
   username    = %[2]q
   auth_token  = %[3]q
   from_number = %[4]q

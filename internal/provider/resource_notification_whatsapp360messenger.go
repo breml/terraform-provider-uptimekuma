@@ -206,7 +206,6 @@ func (r *NotificationWhatsapp360messengerResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(whatsapp360messenger.Name)
-	data.IsActive = types.BoolValue(whatsapp360messenger.IsActive)
 	data.IsDefault = types.BoolValue(whatsapp360messenger.IsDefault)
 	data.ApplyExisting = types.BoolValue(whatsapp360messenger.ApplyExisting)
 
@@ -328,7 +327,7 @@ func whatsapp360messengerFromModel(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		Whatsapp360messengerDetails: notification.Whatsapp360messengerDetails{

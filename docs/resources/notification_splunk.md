@@ -19,7 +19,6 @@ resource "uptimekuma_notification_splunk" "example" {
   severity        = "critical"
   auto_resolve    = "resolve"
   integration_key = "your_integration_key"
-  is_active       = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: rest_url_wo and integration_key_wo
@@ -56,7 +55,6 @@ resource "uptimekuma_notification_splunk" "write_only" {
 - `integration_key` (String, Sensitive) Splunk On-Call routing key for alert routing. Stored in state; use `integration_key_wo` to keep it out of state.
 - `integration_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Splunk integration key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `integration_key`; requires `integration_key_wo_version`. An imported resource has no `integration_key_wo_version` yet, so `terraform import` may store the server's value in `integration_key` until the next apply with `integration_key_wo` set removes it from state.
 - `integration_key_wo_version` (String) Any value that changes whenever `integration_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `integration_key_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `rest_url` (String, Sensitive) Splunk On-Call REST API URL endpoint. Stored in state; use `rest_url_wo` to keep it out of state.
 - `rest_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Splunk REST URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `rest_url`; requires `rest_url_wo_version`. An imported resource has no `rest_url_wo_version` yet, so `terraform import` may store the server's value in `rest_url` until the next apply with `rest_url_wo` set removes it from state.

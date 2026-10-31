@@ -41,7 +41,6 @@ func testAccNotificationDiscordDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_discord" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://discord.com/api/webhooks/123456789/abcdefg"
 }
 

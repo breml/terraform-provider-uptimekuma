@@ -112,7 +112,7 @@ func (r *NotificationPushDeerResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushDeerDetails: notification.PushDeerDetails{
@@ -176,7 +176,6 @@ func (r *NotificationPushDeerResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushDeer.Name)
-	data.IsActive = types.BoolValue(pushDeer.IsActive)
 	data.IsDefault = types.BoolValue(pushDeer.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushDeer.ApplyExisting)
 
@@ -208,7 +207,7 @@ func (r *NotificationPushDeerResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushDeerDetails: notification.PushDeerDetails{

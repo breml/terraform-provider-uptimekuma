@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_webpush" "example" {
-  name      = "Web Push Notifications"
-  is_active = true
+  name = "Web Push Notifications"
 
   subscription = {
     endpoint = "https://fcm.googleapis.com/fcm/send/abc123"

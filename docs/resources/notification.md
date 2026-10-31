@@ -19,7 +19,6 @@ resource "uptimekuma_notification" "example" {
   config = jsonencode({
     customField = "customValue"
   })
-  is_active      = true
   is_default     = false
   apply_existing = false
 }
@@ -37,7 +36,6 @@ resource "uptimekuma_notification" "example" {
 ### Optional
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

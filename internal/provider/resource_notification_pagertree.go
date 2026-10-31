@@ -114,7 +114,7 @@ func (r *NotificationPagerTreeResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PagerTreeDetails: notification.PagerTreeDetails{
@@ -183,7 +183,6 @@ func (r *NotificationPagerTreeResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pagertree.Name)
-	data.IsActive = types.BoolValue(pagertree.IsActive)
 	data.IsDefault = types.BoolValue(pagertree.IsDefault)
 	data.ApplyExisting = types.BoolValue(pagertree.ApplyExisting)
 
@@ -229,7 +228,7 @@ func (r *NotificationPagerTreeResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PagerTreeDetails: notification.PagerTreeDetails{

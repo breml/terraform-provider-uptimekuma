@@ -36,7 +36,6 @@ func testAccNotificationFeishuDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_feishu" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://open.feishu.cn/open-apis/bot/v2/hook/abcdefg123456"
 }
 

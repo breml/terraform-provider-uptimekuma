@@ -113,7 +113,7 @@ func (r *NotificationSMSPlanetResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSPlanetDetails: notification.SMSPlanetDetails{
@@ -182,7 +182,6 @@ func (r *NotificationSMSPlanetResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsplanet.Name)
-	data.IsActive = types.BoolValue(smsplanet.IsActive)
 	data.IsDefault = types.BoolValue(smsplanet.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsplanet.ApplyExisting)
 
@@ -221,7 +220,7 @@ func (r *NotificationSMSPlanetResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSPlanetDetails: notification.SMSPlanetDetails{

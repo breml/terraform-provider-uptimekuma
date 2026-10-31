@@ -120,7 +120,7 @@ func (r *NotificationOneChatResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OneChatDetails: notification.OneChatDetails{
@@ -185,7 +185,6 @@ func (r *NotificationOneChatResource) Read(ctx context.Context, req resource.Rea
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(onechat.Name)
-	data.IsActive = types.BoolValue(onechat.IsActive)
 	data.IsDefault = types.BoolValue(onechat.IsDefault)
 	data.ApplyExisting = types.BoolValue(onechat.ApplyExisting)
 
@@ -219,7 +218,7 @@ func (r *NotificationOneChatResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OneChatDetails: notification.OneChatDetails{

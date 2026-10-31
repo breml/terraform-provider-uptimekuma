@@ -41,7 +41,6 @@ func testAccNotificationOneChatDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_onechat" "test" {
   name         = %[1]q
-  is_active    = true
   access_token = "test-access-token"
   receiver_id  = "user123"
   bot_id       = "bot-001"

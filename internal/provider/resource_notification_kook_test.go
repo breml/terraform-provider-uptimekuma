@@ -45,11 +45,6 @@ func TestAccNotificationKookResource(t *testing.T) {
 						tfjsonpath.New("guild_id"),
 						knownvalue.StringExact(guildID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_kook.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -74,11 +69,6 @@ func TestAccNotificationKookResource(t *testing.T) {
 						tfjsonpath.New("guild_id"),
 						knownvalue.StringExact(guildIDUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_kook.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -98,7 +88,6 @@ func testAccNotificationKookResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_kook" "test" {
   name      = %[1]q
-  is_active = true
   bot_token = %[2]q
   guild_id  = %[3]q
 }

@@ -15,7 +15,6 @@ Grafana OnCall notification resource
 ```terraform
 resource "uptimekuma_notification_grafanaoncall" "example" {
   name               = "Grafana OnCall Notifications"
-  is_active          = true
   is_default         = false
   apply_existing     = false
   grafana_oncall_url = "https://grafana-oncall.example.com/integrations/v1/webhook/abc123/"
@@ -46,7 +45,6 @@ resource "uptimekuma_notification_grafanaoncall" "write_only" {
 - `grafana_oncall_url` (String, Sensitive) Grafana OnCall webhook URL. Stored in state; use `grafana_oncall_url_wo` to keep it out of state.
 - `grafana_oncall_url_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Grafana OnCall webhook URL, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `grafana_oncall_url`; requires `grafana_oncall_url_wo_version`. An imported resource has no `grafana_oncall_url_wo_version` yet, so `terraform import` may store the server's value in `grafana_oncall_url` until the next apply with `grafana_oncall_url_wo` set removes it from state.
 - `grafana_oncall_url_wo_version` (String) Any value that changes whenever `grafana_oncall_url_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `grafana_oncall_url_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

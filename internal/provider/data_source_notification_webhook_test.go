@@ -42,7 +42,6 @@ func testAccNotificationWebhookDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://example.com/webhook"
 }
 
@@ -88,7 +87,6 @@ func testAccNotificationWebhookDataSourceConfigIDAndName(name string, lookupName
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webhook" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://example.com/webhook"
 }
 

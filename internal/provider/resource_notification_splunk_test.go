@@ -62,11 +62,6 @@ func TestAccNotificationSplunkResource(t *testing.T) {
 						tfjsonpath.New("integration_key"),
 						knownvalue.StringExact(integrationKey),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_splunk.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -103,11 +98,6 @@ func TestAccNotificationSplunkResource(t *testing.T) {
 						tfjsonpath.New("integration_key"),
 						knownvalue.StringExact(integrationKeyUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_splunk.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -137,7 +127,6 @@ func testAccNotificationSplunkResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_splunk" "test" {
   name              = %[1]q
-  is_active         = true
   rest_url          = %[2]q
   severity          = %[3]q
   auto_resolve      = %[4]q

@@ -139,7 +139,7 @@ func (r *NotificationPushoverResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushoverDetails: notification.PushoverDetails{
@@ -213,7 +213,6 @@ func (r *NotificationPushoverResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushover.Name)
-	data.IsActive = types.BoolValue(pushover.IsActive)
 	data.IsDefault = types.BoolValue(pushover.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushover.ApplyExisting)
 
@@ -282,7 +281,7 @@ func (r *NotificationPushoverResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushoverDetails: notification.PushoverDetails{

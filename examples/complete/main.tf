@@ -30,7 +30,6 @@ resource "uptimekuma_notification_slack" "critical_alerts" {
   webhook_url     = var.slack_webhook_url
   channel         = "#alerts"
   mention_channel = "channel"
-  is_active       = true
   is_default      = true
 }
 
@@ -39,7 +38,6 @@ resource "uptimekuma_notification_ntfy" "fallback" {
   topic      = "uptime_kuma_alerts"
   priority   = 5
   server_url = "https://ntfy.sh"
-  is_active  = true
 }
 
 # Production Monitors

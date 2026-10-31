@@ -171,7 +171,6 @@ func (r *NotificationSMSIRResource) Read(ctx context.Context, req resource.ReadR
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsir.Name)
-	data.IsActive = types.BoolValue(smsir.IsActive)
 	data.IsDefault = types.BoolValue(smsir.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsir.ApplyExisting)
 
@@ -273,7 +272,7 @@ func smsirFromModel(data *NotificationSMSIRResourceModel) notification.SMSIR {
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSIRDetails: notification.SMSIRDetails{

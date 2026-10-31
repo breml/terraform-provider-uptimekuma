@@ -125,7 +125,7 @@ func (r *NotificationThreemaResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ThreemaDetails: notification.ThreemaDetails{
@@ -195,7 +195,6 @@ func (r *NotificationThreemaResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(threema.Name)
-	data.IsActive = types.BoolValue(threema.IsActive)
 	data.IsDefault = types.BoolValue(threema.IsDefault)
 	data.ApplyExisting = types.BoolValue(threema.ApplyExisting)
 
@@ -230,7 +229,7 @@ func (r *NotificationThreemaResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ThreemaDetails: notification.ThreemaDetails{

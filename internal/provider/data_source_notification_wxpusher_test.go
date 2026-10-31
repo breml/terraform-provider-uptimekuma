@@ -46,7 +46,6 @@ func testAccNotificationWxPusherDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_wxpusher" "test" {
   name      = %[1]q
-  is_active = true
   spt       = "SPT_0123456789ab"
 }
 

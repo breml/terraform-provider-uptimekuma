@@ -44,11 +44,6 @@ func TestAccNotificationSMSIRResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_smsir.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smsir.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -102,7 +97,6 @@ func testAccNotificationSMSIRResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsir" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = %[2]q
   number    = %[3]q
   template  = %[4]q

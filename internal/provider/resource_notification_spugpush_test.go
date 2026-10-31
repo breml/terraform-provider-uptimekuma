@@ -34,11 +34,6 @@ func TestAccNotificationSpugPushResource(t *testing.T) {
 						tfjsonpath.New("template_key"),
 						knownvalue.StringExact(templateKey),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_spugpush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -53,11 +48,6 @@ func TestAccNotificationSpugPushResource(t *testing.T) {
 						"uptimekuma_notification_spugpush.test",
 						tfjsonpath.New("template_key"),
 						knownvalue.StringExact(templateKeyUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_spugpush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -75,7 +65,6 @@ func testAccNotificationSpugPushResourceConfig(name string, templateKey string) 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_spugpush" "test" {
   name         = %[1]q
-  is_active    = true
   template_key = %[2]q
 }
 `, name, templateKey)

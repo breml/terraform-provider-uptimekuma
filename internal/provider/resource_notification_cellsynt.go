@@ -144,7 +144,7 @@ func (r *NotificationCellsyntResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		CellsyntDetails: notification.CellsyntDetails{
@@ -216,7 +216,6 @@ func (r *NotificationCellsyntResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(cellsynt.Name)
-	data.IsActive = types.BoolValue(cellsynt.IsActive)
 	data.IsDefault = types.BoolValue(cellsynt.IsDefault)
 	data.ApplyExisting = types.BoolValue(cellsynt.ApplyExisting)
 
@@ -253,7 +252,7 @@ func (r *NotificationCellsyntResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		CellsyntDetails: notification.CellsyntDetails{

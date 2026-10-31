@@ -3,7 +3,6 @@ resource "uptimekuma_notification_rocketchat" "example" {
   webhook_url = "https://rocket.example.com/hooks/uid/token"
   channel     = "general"
   icon_emoji  = ":bell:"
-  is_active   = true
   is_default  = false
 }
 
@@ -14,7 +13,6 @@ resource "uptimekuma_notification_rocketchat" "with_button" {
   icon_emoji  = ":warning:"
   channel     = "alerts"
   button      = "View Status"
-  is_active   = true
   is_default  = false
 }
 

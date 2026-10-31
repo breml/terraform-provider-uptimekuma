@@ -35,11 +35,6 @@ func TestAccNotificationPushbulletResource(t *testing.T) {
 						tfjsonpath.New("access_token"),
 						knownvalue.StringExact(accessToken),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushbullet.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -54,11 +49,6 @@ func TestAccNotificationPushbulletResource(t *testing.T) {
 						"uptimekuma_notification_pushbullet.test",
 						tfjsonpath.New("access_token"),
 						knownvalue.StringExact(accessTokenUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushbullet.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -77,7 +67,6 @@ func testAccNotificationPushbulletResourceConfig(name string, accessToken string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushbullet" "test" {
   name          = %[1]q
-  is_active     = true
   access_token  = %[2]q
 }
 `, name, accessToken)

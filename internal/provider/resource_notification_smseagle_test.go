@@ -71,11 +71,6 @@ func TestAccNotificationSMSEagleResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_smseagle.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smseagle.test",
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(0),
 					),
@@ -130,11 +125,6 @@ func TestAccNotificationSMSEagleResource(t *testing.T) {
 						tfjsonpath.New("msg_type"),
 						knownvalue.StringExact("smseagle-ring"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smseagle.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -157,7 +147,6 @@ func testAccNotificationSMSEagleResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smseagle" "test" {
   name           = %[1]q
-  is_active      = true
   url            = %[2]q
   token          = %[3]q
   recipient_type = "smseagle-to"

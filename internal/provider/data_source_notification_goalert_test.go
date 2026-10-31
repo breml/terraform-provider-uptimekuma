@@ -59,7 +59,6 @@ func testAccNotificationGoAlertDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_goalert" "test" {
   name     = %[1]q
-  is_active = true
   base_url = %[2]q
   token    = %[3]q
 }

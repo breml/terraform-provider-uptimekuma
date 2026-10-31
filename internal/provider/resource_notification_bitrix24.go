@@ -105,7 +105,7 @@ func (r *NotificationBitrix24Resource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		Bitrix24Details: notification.Bitrix24Details{
@@ -173,7 +173,6 @@ func (r *NotificationBitrix24Resource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(bitrix24.Name)
-	data.IsActive = types.BoolValue(bitrix24.IsActive)
 	data.IsDefault = types.BoolValue(bitrix24.IsDefault)
 	data.ApplyExisting = types.BoolValue(bitrix24.ApplyExisting)
 
@@ -206,7 +205,7 @@ func (r *NotificationBitrix24Resource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		Bitrix24Details: notification.Bitrix24Details{

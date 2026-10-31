@@ -30,7 +30,6 @@ resource "uptimekuma_notification_smtp" "example" {
     "X-Environment"   = "production"
   })
 
-  is_active  = true
   is_default = false
 }
 
@@ -53,7 +52,6 @@ resource "uptimekuma_notification_smtp" "with_dkim" {
   dkim_header_field_names = "From:Subject:Date"
   dkim_skip_fields        = "Bcc"
 
-  is_active  = true
   is_default = false
 }
 
@@ -77,6 +75,5 @@ resource "uptimekuma_notification_smtp" "write_only_password" {
   dkim_private_key_wo         = "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
   dkim_private_key_wo_version = "1"
 
-  is_active  = true
   is_default = false
 }

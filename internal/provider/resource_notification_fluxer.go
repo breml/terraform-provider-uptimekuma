@@ -188,7 +188,6 @@ func (r *NotificationFluxerResource) Read(ctx context.Context, req resource.Read
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(fluxer.Name)
-	data.IsActive = types.BoolValue(fluxer.IsActive)
 	data.IsDefault = types.BoolValue(fluxer.IsDefault)
 	data.ApplyExisting = types.BoolValue(fluxer.ApplyExisting)
 
@@ -304,7 +303,7 @@ func fluxerFromModel(data *NotificationFluxerResourceModel) notification.Fluxer 
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FluxerDetails: notification.FluxerDetails{

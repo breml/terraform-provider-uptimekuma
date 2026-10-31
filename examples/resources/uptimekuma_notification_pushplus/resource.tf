@@ -1,7 +1,6 @@
 resource "uptimekuma_notification_pushplus" "example" {
-  name      = "PushPlus Notification"
-  send_key  = "your-pushplus-send-key"
-  is_active = true
+  name     = "PushPlus Notification"
+  send_key = "your-pushplus-send-key"
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: send_key_wo is never stored in

@@ -46,7 +46,6 @@ func testAccNotificationTelnyxDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_telnyx" "test" {
   name         = %[1]q
-  is_active    = true
   api_key      = "KEY0000000000000000000000000000000"
   phone_number = "+15550001111"
   to_number    = "+15550002222"
