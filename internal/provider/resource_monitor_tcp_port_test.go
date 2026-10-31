@@ -1,16 +1,21 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+
+	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
 func TestAccMonitorTCPPortResource(t *testing.T) {
@@ -232,6 +237,69 @@ resource "uptimekuma_monitor_tcp_port" "test" {
 				},
 			},
 			{Config: unset, ConfigStateChecks: nullChecks},
+		},
+	})
+}
+
+// TestAccMonitorTCPPortResourceTLSSetOutsideTerraform pins what the upgrade note
+// promises: a TLS check enabled outside Terraform shows up in the plan as a change
+// to the unset configuration, and the apply clears it on the server, which the plan
+// the framework runs after the second apply proves.
+func TestAccMonitorTCPPortResourceTLSSetOutsideTerraform(t *testing.T) {
+	const addr = "uptimekuma_monitor_tcp_port.test"
+
+	kumaClient := testAccOutOfBandClient(t)
+	config := providerConfig() + fmt.Sprintf(`
+resource "uptimekuma_monitor_tcp_port" "test" {
+  name     = %[1]q
+  hostname = "example.com"
+  port     = 443
+}
+`, acctest.RandomWithPrefix("TestTCPPortTLSOutside"))
+
+	enableTLS := func(s *terraform.State) error {
+		id, err := testAccResourceID(s, addr)
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		var tcpMonitor monitor.TCPPort
+
+		err = kumaClient.GetMonitorAs(ctx, id, &tcpMonitor)
+		if err != nil {
+			return fmt.Errorf("failed to get monitor: %w", err)
+		}
+
+		security := "secure"
+		tcpMonitor.SMTPSecurity = &security
+		tcpMonitor.ExpiryNotification = true
+
+		err = kumaClient.UpdateMonitor(ctx, &tcpMonitor)
+		if err != nil {
+			return fmt.Errorf("failed to enable TLS externally: %w", err)
+		}
+
+		return nil
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: config, Check: enableTLS, ExpectNonEmptyPlan: true},
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(addr, plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue(addr, tfjsonpath.New("smtp_security"), knownvalue.Null()),
+						plancheck.ExpectKnownValue(addr, tfjsonpath.New("expiry_notification"), knownvalue.Bool(false)),
+					},
+				},
+			},
 		},
 	})
 }

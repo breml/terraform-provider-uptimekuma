@@ -1,16 +1,21 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+
+	"github.com/breml/go-uptime-kuma-client/monitor"
 )
 
 func TestAccMonitorSMTPResource(t *testing.T) {
@@ -156,7 +161,7 @@ func TestAccMonitorSMTPResourceMinimal(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMonitorSMTPResourceConfigMinimal(name, "smtp.example.com"),
+				Config: testAccMonitorSMTPResourceConfigMinimal(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
@@ -204,13 +209,13 @@ func TestAccMonitorSMTPResourceMinimal(t *testing.T) {
 	})
 }
 
-func testAccMonitorSMTPResourceConfigMinimal(name string, hostname string) string {
+func testAccMonitorSMTPResourceConfigMinimal(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_smtp" "test" {
   name     = %[1]q
-  hostname = %[2]q
+  hostname = "smtp.example.com"
 }
-`, name, hostname)
+`, name)
 }
 
 func TestAccMonitorSMTPResourceWithAllOptions(t *testing.T) {
@@ -315,7 +320,7 @@ func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
 				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
 					{
-						Config: testAccMonitorSMTPResourceConfigSecurityMode(name, "smtp.example.com", mode),
+						Config: testAccMonitorSMTPResourceConfigSecurityMode(name, mode),
 						ConfigStateChecks: []statecheck.StateCheck{
 							statecheck.ExpectKnownValue(
 								"uptimekuma_monitor_smtp.test",
@@ -349,14 +354,14 @@ func TestAccMonitorSMTPResourceSecurityModes(t *testing.T) {
 	}
 }
 
-func testAccMonitorSMTPResourceConfigSecurityMode(name string, hostname string, securityMode string) string {
+func testAccMonitorSMTPResourceConfigSecurityMode(name string, securityMode string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_smtp" "test" {
   name          = %[1]q
-  hostname      = %[2]q
-  smtp_security = %[3]q
+  hostname      = "smtp.example.com"
+  smtp_security = %[2]q
 }
-`, name, hostname, securityMode)
+`, name, securityMode)
 }
 
 // TestAccMonitorSMTPResourceSecure covers issue #470: an SMTPS monitor can be
@@ -364,7 +369,7 @@ resource "uptimekuma_monitor_smtp" "test" {
 // attribute.
 func TestAccMonitorSMTPResourceSecure(t *testing.T) {
 	name := acctest.RandomWithPrefix("TestSMTPMonitorSecure")
-	config := testAccMonitorSMTPResourceConfigSecurityMode(name, "smtp.example.com", "secure")
+	config := testAccMonitorSMTPResourceConfigSecurityMode(name, "secure")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -392,7 +397,7 @@ func TestAccMonitorSMTPResourceSecure(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccMonitorSMTPResourceConfigMinimal(name, "smtp.example.com"),
+				Config: testAccMonitorSMTPResourceConfigMinimal(name),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"uptimekuma_monitor_smtp.test",
@@ -405,6 +410,110 @@ func TestAccMonitorSMTPResourceSecure(t *testing.T) {
 	})
 }
 
+// testAccSetSMTPSecurityExternally stores a security mode on an SMTP monitor
+// through the out-of-band client, the way a monitor written by an earlier
+// provider version or the web UI holds it on the server.
+func testAccSetSMTPSecurityExternally(t *testing.T, resourceAddr string, security string) resource.TestCheckFunc {
+	t.Helper()
+
+	kumaClient := testAccOutOfBandClient(t)
+
+	return func(s *terraform.State) error {
+		id, err := testAccResourceID(s, resourceAddr)
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		defer cancel()
+
+		var smtpMonitor monitor.SMTP
+
+		err = kumaClient.GetMonitorAs(ctx, id, &smtpMonitor)
+		if err != nil {
+			return fmt.Errorf("failed to get monitor: %w", err)
+		}
+
+		smtpMonitor.SMTPSecurity = &security
+
+		err = kumaClient.UpdateMonitor(ctx, &smtpMonitor)
+		if err != nil {
+			return fmt.Errorf("failed to set smtp security externally: %w", err)
+		}
+
+		return nil
+	}
+}
+
+// TestAccMonitorSMTPResourceLegacyValueOnServer covers the upgrade path: a
+// monitor holding a removed value is not rejected, plans a change to what the
+// configuration says, and the server no longer holds the value afterwards, which
+// the plan the framework runs after the second apply proves.
+func TestAccMonitorSMTPResourceLegacyValueOnServer(t *testing.T) {
+	const addr = "uptimekuma_monitor_smtp.test"
+
+	testCases := []struct {
+		name   string
+		legacy string
+		config func(name string) string
+		want   knownvalue.Check
+	}{
+		{
+			name:   "None to unset",
+			legacy: "None",
+			config: testAccMonitorSMTPResourceConfigMinimal,
+			want:   knownvalue.Null(),
+		},
+		{
+			name:   "STARTTLS to unset",
+			legacy: "STARTTLS",
+			config: testAccMonitorSMTPResourceConfigMinimal,
+			want:   knownvalue.Null(),
+		},
+		{
+			name:   "TLS to unset",
+			legacy: "TLS",
+			config: testAccMonitorSMTPResourceConfigMinimal,
+			want:   knownvalue.Null(),
+		},
+		{
+			name:   "TLS to secure",
+			legacy: "TLS",
+			config: func(name string) string {
+				return testAccMonitorSMTPResourceConfigSecurityMode(name, "secure")
+			},
+			want: knownvalue.StringExact("secure"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := tc.config(acctest.RandomWithPrefix("TestSMTPMonitorLegacy"))
+
+			resource.ParallelTest(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:             config,
+						Check:              testAccSetSMTPSecurityExternally(t, addr, tc.legacy),
+						ExpectNonEmptyPlan: true,
+					},
+					{
+						Config: config,
+						ConfigPlanChecks: resource.ConfigPlanChecks{
+							PreApply: []plancheck.PlanCheck{
+								plancheck.ExpectResourceAction(addr, plancheck.ResourceActionUpdate),
+								plancheck.ExpectKnownValue(addr, tfjsonpath.New("smtp_security"), tc.want),
+							},
+						},
+					},
+				},
+			})
+		})
+	}
+}
+
 func TestAccMonitorSMTPResourceLegacySecurityModesRejected(t *testing.T) {
 	for _, mode := range []string{"None", "STARTTLS", "TLS"} {
 		t.Run(mode, func(t *testing.T) {
@@ -413,7 +522,7 @@ func TestAccMonitorSMTPResourceLegacySecurityModesRejected(t *testing.T) {
 				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
 					{
-						Config:      testAccMonitorSMTPResourceConfigSecurityMode("unused", "smtp.example.com", mode),
+						Config:      testAccMonitorSMTPResourceConfigSecurityMode("unused", mode),
 						PlanOnly:    true,
 						ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 					},

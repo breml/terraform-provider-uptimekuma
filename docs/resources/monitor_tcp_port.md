@@ -50,14 +50,14 @@ resource "uptimekuma_monitor_tcp_port" "tls" {
 - `active` (Boolean) Monitor is active
 - `description` (String) Description
 - `domain_expiry_notification` (Boolean) Enable domain (WHOIS) expiry notification, independent of TLS certificate expiry notification (`expiry_notification`)
-- `expiry_notification` (Boolean) Enable the TLS check and certificate expiry notification. Only has an effect while `smtp_security` is `secure` or `starttls`.
+- `expiry_notification` (Boolean) Enable the TLS check and certificate expiry notification. Only has an effect while `smtp_security` is `secure` or `starttls`, or while the "expected TLS alert" option set in the web UI is in use.
 - `interval` (Number) Heartbeat interval in seconds. Minimum 20. Uptime Kuma 2.5.0 removed the former 24 day maximum, so no upper bound is enforced.
 - `max_retries` (Number) Maximum number of retries
 - `notification_ids` (List of Number) List of notification IDs
 - `parent` (Number) Parent monitor ID for hierarchical organization
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
-- `smtp_security` (String) TLS mode, the "SSL/TLS" option in the Uptime Kuma web UI: `nostarttls` (None), `secure` (SSL) or `starttls` (STARTTLS). When unset, the check is plain TCP, and a value set on the monitor outside Terraform is cleared on the next apply. Uptime Kuma only performs the TLS check for `secure` and `starttls` while `expiry_notification` is `true`.
+- `smtp_security` (String) TLS mode, the "SSL/TLS" option in the Uptime Kuma web UI: `nostarttls` (None), `secure` (SSL) or `starttls` (STARTTLS). When unset, the check is plain TCP, and a value set on the monitor outside Terraform is cleared on the next apply. Uptime Kuma only performs the TLS check for `secure` and `starttls` while `expiry_notification` is `true`. The "expected TLS alert" option of the web UI takes precedence over all of this; the provider does not manage that option, and any update clears it.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 

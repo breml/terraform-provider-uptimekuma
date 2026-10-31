@@ -70,12 +70,19 @@ behaviour you want:
 | `STARTTLS` | `starttls` (use STARTTLS or fail) |
 | `None` | `nostarttls` to never use STARTTLS, or leave unset to keep opportunistic STARTTLS |
 
+`secure` and `starttls` are stricter than the removed values, which never enforced TLS. A check that
+passed before can go down: use `secure` only on an implicit TLS port such as 465, and `starttls`
+only on a server that offers STARTTLS.
+
 The attribute also no longer defaults to `None`: unset now means null. A monitor that carries a
 value on the server, including one created with a removed value or set in the web UI, plans
 `<value> -> null` unless the attribute is configured. The same applies to the new `smtp_security`
 attribute on `uptimekuma_monitor_tcp_port`, so configure it before applying to a TCP port monitor
-whose TLS option was set outside Terraform. `expiry_notification` on that resource defaults to
-`false` in the same way.
+whose TLS option was set outside Terraform. Configure `expiry_notification` on that resource too:
+it defaults to `false`, so a monitor with the option enabled plans `true -> false`.
+
+This provider does not manage the "expected TLS alert" option of a TCP port monitor. Any apply that
+updates such a monitor clears the option without showing it in the plan.
 
 ## Upgrading to Uptime Kuma 2.5.0
 

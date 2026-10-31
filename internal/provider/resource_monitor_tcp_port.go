@@ -81,13 +81,15 @@ func (*MonitorTCPPortResource) Schema(
 					"(None), `secure` (SSL) or `starttls` (STARTTLS). When unset, the check is plain TCP, and " +
 					"a value set on the monitor outside Terraform is cleared on the next apply. Uptime Kuma " +
 					"only performs the TLS check for `secure` and `starttls` while `expiry_notification` is " +
-					"`true`.",
+					"`true`. The \"expected TLS alert\" option of the web UI takes precedence over all of " +
+					"this; the provider does not manage that option, and any update clears it.",
 				Optional:   true,
 				Validators: smtpSecurityValidators(),
 			},
 			"expiry_notification": schema.BoolAttribute{
 				MarkdownDescription: "Enable the TLS check and certificate expiry notification. Only has an " +
-					"effect while `smtp_security` is `secure` or `starttls`.",
+					"effect while `smtp_security` is `secure` or `starttls`, or while the \"expected TLS " +
+					"alert\" option set in the web UI is in use.",
 				Optional: true,
 				Computed: true,
 				Default:  booldefault.StaticBool(false),
