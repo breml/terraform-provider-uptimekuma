@@ -362,6 +362,16 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("bot_token", n.BotToken)
 			}),
 		},
+		"uptimekuma_notification_milky": {
+			body: `
+  http_addr   = "http://localhost:3000"
+  msg_type    = "group"
+  receiver_id = "123456789"`,
+			attrs: []string{"access_token"},
+			serverSecrets: notificationSecrets(func(n *notification.Milky) map[string]string {
+				return singleSecret("access_token", n.AccessToken)
+			}),
+		},
 		"uptimekuma_notification_nextcloudtalk": {
 			body: `
   host               = "https://nextcloud.example.com"

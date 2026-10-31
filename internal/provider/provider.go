@@ -503,6 +503,7 @@ func notificationResourcesAToM() []func() resource.Resource {
 		NewNotificationMatrixResource,
 		NewNotificationMattermostResource,
 		NewNotificationMaxResource,
+		NewNotificationMilkyResource,
 	}
 }
 
@@ -675,6 +676,7 @@ func notificationDataSourcesAToM() []func() datasource.DataSource {
 		NewNotificationMatrixDataSource,
 		NewNotificationMattermostDataSource,
 		NewNotificationMaxDataSource,
+		NewNotificationMilkyDataSource,
 	}
 }
 
