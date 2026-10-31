@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -55,6 +54,14 @@ func (*MonitorSMTPResource) Metadata(
 	resp.TypeName = req.ProviderTypeName + "_monitor_smtp"
 }
 
+// smtpSecurityValidators restricts an smtp_security attribute to the values of
+// Uptime Kuma's smtpSecurity column, which the SMTP and TCP port monitors share.
+func smtpSecurityValidators() []validator.String {
+	return []validator.String{
+		stringvalidator.OneOf("secure", "starttls", "nostarttls"),
+	}
+}
+
 // Schema returns the schema for the resource.
 func (*MonitorSMTPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -74,13 +81,12 @@ func (*MonitorSMTPResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"smtp_security": schema.StringAttribute{
-				MarkdownDescription: "SMTP security mode (None, STARTTLS, TLS, or nostarttls)",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("None"),
-				Validators: []validator.String{
-					stringvalidator.OneOf("None", "STARTTLS", "TLS", "nostarttls"),
-				},
+				MarkdownDescription: "SMTP security mode: `secure` (SMTPS, TLS from the start of the connection), " +
+					"`starttls` (use STARTTLS or fail) or `nostarttls` (do not use STARTTLS even if it is " +
+					"available). When unset, Uptime Kuma uses STARTTLS opportunistically, and a value set " +
+					"on the monitor outside Terraform is cleared on the next apply.",
+				Optional:   true,
+				Validators: smtpSecurityValidators(),
 			},
 			"domain_expiry_notification": domainExpiryNotificationAttribute(),
 		}),
@@ -166,10 +172,7 @@ func buildSMTPMonitor(ctx context.Context, data *MonitorSMTPResourceModel, diags
 		smtpMonitor.Port = &port
 	}
 
-	if !data.SMTPSecurity.IsNull() {
-		security := data.SMTPSecurity.ValueString()
-		smtpMonitor.SMTPSecurity = &security
-	}
+	smtpMonitor.SMTPSecurity = strToPtr(data.SMTPSecurity)
 
 	if !data.NotificationIDs.IsNull() {
 		var notificationIDs []int64

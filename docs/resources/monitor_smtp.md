@@ -20,29 +20,29 @@ resource "uptimekuma_monitor_smtp" "mail_server" {
   description                = "Monitor SMTP mail server connectivity"
   hostname                   = "smtp.example.com"
   port                       = 587
-  smtp_security              = "STARTTLS"
+  smtp_security              = "starttls"
   interval                   = 60
   domain_expiry_notification = false
 }
 
-# SMTP monitor with TLS security.
+# SMTP monitor with SMTPS.
 # Connects to an SMTP server using implicit TLS on port 465.
 resource "uptimekuma_monitor_smtp" "secure_mail" {
   name          = "Secure Mail Server"
   hostname      = "mail.example.com"
   port          = 465
-  smtp_security = "TLS"
+  smtp_security = "secure"
   interval      = 30
   max_retries   = 3
 }
 
 # SMTP monitor without encryption.
-# Checks plain SMTP connectivity on port 25.
+# Checks plain SMTP connectivity on port 25, ignoring STARTTLS even if offered.
 resource "uptimekuma_monitor_smtp" "relay" {
   name          = "SMTP Relay"
   hostname      = "relay.internal.example.com"
   port          = 25
-  smtp_security = "None"
+  smtp_security = "nostarttls"
   interval      = 120
   active        = true
 }
@@ -83,7 +83,7 @@ resource "uptimekuma_monitor_group" "mail_monitors" {
 - `port` (Number) SMTP server port
 - `resend_interval` (Number) Resend interval in seconds
 - `retry_interval` (Number) Retry interval in seconds. Minimum 20, and like `interval` it has no upper bound since Uptime Kuma 2.5.0.
-- `smtp_security` (String) SMTP security mode (None, STARTTLS, TLS, or nostarttls)
+- `smtp_security` (String) SMTP security mode: `secure` (SMTPS, TLS from the start of the connection), `starttls` (use STARTTLS or fail) or `nostarttls` (do not use STARTTLS even if it is available). When unset, Uptime Kuma uses STARTTLS opportunistically, and a value set on the monitor outside Terraform is cleared on the next apply.
 - `tags` (Attributes Set) Set of tags assigned to this monitor (see [below for nested schema](#nestedatt--tags))
 - `upside_down` (Boolean) Invert monitor status (treat DOWN as UP and vice versa)
 

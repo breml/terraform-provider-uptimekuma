@@ -29,6 +29,8 @@ type MonitorTCPPortDataSourceModel struct {
 	Name                     types.String `tfsdk:"name"`
 	Hostname                 types.String `tfsdk:"hostname"`
 	Port                     types.Int64  `tfsdk:"port"`
+	SMTPSecurity             types.String `tfsdk:"smtp_security"`
+	ExpiryNotification       types.Bool   `tfsdk:"expiry_notification"`
 	DomainExpiryNotification types.Bool   `tfsdk:"domain_expiry_notification"`
 }
 
@@ -66,6 +68,14 @@ func (*MonitorTCPPortDataSource) Schema(
 			},
 			"port": schema.Int64Attribute{
 				MarkdownDescription: "Port number",
+				Computed:            true,
+			},
+			"smtp_security": schema.StringAttribute{
+				MarkdownDescription: "TLS mode: `nostarttls`, `secure` or `starttls`. Null when unset",
+				Computed:            true,
+			},
+			"expiry_notification": schema.BoolAttribute{
+				MarkdownDescription: "Enable the TLS check and certificate expiry notification",
 				Computed:            true,
 			},
 			"domain_expiry_notification": schema.BoolAttribute{
@@ -134,6 +144,8 @@ func (d *MonitorTCPPortDataSource) readByID(
 	data.Name = types.StringValue(tcpMonitor.Name)
 	data.Hostname = types.StringValue(tcpMonitor.Hostname)
 	data.Port = types.Int64Value(int64(tcpMonitor.Port))
+	data.SMTPSecurity = ptrToTypes(tcpMonitor.SMTPSecurity)
+	data.ExpiryNotification = types.BoolValue(tcpMonitor.ExpiryNotification)
 	data.DomainExpiryNotification = types.BoolValue(tcpMonitor.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -159,6 +171,8 @@ func (d *MonitorTCPPortDataSource) readByName(
 	data.ID = types.Int64Value(tcpMon.ID)
 	data.Hostname = types.StringValue(tcpMon.Hostname)
 	data.Port = types.Int64Value(int64(tcpMon.Port))
+	data.SMTPSecurity = ptrToTypes(tcpMon.SMTPSecurity)
+	data.ExpiryNotification = types.BoolValue(tcpMon.ExpiryNotification)
 	data.DomainExpiryNotification = types.BoolValue(tcpMon.DomainExpiryNotification)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

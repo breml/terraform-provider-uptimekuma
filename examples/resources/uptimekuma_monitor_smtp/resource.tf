@@ -5,29 +5,29 @@ resource "uptimekuma_monitor_smtp" "mail_server" {
   description                = "Monitor SMTP mail server connectivity"
   hostname                   = "smtp.example.com"
   port                       = 587
-  smtp_security              = "STARTTLS"
+  smtp_security              = "starttls"
   interval                   = 60
   domain_expiry_notification = false
 }
 
-# SMTP monitor with TLS security.
+# SMTP monitor with SMTPS.
 # Connects to an SMTP server using implicit TLS on port 465.
 resource "uptimekuma_monitor_smtp" "secure_mail" {
   name          = "Secure Mail Server"
   hostname      = "mail.example.com"
   port          = 465
-  smtp_security = "TLS"
+  smtp_security = "secure"
   interval      = 30
   max_retries   = 3
 }
 
 # SMTP monitor without encryption.
-# Checks plain SMTP connectivity on port 25.
+# Checks plain SMTP connectivity on port 25, ignoring STARTTLS even if offered.
 resource "uptimekuma_monitor_smtp" "relay" {
   name          = "SMTP Relay"
   hostname      = "relay.internal.example.com"
   port          = 25
-  smtp_security = "None"
+  smtp_security = "nostarttls"
   interval      = 120
   active        = true
 }

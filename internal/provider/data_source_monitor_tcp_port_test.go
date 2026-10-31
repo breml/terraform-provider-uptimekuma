@@ -32,6 +32,16 @@ func TestAccMonitorTCPPortDataSource(t *testing.T) {
 						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tcp_port.by_name",
+						tfjsonpath.New("smtp_security"),
+						knownvalue.StringExact("secure"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tcp_port.by_name",
+						tfjsonpath.New("expiry_notification"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
 						"data.uptimekuma_monitor_tcp_port.by_id",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(name),
@@ -39,6 +49,16 @@ func TestAccMonitorTCPPortDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"data.uptimekuma_monitor_tcp_port.by_id",
 						tfjsonpath.New("domain_expiry_notification"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tcp_port.by_id",
+						tfjsonpath.New("smtp_security"),
+						knownvalue.StringExact("secure"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.uptimekuma_monitor_tcp_port.by_id",
+						tfjsonpath.New("expiry_notification"),
 						knownvalue.Bool(true),
 					),
 				},
@@ -53,6 +73,8 @@ resource "uptimekuma_monitor_tcp_port" "test" {
   name                       = %[1]q
   hostname                   = "google.com"
   port                       = 443
+  smtp_security              = "secure"
+  expiry_notification        = true
   domain_expiry_notification = true
 }
 

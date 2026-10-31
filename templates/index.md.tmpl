@@ -58,6 +58,32 @@ This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run a
   Service Control Manager does not accept `@`, so a name containing it is accepted here but
   fails when the check runs.
 
+## Upgrading: `smtp_security` values
+
+`smtp_security` on `uptimekuma_monitor_smtp` now accepts only the values Uptime Kuma recognises.
+The removed values were stored as is and all behaved as opportunistic STARTTLS, so choose by the
+behaviour you want:
+
+| Removed value | Replacement |
+| --- | --- |
+| `TLS` | `secure` (SMTPS) |
+| `STARTTLS` | `starttls` (use STARTTLS or fail) |
+| `None` | `nostarttls` to never use STARTTLS, or leave unset to keep opportunistic STARTTLS |
+
+`secure` and `starttls` are stricter than the removed values, which never enforced TLS. A check that
+passed before can go down: use `secure` only on an implicit TLS port such as 465, and `starttls`
+only on a server that offers STARTTLS.
+
+The attribute also no longer defaults to `None`: unset now means null. A monitor that carries a
+value on the server, including one created with a removed value or set in the web UI, plans
+`<value> -> null` unless the attribute is configured. The same applies to the new `smtp_security`
+attribute on `uptimekuma_monitor_tcp_port`, so configure it before applying to a TCP port monitor
+whose TLS option was set outside Terraform. Configure `expiry_notification` on that resource too:
+it defaults to `false`, so a monitor with the option enabled plans `true -> false`.
+
+This provider does not manage the "expected TLS alert" option of a TCP port monitor. Any apply that
+updates such a monitor clears the option without showing it in the plan.
+
 ## Upgrading to Uptime Kuma 2.5.0
 
 Uptime Kuma 2.5.0 renamed eight notification type identifiers. Notifications created with an
