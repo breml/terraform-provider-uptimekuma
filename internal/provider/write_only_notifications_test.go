@@ -474,6 +474,16 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return map[string]string{"access_key": n.AccessKey, "bearer_token": n.BearerToken}
 			}),
 		},
+		"uptimekuma_notification_openwa": {
+			body: `
+  api_url = "http://localhost:2785/"
+  session = "default"
+  chat_id = "00117612345678@c.us"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.OpenWa) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
 		"uptimekuma_notification_opsgenie": {
 			body: `
   region = "us"`,

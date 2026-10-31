@@ -5,8 +5,8 @@ This package implements the Terraform provider for Uptime Kuma, including all re
 ## Package Overview
 
 - **Package**: `internal/provider`
-- **Resources**: 146 resource types
-- **Data Sources**: 146 data source types (mirroring resources)
+- **Resources**: 147 resource types
+- **Data Sources**: 147 data source types (mirroring resources)
 - **Size**: One of the largest packages in the codebase
 
 ## Provider Structure
@@ -121,9 +121,9 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 
 - `uptimekuma_monitor_group` - Monitor groups for hierarchical organization
 
-### Notification Resources (102 types)
+### Notification Resources (103 types)
 
-102 typed notification resources plus the generic `uptimekuma_notification`. The list below is a
+103 typed notification resources plus the generic `uptimekuma_notification`. The list below is a
 selection; `provider.go` holds the complete registration. All notification types follow the same
 pattern with type-specific fields:
 
@@ -199,6 +199,7 @@ pattern with type-specific fields:
 - `uptimekuma_notification_threema` - Threema
 - `uptimekuma_notification_nostr` - Nostr protocol
 - `uptimekuma_notification_waha` - WAHA (WhatsApp API)
+- `uptimekuma_notification_openwa` - OpenWA (self-hosted WhatsApp gateway)
 - `uptimekuma_notification_brevo` - Brevo (Sendinblue)
 - `uptimekuma_notification_bitrix24` - Bitrix24
 - `uptimekuma_notification_evolution` - Evolution API
@@ -236,7 +237,7 @@ pattern with type-specific fields:
 
 ### Data Sources
 
-Each resource has a corresponding data source (146 total) that allows querying existing resources:
+Each resource has a corresponding data source (147 total) that allows querying existing resources:
 
 - By ID: `data.uptimekuma_monitor_http.example.id = 123`
 - By name: `data.uptimekuma_monitor_http.example.name = "Production API"`
@@ -1582,7 +1583,7 @@ Testing framework providing:
 
 Most files are 200-400 lines. Large files:
 
-- `provider.go` (750 lines) - 146 resource + 146 data source registrations
+- `provider.go` (750 lines) - 147 resource + 147 data source registrations
 - `resource_monitor_http.go` (300+ lines) - Heavily documented
 - `resource_monitor_http_base.go` (300+ lines) - Many HTTP configuration options
 - `resource_status_page.go` (350+ lines) - Complex nested structures
