@@ -620,6 +620,14 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("api_key", n.APIKey)
 			}),
 		},
+		"uptimekuma_notification_signalgrid": {
+			body: `
+  channel = "alerts"`,
+			attrs: []string{"client_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Signalgrid) map[string]string {
+				return singleSecret("client_key", n.ClientKey)
+			}),
+		},
 		"uptimekuma_notification_signl4": {
 			attrs: []string{"webhook_url"},
 			serverSecrets: notificationSecrets(func(n *notification.SIGNL4) map[string]string {

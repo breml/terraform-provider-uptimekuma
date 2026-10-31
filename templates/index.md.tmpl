@@ -59,6 +59,8 @@ This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run a
   fails when the check runs.
 - `uptimekuma_notification_openwa` needs Uptime Kuma 2.5.1 or later. Uptime Kuma 2.5.0 saves the
   notification without complaint, but fails every send with `Notification type is not supported`.
+- `uptimekuma_notification_signalgrid` needs Uptime Kuma 2.5.4 or later. Earlier versions save the
+  notification without complaint, but fail every send with `Notification type is not supported`.
 
 ## Upgrading: `is_active` removed from notifications
 
