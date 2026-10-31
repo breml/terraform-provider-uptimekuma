@@ -484,6 +484,14 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("integration_url", n.IntegrationURL)
 			}),
 		},
+		"uptimekuma_notification_pinglet": {
+			body: `
+  publish_url = "https://app.pinglet.co.uk/test-namespace/alerts"`,
+			attrs: []string{"api_key"},
+			serverSecrets: notificationSecrets(func(n *notification.Pinglet) map[string]string {
+				return singleSecret("api_key", n.APIKey)
+			}),
+		},
 		"uptimekuma_notification_plivo": {
 			body: `
   auth_id     = "MA0123456789ABCDEFGH"

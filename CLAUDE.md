@@ -9,8 +9,8 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 
 **Key Features**:
 
-- 144 resource types (monitors, notifications, status pages, maintenance windows, etc.)
-- 144 corresponding data sources for querying existing resources
+- 145 resource types (monitors, notifications, status pages, maintenance windows, etc.)
+- 145 corresponding data sources for querying existing resources
 - Built-in retry logic and connection pooling for reliability
 - Write-only (`*_wo`) variants of secret attributes keep credentials out of plan and state
 - Comprehensive testing with Docker-based acceptance tests
@@ -78,13 +78,13 @@ terraform-provider-uptimekuma/
 
 ### Resource Categories
 
-The provider manages 144 resource types across multiple categories:
+The provider manages 145 resource types across multiple categories:
 
 **Monitors** (34 types): HTTP, ping, DNS, TCP, SFTP, SMTP, SIP, RADIUS, WebSocket, databases (PostgreSQL, MySQL,
 MongoDB, Redis, SQL Server, OracleDB), message brokers (MQTT, Kafka, RabbitMQ), Docker, real browser, SNMP, push,
 manual, gRPC, Steam, GameDig, Globalping, Tailscale, PM2, system services, and monitor groups.
 
-**Notifications** (100 types plus a generic `uptimekuma_notification`): Webhook, Slack, Teams, Discord,
+**Notifications** (101 types plus a generic `uptimekuma_notification`): Webhook, Slack, Teams, Discord,
 email (SMTP), push services (Pushover, Telegram, Signal, etc.), SMS services, enterprise alerting (PagerDuty,
 Opsgenie, Splunk), regional platforms (Feishu, DingTalk), and many more.
 
@@ -94,7 +94,7 @@ Opsgenie, Splunk), regional platforms (Feishu, DingTalk), and many more.
 
 **Infrastructure**: Tags, proxies, and Docker host integration.
 
-**Data Sources**: Each resource has a corresponding data source (144 total) for querying existing resources by ID or name.
+**Data Sources**: Each resource has a corresponding data source (145 total) for querying existing resources by ID or name.
 
 ### Design Patterns
 
@@ -122,7 +122,7 @@ See [internal/provider/CLAUDE.md](internal/provider/CLAUDE.md) for detailed impl
 
 - **[internal/provider/CLAUDE.md](internal/provider/CLAUDE.md)** - Provider implementation
   - Provider structure and configuration
-  - Complete resource catalog (144 resources, 144 data sources)
+  - Complete resource catalog (145 resources, 145 data sources)
   - Base models and helper functions
   - CRUD implementation patterns
   - State management
