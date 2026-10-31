@@ -511,6 +511,7 @@ func notificationResourcesNToZ() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewNotificationNextcloudTalkResource,
 		NewNotificationNotiferyResource,
+		NewNotificationNotifyAppResource,
 		NewNotificationNostrResource,
 		NewNotificationNtfyResource,
 		NewNotificationOneBotResource,
@@ -686,6 +687,7 @@ func notificationDataSourcesNToZ() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewNotificationNextcloudTalkDataSource,
 		NewNotificationNotiferyDataSource,
+		NewNotificationNotifyAppDataSource,
 		NewNotificationNostrDataSource,
 		NewNotificationNtfyDataSource,
 		NewNotificationOneBotDataSource,
