@@ -104,7 +104,7 @@ func (r *NotificationPumbleResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PumbleDetails: notification.PumbleDetails{
@@ -171,7 +171,6 @@ func (r *NotificationPumbleResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pumble.Name)
-	data.IsActive = types.BoolValue(pumble.IsActive)
 	data.IsDefault = types.BoolValue(pumble.IsDefault)
 	data.ApplyExisting = types.BoolValue(pumble.ApplyExisting)
 
@@ -202,7 +201,7 @@ func (r *NotificationPumbleResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PumbleDetails: notification.PumbleDetails{

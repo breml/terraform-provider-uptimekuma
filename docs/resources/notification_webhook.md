@@ -17,7 +17,6 @@ resource "uptimekuma_notification_webhook" "example" {
   name                 = "Generic Webhook Notification"
   webhook_url          = "https://webhooks.example.com/uptime-kuma"
   webhook_content_type = "json"
-  is_active            = true
   is_default           = false
 }
 
@@ -29,7 +28,6 @@ resource "uptimekuma_notification_webhook" "with_headers" {
     "Authorization"   = "Bearer token123"
     "X-Custom-Header" = "value"
   }
-  is_active  = true
   is_default = false
 }
 
@@ -57,7 +55,6 @@ resource "uptimekuma_notification_webhook" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `webhook_additional_headers` (Map of String) Additional HTTP headers to send with the webhook request (e.g., Authorization headers)
 - `webhook_content_type` (String) Content type for the webhook payload. Supported values: `json`, `form-data`, `custom`. Defaults to `json`

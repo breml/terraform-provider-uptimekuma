@@ -51,7 +51,6 @@ func testAccNotificationWPushDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_wpush" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = %[2]q
   channel   = %[3]q
 }

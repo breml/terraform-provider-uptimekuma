@@ -324,7 +324,7 @@ func (r *NotificationOctopushResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OctopushDetails: notification.OctopushDetails{
@@ -401,7 +401,6 @@ func (r *NotificationOctopushResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(octopush.Name)
-	data.IsActive = types.BoolValue(octopush.IsActive)
 	data.IsDefault = types.BoolValue(octopush.IsDefault)
 	data.ApplyExisting = types.BoolValue(octopush.ApplyExisting)
 
@@ -497,7 +496,7 @@ func (r *NotificationOctopushResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OctopushDetails: notification.OctopushDetails{

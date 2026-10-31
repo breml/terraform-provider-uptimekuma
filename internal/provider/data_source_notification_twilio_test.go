@@ -57,7 +57,6 @@ func testAccNotificationTwilioDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_twilio" "test" {
   name        = %[1]q
-  is_active   = true
   account_sid = %[2]q
   auth_token  = %[3]q
   to_number   = %[4]q

@@ -35,11 +35,6 @@ func TestAccNotificationTelnyxResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_telnyx.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_telnyx.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -91,11 +86,6 @@ func TestAccNotificationTelnyxResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_telnyx.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_telnyx.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -141,7 +131,6 @@ func testAccNotificationTelnyxResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_telnyx" "test" {
   name                 = %[1]q
-  is_active            = true
   api_key              = %[2]q
   messaging_profile_id = %[3]q
   phone_number         = %[4]q

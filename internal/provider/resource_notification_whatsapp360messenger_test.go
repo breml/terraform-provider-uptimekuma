@@ -44,11 +44,6 @@ func TestAccNotificationWhatsapp360messengerResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_whatsapp360messenger.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_whatsapp360messenger.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -189,7 +184,6 @@ func testAccNotificationWhatsapp360messengerResourceConfigMinimal(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_whatsapp360messenger" "test" {
   name       = %[1]q
-  is_active  = true
   auth_token = %[2]q
   recipient  = %[3]q
 }
@@ -202,7 +196,6 @@ func testAccNotificationWhatsapp360messengerResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_whatsapp360messenger" "test" {
   name         = %[1]q
-  is_active    = true
   auth_token   = %[2]q
   recipient    = %[3]q
   group_id     = %[4]q
@@ -218,7 +211,6 @@ func testAccNotificationWhatsapp360messengerResourceConfigWithGroupIDs(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_whatsapp360messenger" "test" {
   name       = %[1]q
-  is_active  = true
   auth_token = %[2]q
   recipient  = %[3]q
   group_ids  = ["120363012345678901", "120363098765432109"]

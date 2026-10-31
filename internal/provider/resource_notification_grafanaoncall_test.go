@@ -37,11 +37,6 @@ func TestAccNotificationGrafanaOncallResource(t *testing.T) {
 						tfjsonpath.New("grafana_oncall_url"),
 						knownvalue.StringExact(url),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_grafanaoncall.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -59,11 +54,6 @@ func TestAccNotificationGrafanaOncallResource(t *testing.T) {
 						"uptimekuma_notification_grafanaoncall.test",
 						tfjsonpath.New("grafana_oncall_url"),
 						knownvalue.StringExact(urlUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_grafanaoncall.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -83,7 +73,6 @@ func testAccNotificationGrafanaOncallResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_grafanaoncall" "test" {
   name                = %[1]q
-  is_active           = true
   grafana_oncall_url  = %[2]q
 }
 `, name, grafanaOncallURL)

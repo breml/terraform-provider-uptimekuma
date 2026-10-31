@@ -108,7 +108,7 @@ func (r *NotificationBaleResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		BaleDetails: notification.BaleDetails{
@@ -172,7 +172,6 @@ func (r *NotificationBaleResource) Read(ctx context.Context, req resource.ReadRe
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(bale.Name)
-	data.IsActive = types.BoolValue(bale.IsActive)
 	data.IsDefault = types.BoolValue(bale.IsDefault)
 	data.ApplyExisting = types.BoolValue(bale.ApplyExisting)
 
@@ -205,7 +204,7 @@ func (r *NotificationBaleResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		BaleDetails: notification.BaleDetails{

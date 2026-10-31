@@ -109,7 +109,7 @@ func (r *NotificationAppriseResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		AppriseDetails: notification.AppriseDetails{
@@ -173,7 +173,6 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(apprise.Name)
-	data.IsActive = types.BoolValue(apprise.IsActive)
 	data.IsDefault = types.BoolValue(apprise.IsDefault)
 	data.ApplyExisting = types.BoolValue(apprise.ApplyExisting)
 
@@ -210,7 +209,7 @@ func (r *NotificationAppriseResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		AppriseDetails: notification.AppriseDetails{

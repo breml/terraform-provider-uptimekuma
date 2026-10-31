@@ -120,7 +120,7 @@ func (r *NotificationMattermostResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		MattermostDetails: notification.MattermostDetails{
@@ -191,7 +191,6 @@ func (r *NotificationMattermostResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(mattermost.Name)
-	data.IsActive = types.BoolValue(mattermost.IsActive)
 	data.IsDefault = types.BoolValue(mattermost.IsDefault)
 	data.ApplyExisting = types.BoolValue(mattermost.ApplyExisting)
 
@@ -238,7 +237,7 @@ func (r *NotificationMattermostResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		MattermostDetails: notification.MattermostDetails{

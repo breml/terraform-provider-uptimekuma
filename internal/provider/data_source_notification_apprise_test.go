@@ -36,7 +36,6 @@ func testAccNotificationAppriseDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_apprise" "test" {
   name        = %[1]q
-  is_active   = true
   apprise_url = "discord://webhook_id/webhook_token"
 }
 

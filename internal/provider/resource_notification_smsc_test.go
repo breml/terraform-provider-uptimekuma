@@ -67,11 +67,6 @@ func TestAccNotificationSMSCResource(t *testing.T) {
 						tfjsonpath.New("translit"),
 						knownvalue.StringExact("1"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smsc.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -114,11 +109,6 @@ func TestAccNotificationSMSCResource(t *testing.T) {
 						tfjsonpath.New("translit"),
 						knownvalue.StringExact("0"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smsc.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -138,7 +128,6 @@ func testAccNotificationSMSCResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsc" "test" {
   name        = %[1]q
-  is_active   = true
   login       = %[2]q
   password    = %[3]q
   to_number   = %[4]q

@@ -59,7 +59,6 @@ func testAccNotificationBarkDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bark" "test" {
   name        = %[1]q
-  is_active   = true
   endpoint    = %[2]q
   group       = %[3]q
   sound       = %[4]q

@@ -56,11 +56,6 @@ func TestAccNotificationJiraServiceManagementResource(t *testing.T) {
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(1),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_jiraservicemanagement.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -97,11 +92,6 @@ func TestAccNotificationJiraServiceManagementResource(t *testing.T) {
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(3),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_jiraservicemanagement.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -121,7 +111,6 @@ func testAccNotificationJiraServiceManagementResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_jiraservicemanagement" "test" {
   name      = %[1]q
-  is_active = true
   cloud_id  = %[2]q
   email     = %[3]q
   api_token = %[4]q

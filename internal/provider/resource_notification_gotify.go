@@ -121,7 +121,7 @@ func (r *NotificationGotifyResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GotifyDetails: notification.GotifyDetails{
@@ -190,7 +190,6 @@ func (r *NotificationGotifyResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(gotify.Name)
-	data.IsActive = types.BoolValue(gotify.IsActive)
 	data.IsDefault = types.BoolValue(gotify.IsDefault)
 	data.ApplyExisting = types.BoolValue(gotify.ApplyExisting)
 
@@ -224,7 +223,7 @@ func (r *NotificationGotifyResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GotifyDetails: notification.GotifyDetails{

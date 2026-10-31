@@ -47,7 +47,6 @@ func testAccNotificationSpugPushDataSourceConfig(name string, templateKey string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_spugpush" "test" {
   name         = %[1]q
-  is_active    = true
   template_key = %[2]q
 }
 

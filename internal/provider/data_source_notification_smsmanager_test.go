@@ -41,7 +41,6 @@ func testAccNotificationSMSManagerDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsmanager" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = "test-api-key-123"
   numbers   = "+1234567890"
 }

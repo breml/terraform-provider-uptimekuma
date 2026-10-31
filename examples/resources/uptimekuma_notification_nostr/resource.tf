@@ -13,7 +13,6 @@ resource "uptimekuma_notification_nostr" "example" {
   relays = "wss://relay.example.com\nwss://relay2.example.com"
 
   # Optional: Enable or disable the notification
-  is_active = true
 
   # Optional: Mark as default notification
   is_default = false

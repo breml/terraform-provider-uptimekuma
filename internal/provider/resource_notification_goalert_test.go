@@ -41,11 +41,6 @@ func TestAccNotificationGoAlertResource(t *testing.T) {
 						tfjsonpath.New("base_url"),
 						knownvalue.StringExact(baseURL),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_goalert.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -64,11 +59,6 @@ func TestAccNotificationGoAlertResource(t *testing.T) {
 						"uptimekuma_notification_goalert.test",
 						tfjsonpath.New("base_url"),
 						knownvalue.StringExact(baseURLUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_goalert.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -94,7 +84,6 @@ func testAccNotificationGoAlertResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_goalert" "test" {
   name     = %[1]q
-  is_active = true
   base_url = %[2]q
   token    = %[3]q
 }

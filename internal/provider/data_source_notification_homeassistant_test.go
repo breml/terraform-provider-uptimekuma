@@ -46,7 +46,6 @@ func testAccNotificationHomeAssistantDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_homeassistant" "test" {
   name                    = %[1]q
-  is_active               = true
   home_assistant_url      = "https://homeassistant.example.com"
   long_lived_access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
   notification_service    = "notify.mobile_app"

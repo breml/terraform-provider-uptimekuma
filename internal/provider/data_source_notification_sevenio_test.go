@@ -41,7 +41,6 @@ func testAccNotificationSevenioDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_sevenio" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = "test-api-key-123"
   sender    = "+491234567890"
   to        = "+491111111111"

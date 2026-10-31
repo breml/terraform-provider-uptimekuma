@@ -35,7 +35,6 @@ func TestAccNotificationMilkyResource(t *testing.T) {
 				Config: testAccNotificationMilkyResourceConfig(name, httpAddr, "token-1", "null", "1001"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_default"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("apply_existing"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("id"), knownvalue.NotNull()),
@@ -87,7 +86,6 @@ func testAccNotificationMilkyResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_milky" "test" {
   name         = %[1]q
-  is_active    = true
   http_addr    = %[2]q
   access_token = %[3]q
   msg_type     = %[4]s

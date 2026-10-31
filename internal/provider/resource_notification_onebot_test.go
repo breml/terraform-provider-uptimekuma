@@ -61,11 +61,6 @@ func TestAccNotificationOneBotResource(t *testing.T) {
 						tfjsonpath.New("receiver_id"),
 						knownvalue.StringExact(receiverID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_onebot.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -102,11 +97,6 @@ func TestAccNotificationOneBotResource(t *testing.T) {
 						tfjsonpath.New("receiver_id"),
 						knownvalue.StringExact(receiverIDUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_onebot.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -129,7 +119,6 @@ func testAccNotificationOneBotResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_onebot" "test" {
   name         = %[1]q
-  is_active    = true
   http_addr    = %[2]q
   access_token = %[3]q
   msg_type     = %[4]q

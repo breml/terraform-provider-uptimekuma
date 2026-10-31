@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_brevo" "example" {
   name       = "Brevo Email Alerts"
-  is_active  = true
   api_key    = "your_brevo_api_key_here"
   to_email   = "alerts@example.com"
   from_email = "monitoring@example.com"
@@ -10,7 +9,6 @@ resource "uptimekuma_notification_brevo" "example" {
 
 resource "uptimekuma_notification_brevo" "with_cc" {
   name       = "Brevo Email Alerts with CC"
-  is_active  = true
   api_key    = "your_brevo_api_key_here"
   to_email   = "alerts@example.com"
   from_email = "monitoring@example.com"

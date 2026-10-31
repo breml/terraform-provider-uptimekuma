@@ -144,7 +144,7 @@ func (r *NotificationPromoSMSResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PromoSMSDetails: notification.PromoSMSDetails{
@@ -216,7 +216,6 @@ func (r *NotificationPromoSMSResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(promosms.Name)
-	data.IsActive = types.BoolValue(promosms.IsActive)
 	data.IsDefault = types.BoolValue(promosms.IsDefault)
 	data.ApplyExisting = types.BoolValue(promosms.ApplyExisting)
 
@@ -254,7 +253,7 @@ func (r *NotificationPromoSMSResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PromoSMSDetails: notification.PromoSMSDetails{

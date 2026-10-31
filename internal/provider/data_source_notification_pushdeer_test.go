@@ -41,7 +41,6 @@ func testAccNotificationPushDeerDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushdeer" "test" {
   name = %[1]q
-  is_active = true
   key  = "pushkey123"
 }
 

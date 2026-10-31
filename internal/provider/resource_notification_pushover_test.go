@@ -42,11 +42,6 @@ func TestAccNotificationPushoverResource(t *testing.T) {
 						tfjsonpath.New("app_token"),
 						knownvalue.StringExact(appToken),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushover.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -67,11 +62,6 @@ func TestAccNotificationPushoverResource(t *testing.T) {
 						tfjsonpath.New("app_token"),
 						knownvalue.StringExact(appTokenUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushover.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -89,7 +79,6 @@ func testAccNotificationPushoverResourceConfig(name string, userKey string, appT
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushover" "test" {
   name      = %[1]q
-  is_active = true
   user_key  = %[2]q
   app_token = %[3]q
 }

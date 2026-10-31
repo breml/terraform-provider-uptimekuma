@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_promosms" "example" {
   name           = "PromoSMS Notification"
-  is_active      = true
   login          = "your_promosms_login"
   password       = "your_promosms_password"
   phone_number   = "+48501234567"

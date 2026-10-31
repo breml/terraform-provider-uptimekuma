@@ -42,7 +42,6 @@ func testAccNotificationDataSourceConfig(name string) string {
 resource "uptimekuma_notification" "test" {
   name      = %[1]q
   type      = "webhook"
-  is_active = true
   config = jsonencode({
     webhookURL = "https://example.com/webhook"
   })

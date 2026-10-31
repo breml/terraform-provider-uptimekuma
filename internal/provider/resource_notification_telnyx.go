@@ -176,7 +176,6 @@ func (r *NotificationTelnyxResource) Read(ctx context.Context, req resource.Read
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(telnyx.Name)
-	data.IsActive = types.BoolValue(telnyx.IsActive)
 	data.IsDefault = types.BoolValue(telnyx.IsDefault)
 	data.ApplyExisting = types.BoolValue(telnyx.ApplyExisting)
 
@@ -280,7 +279,7 @@ func telnyxFromModel(data *NotificationTelnyxResourceModel) notification.Telnyx 
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TelnyxDetails: notification.TelnyxDetails{

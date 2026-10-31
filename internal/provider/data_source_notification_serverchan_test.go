@@ -41,7 +41,6 @@ func testAccNotificationServerChanDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_serverchan" "test" {
   name     = %[1]q
-  is_active = true
   send_key = "test-send-key-12345"
 }
 

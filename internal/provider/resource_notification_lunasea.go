@@ -125,7 +125,7 @@ func (r *NotificationLunaseaResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		LunaSeaDetails: notification.LunaSeaDetails{
@@ -186,7 +186,6 @@ func (r *NotificationLunaseaResource) Read(ctx context.Context, req resource.Rea
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(lunasea.Name)
-	data.IsActive = types.BoolValue(lunasea.IsActive)
 	data.IsDefault = types.BoolValue(lunasea.IsDefault)
 	data.ApplyExisting = types.BoolValue(lunasea.ApplyExisting)
 
@@ -244,7 +243,7 @@ func (r *NotificationLunaseaResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		LunaSeaDetails: notification.LunaSeaDetails{

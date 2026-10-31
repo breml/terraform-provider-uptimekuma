@@ -181,7 +181,6 @@ func (r *NotificationResendResource) Read(ctx context.Context, req resource.Read
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(resend.Name)
-	data.IsActive = types.BoolValue(resend.IsActive)
 	data.IsDefault = types.BoolValue(resend.IsDefault)
 	data.ApplyExisting = types.BoolValue(resend.ApplyExisting)
 
@@ -295,7 +294,7 @@ func resendFromModel(data *NotificationResendResourceModel) notification.Resend 
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ResendDetails: notification.ResendDetails{

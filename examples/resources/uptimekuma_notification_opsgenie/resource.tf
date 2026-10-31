@@ -1,9 +1,8 @@
 resource "uptimekuma_notification_opsgenie" "example" {
-  name      = "OpsGenie Example"
-  is_active = true
-  api_key   = "your-opsgenie-api-key"
-  region    = "us"
-  priority  = 2
+  name     = "OpsGenie Example"
+  api_key  = "your-opsgenie-api-key"
+  region   = "us"
+  priority = 2
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in plan

@@ -52,7 +52,6 @@ func testAccNotificationWeComDataSourceConfig(name string, botKey string) string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_wecom" "test" {
   name    = %[1]q
-  is_active = true
   bot_key = %[2]q
 }
 

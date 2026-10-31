@@ -52,7 +52,6 @@ func testAccNotificationThreemaDataSourceByIDConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_threema" "test" {
   name               = %[1]q
-  is_active          = true
   sender_identity    = %[2]q
   secret             = %[3]q
   recipient          = %[4]q

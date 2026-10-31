@@ -18,20 +18,18 @@ WAHA (WhatsApp HTTP API) notification resource
 # Used for sending WhatsApp messages for monitoring alerts
 
 resource "uptimekuma_notification_waha" "example" {
-  name      = "WAHA Group Chat"
-  is_active = true
-  api_url   = "https://api.waha.local:3000"
-  session   = "default"
-  chat_id   = "120363101234567890@g.us"
-  api_key   = "your-api-key-here" # Optional
+  name    = "WAHA Group Chat"
+  api_url = "https://api.waha.local:3000"
+  session = "default"
+  chat_id = "120363101234567890@g.us"
+  api_key = "your-api-key-here" # Optional
 }
 
 resource "uptimekuma_notification_waha" "example_without_key" {
-  name      = "WAHA Direct Message"
-  is_active = true
-  api_url   = "https://api.waha.local:3000"
-  session   = "production"
-  chat_id   = "5219123456789" # Phone number format for direct messages
+  name    = "WAHA Direct Message"
+  api_url = "https://api.waha.local:3000"
+  session = "production"
+  chat_id = "5219123456789" # Phone number format for direct messages
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
@@ -66,7 +64,6 @@ resource "uptimekuma_notification_waha" "write_only" {
 - `api_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) WAHA API key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `api_key`; requires `api_key_wo_version`. An imported resource has no `api_key_wo_version` yet, so `terraform import` may store the server's value in `api_key` until the next apply with `api_key_wo` set removes it from state.
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

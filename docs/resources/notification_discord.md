@@ -17,7 +17,6 @@ resource "uptimekuma_notification_discord" "example" {
   name        = "Discord Notifications"
   webhook_url = "https://discord.com/api/webhooks/123456789/abcdefghijklmnopqrstuvwxyz"
   username    = "Uptime Kuma"
-  is_active   = true
   is_default  = false
 }
 
@@ -27,7 +26,6 @@ resource "uptimekuma_notification_discord" "alerts_channel" {
   username       = "Uptime Kuma Alerts"
   prefix_message = "🚨 ALERT"
   disable_url    = false
-  is_active      = true
   is_default     = true
 }
 
@@ -55,7 +53,6 @@ resource "uptimekuma_notification_discord" "write_only" {
 - `apply_existing` (Boolean)
 - `channel_type` (String) The type of Discord channel associated with the webhook (for example, text, forum, or announcement).
 - `disable_url` (Boolean) If true, disables including the monitor URL in the Discord notification.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `post_name` (String) The display name override for the Discord webhook when posting notifications (appears as the sender name in Discord).
 - `prefix_message` (String) A message to prefix to all Discord notifications.

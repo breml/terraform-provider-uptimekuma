@@ -38,11 +38,6 @@ func TestAccNotificationPlivoResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_plivo.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_plivo.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -241,7 +236,6 @@ func testAccNotificationPlivoResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_plivo" "test" {
   name        = %[1]q
-  is_active   = true
   auth_id     = %[2]q
   auth_token  = %[3]q
   from_number = %[4]q
@@ -254,7 +248,6 @@ func testAccNotificationPlivoResourceCallConfig(name string, answerURL string) s
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_plivo" "call" {
   name         = %[1]q
-  is_active    = true
   auth_id      = "MAXXXXXXXXXXXXXXXXXX"
   auth_token   = "authtoken0000000000000000000000000000000"
   from_number  = "+15550001111"
@@ -269,7 +262,6 @@ func testAccNotificationPlivoResourceSMSConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_plivo" "call" {
   name         = %[1]q
-  is_active    = true
   auth_id      = "MAXXXXXXXXXXXXXXXXXX"
   auth_token   = "authtoken0000000000000000000000000000000"
   from_number  = "+15550001111"

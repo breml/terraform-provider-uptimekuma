@@ -100,7 +100,7 @@ func (r *NotificationSquadcastResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SquadcastDetails: notification.SquadcastDetails{
@@ -167,7 +167,6 @@ func (r *NotificationSquadcastResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(squadcast.Name)
-	data.IsActive = types.BoolValue(squadcast.IsActive)
 	data.IsDefault = types.BoolValue(squadcast.IsDefault)
 	data.ApplyExisting = types.BoolValue(squadcast.ApplyExisting)
 
@@ -198,7 +197,7 @@ func (r *NotificationSquadcastResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SquadcastDetails: notification.SquadcastDetails{

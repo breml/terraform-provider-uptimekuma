@@ -133,7 +133,7 @@ func (r *NotificationWebhookResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WebhookDetails: notification.WebhookDetails{
@@ -199,7 +199,6 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(webhook.Name)
-	data.IsActive = types.BoolValue(webhook.IsActive)
 	data.IsDefault = types.BoolValue(webhook.IsDefault)
 	data.ApplyExisting = types.BoolValue(webhook.ApplyExisting)
 
@@ -261,7 +260,7 @@ func (r *NotificationWebhookResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WebhookDetails: notification.WebhookDetails{

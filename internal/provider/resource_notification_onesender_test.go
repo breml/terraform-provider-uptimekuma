@@ -57,11 +57,6 @@ func TestAccNotificationOnesenderResource(t *testing.T) {
 						tfjsonpath.New("type_receiver"),
 						knownvalue.StringExact("private"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_onesender.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -98,11 +93,6 @@ func TestAccNotificationOnesenderResource(t *testing.T) {
 						tfjsonpath.New("type_receiver"),
 						knownvalue.StringExact("group"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_onesender.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -124,7 +114,6 @@ func testAccNotificationOnesenderResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_onesender" "test" {
   name          = %[1]q
-  is_active     = true
   url           = %[2]q
   token         = %[3]q
   receiver      = %[4]q

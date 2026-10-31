@@ -37,7 +37,6 @@ type NotificationResource struct {
 type NotificationResourceModel struct {
 	ID            types.Int64  `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
-	IsActive      types.Bool   `tfsdk:"is_active"`
 	IsDefault     types.Bool   `tfsdk:"is_default"`
 	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
 	Type          types.String `tfsdk:"type"`
@@ -68,11 +67,6 @@ func (*NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Notification name",
 				Required:            true,
-			},
-			"is_active": schema.BoolAttribute{
-				Optional: true,
-				Computed: true,
-				Default:  booldefault.StaticBool(true),
 			},
 			"is_default": schema.BoolAttribute{
 				Optional: true,
@@ -127,7 +121,7 @@ func (r *NotificationResource) Create(ctx context.Context, req resource.CreateRe
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TypeName:       data.Type.ValueString(),
@@ -188,7 +182,6 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(genericNotification.Name)
-	data.IsActive = types.BoolValue(genericNotification.IsActive)
 	data.IsDefault = types.BoolValue(genericNotification.IsDefault)
 	data.ApplyExisting = types.BoolValue(genericNotification.ApplyExisting)
 	data.Type = types.StringValue(genericNotification.Type())
@@ -221,7 +214,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TypeName:       data.Type.ValueString(),

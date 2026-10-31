@@ -137,7 +137,7 @@ func (r *NotificationDiscordResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		DiscordDetails: notification.DiscordDetails{
@@ -206,7 +206,6 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(discord.Name)
-	data.IsActive = types.BoolValue(discord.IsActive)
 	data.IsDefault = types.BoolValue(discord.IsDefault)
 	data.ApplyExisting = types.BoolValue(discord.ApplyExisting)
 
@@ -269,7 +268,7 @@ func (r *NotificationDiscordResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		DiscordDetails: notification.DiscordDetails{

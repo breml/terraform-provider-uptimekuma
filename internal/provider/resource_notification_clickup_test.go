@@ -51,11 +51,6 @@ func TestAccNotificationClickUpResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_clickup.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_clickup.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -223,7 +218,6 @@ func testAccNotificationClickUpResourceConfig(cfg clickUpTestConfig) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_clickup" "test" {
   name         = %[1]q
-  is_active    = true
   token        = %[2]q
   workspace_id = %[3]q
   channel_id   = %[4]q

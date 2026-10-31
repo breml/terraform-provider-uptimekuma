@@ -40,11 +40,6 @@ func TestAccNotificationLunaseaResource(t *testing.T) {
 						tfjsonpath.New("lunasea_user_id"),
 						knownvalue.StringExact(userID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_lunasea.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -59,11 +54,6 @@ func TestAccNotificationLunaseaResource(t *testing.T) {
 						"uptimekuma_notification_lunasea.test",
 						tfjsonpath.New("lunasea_user_id"),
 						knownvalue.StringExact(userIDUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_lunasea.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -99,11 +89,6 @@ func TestAccNotificationLunaseaResourceDevice(t *testing.T) {
 						tfjsonpath.New("device"),
 						knownvalue.StringExact(deviceID),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_lunasea.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -118,11 +103,6 @@ func TestAccNotificationLunaseaResourceDevice(t *testing.T) {
 						"uptimekuma_notification_lunasea.test",
 						tfjsonpath.New("device"),
 						knownvalue.StringExact(deviceIDUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_lunasea.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -154,7 +134,6 @@ func testAccNotificationLunaseaResourceConfigUser(name string, userID string) st
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_lunasea" "test" {
   name             = %[1]q
-  is_active        = true
   target           = "user"
   lunasea_user_id  = %[2]q
 }
@@ -165,7 +144,6 @@ func testAccNotificationLunaseaResourceConfigDevice(name string, deviceID string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_lunasea" "test" {
   name      = %[1]q
-  is_active = true
   target    = "device"
   device    = %[2]q
 }
@@ -206,7 +184,6 @@ func testAccNotificationLunaseaResourceConfigMissingUserID(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_lunasea" "test" {
   name      = %[1]q
-  is_active = true
   target    = "user"
 }
 `, name)
@@ -216,7 +193,6 @@ func testAccNotificationLunaseaResourceConfigMissingDevice(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_lunasea" "test" {
   name      = %[1]q
-  is_active = true
   target    = "device"
 }
 `, name)

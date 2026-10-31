@@ -1,9 +1,8 @@
 resource "uptimekuma_notification_sevenio" "example" {
-  name      = "Seven.io SMS Notification"
-  is_active = true
-  api_key   = "your_sevenio_api_key"
-  sender    = "+491234567890"
-  to        = "+491111111111"
+  name    = "Seven.io SMS Notification"
+  api_key = "your_sevenio_api_key"
+  sender  = "+491234567890"
+  to      = "+491111111111"
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in

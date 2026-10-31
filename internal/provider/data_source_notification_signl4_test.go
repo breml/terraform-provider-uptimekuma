@@ -41,7 +41,6 @@ func testAccNotificationSIGNL4DataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_signl4" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://connect.signl4.com/webhook/example"
 }
 

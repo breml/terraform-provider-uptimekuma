@@ -37,11 +37,6 @@ func TestAccNotificationResendResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_resend.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_resend.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -164,7 +159,6 @@ func testAccNotificationResendResourceConfigMinimal(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_resend" "test" {
   name       = %[1]q
-  is_active  = true
   api_key    = %[2]q
   from_email = %[3]q
   to_email   = %[4]q
@@ -178,7 +172,6 @@ func testAccNotificationResendResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_resend" "test" {
   name       = %[1]q
-  is_active  = true
   api_key    = %[2]q
   from_email = %[3]q
   from_name  = %[4]q

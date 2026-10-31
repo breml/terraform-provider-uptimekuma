@@ -53,11 +53,6 @@ func TestAccNotificationSMSPlanetResource(t *testing.T) {
 						tfjsonpath.New("sender_name"),
 						knownvalue.StringExact(senderName),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smsplanet.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -88,11 +83,6 @@ func TestAccNotificationSMSPlanetResource(t *testing.T) {
 						tfjsonpath.New("sender_name"),
 						knownvalue.StringExact(senderNameUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smsplanet.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -114,7 +104,6 @@ func testAccNotificationSMSPlanetResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsplanet" "test" {
   name          = %[1]q
-  is_active     = true
   api_token     = %[2]q
   phone_numbers = %[3]q
   sender_name   = %[4]q

@@ -44,11 +44,6 @@ func TestAccNotificationMattermostResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_mattermost.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_mattermost.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("test-bot"),
 					),
@@ -91,11 +86,6 @@ func TestAccNotificationMattermostResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_mattermost.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_mattermost.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("updated-bot"),
 					),
@@ -134,7 +124,6 @@ func testAccNotificationMattermostResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_mattermost" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
   username    = %[3]q
   channel     = %[4]q

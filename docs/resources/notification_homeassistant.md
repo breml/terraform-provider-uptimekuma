@@ -15,7 +15,6 @@ Home Assistant notification resource
 ```terraform
 resource "uptimekuma_notification_homeassistant" "example" {
   name                    = "Home Assistant Notifications"
-  is_active               = true
   is_default              = false
   apply_existing          = false
   home_assistant_url      = "https://homeassistant.example.com"
@@ -50,7 +49,6 @@ resource "uptimekuma_notification_homeassistant" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `long_lived_access_token` (String, Sensitive) Home Assistant long-lived access token. Stored in state; use `long_lived_access_token_wo` to keep it out of state.
 - `long_lived_access_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Home Assistant long-lived access token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `long_lived_access_token`; requires `long_lived_access_token_wo_version`. An imported resource has no `long_lived_access_token_wo_version` yet, so `terraform import` may store the server's value in `long_lived_access_token` until the next apply with `long_lived_access_token_wo` set removes it from state.

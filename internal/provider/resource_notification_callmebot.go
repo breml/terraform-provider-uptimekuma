@@ -104,7 +104,7 @@ func (r *NotificationCallMeBotResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		CallMeBotDetails: notification.CallMeBotDetails{
@@ -171,7 +171,6 @@ func (r *NotificationCallMeBotResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(callmebot.Name)
-	data.IsActive = types.BoolValue(callmebot.IsActive)
 	data.IsDefault = types.BoolValue(callmebot.IsDefault)
 	data.ApplyExisting = types.BoolValue(callmebot.ApplyExisting)
 
@@ -202,7 +201,7 @@ func (r *NotificationCallMeBotResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		CallMeBotDetails: notification.CallMeBotDetails{

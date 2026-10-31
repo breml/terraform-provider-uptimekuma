@@ -61,11 +61,6 @@ func TestAccNotificationEvolutionResource(t *testing.T) {
 						tfjsonpath.New("recipient"),
 						knownvalue.StringExact(recipient),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_evolution.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -102,11 +97,6 @@ func TestAccNotificationEvolutionResource(t *testing.T) {
 						tfjsonpath.New("recipient"),
 						knownvalue.StringExact(recipientUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_evolution.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -125,7 +115,6 @@ func testAccNotificationEvolutionResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_evolution" "test" {
   name            = %[1]q
-  is_active       = true
   api_url         = %[2]q
   instance_name   = %[3]q
   auth_token      = %[4]q

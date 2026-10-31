@@ -41,7 +41,6 @@ func testAccNotificationAlertaDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_alerta" "test" {
   name         = %[1]q
-  is_active    = true
   api_endpoint = "https://alerta.example.com"
   api_key      = "test-api-key-12345"
 }

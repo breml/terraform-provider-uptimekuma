@@ -4,7 +4,6 @@ resource "uptimekuma_notification_plivo" "example" {
   auth_token  = "0123456789abcdef0123456789abcdef"
   from_number = "+15550001111"
   to_number   = "+15550002222"
-  is_active   = true
   is_default  = false
 }
 
@@ -19,7 +18,6 @@ resource "uptimekuma_notification_plivo" "voice_call" {
   to_number    = "+15550002222"
   message_type = "call"
   answer_url   = "https://example.com/plivo/answer"
-  is_active    = true
   is_default   = false
 }
 

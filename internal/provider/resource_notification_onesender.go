@@ -129,7 +129,7 @@ func (r *NotificationOnesenderResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OneSenderDetails: notification.OneSenderDetails{
@@ -199,7 +199,6 @@ func (r *NotificationOnesenderResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(onesender.Name)
-	data.IsActive = types.BoolValue(onesender.IsActive)
 	data.IsDefault = types.BoolValue(onesender.IsDefault)
 	data.ApplyExisting = types.BoolValue(onesender.ApplyExisting)
 
@@ -235,7 +234,7 @@ func (r *NotificationOnesenderResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		OneSenderDetails: notification.OneSenderDetails{

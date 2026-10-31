@@ -41,7 +41,6 @@ func testAccNotificationZohoCliqDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_zohocliq" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://cliq.zoho.com/company/api/v2/channelsbyname/general/message?zapikey=test-key"
 }
 

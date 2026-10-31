@@ -18,7 +18,6 @@ resource "uptimekuma_notification_resend" "example" {
   api_key    = "re_your_api_key_here"
   from_email = "monitoring@example.com"
   to_email   = "alerts@example.com"
-  is_active  = true
   is_default = false
 }
 
@@ -29,7 +28,6 @@ resource "uptimekuma_notification_resend" "with_subject" {
   from_name  = "Uptime Kuma"
   to_email   = "alerts@example.com,oncall@example.com"
   subject    = "Uptime Alert Notification"
-  is_active  = true
   is_default = false
 }
 
@@ -64,7 +62,6 @@ resource "uptimekuma_notification_resend" "write_only" {
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
 - `from_name` (String) The sender display name.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `subject` (String) The subject of the email notification.
 

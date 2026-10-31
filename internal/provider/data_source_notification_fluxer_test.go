@@ -41,7 +41,6 @@ func testAccNotificationFluxerDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_fluxer" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://fluxer.example.com/webhook/XXXXXXXX"
 }
 

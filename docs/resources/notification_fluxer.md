@@ -17,7 +17,6 @@ resource "uptimekuma_notification_fluxer" "example" {
   name        = "Fluxer Notifications"
   webhook_url = "https://fluxer.example.com/webhook/YOUR_TOKEN"
   username    = "Uptime Kuma"
-  is_active   = true
   is_default  = false
 }
 
@@ -29,7 +28,6 @@ resource "uptimekuma_notification_fluxer" "with_template" {
   use_message_template = true
   message_format       = "markdown"
   message_template     = "{{ name }} is {{ status }}"
-  is_active            = true
   is_default           = false
 }
 
@@ -56,7 +54,6 @@ resource "uptimekuma_notification_fluxer" "write_only" {
 
 - `apply_existing` (Boolean)
 - `disable_url` (Boolean) If true, disables including the monitor URL in the Fluxer notification.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `message_format` (String) The format of the Fluxer notification message.
 - `message_template` (String) The custom message template for Fluxer notifications.

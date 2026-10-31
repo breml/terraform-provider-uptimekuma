@@ -41,11 +41,6 @@ func TestAccNotificationSendgridResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_sendgrid.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_sendgrid.test",
 						tfjsonpath.New("to_email"),
 						knownvalue.StringExact("alerts@example.com"),
 					),
@@ -76,11 +71,6 @@ func TestAccNotificationSendgridResource(t *testing.T) {
 						"uptimekuma_notification_sendgrid.test",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(nameUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_sendgrid.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_sendgrid.test",
@@ -137,7 +127,6 @@ func testAccNotificationSendgridResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_sendgrid" "test" {
   name       = %[1]q
-  is_active  = true
   api_key    = %[2]q
   to_email   = %[3]q
   from_email = %[4]q

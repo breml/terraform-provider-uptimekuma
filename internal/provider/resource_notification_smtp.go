@@ -246,7 +246,7 @@ func (r *NotificationSMTPResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMTPDetails: notification.SMTPDetails{
@@ -354,7 +354,7 @@ func (r *NotificationSMTPResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMTPDetails: notification.SMTPDetails{
@@ -437,7 +437,6 @@ func populateSMTPModelFromAPI(
 ) {
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smtp.Name)
-	data.IsActive = types.BoolValue(smtp.IsActive)
 	data.IsDefault = types.BoolValue(smtp.IsDefault)
 	data.ApplyExisting = types.BoolValue(smtp.ApplyExisting)
 

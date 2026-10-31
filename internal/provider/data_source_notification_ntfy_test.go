@@ -41,7 +41,6 @@ func testAccNotificationNtfyDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_ntfy" "test" {
   name      = %[1]q
-  is_active = true
 
   authentication_method = "none"
   server_url            = "https://ntfy.sh"

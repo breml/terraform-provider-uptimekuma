@@ -41,7 +41,6 @@ func testAccNotificationWebpushDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_webpush" "test" {
   name      = %[1]q
-  is_active = true
 
   subscription = {
     endpoint = "https://fcm.googleapis.com/fcm/send/abc123"

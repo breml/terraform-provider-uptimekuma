@@ -46,7 +46,6 @@ func testAccNotificationWhatsapp360messengerDataSourceConfig(name string) string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_whatsapp360messenger" "test" {
   name       = %[1]q
-  is_active  = true
   auth_token = "auth-token-xxxxxxxx"
   recipient  = "+15551234567"
 }

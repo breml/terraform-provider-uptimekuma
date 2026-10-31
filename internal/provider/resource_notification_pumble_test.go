@@ -35,11 +35,6 @@ func TestAccNotificationPumbleResource(t *testing.T) {
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURL),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pumble.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -54,11 +49,6 @@ func TestAccNotificationPumbleResource(t *testing.T) {
 						"uptimekuma_notification_pumble.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURLUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pumble.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -77,7 +67,6 @@ func testAccNotificationPumbleResourceConfig(name string, webhookURL string) str
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pumble" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)

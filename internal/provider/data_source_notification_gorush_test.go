@@ -41,7 +41,6 @@ func testAccNotificationGorushDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_gorush" "test" {
   name         = %[1]q
-  is_active    = true
   server_url   = "https://gorush.example.com"
   device_token = "test-device-token"
   platform     = "ios"

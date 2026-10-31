@@ -1,8 +1,7 @@
 resource "uptimekuma_notification_wpush" "example" {
-  name      = "WPush Notifications"
-  api_key   = "your-wpush-api-key"
-  channel   = "monitoring"
-  is_active = true
+  name    = "WPush Notifications"
+  api_key = "your-wpush-api-key"
+  channel = "monitoring"
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in

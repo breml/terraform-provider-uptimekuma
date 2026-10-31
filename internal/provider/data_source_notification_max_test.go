@@ -46,7 +46,6 @@ func testAccNotificationMaxDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_max" "test" {
   name      = %[1]q
-  is_active = true
   bot_token = "bot-token-123"
   chat_id   = "-12345"
 }

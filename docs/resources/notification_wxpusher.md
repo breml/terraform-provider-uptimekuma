@@ -16,7 +16,6 @@ WxPusher notification resource. WxPusher delivers the notifications through the 
 resource "uptimekuma_notification_wxpusher" "example" {
   name       = "WxPusher Notifications"
   spt        = "SPT_0123456789ab"
-  is_active  = true
   is_default = false
 }
 
@@ -24,7 +23,6 @@ resource "uptimekuma_notification_wxpusher" "example" {
 resource "uptimekuma_notification_wxpusher" "team" {
   name       = "WxPusher Team Notifications"
   spt        = "SPT_0123456789ab,SPT_cdef01234567"
-  is_active  = true
   is_default = false
 }
 
@@ -50,7 +48,6 @@ resource "uptimekuma_notification_wxpusher" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `spt` (String, Sensitive) The WxPusher simple push token, for example `SPT_xxxxxxxxxxxx`. Multiple tokens are separated by commas: Uptime Kuma trims each one, discards the empty entries and delivers to them in batches of at most 10 tokens per request. The value is stored verbatim, the provider does not normalize it. Stored in state; use `spt_wo` to keep it out of state.
 - `spt_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) WxPusher SPT token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `spt`; requires `spt_wo_version`. An imported resource has no `spt_wo_version` yet, so `terraform import` may store the server's value in `spt` until the next apply with `spt_wo` set removes it from state.

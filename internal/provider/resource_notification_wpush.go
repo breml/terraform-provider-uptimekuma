@@ -105,7 +105,7 @@ func (r *NotificationWPushResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WPushDetails: notification.WPushDetails{
@@ -173,7 +173,6 @@ func (r *NotificationWPushResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(wpush.Name)
-	data.IsActive = types.BoolValue(wpush.IsActive)
 	data.IsDefault = types.BoolValue(wpush.IsDefault)
 	data.ApplyExisting = types.BoolValue(wpush.ApplyExisting)
 
@@ -212,7 +211,7 @@ func (r *NotificationWPushResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WPushDetails: notification.WPushDetails{

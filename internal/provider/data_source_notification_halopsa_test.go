@@ -46,7 +46,6 @@ func testAccNotificationHaloPSADataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_halopsa" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://halopsa.example.com/webhook/XXXXXXXX"
   username    = "testuser"
   password    = "testpassword"

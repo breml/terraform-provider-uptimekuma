@@ -44,11 +44,6 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlechat.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_googlechat.test",
 						tfjsonpath.New("use_template"),
 						knownvalue.Bool(false),
 					),
@@ -71,11 +66,6 @@ func TestAccNotificationGoogleChatResource(t *testing.T) {
 						"uptimekuma_notification_googlechat.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURLUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_googlechat.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_googlechat.test",

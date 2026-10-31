@@ -45,7 +45,6 @@ resource "uptimekuma_notification_smtp" "test" {
   from  = "uptime-kuma@example.com"
   to    = "admin@example.com"
   port  = 587
-  is_active = true
 }
 
 data "uptimekuma_notification_smtp" "by_name" {

@@ -4,7 +4,6 @@ resource "uptimekuma_notification_nextcloudtalk" "example" {
   host               = "https://nextcloud.example.com"
   conversation_token = "abc123token"
   bot_secret         = "your-bot-secret"
-  is_active          = true
   is_default         = false
 }
 
@@ -16,7 +15,6 @@ resource "uptimekuma_notification_nextcloudtalk" "silent" {
   bot_secret         = "another-bot-secret"
   send_silent_up     = true
   send_silent_down   = false
-  is_active          = true
   is_default         = false
 }
 

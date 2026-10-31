@@ -18,7 +18,6 @@ resource "uptimekuma_notification_clickup" "example" {
   token        = "pk_12345678_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
   workspace_id = "9012345678"
   channel_id   = "abc12-345"
-  is_active    = true
   is_default   = false
 }
 
@@ -59,7 +58,6 @@ resource "uptimekuma_notification_clickup" "write_only" {
 
 - `apply_existing` (Boolean)
 - `disable_url` (Boolean) If true, the monitor address is left out of the message body. Leaving it unset behaves like `false`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `token` (String, Sensitive) The ClickUp personal access token (`pk_…`). Uptime Kuma sends it verbatim as the `Authorization` header, so it must not carry a `Bearer` prefix. Stored in state; use `token_wo` to keep it out of state.
 - `token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The ClickUp personal access token (`pk_…`), without a `Bearer` prefix, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `token`; requires `token_wo_version`. An imported resource has no `token_wo_version` yet, so `terraform import` may store the server's value in `token` until the next apply with `token_wo` set removes it from state.

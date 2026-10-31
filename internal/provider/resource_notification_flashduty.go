@@ -115,7 +115,7 @@ func (r *NotificationFlashDutyResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FlashDutyDetails: notification.FlashDutyDetails{
@@ -183,7 +183,6 @@ func (r *NotificationFlashDutyResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(flashduty.Name)
-	data.IsActive = types.BoolValue(flashduty.IsActive)
 	data.IsDefault = types.BoolValue(flashduty.IsDefault)
 	data.ApplyExisting = types.BoolValue(flashduty.ApplyExisting)
 
@@ -216,7 +215,7 @@ func (r *NotificationFlashDutyResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FlashDutyDetails: notification.FlashDutyDetails{

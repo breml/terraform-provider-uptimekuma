@@ -65,11 +65,6 @@ func TestAccNotificationOctopushResource(t *testing.T) {
 						tfjsonpath.New("sender_name"),
 						knownvalue.StringExact("TestSender"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_octopush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -137,7 +132,6 @@ func testAccNotificationOctopushResourceConfig(
 		return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_octopush" "test" {
   name          = %[1]q
-  is_active     = true
   version       = %[2]q
   api_key       = %[3]q
   login         = %[4]q
@@ -151,7 +145,6 @@ resource "uptimekuma_notification_octopush" "test" {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_octopush" "test" {
   name            = %[1]q
-  is_active       = true
   version         = %[2]q
   dm_api_key      = %[3]q
   dm_login        = %[4]q

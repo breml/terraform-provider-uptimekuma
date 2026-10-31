@@ -41,7 +41,6 @@ func testAccNotificationOctopushDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_octopush" "test" {
   name         = %[1]q
-  is_active    = true
   version      = "2"
   api_key      = "test-api-key"
   login        = "test-login"

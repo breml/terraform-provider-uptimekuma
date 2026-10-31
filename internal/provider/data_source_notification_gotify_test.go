@@ -46,7 +46,6 @@ func testAccNotificationGotifyDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_gotify" "test" {
   name              = %[1]q
-  is_active         = true
   server_url        = "https://gotify.example.com"
   application_token = "AGe0Ks4WV5fEJkX"
   priority          = 8

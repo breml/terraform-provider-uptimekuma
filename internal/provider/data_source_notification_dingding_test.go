@@ -36,7 +36,6 @@ func testAccNotificationDingDingDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_dingding" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://oapi.dingtalk.com/robot/send?access_token=abcdefg123456"
 }
 

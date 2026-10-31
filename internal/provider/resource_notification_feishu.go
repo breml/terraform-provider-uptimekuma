@@ -100,7 +100,7 @@ func (r *NotificationFeishuResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FeishuDetails: notification.FeishuDetails{
@@ -163,7 +163,6 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(feishu.Name)
-	data.IsActive = types.BoolValue(feishu.IsActive)
 	data.IsDefault = types.BoolValue(feishu.IsDefault)
 	data.ApplyExisting = types.BoolValue(feishu.ApplyExisting)
 
@@ -194,7 +193,7 @@ func (r *NotificationFeishuResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		FeishuDetails: notification.FeishuDetails{

@@ -32,11 +32,6 @@ func TestAccNotificationFeishuResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_feishu.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_feishu.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact("https://open.feishu.cn/open-apis/bot/v2/hook/abcdefg123456"),
 					),
@@ -55,11 +50,6 @@ func TestAccNotificationFeishuResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_feishu.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_feishu.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact("https://open.feishu.cn/open-apis/bot/v2/hook/updated789012"),
 					),
@@ -73,7 +63,6 @@ func testAccNotificationFeishuResourceConfig(name string, webhookURL string) str
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_feishu" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)

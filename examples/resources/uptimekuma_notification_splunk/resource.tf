@@ -4,7 +4,6 @@ resource "uptimekuma_notification_splunk" "example" {
   severity        = "critical"
   auto_resolve    = "resolve"
   integration_key = "your_integration_key"
-  is_active       = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: rest_url_wo and integration_key_wo

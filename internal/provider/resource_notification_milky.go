@@ -190,7 +190,6 @@ func (r *NotificationMilkyResource) Read(ctx context.Context, req resource.ReadR
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(milky.Name)
-	data.IsActive = types.BoolValue(milky.IsActive)
 	data.IsDefault = types.BoolValue(milky.IsDefault)
 	data.ApplyExisting = types.BoolValue(milky.ApplyExisting)
 
@@ -294,7 +293,7 @@ func milkyFromModel(data *NotificationMilkyResourceModel) notification.Milky {
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		MilkyDetails: notification.MilkyDetails{

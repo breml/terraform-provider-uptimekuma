@@ -46,7 +46,6 @@ func testAccNotificationFlowtriqDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_flowtriq" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://app.flowtriq.com/api/webhooks/0123456789abcdef"
   api_key     = "apikey0000000000"
 }

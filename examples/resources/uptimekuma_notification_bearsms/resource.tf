@@ -3,7 +3,6 @@ resource "uptimekuma_notification_bearsms" "example" {
   username     = "your-bearsms-username"
   hash_key     = "your-bearsms-hash-key"
   phone_number = "9725XXXXXXXX"
-  is_active    = true
   is_default   = false
 }
 

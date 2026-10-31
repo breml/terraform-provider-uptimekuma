@@ -54,7 +54,6 @@ func testAccNotificationSMSEagleDataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smseagle" "test" {
   name           = %[1]q
-  is_active      = true
   url            = %[2]q
   token          = %[3]q
   recipient_type = "smseagle-to"

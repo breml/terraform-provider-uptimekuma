@@ -42,7 +42,6 @@ func testAccNotificationCallMeBotDataSourceConfig(name string, endpoint string) 
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_callmebot" "test" {
   name     = %[1]q
-  is_active = true
   endpoint = %[2]q
 }
 

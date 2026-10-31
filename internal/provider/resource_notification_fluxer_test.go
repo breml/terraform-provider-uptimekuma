@@ -32,11 +32,6 @@ func TestAccNotificationFluxerResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_fluxer.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_fluxer.test",
 						tfjsonpath.New("username"),
 						knownvalue.Null(),
 					),
@@ -85,11 +80,6 @@ func TestAccNotificationFluxerResource(t *testing.T) {
 						"uptimekuma_notification_fluxer.test",
 						tfjsonpath.New("webhook_url"),
 						knownvalue.StringExact(webhookURL),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_fluxer.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_fluxer.test",
@@ -206,7 +196,6 @@ func testAccNotificationFluxerResourceConfigMinimal(name string, webhookURL stri
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_fluxer" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 `, name, webhookURL)
@@ -218,7 +207,6 @@ func testAccNotificationFluxerResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_fluxer" "test" {
   name           = %[1]q
-  is_active      = true
   webhook_url    = %[2]q
   username       = %[3]q
   prefix_message = %[4]q
@@ -233,7 +221,6 @@ func testAccNotificationFluxerResourceConfigWithTemplate(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_fluxer" "test" {
   name                 = %[1]q
-  is_active            = true
   webhook_url          = %[2]q
   use_message_template = %[3]t
   message_format       = %[4]q

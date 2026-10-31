@@ -57,11 +57,6 @@ func TestAccNotificationNextcloudTalkResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_nextcloudtalk.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_nextcloudtalk.test",
 						tfjsonpath.New("send_silent_up"),
 						knownvalue.Bool(false),
 					),
@@ -104,11 +99,6 @@ func TestAccNotificationNextcloudTalkResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_nextcloudtalk.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_nextcloudtalk.test",
 						tfjsonpath.New("send_silent_up"),
 						knownvalue.Bool(true),
 					),
@@ -139,7 +129,6 @@ func testAccNotificationNextcloudTalkResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_nextcloudtalk" "test" {
   name               = %[1]q
-  is_active          = true
   host               = %[2]q
   conversation_token = %[3]q
   bot_secret         = %[4]q

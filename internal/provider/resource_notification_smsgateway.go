@@ -182,7 +182,6 @@ func (r *NotificationSMSGatewayResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsGateway.Name)
-	data.IsActive = types.BoolValue(smsGateway.IsActive)
 	data.IsDefault = types.BoolValue(smsGateway.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsGateway.ApplyExisting)
 
@@ -285,7 +284,7 @@ func smsGatewayFromModel(data *NotificationSMSGatewayResourceModel) notification
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSGatewayDetails: notification.SMSGatewayDetails{

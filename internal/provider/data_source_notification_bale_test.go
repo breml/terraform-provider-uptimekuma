@@ -51,7 +51,6 @@ func testAccNotificationBaleDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bale" "test" {
   name      = %[1]q
-  is_active = true
   bot_token = "123456:ABCDEF"
   chat_id   = "111222333"
 }

@@ -41,7 +41,6 @@ func testAccNotificationOneBotDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_onebot" "test" {
   name        = %[1]q
-  is_active   = true
   http_addr   = "http://localhost:5700"
   msg_type    = "group"
   receiver_id = "123456789"

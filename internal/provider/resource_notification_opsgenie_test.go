@@ -50,11 +50,6 @@ func TestAccNotificationOpsgenieResource(t *testing.T) {
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(1),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_opsgenie.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -85,11 +80,6 @@ func TestAccNotificationOpsgenieResource(t *testing.T) {
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(3),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_opsgenie.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -109,7 +99,6 @@ func testAccNotificationOpsgenieResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_opsgenie" "test" {
   name     = %[1]q
-  is_active = true
   api_key  = %[2]q
   region   = %[3]q
   priority = %[4]d

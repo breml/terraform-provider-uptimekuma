@@ -39,11 +39,6 @@ func TestAccNotificationPushDeerResource(t *testing.T) {
 						tfjsonpath.New("server"),
 						knownvalue.StringExact("https://api2.pushdeer.com"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushdeer.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -68,11 +63,6 @@ func TestAccNotificationPushDeerResource(t *testing.T) {
 						tfjsonpath.New("server"),
 						knownvalue.StringExact("https://custom.pushdeer.server.com"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pushdeer.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -88,7 +78,6 @@ func testAccNotificationPushDeerResourceConfig(name string, key string, server s
 	baseConfig := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushdeer" "test" {
   name      = %[1]q
-  is_active = true
   key       = %[2]q
 `, name, key)
 

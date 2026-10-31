@@ -40,11 +40,6 @@ func TestAccNotificationFlashDutyResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_flashduty.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_flashduty.test",
 						tfjsonpath.New("severity"),
 						knownvalue.StringExact("Warning"),
 					),
@@ -66,11 +61,6 @@ func TestAccNotificationFlashDutyResource(t *testing.T) {
 						"uptimekuma_notification_flashduty.test",
 						tfjsonpath.New("integration_key"),
 						knownvalue.StringExact(integrationKeyUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_flashduty.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_flashduty.test",
@@ -96,7 +86,6 @@ func testAccNotificationFlashDutyResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_flashduty" "test" {
   name              = %[1]q
-  is_active         = true
   integration_key   = %[2]q
   severity          = %[3]q
 }

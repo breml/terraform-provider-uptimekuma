@@ -57,7 +57,6 @@ func testAccNotificationWAHADataSourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_waha" "test" {
   name      = %[1]q
-  is_active = true
   api_url   = %[2]q
   session   = %[3]q
   chat_id   = %[4]q

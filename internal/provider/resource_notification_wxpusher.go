@@ -162,7 +162,6 @@ func (r *NotificationWxPusherResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(wxPusher.Name)
-	data.IsActive = types.BoolValue(wxPusher.IsActive)
 	data.IsDefault = types.BoolValue(wxPusher.IsDefault)
 	data.ApplyExisting = types.BoolValue(wxPusher.ApplyExisting)
 
@@ -260,7 +259,7 @@ func wxPusherFromModel(data *NotificationWxPusherResourceModel) notification.WxP
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		WxPusherDetails: notification.WxPusherDetails{

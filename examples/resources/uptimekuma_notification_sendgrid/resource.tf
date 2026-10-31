@@ -4,7 +4,6 @@ resource "uptimekuma_notification_sendgrid" "example" {
   to_email   = "alerts@example.com"
   from_email = "monitoring@example.com"
   subject    = "Uptime Alert Notification"
-  is_active  = true
   is_default = false
 }
 
@@ -16,7 +15,6 @@ resource "uptimekuma_notification_sendgrid" "with_cc_bcc" {
   subject    = "Critical Alert"
   cc_email   = "team-lead@example.com"
   bcc_email  = "archive@example.com"
-  is_active  = true
   is_default = false
 }
 

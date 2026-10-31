@@ -41,7 +41,6 @@ func testAccNotificationSquadcastDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_squadcast" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://api.squadcast.com/v3/incidents/webhook/test"
 }
 

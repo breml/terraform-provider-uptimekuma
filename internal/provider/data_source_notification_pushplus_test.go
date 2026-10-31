@@ -42,7 +42,6 @@ func testAccNotificationPushPlusDataSourceConfig(name string, sendKey string) st
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushplus" "test" {
   name     = %[1]q
-  is_active = true
   send_key = %[2]q
 }
 

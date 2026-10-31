@@ -17,7 +17,6 @@ resource "uptimekuma_notification_yzj" "example" {
   name        = "YZJ Notifications"
   webhook_url = "https://yzj.example.com/webhook/your-webhook"
   token       = "your-yzj-token"
-  is_active   = true
   is_default  = false
 }
 
@@ -25,7 +24,6 @@ resource "uptimekuma_notification_yzj" "alerts" {
   name        = "YZJ Alerts"
   webhook_url = "https://yzj.example.com/webhook/alerts"
   token       = "your-yzj-alert-token"
-  is_active   = true
   is_default  = false
 }
 
@@ -54,7 +52,6 @@ resource "uptimekuma_notification_yzj" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `token` (String, Sensitive) YZJ authentication token. Stored in state; use `token_wo` to keep it out of state.
 - `token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) YZJ token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `token`; requires `token_wo_version`. An imported resource has no `token_wo_version` yet, so `terraform import` may store the server's value in `token` until the next apply with `token_wo` set removes it from state.

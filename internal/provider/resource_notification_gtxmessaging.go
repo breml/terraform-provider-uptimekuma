@@ -116,7 +116,7 @@ func (r *NotificationGTXMessagingResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GTXMessagingDetails: notification.GTXMessagingDetails{
@@ -181,7 +181,6 @@ func (r *NotificationGTXMessagingResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(gtxmessaging.Name)
-	data.IsActive = types.BoolValue(gtxmessaging.IsActive)
 	data.IsDefault = types.BoolValue(gtxmessaging.IsDefault)
 	data.ApplyExisting = types.BoolValue(gtxmessaging.ApplyExisting)
 
@@ -214,7 +213,7 @@ func (r *NotificationGTXMessagingResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GTXMessagingDetails: notification.GTXMessagingDetails{

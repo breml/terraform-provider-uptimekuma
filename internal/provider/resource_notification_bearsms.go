@@ -191,7 +191,6 @@ func (r *NotificationBearSMSResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(bearSMS.Name)
-	data.IsActive = types.BoolValue(bearSMS.IsActive)
 	data.IsDefault = types.BoolValue(bearSMS.IsDefault)
 	data.ApplyExisting = types.BoolValue(bearSMS.ApplyExisting)
 
@@ -301,7 +300,7 @@ func bearSMSFromModel(data *NotificationBearSMSResourceModel) notification.BearS
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		BearSMSDetails: notification.BearSMSDetails{

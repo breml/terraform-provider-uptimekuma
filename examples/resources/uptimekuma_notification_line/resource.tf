@@ -2,7 +2,6 @@ resource "uptimekuma_notification_line" "example" {
   name                 = "LINE Notification"
   channel_access_token = "your_channel_access_token"
   user_id              = "your_user_id"
-  is_active            = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: channel_access_token_wo is never

@@ -22,7 +22,6 @@ resource "uptimekuma_notification_smseagle" "sms" {
   recipient_to   = "+1234567890"
   msg_type       = "smseagle-sms"
   api_type       = "smseagle-apiv2"
-  is_active      = true
   is_default     = false
 }
 
@@ -36,7 +35,6 @@ resource "uptimekuma_notification_smseagle" "ring" {
   msg_type       = "smseagle-ring"
   duration       = 15
   api_type       = "smseagle-apiv2"
-  is_active      = true
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: token_wo is never stored in
@@ -70,7 +68,6 @@ resource "uptimekuma_notification_smseagle" "write_only" {
 - `apply_existing` (Boolean)
 - `duration` (Number) Duration for voice calls in seconds
 - `encoding` (Boolean) Enable unicode encoding for non-ASCII characters
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `msg_type` (String) Message type: `smseagle-sms`, `smseagle-ring`, `smseagle-tts`, or `smseagle-tts-advanced`
 - `priority` (Number) Message priority level (0-9, where 9 is highest)

@@ -15,7 +15,6 @@ PromoSMS notification resource
 ```terraform
 resource "uptimekuma_notification_promosms" "example" {
   name           = "PromoSMS Notification"
-  is_active      = true
   login          = "your_promosms_login"
   password       = "your_promosms_password"
   phone_number   = "+48501234567"
@@ -52,7 +51,6 @@ resource "uptimekuma_notification_promosms" "write_only" {
 
 - `allow_long_sms` (Boolean) Allow long SMS messages (up to 639 characters instead of 159)
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `password` (String, Sensitive) PromoSMS password for authentication. Stored in state; use `password_wo` to keep it out of state.
 - `password_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) PromoSMS password for authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `password`; requires `password_wo_version`. An imported resource has no `password_wo_version` yet, so `terraform import` may store the server's value in `password` until the next apply with `password_wo` set removes it from state.

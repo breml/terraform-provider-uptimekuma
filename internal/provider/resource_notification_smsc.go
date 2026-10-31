@@ -135,7 +135,7 @@ func (r *NotificationSMSCResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSCDetails: notification.SMSCDetails{
@@ -206,7 +206,6 @@ func (r *NotificationSMSCResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsc.Name)
-	data.IsActive = types.BoolValue(smsc.IsActive)
 	data.IsDefault = types.BoolValue(smsc.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsc.ApplyExisting)
 
@@ -243,7 +242,7 @@ func (r *NotificationSMSCResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSCDetails: notification.SMSCDetails{

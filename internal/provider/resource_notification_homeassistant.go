@@ -121,7 +121,7 @@ func (r *NotificationHomeAssistantResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		HomeAssistantDetails: notification.HomeAssistantDetails{
@@ -196,7 +196,6 @@ func (r *NotificationHomeAssistantResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(homeAssistant.Name)
-	data.IsActive = types.BoolValue(homeAssistant.IsActive)
 	data.IsDefault = types.BoolValue(homeAssistant.IsDefault)
 	data.ApplyExisting = types.BoolValue(homeAssistant.ApplyExisting)
 
@@ -231,7 +230,7 @@ func (r *NotificationHomeAssistantResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		HomeAssistantDetails: notification.HomeAssistantDetails{

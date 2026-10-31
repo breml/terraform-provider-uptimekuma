@@ -16,14 +16,12 @@ WeCom notification resource
 resource "uptimekuma_notification_wecom" "example" {
   name       = "WeCom Notifications"
   bot_key    = "your-bot-key"
-  is_active  = true
   is_default = false
 }
 
 resource "uptimekuma_notification_wecom" "alerts" {
   name       = "WeCom Alerts"
   bot_key    = "your-bot-key-for-alerts"
-  is_active  = true
   is_default = false
 }
 
@@ -52,7 +50,6 @@ resource "uptimekuma_notification_wecom" "write_only" {
 - `bot_key` (String, Sensitive) WeCom bot key. Stored in state; use `bot_key_wo` to keep it out of state.
 - `bot_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) WeCom bot key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `bot_key`; requires `bot_key_wo_version`. An imported resource has no `bot_key_wo_version` yet, so `terraform import` may store the server's value in `bot_key` until the next apply with `bot_key_wo` set removes it from state.
 - `bot_key_wo_version` (String) Any value that changes whenever `bot_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `bot_key_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

@@ -51,11 +51,6 @@ func TestAccNotificationGotifyResource(t *testing.T) {
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(8),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_gotify.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -86,11 +81,6 @@ func TestAccNotificationGotifyResource(t *testing.T) {
 						tfjsonpath.New("priority"),
 						knownvalue.Int64Exact(5),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_gotify.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -111,7 +101,6 @@ func testAccNotificationGotifyResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_gotify" "test" {
   name                 = %[1]q
-  is_active            = true
   server_url           = %[2]q
   application_token    = %[3]q
   priority             = %[4]d

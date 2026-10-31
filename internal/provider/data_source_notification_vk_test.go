@@ -41,7 +41,6 @@ func testAccNotificationVKDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_vk" "test" {
   name         = %[1]q
-  is_active    = true
   access_token = "vk1.a.abcdefghijklmnopqrstuvwxyz"
   peer_id      = "12345"
 }

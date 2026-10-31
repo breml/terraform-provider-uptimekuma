@@ -15,7 +15,6 @@ Pushover notification resource
 ```terraform
 resource "uptimekuma_notification_pushover" "example" {
   name      = "My Pushover Notification"
-  is_active = true
   user_key  = var.pushover_user_key
   app_token = var.pushover_app_token
 }
@@ -49,7 +48,6 @@ resource "uptimekuma_notification_pushover" "write_only" {
 - `app_token_wo_version` (String) Any value that changes whenever `app_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `app_token_wo`.
 - `apply_existing` (Boolean)
 - `device` (String) Device name to receive notifications
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `priority` (String) Priority level for notifications
 - `sounds` (String) Notification sound

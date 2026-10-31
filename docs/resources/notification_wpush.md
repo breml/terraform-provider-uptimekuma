@@ -14,10 +14,9 @@ WPush notification resource
 
 ```terraform
 resource "uptimekuma_notification_wpush" "example" {
-  name      = "WPush Notifications"
-  api_key   = "your-wpush-api-key"
-  channel   = "monitoring"
-  is_active = true
+  name    = "WPush Notifications"
+  api_key = "your-wpush-api-key"
+  channel = "monitoring"
 }
 
 # Requires Terraform or OpenTofu 1.11 or later: api_key_wo is never stored in
@@ -48,7 +47,6 @@ resource "uptimekuma_notification_wpush" "write_only" {
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
 - `channel` (String) WPush push channel identifier
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 
 ### Read-Only

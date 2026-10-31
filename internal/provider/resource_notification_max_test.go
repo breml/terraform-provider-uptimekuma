@@ -37,11 +37,6 @@ func TestAccNotificationMaxResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_max.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_max.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -147,7 +142,6 @@ func testAccNotificationMaxResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_max" "test" {
   name         = %[1]q
-  is_active    = true
   bot_token    = %[2]q
   chat_id      = %[3]q
   use_template = %[4]t%[5]s

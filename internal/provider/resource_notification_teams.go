@@ -99,7 +99,7 @@ func (r *NotificationTeamsResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TeamsDetails: notification.TeamsDetails{
@@ -162,7 +162,6 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(teams.Name)
-	data.IsActive = types.BoolValue(teams.IsActive)
 	data.IsDefault = types.BoolValue(teams.IsDefault)
 	data.ApplyExisting = types.BoolValue(teams.ApplyExisting)
 
@@ -193,7 +192,7 @@ func (r *NotificationTeamsResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TeamsDetails: notification.TeamsDetails{

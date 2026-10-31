@@ -53,11 +53,6 @@ func TestAccNotificationSevenioResource(t *testing.T) {
 						tfjsonpath.New("to"),
 						knownvalue.StringExact(to),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_sevenio.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -88,11 +83,6 @@ func TestAccNotificationSevenioResource(t *testing.T) {
 						tfjsonpath.New("to"),
 						knownvalue.StringExact(toUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_sevenio.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -111,7 +101,6 @@ func testAccNotificationSevenioResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_sevenio" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = %[2]q
   sender    = %[3]q
   to        = %[4]q

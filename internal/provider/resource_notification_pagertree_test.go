@@ -50,11 +50,6 @@ func TestAccNotificationPagerTreeResource(t *testing.T) {
 						tfjsonpath.New("auto_resolve"),
 						knownvalue.StringExact("resolve"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pagertree.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -85,11 +80,6 @@ func TestAccNotificationPagerTreeResource(t *testing.T) {
 						tfjsonpath.New("auto_resolve"),
 						knownvalue.Null(),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_pagertree.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -116,7 +106,6 @@ func testAccNotificationPagerTreeResourceConfig(
 	config := providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pagertree" "test" {
   name              = %[1]q
-  is_active         = true
   integration_url   = %[2]q
   urgency           = %[3]q
 `, name, integrationURL, urgency)

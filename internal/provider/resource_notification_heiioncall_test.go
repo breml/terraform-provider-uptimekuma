@@ -39,11 +39,6 @@ func TestAccNotificationHeiiOnCallResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_heiioncall.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_heiioncall.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),

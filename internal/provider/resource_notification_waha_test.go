@@ -61,11 +61,6 @@ func TestAccNotificationWAHAResource(t *testing.T) {
 						tfjsonpath.New("api_key"),
 						knownvalue.StringExact(apiKey),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_waha.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -102,11 +97,6 @@ func TestAccNotificationWAHAResource(t *testing.T) {
 						tfjsonpath.New("api_key"),
 						knownvalue.StringExact(apiKeyUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_waha.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -128,7 +118,6 @@ func testAccNotificationWAHAResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_waha" "test" {
   name      = %[1]q
-  is_active = true
   api_url   = %[2]q
   session   = %[3]q
   chat_id   = %[4]q

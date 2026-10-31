@@ -120,7 +120,7 @@ func (r *NotificationNostrResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		NostrDetails: notification.NostrDetails{
@@ -189,7 +189,6 @@ func (r *NotificationNostrResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(nostr.Name)
-	data.IsActive = types.BoolValue(nostr.IsActive)
 	data.IsDefault = types.BoolValue(nostr.IsDefault)
 	data.ApplyExisting = types.BoolValue(nostr.ApplyExisting)
 
@@ -223,7 +222,7 @@ func (r *NotificationNostrResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		NostrDetails: notification.NostrDetails{

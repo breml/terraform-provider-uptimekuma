@@ -46,7 +46,6 @@ func testAccNotificationMilkyDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_milky" "test" {
   name         = %[1]q
-  is_active    = true
   http_addr    = "http://localhost:3000"
   access_token = "milky-access-token"
   msg_type     = "group"

@@ -51,7 +51,6 @@ func testAccNotificationGoogleSheetsDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_googlesheets" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://script.google.com/macros/s/test/exec"
 }
 

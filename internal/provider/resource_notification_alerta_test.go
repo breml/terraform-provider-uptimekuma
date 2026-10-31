@@ -63,11 +63,6 @@ func TestAccNotificationAlertaResource(t *testing.T) {
 						tfjsonpath.New("recover_state"),
 						knownvalue.StringExact("ok"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_alerta.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -110,11 +105,6 @@ func TestAccNotificationAlertaResource(t *testing.T) {
 						tfjsonpath.New("recover_state"),
 						knownvalue.StringExact("resolved"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_alerta.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 		},
@@ -132,7 +122,6 @@ func testAccNotificationAlertaResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_alerta" "test" {
   name             = %[1]q
-  is_active        = true
   api_endpoint     = %[2]q
   api_key          = %[3]q
   environment      = %[4]q

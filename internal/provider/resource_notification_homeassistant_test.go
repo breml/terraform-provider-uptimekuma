@@ -53,11 +53,6 @@ func TestAccNotificationHomeAssistantResource(t *testing.T) {
 						tfjsonpath.New("notification_service"),
 						knownvalue.StringExact(service),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_homeassistant.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -88,11 +83,6 @@ func TestAccNotificationHomeAssistantResource(t *testing.T) {
 						tfjsonpath.New("notification_service"),
 						knownvalue.StringExact(serviceUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_homeassistant.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -113,7 +103,6 @@ func testAccNotificationHomeAssistantResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_homeassistant" "test" {
   name                      = %[1]q
-  is_active                 = true
   home_assistant_url        = %[2]q
   long_lived_access_token   = %[3]q
   notification_service      = %[4]q

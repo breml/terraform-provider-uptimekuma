@@ -113,7 +113,7 @@ func (r *NotificationYZJResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		YZJDetails: notification.YZJDetails{
@@ -181,7 +181,6 @@ func (r *NotificationYZJResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(yzj.Name)
-	data.IsActive = types.BoolValue(yzj.IsActive)
 	data.IsDefault = types.BoolValue(yzj.IsDefault)
 	data.ApplyExisting = types.BoolValue(yzj.ApplyExisting)
 
@@ -220,7 +219,7 @@ func (r *NotificationYZJResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		YZJDetails: notification.YZJDetails{

@@ -73,11 +73,6 @@ func TestAccNotificationPromoSMSResource(t *testing.T) {
 						tfjsonpath.New("allow_long_sms"),
 						knownvalue.Bool(false),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_promosms.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -126,11 +121,6 @@ func TestAccNotificationPromoSMSResource(t *testing.T) {
 						tfjsonpath.New("allow_long_sms"),
 						knownvalue.Bool(true),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_promosms.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -150,7 +140,6 @@ func testAccNotificationPromoSMSResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_promosms" "test" {
   name           = %[1]q
-  is_active      = true
   login          = %[2]q
   password       = %[3]q
   phone_number   = %[4]q

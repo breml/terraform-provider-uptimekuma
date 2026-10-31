@@ -46,7 +46,6 @@ func testAccNotificationSMSIRDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsir" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = "test-api-key"
   number    = "09123456789"
   template  = "12345"

@@ -116,7 +116,7 @@ func (r *NotificationSMSManagerResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSManagerDetails: notification.SMSManagerDetails{
@@ -185,7 +185,6 @@ func (r *NotificationSMSManagerResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsmanager.Name)
-	data.IsActive = types.BoolValue(smsmanager.IsActive)
 	data.IsDefault = types.BoolValue(smsmanager.IsDefault)
 	data.ApplyExisting = types.BoolValue(smsmanager.ApplyExisting)
 
@@ -220,7 +219,7 @@ func (r *NotificationSMSManagerResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SMSManagerDetails: notification.SMSManagerDetails{

@@ -41,7 +41,6 @@ func testAccNotificationOnesenderDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_onesender" "test" {
   name          = %[1]q
-  is_active     = true
   url           = "https://onesender.example.com/api/v1/send"
   token         = "test-token-abc123"
   receiver      = "+6281234567890"

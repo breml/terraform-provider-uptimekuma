@@ -28,7 +28,6 @@ func TestAccNotificationPingletResource(t *testing.T) {
 				Config: testAccNotificationPingletResourceConfig(name, publishURL, "api-key-1"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_default"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("apply_existing"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("id"), knownvalue.NotNull()),
@@ -59,7 +58,6 @@ func testAccNotificationPingletResourceConfig(name string, publishURL string, ap
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pinglet" "test" {
   name        = %[1]q
-  is_active   = true
   publish_url = %[2]q
   api_key     = %[3]q
 }

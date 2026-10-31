@@ -108,7 +108,7 @@ func (r *NotificationGoAlertResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GoAlertDetails: notification.GoAlertDetails{
@@ -176,7 +176,6 @@ func (r *NotificationGoAlertResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(goalert.Name)
-	data.IsActive = types.BoolValue(goalert.IsActive)
 	data.IsDefault = types.BoolValue(goalert.IsDefault)
 	data.ApplyExisting = types.BoolValue(goalert.ApplyExisting)
 
@@ -208,7 +207,7 @@ func (r *NotificationGoAlertResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		GoAlertDetails: notification.GoAlertDetails{

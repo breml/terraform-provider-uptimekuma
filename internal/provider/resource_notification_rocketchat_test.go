@@ -43,11 +43,6 @@ func TestAccNotificationRocketChatResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_rocketchat.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_rocketchat.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("rocket-bot"),
 					),
@@ -90,11 +85,6 @@ func TestAccNotificationRocketChatResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_rocketchat.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_rocketchat.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("updated-rocket-bot"),
 					),
@@ -126,7 +116,6 @@ func testAccNotificationRocketChatResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_rocketchat" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
   username    = %[3]q
   icon_emoji  = %[4]q

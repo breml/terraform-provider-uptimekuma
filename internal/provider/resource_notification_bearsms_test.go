@@ -27,7 +27,6 @@ func TestAccNotificationBearSMSResource(t *testing.T) {
 				Config: testAccNotificationBearSMSResourceConfig(name, "user-1", "hash-key-1", "41790000001"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_default"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("apply_existing"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("id"), knownvalue.NotNull()),
@@ -119,7 +118,6 @@ func testAccNotificationBearSMSResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bearsms" "test" {
   name         = %[1]q
-  is_active    = true
   username     = %[2]q
   hash_key     = %[3]q
   phone_number = %[4]q
@@ -131,7 +129,6 @@ func testAccNotificationBearSMSResourceSenderConfig(name string, senderID string
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bearsms" "sender" {
   name         = %[1]q
-  is_active    = true
   username     = "bearsms-user"
   hash_key     = "bearsms-hash-key"
   sender_id    = %[2]q
@@ -144,7 +141,6 @@ func testAccNotificationBearSMSResourceSenderClearedConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bearsms" "sender" {
   name         = %[1]q
-  is_active    = true
   username     = "bearsms-user"
   hash_key     = "bearsms-hash-key"
   phone_number = "41790000000"

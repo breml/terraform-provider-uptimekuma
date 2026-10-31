@@ -46,7 +46,6 @@ func testAccNotificationPagerTreeDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pagertree" "test" {
   name              = %[1]q
-  is_active         = true
   integration_url   = "https://alerts.pagertree.com/api/v2/incidents"
   urgency           = "high"
   auto_resolve      = "resolve"

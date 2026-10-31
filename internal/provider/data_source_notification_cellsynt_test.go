@@ -41,7 +41,6 @@ func testAccNotificationCellsyntDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_cellsynt" "test" {
   name            = %[1]q
-  is_active       = true
   login           = "testuser"
   password        = "testpass123"
   destination     = "+46701234567"

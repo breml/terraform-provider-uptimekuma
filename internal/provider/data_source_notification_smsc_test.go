@@ -41,7 +41,6 @@ func testAccNotificationSMSCDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsc" "test" {
   name        = %[1]q
-  is_active   = true
   login       = "testuser"
   password    = "testpass123"
   to_number   = "77123456789"

@@ -4,7 +4,6 @@
 
 resource "uptimekuma_notification_threema" "example_email" {
   name            = "Threema Email Recipient"
-  is_active       = true
   sender_identity = "YOUR_GATEWAY_ID"
   secret          = "YOUR_API_SECRET" # Sensitive field
   recipient       = "user@example.com"
@@ -13,7 +12,6 @@ resource "uptimekuma_notification_threema" "example_email" {
 
 resource "uptimekuma_notification_threema" "example_phone" {
   name            = "Threema Phone Recipient"
-  is_active       = true
   sender_identity = "YOUR_GATEWAY_ID"
   secret          = "YOUR_API_SECRET" # Sensitive field
   recipient       = "+41791234567"
@@ -22,7 +20,6 @@ resource "uptimekuma_notification_threema" "example_phone" {
 
 resource "uptimekuma_notification_threema" "example_identity" {
   name            = "Threema Identity Recipient"
-  is_active       = true
   sender_identity = "YOUR_GATEWAY_ID"
   secret          = "YOUR_API_SECRET" # Sensitive field
   recipient       = "ECHOECHO"

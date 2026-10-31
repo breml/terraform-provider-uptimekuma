@@ -46,7 +46,6 @@ func testAccNotificationBearSMSDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_bearsms" "test" {
   name         = %[1]q
-  is_active    = true
   username     = "bearsms-user"
   hash_key     = "bearsms-hash-key"
   phone_number = "41790000000"

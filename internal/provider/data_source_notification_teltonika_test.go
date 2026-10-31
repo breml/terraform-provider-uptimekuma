@@ -41,7 +41,6 @@ func testAccNotificationTeltonikaDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_teltonika" "test" {
   name         = %[1]q
-  is_active    = true
   url          = "https://192.168.1.1"
   username     = "admin"
   password     = "test-password-123"

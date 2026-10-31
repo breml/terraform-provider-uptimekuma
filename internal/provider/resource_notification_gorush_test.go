@@ -75,11 +75,6 @@ func TestAccNotificationGorushResource(t *testing.T) {
 						tfjsonpath.New("topic"),
 						knownvalue.StringExact("test-topic"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_gorush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -134,11 +129,6 @@ func TestAccNotificationGorushResource(t *testing.T) {
 						tfjsonpath.New("topic"),
 						knownvalue.StringExact("updated-topic"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_gorush.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -163,7 +153,6 @@ func testAccNotificationGorushResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_gorush" "test" {
   name           = %[1]q
-  is_active      = true
   server_url     = %[2]q
   device_token   = %[3]q
   platform       = %[4]q

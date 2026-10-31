@@ -163,7 +163,7 @@ func (r *NotificationTelegramResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TelegramDetails: notification.TelegramDetails{
@@ -238,7 +238,6 @@ func (r *NotificationTelegramResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(telegram.Name)
-	data.IsActive = types.BoolValue(telegram.IsActive)
 	data.IsDefault = types.BoolValue(telegram.IsDefault)
 	data.ApplyExisting = types.BoolValue(telegram.ApplyExisting)
 
@@ -293,7 +292,7 @@ func (r *NotificationTelegramResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TelegramDetails: notification.TelegramDetails{

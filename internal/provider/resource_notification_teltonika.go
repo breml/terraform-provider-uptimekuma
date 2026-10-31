@@ -199,7 +199,6 @@ func (r *NotificationTeltonikaResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(teltonika.Name)
-	data.IsActive = types.BoolValue(teltonika.IsActive)
 	data.IsDefault = types.BoolValue(teltonika.IsDefault)
 	data.ApplyExisting = types.BoolValue(teltonika.ApplyExisting)
 
@@ -312,7 +311,7 @@ func teltonikaFromModel(data *NotificationTeltonikaResourceModel) notification.T
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TeltonikaDetails: notification.TeltonikaDetails{

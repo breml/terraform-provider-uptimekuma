@@ -41,7 +41,6 @@ func testAccNotificationTelegramDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_telegram" "test" {
   name      = %[1]q
-  is_active = true
   bot_token = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
   chat_id   = "123456789"
 }

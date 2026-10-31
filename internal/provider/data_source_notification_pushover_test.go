@@ -41,7 +41,6 @@ func testAccNotificationPushoverDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_pushover" "test" {
   name      = %[1]q
-  is_active = true
   user_key  = "test-user-key-123"
   app_token = "test-app-token-789"
 }

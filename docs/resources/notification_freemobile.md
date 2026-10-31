@@ -17,7 +17,6 @@ resource "uptimekuma_notification_freemobile" "example" {
   name       = "Free Mobile SMS Alerts"
   user       = "YOUR_FREE_MOBILE_USER_ID"
   pass       = "YOUR_FREE_MOBILE_API_KEY"
-  is_active  = true
   is_default = false
 }
 
@@ -25,7 +24,6 @@ resource "uptimekuma_notification_freemobile" "production" {
   name       = "Free Mobile Production Alerts"
   user       = "1234567890"
   pass       = "your_api_key_here"
-  is_active  = true
   is_default = true
 }
 
@@ -54,7 +52,6 @@ resource "uptimekuma_notification_freemobile" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `pass` (String, Sensitive) Free Mobile API key. Stored in state; use `pass_wo` to keep it out of state.
 - `pass_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Free Mobile API key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `pass`; requires `pass_wo_version`. An imported resource has no `pass_wo_version` yet, so `terraform import` may store the server's value in `pass` until the next apply with `pass_wo` set removes it from state.

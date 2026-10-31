@@ -19,7 +19,6 @@ resource "uptimekuma_notification_gorush" "basic" {
   server_url   = "https://gorush.example.com"
   device_token = "your-device-token-here"
   platform     = "ios"
-  is_active    = true
   is_default   = false
 }
 
@@ -33,7 +32,6 @@ resource "uptimekuma_notification_gorush" "full" {
   priority     = "high"
   retry        = 3
   topic        = "uptime-alerts"
-  is_active    = true
   is_default   = false
 }
 
@@ -44,7 +42,6 @@ resource "uptimekuma_notification_gorush" "web" {
   device_token = "web-device-subscription-key"
   platform     = "web"
   title        = "Status Update"
-  is_active    = true
 }
 ```
 
@@ -61,7 +58,6 @@ resource "uptimekuma_notification_gorush" "web" {
 ### Optional
 
 - `apply_existing` (Boolean)
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `priority` (String) Notification priority
 - `retry` (Number) Number of retries

@@ -47,7 +47,6 @@ func testAccNotificationMattermostDataSourceConfig(name string, webhookURL strin
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_mattermost" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
 }
 

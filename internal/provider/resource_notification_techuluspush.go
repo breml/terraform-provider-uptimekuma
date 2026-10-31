@@ -123,7 +123,7 @@ func (r *NotificationTechulusPushResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TechulusPushDetails: notification.TechulusPushDetails{
@@ -194,7 +194,6 @@ func (r *NotificationTechulusPushResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(techulusPush.Name)
-	data.IsActive = types.BoolValue(techulusPush.IsActive)
 	data.IsDefault = types.BoolValue(techulusPush.IsDefault)
 	data.ApplyExisting = types.BoolValue(techulusPush.ApplyExisting)
 
@@ -245,7 +244,7 @@ func (r *NotificationTechulusPushResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TechulusPushDetails: notification.TechulusPushDetails{

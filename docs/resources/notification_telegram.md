@@ -17,7 +17,6 @@ resource "uptimekuma_notification_telegram" "example" {
   name       = "Telegram Notifications"
   bot_token  = "YOUR_BOT_TOKEN"
   chat_id    = "YOUR_CHAT_ID"
-  is_active  = true
   is_default = false
 }
 
@@ -29,7 +28,6 @@ resource "uptimekuma_notification_telegram" "with_options" {
   protect_content     = true
   use_template        = false
   template_parse_mode = "HTML"
-  is_active           = true
   is_default          = false
 }
 
@@ -38,7 +36,6 @@ resource "uptimekuma_notification_telegram" "with_custom_server" {
   bot_token  = "YOUR_BOT_TOKEN"
   chat_id    = "YOUR_CHAT_ID"
   server_url = "https://custom-telegram-api.example.com"
-  is_active  = true
   is_default = false
 }
 
@@ -70,7 +67,6 @@ resource "uptimekuma_notification_telegram" "write_only" {
 - `bot_token` (String, Sensitive) Telegram bot token. Stored in state; use `bot_token_wo` to keep it out of state.
 - `bot_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Telegram bot token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `bot_token`; requires `bot_token_wo_version`. An imported resource has no `bot_token_wo_version` yet, so `terraform import` may store the server's value in `bot_token` until the next apply with `bot_token_wo` set removes it from state.
 - `bot_token_wo_version` (String) Any value that changes whenever `bot_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `bot_token_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `message_thread_id` (String) Message thread ID for topics in supergroups
 - `protect_content` (Boolean) Protect content from forwarding

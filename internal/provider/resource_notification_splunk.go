@@ -129,7 +129,7 @@ func (r *NotificationSplunkResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SplunkDetails: notification.SplunkDetails{
@@ -199,7 +199,6 @@ func (r *NotificationSplunkResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(splunk.Name)
-	data.IsActive = types.BoolValue(splunk.IsActive)
 	data.IsDefault = types.BoolValue(splunk.IsDefault)
 	data.ApplyExisting = types.BoolValue(splunk.ApplyExisting)
 
@@ -237,7 +236,7 @@ func (r *NotificationSplunkResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		SplunkDetails: notification.SplunkDetails{

@@ -135,7 +135,7 @@ func (r *NotificationTwilioResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TwilioDetails: notification.TwilioDetails{
@@ -206,7 +206,6 @@ func (r *NotificationTwilioResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(twilio.Name)
-	data.IsActive = types.BoolValue(twilio.IsActive)
 	data.IsDefault = types.BoolValue(twilio.IsDefault)
 	data.ApplyExisting = types.BoolValue(twilio.ApplyExisting)
 
@@ -249,7 +248,7 @@ func (r *NotificationTwilioResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		TwilioDetails: notification.TwilioDetails{

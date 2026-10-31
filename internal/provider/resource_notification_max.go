@@ -190,7 +190,6 @@ func (r *NotificationMaxResource) Read(ctx context.Context, req resource.ReadReq
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(maxNotification.Name)
-	data.IsActive = types.BoolValue(maxNotification.IsActive)
 	data.IsDefault = types.BoolValue(maxNotification.IsDefault)
 	data.ApplyExisting = types.BoolValue(maxNotification.ApplyExisting)
 
@@ -296,7 +295,7 @@ func maxFromModel(data *NotificationMaxResourceModel) notification.Max {
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		MaxDetails: notification.MaxDetails{

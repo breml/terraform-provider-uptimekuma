@@ -37,11 +37,6 @@ func TestAccNotificationSMSGatewayResource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"uptimekuma_notification_smsgateway.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_smsgateway.test",
 						tfjsonpath.New("is_default"),
 						knownvalue.Bool(false),
 					),
@@ -174,7 +169,6 @@ func testAccNotificationSMSGatewayResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_smsgateway" "test" {
   name       = %[1]q
-  is_active  = true
   url        = %[2]q
   api_key    = %[3]q
   recipients = %[4]q

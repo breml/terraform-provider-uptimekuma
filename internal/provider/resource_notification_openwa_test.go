@@ -54,7 +54,6 @@ func TestAccNotificationOpenWaResource(t *testing.T) {
 				Config: plain.hcl(),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("name"), knownvalue.StringExact(name)),
-					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_active"), knownvalue.Bool(true)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("is_default"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("apply_existing"), knownvalue.Bool(false)),
 					statecheck.ExpectKnownValue(addr, tfjsonpath.New("id"), knownvalue.NotNull()),
@@ -120,7 +119,6 @@ func (c openWaTestConfig) hcl() string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_openwa" "test" {
   name               = %[1]q
-  is_active          = true
   api_url            = %[2]q
   api_key            = %[3]q
   session            = %[4]q

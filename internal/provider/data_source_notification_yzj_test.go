@@ -53,7 +53,6 @@ func testAccNotificationYZJDataSourceConfig(name string, webhookURL string, toke
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_yzj" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = %[2]q
   token       = %[3]q
 }

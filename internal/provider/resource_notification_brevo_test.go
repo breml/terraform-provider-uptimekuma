@@ -66,11 +66,6 @@ func TestAccNotificationBrevoResource(t *testing.T) {
 						tfjsonpath.New("from_name"),
 						knownvalue.StringExact("monitoring-group"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_brevo.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -119,11 +114,6 @@ func TestAccNotificationBrevoResource(t *testing.T) {
 						tfjsonpath.New("cc_email"),
 						knownvalue.StringExact("cc@example.com"),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_brevo.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -152,7 +142,6 @@ func testAccNotificationBrevoResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_brevo" "test" {
   name       = %[1]q
-  is_active  = true
   api_key    = %[2]q
   to_email   = %[3]q
   from_email = %[4]q

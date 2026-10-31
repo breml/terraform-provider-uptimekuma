@@ -4,7 +4,6 @@ resource "uptimekuma_notification_ntfy" "example" {
   priority   = 5
   server_url = "https://ntfy.sh"
   icon       = "https://example.com/icon.png"
-  is_active  = true
   is_default = false
 }
 
@@ -13,7 +12,6 @@ resource "uptimekuma_notification_ntfy" "high_priority" {
   topic      = "critical_alerts"
   priority   = 1
   server_url = "https://ntfy.sh"
-  is_active  = true
   is_default = true
 }
 

@@ -41,7 +41,6 @@ func testAccNotificationLunaseaDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_lunasea" "test" {
   name            = %[1]q
-  is_active       = true
   target          = "user"
   lunasea_user_id = "test_user_123"
 }

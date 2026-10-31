@@ -20,7 +20,6 @@ resource "uptimekuma_notification_alerta" "example" {
   environment   = "production"
   alert_state   = "alert"
   recover_state = "ok"
-  is_active     = true
   is_default    = false
 }
 
@@ -31,7 +30,6 @@ resource "uptimekuma_notification_alerta" "staging" {
   environment   = "staging"
   alert_state   = "critical"
   recover_state = "resolved"
-  is_active     = true
   is_default    = false
 }
 
@@ -65,7 +63,6 @@ resource "uptimekuma_notification_alerta" "write_only" {
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
 - `apply_existing` (Boolean)
 - `environment` (String) Alerta environment
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `recover_state` (String) Alert state for recovered alerts
 

@@ -104,7 +104,7 @@ func (r *NotificationPushPlusResource) Create(
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushPlusDetails: notification.PushPlusDetails{
@@ -171,7 +171,6 @@ func (r *NotificationPushPlusResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushplus.Name)
-	data.IsActive = types.BoolValue(pushplus.IsActive)
 	data.IsDefault = types.BoolValue(pushplus.IsDefault)
 	data.ApplyExisting = types.BoolValue(pushplus.ApplyExisting)
 
@@ -202,7 +201,7 @@ func (r *NotificationPushPlusResource) Update(
 			ID:            data.ID.ValueInt64(),
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		PushPlusDetails: notification.PushPlusDetails{

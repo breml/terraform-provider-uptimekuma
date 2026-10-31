@@ -1,6 +1,5 @@
 resource "uptimekuma_notification_homeassistant" "example" {
   name                    = "Home Assistant Notifications"
-  is_active               = true
   is_default              = false
   apply_existing          = false
   home_assistant_url      = "https://homeassistant.example.com"

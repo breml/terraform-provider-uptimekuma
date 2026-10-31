@@ -188,7 +188,6 @@ func (r *NotificationClickUpResource) Read(
 
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(clickUp.Name)
-	data.IsActive = types.BoolValue(clickUp.IsActive)
 	data.IsDefault = types.BoolValue(clickUp.IsDefault)
 	data.ApplyExisting = types.BoolValue(clickUp.ApplyExisting)
 
@@ -291,7 +290,7 @@ func clickUpFromModel(data *NotificationClickUpResourceModel) notification.Click
 		Base: notification.Base{
 			ApplyExisting: data.ApplyExisting.ValueBool(),
 			IsDefault:     data.IsDefault.ValueBool(),
-			IsActive:      data.IsActive.ValueBool(),
+			IsActive:      true,
 			Name:          data.Name.ValueString(),
 		},
 		ClickUpDetails: notification.ClickUpDetails{

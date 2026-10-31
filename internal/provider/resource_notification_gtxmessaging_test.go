@@ -48,11 +48,6 @@ func TestAccNotificationGTXMessagingResource(t *testing.T) {
 						tfjsonpath.New("to"),
 						knownvalue.StringExact(to),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_gtxmessaging.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -78,11 +73,6 @@ func TestAccNotificationGTXMessagingResource(t *testing.T) {
 						tfjsonpath.New("to"),
 						knownvalue.StringExact(toUpdated),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_gtxmessaging.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -100,7 +90,6 @@ func testAccNotificationGTXMessagingResourceConfig(
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_gtxmessaging" "test" {
   name      = %[1]q
-  is_active = true
   api_key   = %[2]q
   from      = %[3]q
   to        = %[4]q

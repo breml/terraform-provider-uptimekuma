@@ -19,7 +19,6 @@ resource "uptimekuma_notification_ooredoo" "example" {
   access_key   = "0123456789abcdef"
   bearer_token = "0123456789abcdef0123456789abcdef"
   to_number    = "9601234567"
-  is_active    = true
   is_default   = false
 }
 
@@ -32,7 +31,6 @@ resource "uptimekuma_notification_ooredoo" "multiple_recipients" {
   access_key   = "0123456789abcdef"
   bearer_token = "0123456789abcdef0123456789abcdef"
   to_number    = "1234567,+9607654321"
-  is_active    = true
   is_default   = false
 }
 
@@ -45,7 +43,6 @@ resource "uptimekuma_notification_ooredoo" "custom_endpoint" {
   bearer_token = "0123456789abcdef0123456789abcdef"
   to_number    = "9601234567"
   server_url   = "https://o-papi2-lb01.ooredoo.mv/bulk_sms/v2"
-  is_active    = true
   is_default   = false
 }
 
@@ -84,7 +81,6 @@ resource "uptimekuma_notification_ooredoo" "write_only" {
 - `bearer_token` (String, Sensitive) The token authenticating the request against the gateway. It is sent as an `Authorization: Bearer` header. Stored in state; use `bearer_token_wo` to keep it out of state.
 - `bearer_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The token authenticating the request against the gateway, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `bearer_token`; requires `bearer_token_wo_version`. An imported resource has no `bearer_token_wo_version` yet, so `terraform import` may store the server's value in `bearer_token` until the next apply with `bearer_token_wo` set removes it from state.
 - `bearer_token_wo_version` (String) Any value that changes whenever `bearer_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `bearer_token_wo`.
-- `is_active` (Boolean)
 - `is_default` (Boolean)
 - `server_url` (String) The Ooredoo API endpoint. If unset, Uptime Kuma falls back to `https://o-papi1-lb01.ooredoo.mv/bulk_sms/v2`.
 

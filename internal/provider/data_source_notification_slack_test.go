@@ -41,7 +41,6 @@ func testAccNotificationSlackDataSourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_slack" "test" {
   name        = %[1]q
-  is_active   = true
   webhook_url = "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX"
 }
 

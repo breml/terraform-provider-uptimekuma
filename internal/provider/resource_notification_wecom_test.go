@@ -35,11 +35,6 @@ func TestAccNotificationWeComResource(t *testing.T) {
 						tfjsonpath.New("bot_key"),
 						knownvalue.StringExact(botKey),
 					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_wecom.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
-					),
 				},
 			},
 			{
@@ -54,11 +49,6 @@ func TestAccNotificationWeComResource(t *testing.T) {
 						"uptimekuma_notification_wecom.test",
 						tfjsonpath.New("bot_key"),
 						knownvalue.StringExact(botKeyUpdated),
-					),
-					statecheck.ExpectKnownValue(
-						"uptimekuma_notification_wecom.test",
-						tfjsonpath.New("is_active"),
-						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -82,7 +72,6 @@ func testAccNotificationWeComResourceConfig(name string, botKey string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_notification_wecom" "test" {
   name    = %[1]q
-  is_active = true
   bot_key = %[2]q
 }
 `, name, botKey)
