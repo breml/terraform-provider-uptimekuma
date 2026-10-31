@@ -118,6 +118,15 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("endpoint", n.Endpoint)
 			}),
 		},
+		"uptimekuma_notification_bearsms": {
+			body: `
+  username     = "bearsms-user"
+  phone_number = "41790000000"`,
+			attrs: []string{"hash_key"},
+			serverSecrets: notificationSecrets(func(n *notification.BearSMS) map[string]string {
+				return singleSecret("hash_key", n.HashKey)
+			}),
+		},
 		"uptimekuma_notification_bitrix24": {
 			body: `
   notification_user_id = "1"`,
