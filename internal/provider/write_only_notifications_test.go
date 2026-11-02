@@ -98,6 +98,15 @@ func TestAccNotificationResourcesWriteOnly(t *testing.T) {
 				return singleSecret("secret_access_key", n.SecretAccessKey)
 			}),
 		},
+		"uptimekuma_notification_amootsms": {
+			body: `
+  mobiles     = "09120000000"
+  line_number = "public"`,
+			attrs: []string{"api_token"},
+			serverSecrets: notificationSecrets(func(n *notification.AmootSMS) map[string]string {
+				return singleSecret("api_token", n.APIToken)
+			}),
+		},
 		"uptimekuma_notification_apprise": {
 			attrs: []string{"apprise_url"},
 			serverSecrets: notificationSecrets(func(n *notification.Apprise) map[string]string {
