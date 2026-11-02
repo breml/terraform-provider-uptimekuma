@@ -5,8 +5,8 @@ This package implements the Terraform provider for Uptime Kuma, including all re
 ## Package Overview
 
 - **Package**: `internal/provider`
-- **Resources**: 149 resource types
-- **Data Sources**: 149 data source types (mirroring resources)
+- **Resources**: 150 resource types
+- **Data Sources**: 150 data source types (mirroring resources)
 - **Size**: One of the largest packages in the codebase
 
 ## Provider Structure
@@ -121,9 +121,9 @@ Share common HTTP configuration via `MonitorHTTPBaseModel`:
 
 - `uptimekuma_monitor_group` - Monitor groups for hierarchical organization
 
-### Notification Resources (105 types)
+### Notification Resources (106 types)
 
-105 typed notification resources plus the generic `uptimekuma_notification`. The list below is a
+106 typed notification resources plus the generic `uptimekuma_notification`. The list below is a
 selection; `provider.go` holds the complete registration. All notification types follow the same
 pattern with type-specific fields:
 
@@ -189,6 +189,7 @@ pattern with type-specific fields:
 - `uptimekuma_notification_octopush` - Octopush
 - `uptimekuma_notification_46elks` - 46elks
 - `uptimekuma_notification_bearsms` - BearSMS
+- `uptimekuma_notification_amootsms` - Amoot SMS
 
 #### Regional Platforms
 
@@ -239,7 +240,7 @@ pattern with type-specific fields:
 
 ### Data Sources
 
-Each resource has a corresponding data source (149 total) that allows querying existing resources:
+Each resource has a corresponding data source (150 total) that allows querying existing resources:
 
 - By ID: `data.uptimekuma_monitor_http.example.id = 123`
 - By name: `data.uptimekuma_monitor_http.example.name = "Production API"`
@@ -1587,7 +1588,7 @@ Testing framework providing:
 
 Most files are 200-400 lines. Large files:
 
-- `provider.go` (~760 lines) - 149 resource + 149 data source registrations
+- `provider.go` (~760 lines) - 150 resource + 150 data source registrations
 - `resource_monitor_http.go` (300+ lines) - Heavily documented
 - `resource_monitor_http_base.go` (300+ lines) - Many HTTP configuration options
 - `resource_status_page.go` (350+ lines) - Complex nested structures
