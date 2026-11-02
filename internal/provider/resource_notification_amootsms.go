@@ -95,7 +95,7 @@ func (*NotificationAmootSMSResource) Schema(
 			},
 			"pattern_code_id": schema.Int64Attribute{
 				MarkdownDescription: "The ID of the pattern registered with Amoot SMS. " +
-					"Required when `use_pattern` is `true`.",
+					"Required when `use_pattern` is `true`, ignored otherwise.",
 				Optional: true,
 				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
@@ -108,10 +108,12 @@ func (*NotificationAmootSMSResource) Schema(
 			},
 			"line_number": schema.StringAttribute{
 				MarkdownDescription: "The sender line, for example `public`, the value the Uptime Kuma web UI " +
-					"suggests. Required unless `use_pattern` is `true`, and when `use_own_line` is `true`.",
+					"suggests. Required unless `use_pattern` is `true`. With `use_pattern`, required when " +
+					"`use_own_line` is `true` and ignored otherwise.",
 				Optional: true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
+					// Uptime Kuma only treats an empty line as missing, a blank one reaches the gateway.
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S`), "must not be blank"),
 				},
 			},
 		}),
@@ -169,10 +171,6 @@ func validateAmootSMSSendMode(config *NotificationAmootSMSResourceModel, resp *r
 			"Missing Attribute Configuration",
 			"When \"use_pattern\" is set to true, the attribute \"pattern_code_id\" must be set.",
 		))
-	}
-
-	if usePattern && config.UseOwnLine.IsUnknown() {
-		return
 	}
 
 	if (!usePattern || config.UseOwnLine.ValueBool()) && config.LineNumber.IsNull() {
@@ -273,9 +271,9 @@ func (r *NotificationAmootSMSResource) Read(
 	data.PatternCodeID = int64PtrToTypes(amootSMS.PatternCodeID)
 	data.UseOwnLine = boolPtrToTypes(amootSMS.UseOwnLine)
 
-	// amootLineNumber is a *string, so omitempty drops it only when it is nil, not when it points at
-	// the empty string. A line number cleared in the Uptime Kuma UI comes back as "", and keeping that
-	// in state against a null configuration would be a perpetual diff.
+	// The server keeps whatever string it was given, and an empty one decodes to a non-nil pointer.
+	// Treat it as unset, which is also how the server treats it when sending, so that it does not show
+	// up as a diff against a null line_number.
 	if amootSMS.LineNumber == nil || *amootSMS.LineNumber == "" {
 		data.LineNumber = types.StringNull()
 	} else {

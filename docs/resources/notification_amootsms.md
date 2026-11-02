@@ -60,8 +60,8 @@ resource "uptimekuma_notification_amootsms" "pattern_own_line" {
 - `api_token_wo_version` (String) Any value that changes whenever `api_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_token_wo`.
 - `apply_existing` (Boolean)
 - `is_default` (Boolean)
-- `line_number` (String) The sender line, for example `public`, the value the Uptime Kuma web UI suggests. Required unless `use_pattern` is `true`, and when `use_own_line` is `true`.
-- `pattern_code_id` (Number) The ID of the pattern registered with Amoot SMS. Required when `use_pattern` is `true`.
+- `line_number` (String) The sender line, for example `public`, the value the Uptime Kuma web UI suggests. Required unless `use_pattern` is `true`. With `use_pattern`, required when `use_own_line` is `true` and ignored otherwise.
+- `pattern_code_id` (Number) The ID of the pattern registered with Amoot SMS. Required when `use_pattern` is `true`, ignored otherwise.
 - `use_own_line` (Boolean) Send pattern messages from `line_number`. Only used when `use_pattern` is `true`.
 - `use_pattern` (Boolean) Send the message as the values of a pattern registered with Amoot SMS instead of as plain text. Requires `pattern_code_id`.
 
