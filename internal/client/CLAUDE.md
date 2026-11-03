@@ -147,6 +147,14 @@ if err != nil {
 - Jitter: ±20% randomization (0.8 to 1.2 multiplier)
 - Backoff capped to the remaining overall `ConnectTimeout` budget
 - Respects context cancellation during backoff
+- Permanent login failures (`kuma.ErrInvalidCredentials`, `ErrTwoFactorRequired`, `ErrInvalidTOTPCode`,
+  `ErrTwoFactorLocked`, `ErrInvalidSessionToken` including `ErrUserInactive`, `ErrAuthRequired`) are returned
+  after the first attempt: retrying them only burns attempts against the server's login rate limit
+- A rate limited login (`*kuma.RateLimitedError` with `RetryAfter > 0`, Uptime Kuma 3.x) waits `RetryAfter`
+  instead of the backoff; a wait that does not fit into the remaining budget returns the error at once.
+  Without a `RetryAfter` (2.x) the regular backoff applies
+- Retry decisions are unit tested through the `connectFunc` parameter of `newClientDirectWithRetry`, which
+  takes `kuma.New` in production and a fake in tests
 
 **Backoff Schedule (with defaults):**
 

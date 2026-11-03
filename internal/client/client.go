@@ -34,6 +34,13 @@ const DefaultOperationTimeout = 60 * time.Second
 // can be split across a few quick attempts without requiring a large total wait.
 const defaultMaxRetries = 3
 
+// baseRetryDelay is the backoff before the second attempt; it doubles with
+// every further attempt.
+const baseRetryDelay = 500 * time.Millisecond
+
+// maxRetryDelay caps the exponential backoff between two attempts.
+const maxRetryDelay = 30 * time.Second
+
 // effectiveTimeout returns the configured timeout, or defaultConnectTimeout if
 // the configured value is zero or negative.
 func effectiveTimeout(configured time.Duration) time.Duration {
@@ -129,7 +136,70 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 	resolved := *config
 	resolved.ConnectTimeout = timeout
 
-	return newClientDirectWithRetry(ctx, &resolved)
+	return newClientDirectWithRetry(ctx, &resolved, kuma.New)
+}
+
+// connectFunc opens a single connection to Uptime Kuma. It has the signature of
+// kuma.New, which is what the provider uses; tests pass a function that fails
+// the way a server would, to exercise the retry decisions without one.
+type connectFunc func(
+	ctx context.Context,
+	baseURL string,
+	username string,
+	password string,
+	opts ...kuma.Option,
+) (*kuma.Client, error)
+
+// isPermanentLoginError reports whether err is a login failure that another
+// attempt with the same configuration cannot overcome. Retrying those only
+// costs time and, worse, login attempts: every one counts against the server's
+// login rate limit, so retrying a wrong password can lock the address out for
+// a while. kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is
+// covered by it.
+func isPermanentLoginError(err error) bool {
+	for _, target := range []error{
+		kuma.ErrInvalidCredentials,
+		kuma.ErrTwoFactorRequired,
+		kuma.ErrInvalidTOTPCode,
+		kuma.ErrTwoFactorLocked,
+		kuma.ErrInvalidSessionToken,
+		kuma.ErrAuthRequired,
+	} {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// retryDelay returns how long to wait after the failed attempt with the given
+// zero-based index before the next one, and false if no further attempt should
+// be made. remaining is the rest of the overall budget and caps the wait.
+//
+// A login the server refused for its rate limit is retried after the wait the
+// server named in kuma.RateLimitedError.RetryAfter, since an attempt before
+// that is refused again and counts against the limit too. A wait that does not
+// fit into the remaining budget ends the retries at once, so the caller learns
+// that it is rate limited rather than that it timed out. Where the server named
+// no wait, as Uptime Kuma 2.x does not, and for every other error, the regular
+// exponential backoff applies.
+func retryDelay(err error, attempt int, remaining time.Duration) (time.Duration, bool) {
+	var rateLimited *kuma.RateLimitedError
+	if errors.As(err, &rateLimited) && rateLimited.RetryAfter > 0 {
+		if rateLimited.RetryAfter >= remaining {
+			return 0, false
+		}
+
+		return rateLimited.RetryAfter, true
+	}
+
+	// Exponential backoff with jitter, capped to remaining budget.
+	backoff := float64(baseRetryDelay) * math.Pow(2, float64(attempt))
+	//nolint:gosec // Not for cryptographic use, only for jitter in backoff.
+	jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
+
+	return min(time.Duration(backoff*jitter), maxRetryDelay, remaining), true
 }
 
 // newClientDirectWithRetry attempts to connect to Uptime Kuma with
@@ -141,9 +211,14 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 // into the socket.io client and controls the connection lifetime —
 // adding a deadline to it would kill the connection after the
 // timeout expires.
+//
+// A permanent login failure, see isPermanentLoginError, is returned after the
+// first attempt, and a rate limited login waits for as long as the server
+// asked, see retryDelay.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,
+	connect connectFunc,
 ) (*kuma.Client, error) {
 	maxRetries := effectiveMaxRetries(config.MaxRetries)
 
@@ -152,8 +227,6 @@ func newClientDirectWithRetry(
 	defer timer.Stop()
 
 	deadline := timer.C
-
-	baseDelay := 500 * time.Millisecond
 
 	var kumaClient *kuma.Client
 	var err error
@@ -178,7 +251,7 @@ func newClientDirectWithRetry(
 			kuma.WithOperationTimeout(effectiveOperationTimeout(config.OperationTimeout)),
 		}
 
-		kumaClient, err = kuma.New(
+		kumaClient, err = connect(
 			ctx,
 			config.Endpoint,
 			config.Username,
@@ -189,23 +262,22 @@ func newClientDirectWithRetry(
 			return kumaClient, nil
 		}
 
+		if isPermanentLoginError(err) {
+			return nil, fmt.Errorf("login failed: %w", err)
+		}
+
 		if attempt == maxRetries {
 			break
 		}
-
-		// Exponential backoff with jitter, capped to remaining budget.
-		backoff := float64(baseDelay) * math.Pow(2, float64(attempt))
-		//nolint:gosec // Not for cryptographic use, only for jitter in backoff.
-		jitter := rand.Float64()*0.4 + 0.8 // 0.8 to 1.2 (±20%)
-		sleepDuration := min(time.Duration(backoff*jitter), 30*time.Second)
 
 		remaining := time.Until(overallDeadline)
 		if remaining <= 0 {
 			return nil, newTimeoutError(attempt+1, err)
 		}
 
-		if sleepDuration > remaining {
-			sleepDuration = remaining
+		sleepDuration, retry := retryDelay(err, attempt, remaining)
+		if !retry {
+			return nil, fmt.Errorf("failed after %d attempt(s): %w", attempt+1, err)
 		}
 
 		select {
