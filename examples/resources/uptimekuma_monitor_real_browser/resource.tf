@@ -6,6 +6,5 @@ resource "uptimekuma_monitor_real_browser" "example" {
   max_retries                = 2
   upside_down                = false
   active                     = true
-  automation_script          = "step('load page', async () => { await page.goto('https://example.com'); });"
   domain_expiry_notification = false
 }
