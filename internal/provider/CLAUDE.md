@@ -359,6 +359,13 @@ type NotificationBaseModel struct {
 There is deliberately no `is_active` attribute: Uptime Kuma ignores the value, so Create and Update
 always send `IsActive: true`. New notification resources do the same.
 
+`apply_existing` is a one-time action that Uptime Kuma never stores (it always reads back `false`),
+so a notification's Read keeps the state value with `applyExistingFromState(data.ApplyExisting)`
+(`false` after an import), and Update sends the value returned by
+`applyExistingOnUpdate(ctx, req, &resp.Diagnostics)`: `true` only when the plan changes it from
+`false` to `true`. Sending the planned value on every Update would attach the notification to
+every monitor again on any unrelated change. New notification resources do the same.
+
 **Helper Function**: `withNotificationBaseAttributes(attrs map[string]schema.Attribute)` ([resource_notification_base.go:22](resource_notification_base.go))
 
 **Usage Pattern**:
@@ -1282,7 +1289,7 @@ with `task testacc PARALLEL=4`.
 the test creates is uniquely named via `acctest.RandomWithPrefix`, and the test only
 asserts on resources it created itself.
 
-**Four test files must keep using `resource.Test`**, because they touch state shared by
+**Five test files must keep using `resource.Test`**, because they touch state shared by
 the whole Uptime Kuma instance:
 
 | File | Reason |
@@ -1291,9 +1298,10 @@ the whole Uptime Kuma instance:
 | [data_source_settings_test.go](data_source_settings_test.go) | Reads the settings singleton |
 | [data_source_maintenances_test.go](data_source_maintenances_test.go) | Asserts an exact count over *all* maintenances |
 | [resource_proxy_test.go](resource_proxy_test.go) | `default` and `apply_existing` rewrite every other proxy and monitor |
+| [resource_notification_apply_existing_test.go](resource_notification_apply_existing_test.go) | `apply_existing` attaches the notification to every monitor |
 
 Go's `testing` package runs all non-parallel top-level tests to completion *before*
-releasing any parallel ones, so these four files are automatically isolated from the
+releasing any parallel ones, so these five files are automatically isolated from the
 concurrent tests -- no extra synchronisation is required.
 
 When adding a test that asserts on a list data source (e.g. `uptimekuma_maintenances`)

@@ -50,7 +50,7 @@ resource "uptimekuma_notification_discord" "write_only" {
 
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors detached from the notification later stay detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. An imported notification starts with `false`.
 - `channel_type` (String) The type of Discord channel associated with the webhook (for example, text, forum, or announcement).
 - `disable_url` (Boolean) If true, disables including the monitor URL in the Discord notification.
 - `is_default` (Boolean)

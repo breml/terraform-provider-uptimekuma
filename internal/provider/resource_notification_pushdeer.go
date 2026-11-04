@@ -177,7 +177,7 @@ func (r *NotificationPushDeerResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushDeer.Name)
 	data.IsDefault = types.BoolValue(pushDeer.IsDefault)
-	data.ApplyExisting = types.BoolValue(pushDeer.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.KeyWOVersion.IsNull() {
 		data.Key = types.StringValue(pushDeer.Key)
@@ -202,10 +202,15 @@ func (r *NotificationPushDeerResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	pushDeer := notification.PushDeer{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

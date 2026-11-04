@@ -207,7 +207,7 @@ func (r *NotificationDiscordResource) Read(ctx context.Context, req resource.Rea
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(discord.Name)
 	data.IsDefault = types.BoolValue(discord.IsDefault)
-	data.ApplyExisting = types.BoolValue(discord.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(discord.WebhookURL)
@@ -263,10 +263,15 @@ func (r *NotificationDiscordResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	discord := notification.Discord{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

@@ -208,7 +208,7 @@ func (r *NotificationWebpushResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(webpush.Name)
 	data.IsDefault = types.BoolValue(webpush.IsDefault)
-	data.ApplyExisting = types.BoolValue(webpush.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.Subscription = flattenWebpushSubscription(webpush.Subscription, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -233,6 +233,11 @@ func (r *NotificationWebpushResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	subscription := expandWebpushSubscription(ctx, data.Subscription, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -241,7 +246,7 @@ func (r *NotificationWebpushResource) Update(
 	webpush := notification.Webpush{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

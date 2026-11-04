@@ -178,7 +178,7 @@ func (r *NotificationKeepResource) Read(ctx context.Context, req resource.ReadRe
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(keep.Name)
 	data.IsDefault = types.BoolValue(keep.IsDefault)
-	data.ApplyExisting = types.BoolValue(keep.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(keep.WebhookURL)
@@ -206,10 +206,15 @@ func (r *NotificationKeepResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	keep := notification.Keep{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

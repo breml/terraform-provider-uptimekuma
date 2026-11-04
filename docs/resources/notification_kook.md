@@ -50,7 +50,7 @@ resource "uptimekuma_notification_kook" "write_only" {
 
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors detached from the notification later stay detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. An imported notification starts with `false`.
 - `bot_token` (String, Sensitive) Kook bot token for authentication. Stored in state; use `bot_token_wo` to keep it out of state.
 - `bot_token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Kook bot token for authentication, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `bot_token`; requires `bot_token_wo_version`. An imported resource has no `bot_token_wo_version` yet, so `terraform import` may store the server's value in `bot_token` until the next apply with `bot_token_wo` set removes it from state.
 - `bot_token_wo_version` (String) Any value that changes whenever `bot_token_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `bot_token_wo`.

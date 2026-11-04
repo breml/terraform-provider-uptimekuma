@@ -184,7 +184,7 @@ func (r *NotificationFlashDutyResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(flashduty.Name)
 	data.IsDefault = types.BoolValue(flashduty.IsDefault)
-	data.ApplyExisting = types.BoolValue(flashduty.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.IntegrationKeyWOVersion.IsNull() {
 		data.IntegrationKey = types.StringValue(flashduty.IntegrationKey)
@@ -210,10 +210,15 @@ func (r *NotificationFlashDutyResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	flashduty := notification.FlashDuty{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

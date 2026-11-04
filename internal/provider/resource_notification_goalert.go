@@ -177,7 +177,7 @@ func (r *NotificationGoAlertResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(goalert.Name)
 	data.IsDefault = types.BoolValue(goalert.IsDefault)
-	data.ApplyExisting = types.BoolValue(goalert.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.BaseURL = types.StringValue(goalert.BaseURL)
 	if data.TokenWOVersion.IsNull() {
@@ -202,10 +202,15 @@ func (r *NotificationGoAlertResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	goalert := notification.GoAlert{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

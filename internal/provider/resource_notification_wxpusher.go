@@ -163,7 +163,7 @@ func (r *NotificationWxPusherResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(wxPusher.Name)
 	data.IsDefault = types.BoolValue(wxPusher.IsDefault)
-	data.ApplyExisting = types.BoolValue(wxPusher.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.SPTWOVersion.IsNull() {
 		data.SPT = types.StringValue(wxPusher.SPT)
@@ -187,6 +187,11 @@ func (r *NotificationWxPusherResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -198,6 +203,7 @@ func (r *NotificationWxPusherResource) Update(
 	}
 
 	wxPusher := wxPusherFromModel(&data)
+	wxPusher.ApplyExisting = applyExisting
 	wxPusher.SPT = writeOnlyOrPlan(ctx, req.Config, "spt", data.SPT, &resp.Diagnostics)
 	wxPusher.ID = id
 

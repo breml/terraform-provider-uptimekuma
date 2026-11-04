@@ -200,7 +200,7 @@ func (r *NotificationWebhookResource) Read(ctx context.Context, req resource.Rea
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(webhook.Name)
 	data.IsDefault = types.BoolValue(webhook.IsDefault)
-	data.ApplyExisting = types.BoolValue(webhook.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(webhook.WebhookURL)
@@ -244,6 +244,11 @@ func (r *NotificationWebhookResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	headers := make(notification.WebhookAdditionalHeaders)
 	if !data.WebhookAdditionalHeaders.IsNull() && !data.WebhookAdditionalHeaders.IsUnknown() {
 		diags := data.WebhookAdditionalHeaders.ElementsAs(ctx, &headers, false)
@@ -258,7 +263,7 @@ func (r *NotificationWebhookResource) Update(
 	webhook := notification.Webhook{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

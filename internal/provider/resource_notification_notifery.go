@@ -184,7 +184,7 @@ func (r *NotificationNotiferyResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(notifery.Name)
 	data.IsDefault = types.BoolValue(notifery.IsDefault)
-	data.ApplyExisting = types.BoolValue(notifery.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(notifery.APIKey)
@@ -220,10 +220,15 @@ func (r *NotificationNotiferyResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	notifery := notification.Notifery{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

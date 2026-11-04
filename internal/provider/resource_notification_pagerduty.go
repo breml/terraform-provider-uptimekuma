@@ -238,7 +238,7 @@ func (r *NotificationPagerDutyResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pagerduty.Name)
 	data.IsDefault = types.BoolValue(pagerduty.IsDefault)
-	data.ApplyExisting = types.BoolValue(pagerduty.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.IntegrationURLWOVersion.IsNull() {
 		data.IntegrationURL = types.StringNull()
@@ -284,10 +284,15 @@ func (r *NotificationPagerDutyResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	pagerduty := notification.PagerDuty{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

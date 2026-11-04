@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -27,6 +29,14 @@ type NotificationBaseModel struct {
 	IsDefault     types.Bool   `tfsdk:"is_default"`
 	ApplyExisting types.Bool   `tfsdk:"apply_existing"`
 }
+
+// applyExistingDescription documents the apply_existing attribute shared by all
+// notification resources.
+const applyExistingDescription = "Attach this notification to all existing monitors. This is a one-time " +
+	"action: it runs when the notification is created with `true`, or when the value changes from `false` " +
+	"to `true`. Other updates do not attach it again, so monitors detached from the notification later stay " +
+	"detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. " +
+	"An imported notification starts with `false`."
 
 // withNotificationBaseAttributes adds common notification schema attributes to the provided attribute map.
 // These attributes are shared across all notification types: id, name, is_default, apply_existing.
@@ -55,9 +65,10 @@ func withNotificationBaseAttributes(attrs map[string]schema.Attribute) map[strin
 
 	// Apply notification to existing monitors.
 	attrs["apply_existing"] = schema.BoolAttribute{
-		Optional: true,
-		Computed: true,
-		Default:  booldefault.StaticBool(false),
+		MarkdownDescription: applyExistingDescription,
+		Optional:            true,
+		Computed:            true,
+		Default:             booldefault.StaticBool(false),
 	}
 
 	// Return enriched attributes map.
@@ -113,4 +124,37 @@ func readNotification(
 	}
 
 	return base, true
+}
+
+// applyExistingFromState returns the apply_existing value for a notification
+// Read.
+//
+// Uptime Kuma treats applyExisting as a one-time action and always stores it
+// as false (Notification.save in server/notification.js), so the server value
+// would replace a configured true with false on every refresh. Read keeps the
+// prior state value instead, and falls back to false when there is none, e.g.
+// right after an import. See #478.
+func applyExistingFromState(state types.Bool) types.Bool {
+	if state.IsNull() || state.IsUnknown() {
+		return types.BoolValue(false)
+	}
+
+	return state
+}
+
+// applyExistingOnUpdate returns the applyExisting value to send on a
+// notification Update.
+//
+// Uptime Kuma attaches the notification to every monitor each time it is saved
+// with applyExisting true. Sending the planned value on every Update would
+// therefore attach it again on any unrelated change, undoing monitors detached
+// on purpose. The flag is only sent as true when the plan changes it from false
+// to true.
+func applyExistingOnUpdate(ctx context.Context, req resource.UpdateRequest, diags *diag.Diagnostics) bool {
+	var planned, prior types.Bool
+
+	diags.Append(req.Plan.GetAttribute(ctx, path.Root("apply_existing"), &planned)...)
+	diags.Append(req.State.GetAttribute(ctx, path.Root("apply_existing"), &prior)...)
+
+	return planned.ValueBool() && !prior.ValueBool()
 }

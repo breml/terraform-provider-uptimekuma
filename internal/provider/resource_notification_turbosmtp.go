@@ -229,7 +229,7 @@ func (r *NotificationTurboSMTPResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(turboSMTP.Name)
 	data.IsDefault = types.BoolValue(turboSMTP.IsDefault)
-	data.ApplyExisting = types.BoolValue(turboSMTP.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.ConsumerKey = types.StringValue(turboSMTP.ConsumerKey)
 
@@ -273,6 +273,11 @@ func (r *NotificationTurboSMTPResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -284,6 +289,7 @@ func (r *NotificationTurboSMTPResource) Update(
 	}
 
 	turboSMTP := turboSMTPFromModel(&data)
+	turboSMTP.ApplyExisting = applyExisting
 	turboSMTP.ID = id
 	turboSMTP.ConsumerSecret = writeOnlyOrPlan(
 		ctx, req.Config, "consumer_secret", data.ConsumerSecret, &resp.Diagnostics,

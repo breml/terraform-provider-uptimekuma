@@ -191,7 +191,7 @@ func (r *NotificationOpsgenieResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(opsgenie.Name)
 	data.IsDefault = types.BoolValue(opsgenie.IsDefault)
-	data.ApplyExisting = types.BoolValue(opsgenie.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(opsgenie.APIKey)
@@ -218,10 +218,15 @@ func (r *NotificationOpsgenieResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	opsgenie := notification.Opsgenie{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

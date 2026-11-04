@@ -177,7 +177,7 @@ func (r *NotificationFreemobileResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(freemobile.Name)
 	data.IsDefault = types.BoolValue(freemobile.IsDefault)
-	data.ApplyExisting = types.BoolValue(freemobile.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.User = types.StringValue(freemobile.User)
 	if data.PassWOVersion.IsNull() {
@@ -202,10 +202,15 @@ func (r *NotificationFreemobileResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	freemobile := notification.FreeMobile{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

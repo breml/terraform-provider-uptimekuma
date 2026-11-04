@@ -56,7 +56,7 @@ resource "uptimekuma_notification_clickup" "write_only" {
 
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors detached from the notification later stay detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. An imported notification starts with `false`.
 - `disable_url` (Boolean) If true, the monitor address is left out of the message body. Leaving it unset behaves like `false`.
 - `is_default` (Boolean)
 - `token` (String, Sensitive) The ClickUp personal access token (`pk_…`). Uptime Kuma sends it verbatim as the `Authorization` header, so it must not carry a `Bearer` prefix. Stored in state; use `token_wo` to keep it out of state.

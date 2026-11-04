@@ -164,7 +164,7 @@ func (r *NotificationFeishuResource) Read(ctx context.Context, req resource.Read
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(feishu.Name)
 	data.IsDefault = types.BoolValue(feishu.IsDefault)
-	data.ApplyExisting = types.BoolValue(feishu.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebHookURLWOVersion.IsNull() {
 		data.WebHookURL = types.StringValue(feishu.WebHookURL)
@@ -188,10 +188,15 @@ func (r *NotificationFeishuResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	feishu := notification.Feishu{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

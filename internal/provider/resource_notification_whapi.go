@@ -187,7 +187,7 @@ func (r *NotificationWhapiResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(whapi.Name)
 	data.IsDefault = types.BoolValue(whapi.IsDefault)
-	data.ApplyExisting = types.BoolValue(whapi.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.APIURL = types.StringValue(whapi.APIURL)
 	if data.AuthTokenWOVersion.IsNull() {
@@ -214,10 +214,15 @@ func (r *NotificationWhapiResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	whapi := notification.Whapi{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

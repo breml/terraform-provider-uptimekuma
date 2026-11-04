@@ -214,7 +214,7 @@ func (r *NotificationPushoverResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushover.Name)
 	data.IsDefault = types.BoolValue(pushover.IsDefault)
-	data.ApplyExisting = types.BoolValue(pushover.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.UserKey = types.StringValue(pushover.UserKey)
 
@@ -276,10 +276,15 @@ func (r *NotificationPushoverResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	pushover := notification.Pushover{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

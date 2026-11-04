@@ -512,7 +512,7 @@ func (r *NotificationNtfyResource) Read(ctx context.Context, req resource.ReadRe
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(ntfy.Name)
 	data.IsDefault = types.BoolValue(ntfy.IsDefault)
-	data.ApplyExisting = types.BoolValue(ntfy.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	updateNtfyFields(&data, &ntfy)
 
@@ -535,10 +535,15 @@ func (r *NotificationNtfyResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	ntfy := notification.Ntfy{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

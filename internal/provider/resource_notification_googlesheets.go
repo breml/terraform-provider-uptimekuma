@@ -172,7 +172,7 @@ func (r *NotificationGoogleSheetsResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(googleSheets.Name)
 	data.IsDefault = types.BoolValue(googleSheets.IsDefault)
-	data.ApplyExisting = types.BoolValue(googleSheets.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(googleSheets.WebhookURL)
@@ -196,10 +196,15 @@ func (r *NotificationGoogleSheetsResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	googleSheets := notification.GoogleSheets{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

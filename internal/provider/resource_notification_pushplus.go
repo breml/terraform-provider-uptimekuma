@@ -172,7 +172,7 @@ func (r *NotificationPushPlusResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pushplus.Name)
 	data.IsDefault = types.BoolValue(pushplus.IsDefault)
-	data.ApplyExisting = types.BoolValue(pushplus.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.SendKeyWOVersion.IsNull() {
 		data.SendKey = types.StringValue(pushplus.SendKey)
@@ -196,10 +196,15 @@ func (r *NotificationPushPlusResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	pushplus := notification.PushPlus{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

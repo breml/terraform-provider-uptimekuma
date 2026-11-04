@@ -177,7 +177,7 @@ func (r *NotificationTelnyxResource) Read(ctx context.Context, req resource.Read
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(telnyx.Name)
 	data.IsDefault = types.BoolValue(telnyx.IsDefault)
-	data.ApplyExisting = types.BoolValue(telnyx.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(telnyx.APIKey)
@@ -205,6 +205,11 @@ func (r *NotificationTelnyxResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -216,6 +221,7 @@ func (r *NotificationTelnyxResource) Update(
 	}
 
 	telnyx := telnyxFromModel(&data)
+	telnyx.ApplyExisting = applyExisting
 	telnyx.ID = id
 
 	telnyx.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)

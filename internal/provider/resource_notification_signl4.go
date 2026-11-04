@@ -168,7 +168,7 @@ func (r *NotificationSIGNL4Resource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(signl4.Name)
 	data.IsDefault = types.BoolValue(signl4.IsDefault)
-	data.ApplyExisting = types.BoolValue(signl4.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(signl4.WebhookURL)
@@ -192,10 +192,15 @@ func (r *NotificationSIGNL4Resource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	signl4 := notification.SIGNL4{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

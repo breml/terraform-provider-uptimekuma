@@ -260,7 +260,7 @@ func (r *NotificationAmootSMSResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(amootSMS.Name)
 	data.IsDefault = types.BoolValue(amootSMS.IsDefault)
-	data.ApplyExisting = types.BoolValue(amootSMS.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APITokenWOVersion.IsNull() {
 		data.APIToken = types.StringValue(amootSMS.APIToken)
@@ -298,6 +298,11 @@ func (r *NotificationAmootSMSResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -309,6 +314,7 @@ func (r *NotificationAmootSMSResource) Update(
 	}
 
 	amootSMS := amootSMSFromModel(&data)
+	amootSMS.ApplyExisting = applyExisting
 	amootSMS.ID = id
 	amootSMS.APIToken = writeOnlyOrPlan(ctx, req.Config, "api_token", data.APIToken, &resp.Diagnostics)
 

@@ -163,7 +163,7 @@ func (r *NotificationTeamsResource) Read(ctx context.Context, req resource.ReadR
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(teams.Name)
 	data.IsDefault = types.BoolValue(teams.IsDefault)
-	data.ApplyExisting = types.BoolValue(teams.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(teams.WebhookURL)
@@ -187,10 +187,15 @@ func (r *NotificationTeamsResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	teams := notification.Teams{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

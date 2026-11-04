@@ -74,9 +74,10 @@ func (*NotificationResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Default:  booldefault.StaticBool(false),
 			},
 			"apply_existing": schema.BoolAttribute{
-				Optional: true,
-				Computed: true,
-				Default:  booldefault.StaticBool(false),
+				MarkdownDescription: applyExistingDescription,
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "Notification type",
@@ -183,7 +184,7 @@ func (r *NotificationResource) Read(ctx context.Context, req resource.ReadReques
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(genericNotification.Name)
 	data.IsDefault = types.BoolValue(genericNotification.IsDefault)
-	data.ApplyExisting = types.BoolValue(genericNotification.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 	data.Type = types.StringValue(genericNotification.Type())
 	data.Config = types.StringValue(string(genericDetailsJSON))
 
@@ -202,6 +203,11 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	genericDetails := make(map[string]any, 20)
 	err := json.Unmarshal([]byte(data.Config.ValueString()), &genericDetails)
 	if err != nil {
@@ -212,7 +218,7 @@ func (r *NotificationResource) Update(ctx context.Context, req resource.UpdateRe
 	genericNotification := notification.Generic{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

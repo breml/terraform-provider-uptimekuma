@@ -182,7 +182,7 @@ func (r *NotificationHeiiOnCallResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(heiiOnCall.Name)
 	data.IsDefault = types.BoolValue(heiiOnCall.IsDefault)
-	data.ApplyExisting = types.BoolValue(heiiOnCall.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	// Preserve existing APIKey from state if the API does not return a usable value.
 	if data.APIKeyWOVersion.IsNull() && heiiOnCall.APIKey != "" {
@@ -209,10 +209,15 @@ func (r *NotificationHeiiOnCallResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	heiiOnCall := notification.HeiiOnCall{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

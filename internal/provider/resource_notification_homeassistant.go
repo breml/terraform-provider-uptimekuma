@@ -197,7 +197,7 @@ func (r *NotificationHomeAssistantResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(homeAssistant.Name)
 	data.IsDefault = types.BoolValue(homeAssistant.IsDefault)
-	data.ApplyExisting = types.BoolValue(homeAssistant.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.HomeAssistantURL = types.StringValue(homeAssistant.HomeAssistantURL)
 
@@ -225,10 +225,15 @@ func (r *NotificationHomeAssistantResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	homeAssistant := notification.HomeAssistant{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

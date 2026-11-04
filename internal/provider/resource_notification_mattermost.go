@@ -192,7 +192,7 @@ func (r *NotificationMattermostResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(mattermost.Name)
 	data.IsDefault = types.BoolValue(mattermost.IsDefault)
-	data.ApplyExisting = types.BoolValue(mattermost.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(mattermost.WebhookURL)
@@ -232,10 +232,15 @@ func (r *NotificationMattermostResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	mattermost := notification.Mattermost{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

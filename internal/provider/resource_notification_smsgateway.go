@@ -183,7 +183,7 @@ func (r *NotificationSMSGatewayResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsGateway.Name)
 	data.IsDefault = types.BoolValue(smsGateway.IsDefault)
-	data.ApplyExisting = types.BoolValue(smsGateway.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.URL = types.StringValue(smsGateway.URL)
 
@@ -211,6 +211,11 @@ func (r *NotificationSMSGatewayResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -222,6 +227,7 @@ func (r *NotificationSMSGatewayResource) Update(
 	}
 
 	smsGateway := smsGatewayFromModel(&data)
+	smsGateway.ApplyExisting = applyExisting
 	smsGateway.ID = id
 	smsGateway.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
 

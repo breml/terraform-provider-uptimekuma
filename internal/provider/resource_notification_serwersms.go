@@ -193,7 +193,7 @@ func (r *NotificationSerwersmsResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(serwersms.Name)
 	data.IsDefault = types.BoolValue(serwersms.IsDefault)
-	data.ApplyExisting = types.BoolValue(serwersms.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	// Preserve username from state if API does not return it.
 	if serwersms.Username != "" {
@@ -231,10 +231,15 @@ func (r *NotificationSerwersmsResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	serwersms := notification.SerwerSMS{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

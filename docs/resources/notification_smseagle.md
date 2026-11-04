@@ -65,7 +65,7 @@ resource "uptimekuma_notification_smseagle" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `api_type` (String) API version: `smseagle-apiv1` or `smseagle-apiv2`
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors detached from the notification later stay detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. An imported notification starts with `false`.
 - `duration` (Number) Duration for voice calls in seconds
 - `encoding` (Boolean) Enable unicode encoding for non-ASCII characters
 - `is_default` (Boolean)

@@ -195,7 +195,7 @@ func (r *NotificationTechulusPushResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(techulusPush.Name)
 	data.IsDefault = types.BoolValue(techulusPush.IsDefault)
-	data.ApplyExisting = types.BoolValue(techulusPush.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() && techulusPush.APIKey != "" {
 		data.APIKey = types.StringValue(techulusPush.APIKey)
@@ -239,10 +239,15 @@ func (r *NotificationTechulusPushResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	techulusPush := notification.TechulusPush{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),
