@@ -746,6 +746,14 @@ linters:
         linters:
           - govet
 
+      # go-uptime-kuma-client v0.7.0 deprecated the TLS fields of the TCP Port
+      # monitor, because Uptime Kuma 2.5.8 ignores them. Deprecating the
+      # matching provider attributes is a change of its own.
+      - path: 'internal/provider/(data_source|resource)_monitor_tcp_port(_test)?\.go'
+        linters:
+          - staticcheck
+        text: 'SA1019: .*monitor\.TCPPort(Details)?\)\.(SMTPSecurity|ExpiryNotification) is deprecated'
+
       - path: 'internal/provider/main_test\.go'
         linters:
           - revive

@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -178,10 +179,7 @@ func (*UptimeKumaProvider) Configure(
 		MaxRetries:           opts.maxRetries,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"failed to connect to Uptime Kuma",
-			connectionErrorDetail(data.Endpoint.ValueString(), err),
-		)
+		resp.Diagnostics.AddError(connectionError(data.Endpoint.ValueString(), err))
 
 		return
 	}
@@ -201,15 +199,110 @@ func (*UptimeKumaProvider) Configure(
 	resp.ResourceData = pd
 }
 
-func connectionErrorDetail(endpoint string, err error) string {
+// connectionError returns the summary and detail of the diagnostic for a
+// failed connection to Uptime Kuma. A login failure the client reports with a
+// typed error gets a diagnostic of its own that names the next step, since
+// transport advice does not help with a rejected password. Every other error,
+// including a login rejection the client has no typed error for, gets the
+// generic connection advice.
+func connectionError(endpoint string, err error) (summary string, detail string) {
+	summary, nextStep := loginErrorAdvice(err)
+	if summary == "" {
+		return "failed to connect to Uptime Kuma", transportErrorDetail(endpoint, err)
+	}
+
+	return summary, fmt.Sprintf(
+		"Uptime Kuma at %q refused the login.\n\n"+
+			"Underlying error: %v\n\n"+
+			"%s",
+		endpoint,
+		err,
+		nextStep,
+	)
+}
+
+// loginErrorAdvice returns the summary and the next step for a login failure
+// the client reports with a typed error, or empty strings for any other error.
+// kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is therefore
+// matched first.
+//
+// The provider logs in with username and password only, so the two-factor code
+// and session token cases are not expected today. Their advice is written for
+// that setup and must be revisited when issue #404 adds two-factor
+// authentication or session token login.
+func loginErrorAdvice(err error) (summary string, nextStep string) {
+	var rateLimited *kuma.RateLimitedError
+
+	switch {
+	case errors.Is(err, kuma.ErrInvalidCredentials):
+		return "Uptime Kuma rejected the username or password",
+			"Check the provider attributes `username` and `password` (or the environment variables " +
+				"`UPTIMEKUMA_USERNAME` and `UPTIMEKUMA_PASSWORD`). The login is not retried, because every " +
+				"attempt counts against the server's login rate limit."
+
+	case errors.Is(err, kuma.ErrTwoFactorRequired):
+		return "Uptime Kuma requires two-factor authentication",
+			"The account has two-factor authentication (2FA) enabled, which the provider does not support " +
+				"yet, see https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account " +
+				"without 2FA for Terraform."
+
+	case errors.Is(err, kuma.ErrInvalidTOTPCode):
+		return "Uptime Kuma rejected the two-factor authentication code",
+			"The account has two-factor authentication (2FA) enabled, which the provider does not support " +
+				"yet, see https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account " +
+				"without 2FA for Terraform."
+
+	case errors.Is(err, kuma.ErrTwoFactorLocked):
+		return "Uptime Kuma locked the two-factor authentication",
+			"The server refuses further two-factor codes for this login after too many wrong ones. The " +
+				"provider does not support two-factor authentication (2FA) yet, see " +
+				"https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account without " +
+				"2FA for Terraform."
+
+	case errors.Is(err, kuma.ErrUserInactive):
+		return "Uptime Kuma account is inactive",
+			"The account is deactivated or deleted. Reactivate it in Uptime Kuma or configure the credentials " +
+				"of an active account."
+
+	case errors.Is(err, kuma.ErrInvalidSessionToken):
+		return "Uptime Kuma rejected the session token",
+			"The server rejected the session of this login, for example because the password of the " +
+				"account was changed meanwhile. Check the provider attributes `username` and `password` " +
+				"(or the environment variables `UPTIMEKUMA_USERNAME` and `UPTIMEKUMA_PASSWORD`), then run " +
+				"Terraform again."
+
+	case errors.As(err, &rateLimited) && rateLimited.RetryAfter > 0:
+		return "Uptime Kuma rate limited the login",
+			fmt.Sprintf("Too many logins were attempted from this address. Wait %s before running "+
+				"Terraform again.", rateLimited.RetryAfter)
+
+	case errors.Is(err, kuma.ErrRateLimited):
+		return "Uptime Kuma rate limited the login",
+			"Too many logins were attempted from this address. Wait a minute before running Terraform again."
+
+	case errors.Is(err, kuma.ErrAuthRequired):
+		return "Uptime Kuma requires authentication",
+			"The server requires a login, but no credentials are configured. Set the provider attributes " +
+				"`username` and `password` (or the environment variables `UPTIMEKUMA_USERNAME` and " +
+				"`UPTIMEKUMA_PASSWORD`)."
+	}
+
+	return "", ""
+}
+
+// transportErrorDetail returns the diagnostic detail for a connection that
+// failed for a reason other than a typed login failure. That is mostly a
+// transport problem, but can be a login rejection without a typed error too.
+func transportErrorDetail(endpoint string, err error) string {
 	return fmt.Sprintf(
-		"Could not establish a connection to Uptime Kuma at %q.\n\n"+
+		"Could not connect to or log in to Uptime Kuma at %q.\n\n"+
 			"Underlying error: %v\n\n"+
 			"Common causes:\n"+
 			"  - The endpoint URL is incorrect or Uptime Kuma is not reachable from this host.\n"+
 			"  - A reverse proxy is not forwarding the Socket.IO/WebSocket connection.\n"+
 			"  - TLS certificate issues when using a custom domain (try the direct URL to confirm).\n"+
-			"  - Two-factor authentication (2FA) is enabled on the account (currently not supported).\n\n"+
+			"  - The server refused the login for a reason the provider does not recognize, see the "+
+			"underlying error.\n\n"+
 			"To collect diagnostics, re-run with the following environment variables set and share the "+
 			"output when reporting the issue:\n"+
 			"  TF_LOG=DEBUG SOCKETIO_LOG_LEVEL=DEBUG terraform plan",
