@@ -145,14 +145,15 @@ if err != nil {
 - Maximum 3 retry attempts (4 total attempts including first try)
 - Exponential backoff: base delay 500ms, multiplied by 2^attempt
 - Jitter: ±20% randomization (0.8 to 1.2 multiplier)
-- Backoff capped to the remaining overall `ConnectTimeout` budget
+- Backoff capped to 30s (`maxRetryDelay`) and to the remaining overall `ConnectTimeout` budget
 - Respects context cancellation during backoff
 - Permanent login failures (`kuma.ErrInvalidCredentials`, `ErrTwoFactorRequired`, `ErrInvalidTOTPCode`,
   `ErrTwoFactorLocked`, `ErrInvalidSessionToken` including `ErrUserInactive`, `ErrAuthRequired`) are returned
   after the first attempt: retrying them only burns attempts against the server's login rate limit
-- A rate limited login (`*kuma.RateLimitedError` with `RetryAfter > 0`, Uptime Kuma 3.x) waits `RetryAfter`
-  instead of the backoff; a wait that does not fit into the remaining budget returns the error at once.
-  Without a `RetryAfter` (2.x) the regular backoff applies
+- A rate limited login (`kuma.ErrRateLimited`) waits `RetryAfter` (`*kuma.RateLimitedError`, Uptime Kuma 3.x)
+  or, where the server names none (2.x, which allows 20 logins per minute), `rateLimitWindow` of 1 minute
+  instead of the backoff. That wait is not capped by `maxRetryDelay`; a wait at or beyond the remaining budget
+  returns the error at once, so with the default 30s `ConnectTimeout` a 2.x rate limit is never retried
 - Retry decisions are unit tested through the `connectFunc` parameter of `newClientDirectWithRetry`, which
   takes `kuma.New` in production and a fake in tests
 

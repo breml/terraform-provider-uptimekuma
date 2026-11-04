@@ -37,13 +37,15 @@ func TestConnectionError(t *testing.T) {
 			name:        "invalid totp code",
 			err:         kuma.ErrInvalidTOTPCode,
 			wantSummary: "Uptime Kuma rejected the two-factor authentication code",
-			wantDetail:  []string{"TOTP secret"},
+			wantDetail:  []string{"issues/404"},
+			notDetail:   []string{"TOTP secret"},
 		},
 		{
 			name:        "two factor locked",
 			err:         kuma.ErrTwoFactorLocked,
 			wantSummary: "Uptime Kuma locked the two-factor authentication",
-			wantDetail:  []string{"too many wrong ones"},
+			wantDetail:  []string{"too many wrong ones", "issues/404"},
+			notDetail:   []string{"TOTP secret"},
 		},
 		{
 			name:        "user inactive",
@@ -55,7 +57,8 @@ func TestConnectionError(t *testing.T) {
 			name:        "invalid session token",
 			err:         kuma.ErrInvalidSessionToken,
 			wantSummary: "Uptime Kuma rejected the session token",
-			wantDetail:  []string{"`username` and `password` as the fallback"},
+			wantDetail:  []string{"password of the account was changed", "`username` and `password`"},
+			notDetail:   []string{"fallback"},
 		},
 		{
 			name:        "rate limited with wait",
@@ -70,6 +73,13 @@ func TestConnectionError(t *testing.T) {
 			wantDetail:  []string{"Wait a minute"},
 		},
 		{
+			name:        "rate limited with zero wait",
+			err:         fmt.Errorf("failed after 1 attempt(s): %w", &kuma.RateLimitedError{}),
+			wantSummary: "Uptime Kuma rate limited the login",
+			wantDetail:  []string{"Wait a minute"},
+			notDetail:   []string{"Wait 0s"},
+		},
+		{
 			name:        "auth required",
 			err:         kuma.ErrAuthRequired,
 			wantSummary: "Uptime Kuma requires authentication",
@@ -79,8 +89,10 @@ func TestConnectionError(t *testing.T) {
 			name:        "transport error",
 			err:         errors.New("dial tcp: connection refused"),
 			wantSummary: "failed to connect to Uptime Kuma",
-			wantDetail:  []string{endpoint, "connection refused", "Common causes", "SOCKETIO_LOG_LEVEL"},
-			notDetail:   []string{"Two-factor", "2FA"},
+			wantDetail: []string{
+				endpoint, "connection refused", "Common causes", "does not recognize", "SOCKETIO_LOG_LEVEL",
+			},
+			notDetail: []string{"Two-factor", "2FA"},
 		},
 	}
 

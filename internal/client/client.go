@@ -41,6 +41,11 @@ const baseRetryDelay = 500 * time.Millisecond
 // maxRetryDelay caps the exponential backoff between two attempts.
 const maxRetryDelay = 30 * time.Second
 
+// rateLimitWindow is the wait assumed for a rate limited login when the server
+// names none. Uptime Kuma 2.x does not, and allows 20 logins per minute, so an
+// attempt within the minute is refused again and counts against the limit too.
+const rateLimitWindow = time.Minute
+
 // effectiveTimeout returns the configured timeout, or defaultConnectTimeout if
 // the configured value is zero or negative.
 func effectiveTimeout(configured time.Duration) time.Duration {
@@ -175,23 +180,33 @@ func isPermanentLoginError(err error) bool {
 
 // retryDelay returns how long to wait after the failed attempt with the given
 // zero-based index before the next one, and false if no further attempt should
-// be made. remaining is the rest of the overall budget and caps the wait.
+// be made. remaining is the rest of the overall budget: it caps the backoff,
+// and a rate limit wait that reaches it ends the retries.
 //
-// A login the server refused for its rate limit is retried after the wait the
-// server named in kuma.RateLimitedError.RetryAfter, since an attempt before
-// that is refused again and counts against the limit too. A wait that does not
-// fit into the remaining budget ends the retries at once, so the caller learns
-// that it is rate limited rather than that it timed out. Where the server named
-// no wait, as Uptime Kuma 2.x does not, and for every other error, the regular
-// exponential backoff applies.
+// A login the server refused for its rate limit is retried only after the wait
+// the server named in kuma.RateLimitedError.RetryAfter, or after
+// rateLimitWindow where it named none, as Uptime Kuma 2.x does not. An attempt
+// before that is refused again and counts against the limit too. A wait at or
+// beyond the remaining budget ends the retries at once, so the caller learns
+// that it is rate limited rather than that it timed out. With the default
+// ConnectTimeout that is always the case for 2.x. A wait just short of the
+// budget leaves the next attempt little time, which then ends in a timeout.
+// Every other error gets the regular exponential backoff, capped to
+// maxRetryDelay.
 func retryDelay(err error, attempt int, remaining time.Duration) (time.Duration, bool) {
-	var rateLimited *kuma.RateLimitedError
-	if errors.As(err, &rateLimited) && rateLimited.RetryAfter > 0 {
-		if rateLimited.RetryAfter >= remaining {
+	if errors.Is(err, kuma.ErrRateLimited) {
+		wait := rateLimitWindow
+
+		var rateLimited *kuma.RateLimitedError
+		if errors.As(err, &rateLimited) && rateLimited.RetryAfter > 0 {
+			wait = rateLimited.RetryAfter
+		}
+
+		if wait >= remaining {
 			return 0, false
 		}
 
-		return rateLimited.RetryAfter, true
+		return wait, true
 	}
 
 	// Exponential backoff with jitter, capped to remaining budget.
@@ -213,8 +228,8 @@ func retryDelay(err error, attempt int, remaining time.Duration) (time.Duration,
 // timeout expires.
 //
 // A permanent login failure, see isPermanentLoginError, is returned after the
-// first attempt, and a rate limited login waits for as long as the server
-// asked, see retryDelay.
+// first attempt, and a rate limited login waits out the rate limit or ends the
+// retries, see retryDelay.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,

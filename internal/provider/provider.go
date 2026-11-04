@@ -201,9 +201,10 @@ func (*UptimeKumaProvider) Configure(
 
 // connectionError returns the summary and detail of the diagnostic for a
 // failed connection to Uptime Kuma. A login failure the client reports with a
-// typed error gets a diagnostic of its own that names the one thing to change,
-// since transport advice does not help with a rejected password. Every other
-// error is taken for a transport problem.
+// typed error gets a diagnostic of its own that names the next step, since
+// transport advice does not help with a rejected password. Every other error,
+// including a login rejection the client has no typed error for, gets the
+// generic connection advice.
 func connectionError(endpoint string, err error) (summary string, detail string) {
 	summary, nextStep := loginErrorAdvice(err)
 	if summary == "" {
@@ -224,6 +225,11 @@ func connectionError(endpoint string, err error) (summary string, detail string)
 // the client reports with a typed error, or empty strings for any other error.
 // kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is therefore
 // matched first.
+//
+// The provider logs in with username and password only, so the two-factor code
+// and session token cases are not expected today. Their advice is written for
+// that setup and must be revisited when issue #404 adds two-factor
+// authentication or session token login.
 func loginErrorAdvice(err error) (summary string, nextStep string) {
 	var rateLimited *kuma.RateLimitedError
 
@@ -242,14 +248,16 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 
 	case errors.Is(err, kuma.ErrInvalidTOTPCode):
 		return "Uptime Kuma rejected the two-factor authentication code",
-			"Check that the TOTP secret belongs to the account and that the clock of this host is accurate. " +
-				"The server accepts each code only once, so two logins within the same 30 second step cannot " +
-				"both succeed."
+			"The account has two-factor authentication (2FA) enabled, which the provider does not support " +
+				"yet, see https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account " +
+				"without 2FA for Terraform."
 
 	case errors.Is(err, kuma.ErrTwoFactorLocked):
 		return "Uptime Kuma locked the two-factor authentication",
-			"The server refuses further codes for this login after too many wrong ones. Check that the TOTP " +
-				"secret belongs to the account and that the clock of this host is accurate, then try again."
+			"The server refuses further two-factor codes for this login after too many wrong ones. The " +
+				"provider does not support two-factor authentication (2FA) yet, see " +
+				"https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account without " +
+				"2FA for Terraform."
 
 	case errors.Is(err, kuma.ErrUserInactive):
 		return "Uptime Kuma account is inactive",
@@ -258,8 +266,10 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 
 	case errors.Is(err, kuma.ErrInvalidSessionToken):
 		return "Uptime Kuma rejected the session token",
-			"The session token was rejected or has been invalidated by a password change. Configure " +
-				"`username` and `password` as the fallback for a rejected token."
+			"The server rejected the session of this login, for example because the password of the " +
+				"account was changed meanwhile. Check the provider attributes `username` and `password` " +
+				"(or the environment variables `UPTIMEKUMA_USERNAME` and `UPTIMEKUMA_PASSWORD`), then run " +
+				"Terraform again."
 
 	case errors.As(err, &rateLimited) && rateLimited.RetryAfter > 0:
 		return "Uptime Kuma rate limited the login",
@@ -281,15 +291,18 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 }
 
 // transportErrorDetail returns the diagnostic detail for a connection that
-// failed for a reason other than a typed login failure.
+// failed for a reason other than a typed login failure. That is mostly a
+// transport problem, but can be a login rejection without a typed error too.
 func transportErrorDetail(endpoint string, err error) string {
 	return fmt.Sprintf(
-		"Could not establish a connection to Uptime Kuma at %q.\n\n"+
+		"Could not connect to or log in to Uptime Kuma at %q.\n\n"+
 			"Underlying error: %v\n\n"+
 			"Common causes:\n"+
 			"  - The endpoint URL is incorrect or Uptime Kuma is not reachable from this host.\n"+
 			"  - A reverse proxy is not forwarding the Socket.IO/WebSocket connection.\n"+
-			"  - TLS certificate issues when using a custom domain (try the direct URL to confirm).\n\n"+
+			"  - TLS certificate issues when using a custom domain (try the direct URL to confirm).\n"+
+			"  - The server refused the login for a reason the provider does not recognize, see the "+
+			"underlying error.\n\n"+
 			"To collect diagnostics, re-run with the following environment variables set and share the "+
 			"output when reporting the issue:\n"+
 			"  TF_LOG=DEBUG SOCKETIO_LOG_LEVEL=DEBUG terraform plan",

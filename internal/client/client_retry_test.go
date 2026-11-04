@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -39,7 +40,9 @@ func TestNewClientDirectWithRetry_Attempts(t *testing.T) {
 		{name: "user inactive", err: kuma.ErrUserInactive, wantAttempts: 1},
 		{name: "auth required", err: kuma.ErrAuthRequired, wantAttempts: 1},
 		{name: "wrapped invalid credentials", err: fmt.Errorf("login: %w", kuma.ErrInvalidCredentials), wantAttempts: 1},
-		{name: "rate limited without wait", err: kuma.ErrRateLimited, wantAttempts: 3},
+		// Without a RetryAfter the wait is rateLimitWindow, beyond the 30s budget.
+		{name: "rate limited without wait", err: kuma.ErrRateLimited, wantAttempts: 1},
+		{name: "rate limited with zero wait", err: &kuma.RateLimitedError{}, wantAttempts: 1},
 		{
 			name:         "rate limited with short wait",
 			err:          &kuma.RateLimitedError{RetryAfter: 10 * time.Millisecond},
@@ -75,7 +78,7 @@ func TestNewClientDirectWithRetry_Attempts(t *testing.T) {
 func TestNewClientDirectWithRetry_RateLimitedWaitsRetryAfter(t *testing.T) {
 	t.Parallel()
 
-	retryAfter := 300 * time.Millisecond
+	retryAfter := 100 * time.Millisecond
 
 	var attempts atomic.Int32
 
@@ -140,6 +143,10 @@ func TestNewClientDirectWithRetry_RateLimitedBeyondBudgetStops(t *testing.T) {
 
 	if elapsed := time.Since(start); elapsed > time.Second {
 		t.Errorf("expected an immediate return, took %s", elapsed)
+	}
+
+	if strings.Contains(err.Error(), "timed out") {
+		t.Errorf("expected a rate limit error rather than a timeout, got: %v", err)
 	}
 }
 
@@ -227,12 +234,26 @@ func TestRetryDelay(t *testing.T) {
 			wantRetry: false,
 		},
 		{
-			name:      "rate limited without retry after uses backoff",
-			err:       &kuma.RateLimitedError{},
-			remaining: time.Minute,
-			wantMin:   400 * time.Millisecond,
-			wantMax:   600 * time.Millisecond,
+			name:      "rate limited without retry after waits the window",
+			err:       fmt.Errorf("login: %w", kuma.ErrRateLimited),
+			remaining: time.Hour,
+			wantMin:   rateLimitWindow,
+			wantMax:   rateLimitWindow,
 			wantRetry: true,
+		},
+		{
+			name:      "rate limited with zero retry after waits the window",
+			err:       &kuma.RateLimitedError{},
+			remaining: time.Hour,
+			wantMin:   rateLimitWindow,
+			wantMax:   rateLimitWindow,
+			wantRetry: true,
+		},
+		{
+			name:      "rate limited without retry after beyond remaining",
+			err:       kuma.ErrRateLimited,
+			remaining: defaultConnectTimeout,
+			wantRetry: false,
 		},
 	}
 
