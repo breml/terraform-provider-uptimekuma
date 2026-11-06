@@ -52,7 +52,7 @@ resource "uptimekuma_notification_cellsynt" "write_only" {
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
 - `allow_long_sms` (Boolean) Allow sending SMS messages longer than 160 characters
-- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors detached from the notification later stay detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. An imported notification starts with `false`.
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors you detach from the notification afterwards stay detached. Uptime Kuma does not store the value, so the provider does not refresh it from the server; the value in state is the one last applied. An imported notification starts with `false`, so the first apply of a configuration with `true` after an import attaches it to all monitors.
 - `is_default` (Boolean)
 - `originator_type` (String) Type of originator (Numeric or Alphanumeric)
 - `password` (String, Sensitive) Cellsynt account password. Stored in state; use `password_wo` to keep it out of state.

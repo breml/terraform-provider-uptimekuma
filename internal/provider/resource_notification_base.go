@@ -34,9 +34,10 @@ type NotificationBaseModel struct {
 // notification resources.
 const applyExistingDescription = "Attach this notification to all existing monitors. This is a one-time " +
 	"action: it runs when the notification is created with `true`, or when the value changes from `false` " +
-	"to `true`. Other updates do not attach it again, so monitors detached from the notification later stay " +
-	"detached. Uptime Kuma does not store the value, so the provider keeps it from the configuration. " +
-	"An imported notification starts with `false`."
+	"to `true`. Other updates do not attach it again, so monitors you detach from the notification afterwards " +
+	"stay detached. Uptime Kuma does not store the value, so the provider does not refresh it from the " +
+	"server; the value in state is the one last applied. An imported notification starts with `false`, so " +
+	"the first apply of a configuration with `true` after an import attaches it to all monitors."
 
 // withNotificationBaseAttributes adds common notification schema attributes to the provided attribute map.
 // These attributes are shared across all notification types: id, name, is_default, apply_existing.
@@ -63,7 +64,7 @@ func withNotificationBaseAttributes(attrs map[string]schema.Attribute) map[strin
 		Default:  booldefault.StaticBool(false),
 	}
 
-	// Apply notification to existing monitors.
+	// Apply notification to existing monitors, once; see applyExistingDescription.
 	attrs["apply_existing"] = schema.BoolAttribute{
 		MarkdownDescription: applyExistingDescription,
 		Optional:            true,
@@ -129,11 +130,12 @@ func readNotification(
 // applyExistingFromState returns the apply_existing value for a notification
 // Read.
 //
-// Uptime Kuma treats applyExisting as a one-time action and always stores it
-// as false (Notification.save in server/notification.js), so the server value
-// would replace a configured true with false on every refresh. Read keeps the
-// prior state value instead, and falls back to false when there is none, e.g.
-// right after an import. See #478.
+// Uptime Kuma 2.x treats applyExisting as a one-time action: Notification.save
+// in server/notification.js clears it before storing the config, so it always
+// reads back false (1.23 persisted whatever was sent). The server value would
+// therefore replace a configured true with false on every refresh. Read keeps
+// the prior state value instead, and falls back to false when there is none,
+// e.g. right after an import. See #478.
 func applyExistingFromState(state types.Bool) types.Bool {
 	if state.IsNull() || state.IsUnknown() {
 		return types.BoolValue(false)
@@ -150,6 +152,10 @@ func applyExistingFromState(state types.Bool) types.Bool {
 // therefore attach it again on any unrelated change, undoing monitors detached
 // on purpose. The flag is only sent as true when the plan changes it from false
 // to true.
+//
+// apply_existing is Optional and Computed with a static default, so the planned
+// value is always known here. An unknown would read as false and skip the
+// attach.
 func applyExistingOnUpdate(ctx context.Context, req resource.UpdateRequest, diags *diag.Diagnostics) bool {
 	var planned, prior types.Bool
 

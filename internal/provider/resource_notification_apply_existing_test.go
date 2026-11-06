@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -22,9 +23,9 @@ const (
 )
 
 // TestAccNotificationResourceApplyExisting verifies that apply_existing does not
-// cause a perpetual diff and acts as a one-time action: Uptime Kuma attaches the
-// notification to every monitor on create and on a false to true change, but
-// not on other updates.
+// cause a perpetual diff and acts as a one-time action: the provider sends
+// applyExisting only on create and on a false to true change, so Uptime Kuma
+// attaches the notification to every monitor then, but not on other updates.
 //
 // It uses resource.Test, not resource.ParallelTest, because apply_existing
 // attaches the notification to every monitor of the instance.
@@ -39,6 +40,14 @@ func TestAccNotificationResourceApplyExisting(t *testing.T) {
 			tfjsonpath.New("apply_existing"),
 			knownvalue.Bool(want),
 		)
+	}
+
+	// Every change after create must be an in-place update: a replacement would
+	// attach the new notification on create and mask a wrong re-attach.
+	expectUpdate := resource.ConfigPlanChecks{
+		PreApply: []plancheck.PlanCheck{
+			plancheck.ExpectResourceAction(applyExistingNotificationAddr, plancheck.ResourceActionUpdate),
+		},
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -58,26 +67,32 @@ func TestAccNotificationResourceApplyExisting(t *testing.T) {
 			{
 				// An unrelated update must not attach the notification again.
 				Config:            testAccNotificationApplyExistingConfig(nameUpdated, true),
+				ConfigPlanChecks:  expectUpdate,
 				ConfigStateChecks: []statecheck.StateCheck{applyExisting(true)},
 				Check:             testAccCheckNotificationDetached(t, kumaClient),
 			},
 			{
 				Config:            testAccNotificationApplyExistingConfig(nameUpdated, false),
+				ConfigPlanChecks:  expectUpdate,
 				ConfigStateChecks: []statecheck.StateCheck{applyExisting(false)},
 				Check:             testAccCheckNotificationDetached(t, kumaClient),
 			},
 			{
 				// A false to true change attaches it again.
 				Config:            testAccNotificationApplyExistingConfig(nameUpdated, true),
+				ConfigPlanChecks:  expectUpdate,
 				ConfigStateChecks: []statecheck.StateCheck{applyExisting(true)},
 				Check:             testAccCheckNotificationAttached(t, kumaClient),
 			},
 			{
-				// Uptime Kuma does not store apply_existing, so import yields false.
+				// Import leaves apply_existing null and Read falls back to false,
+				// while the pre-import state holds true, so the attribute is
+				// excluded from the verify and checked explicitly instead.
 				ResourceName:            applyExistingNotificationAddr,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"apply_existing"},
+				ImportStateCheck:        testAccCheckImportedApplyExistingFalse,
 			},
 		},
 	})
@@ -86,6 +101,7 @@ func TestAccNotificationResourceApplyExisting(t *testing.T) {
 // testAccNotificationApplyExistingConfig returns a push monitor and a webhook
 // notification created after it. The monitor ignores notification_ids, since
 // apply_existing and the test attach and detach the notification out of band.
+// It is paused, so it never goes down and fires the example webhook.
 func testAccNotificationApplyExistingConfig(name string, applyExisting bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "uptimekuma_monitor_push" "test" {
@@ -107,6 +123,21 @@ resource "uptimekuma_notification_webhook" "test" {
   depends_on = [uptimekuma_monitor_push.test]
 }
 `, name, applyExisting)
+}
+
+// testAccCheckImportedApplyExistingFalse asserts that an imported notification
+// starts with apply_existing false, as the attribute description promises.
+func testAccCheckImportedApplyExistingFalse(states []*terraform.InstanceState) error {
+	if len(states) != 1 {
+		return fmt.Errorf("import produced %d resources, want 1", len(states))
+	}
+
+	got := states[0].Attributes["apply_existing"]
+	if got != "false" {
+		return fmt.Errorf("imported apply_existing is %q, want %q", got, "false")
+	}
+
+	return nil
 }
 
 // testAccCheckNotificationAttached asserts that Uptime Kuma has the test
