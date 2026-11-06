@@ -174,7 +174,7 @@ func (r *NotificationAppriseResource) Read(ctx context.Context, req resource.Rea
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(apprise.Name)
 	data.IsDefault = types.BoolValue(apprise.IsDefault)
-	data.ApplyExisting = types.BoolValue(apprise.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.AppriseURLWOVersion.IsNull() {
 		data.AppriseURL = types.StringValue(apprise.AppriseURL)
@@ -204,10 +204,15 @@ func (r *NotificationAppriseResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	apprise := notification.Apprise{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

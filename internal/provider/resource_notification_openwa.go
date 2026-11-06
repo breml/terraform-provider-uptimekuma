@@ -199,7 +199,7 @@ func (r *NotificationOpenWaResource) Read(ctx context.Context, req resource.Read
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(openWa.Name)
 	data.IsDefault = types.BoolValue(openWa.IsDefault)
-	data.ApplyExisting = types.BoolValue(openWa.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.APIURL = types.StringValue(openWa.APIURL)
 
@@ -230,7 +230,13 @@ func (r *NotificationOpenWaResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	openWa := openWaFromModel(&data)
+	openWa.ApplyExisting = applyExisting
 	openWa.ID = data.ID.ValueInt64()
 	openWa.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
 

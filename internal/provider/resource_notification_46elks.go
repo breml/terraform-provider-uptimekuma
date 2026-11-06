@@ -196,7 +196,7 @@ func (r *Notification46ElksResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(elks.Name)
 	data.IsDefault = types.BoolValue(elks.IsDefault)
-	data.ApplyExisting = types.BoolValue(elks.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.Username = types.StringValue(elks.Username)
 	if data.AuthTokenWOVersion.IsNull() {
@@ -224,10 +224,15 @@ func (r *Notification46ElksResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	elks := notification.FortySixElks{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

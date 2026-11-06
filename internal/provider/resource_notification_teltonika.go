@@ -200,7 +200,7 @@ func (r *NotificationTeltonikaResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(teltonika.Name)
 	data.IsDefault = types.BoolValue(teltonika.IsDefault)
-	data.ApplyExisting = types.BoolValue(teltonika.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.URL = types.StringValue(teltonika.URL)
 	data.Username = types.StringValue(teltonika.Username)
@@ -239,6 +239,11 @@ func (r *NotificationTeltonikaResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -250,6 +255,7 @@ func (r *NotificationTeltonikaResource) Update(
 	}
 
 	teltonika := teltonikaFromModel(&data)
+	teltonika.ApplyExisting = applyExisting
 	teltonika.ID = id
 	teltonika.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
 

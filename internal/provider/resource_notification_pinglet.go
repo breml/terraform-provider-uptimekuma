@@ -175,7 +175,7 @@ func (r *NotificationPingletResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(pinglet.Name)
 	data.IsDefault = types.BoolValue(pinglet.IsDefault)
-	data.ApplyExisting = types.BoolValue(pinglet.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.PublishURL = types.StringValue(pinglet.PublishURL)
 
@@ -201,6 +201,11 @@ func (r *NotificationPingletResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -212,6 +217,7 @@ func (r *NotificationPingletResource) Update(
 	}
 
 	pinglet := pingletFromModel(&data)
+	pinglet.ApplyExisting = applyExisting
 	pinglet.ID = id
 	pinglet.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
 

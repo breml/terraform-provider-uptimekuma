@@ -195,7 +195,7 @@ func (r *NotificationAlertaResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(alerta.Name)
 	data.IsDefault = types.BoolValue(alerta.IsDefault)
-	data.ApplyExisting = types.BoolValue(alerta.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.APIEndpoint = types.StringValue(alerta.APIEndpoint)
 	if data.APIKeyWOVersion.IsNull() {
@@ -232,10 +232,15 @@ func (r *NotificationAlertaResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	alerta := notification.Alerta{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

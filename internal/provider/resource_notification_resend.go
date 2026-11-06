@@ -182,7 +182,7 @@ func (r *NotificationResendResource) Read(ctx context.Context, req resource.Read
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(resend.Name)
 	data.IsDefault = types.BoolValue(resend.IsDefault)
-	data.ApplyExisting = types.BoolValue(resend.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(resend.APIKey)
@@ -221,6 +221,11 @@ func (r *NotificationResendResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -232,6 +237,7 @@ func (r *NotificationResendResource) Update(
 	}
 
 	resend := resendFromModel(&data)
+	resend.ApplyExisting = applyExisting
 	resend.ID = id
 	resend.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
 

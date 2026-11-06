@@ -217,7 +217,7 @@ func (r *NotificationCellsyntResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(cellsynt.Name)
 	data.IsDefault = types.BoolValue(cellsynt.IsDefault)
-	data.ApplyExisting = types.BoolValue(cellsynt.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.Login = types.StringValue(cellsynt.Login)
 	if data.PasswordWOVersion.IsNull() {
@@ -247,10 +247,15 @@ func (r *NotificationCellsyntResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	cellsynt := notification.Cellsynt{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

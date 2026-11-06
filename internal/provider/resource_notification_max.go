@@ -191,7 +191,7 @@ func (r *NotificationMaxResource) Read(ctx context.Context, req resource.ReadReq
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(maxNotification.Name)
 	data.IsDefault = types.BoolValue(maxNotification.IsDefault)
-	data.ApplyExisting = types.BoolValue(maxNotification.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.APIURL = types.StringValue(maxNotification.APIURL)
 
@@ -232,7 +232,13 @@ func (r *NotificationMaxResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	maxNotification := maxFromModel(&data)
+	maxNotification.ApplyExisting = applyExisting
 	maxNotification.BotToken = writeOnlyOrPlan(ctx, req.Config, "bot_token", data.BotToken, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {

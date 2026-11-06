@@ -191,7 +191,7 @@ func (r *NotificationMilkyResource) Read(ctx context.Context, req resource.ReadR
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(milky.Name)
 	data.IsDefault = types.BoolValue(milky.IsDefault)
-	data.ApplyExisting = types.BoolValue(milky.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.HTTPAddr = types.StringValue(milky.HTTPAddr)
 
@@ -227,7 +227,13 @@ func (r *NotificationMilkyResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	milky := milkyFromModel(&data)
+	milky.ApplyExisting = applyExisting
 	milky.ID = data.ID.ValueInt64()
 	milky.AccessToken = writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics)
 

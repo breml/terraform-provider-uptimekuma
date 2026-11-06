@@ -269,7 +269,7 @@ func (r *NotificationPlivoResource) Read(ctx context.Context, req resource.ReadR
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(plivo.Name)
 	data.IsDefault = types.BoolValue(plivo.IsDefault)
-	data.ApplyExisting = types.BoolValue(plivo.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.AuthID = types.StringValue(plivo.AuthID)
 
@@ -315,6 +315,11 @@ func (r *NotificationPlivoResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -326,6 +331,7 @@ func (r *NotificationPlivoResource) Update(
 	}
 
 	plivo := plivoFromModel(&data)
+	plivo.ApplyExisting = applyExisting
 	plivo.ID = id
 	plivo.AuthToken = writeOnlyOrPlan(ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics)
 

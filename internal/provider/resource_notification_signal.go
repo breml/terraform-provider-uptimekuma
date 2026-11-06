@@ -172,7 +172,7 @@ func (r *NotificationSignalResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(signal.Name)
 	data.IsDefault = types.BoolValue(signal.IsDefault)
-	data.ApplyExisting = types.BoolValue(signal.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.URL = types.StringValue(signal.URL)
 	data.Number = types.StringValue(signal.Number)
@@ -196,10 +196,15 @@ func (r *NotificationSignalResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	signal := notification.Signal{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

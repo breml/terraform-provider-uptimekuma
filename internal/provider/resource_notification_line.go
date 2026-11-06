@@ -187,7 +187,7 @@ func (r *NotificationLineResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(line.Name)
 	data.IsDefault = types.BoolValue(line.IsDefault)
-	data.ApplyExisting = types.BoolValue(line.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.ChannelAccessTokenWOVersion.IsNull() {
 		data.ChannelAccessToken = types.StringValue(line.ChannelAccessToken)
@@ -213,10 +213,15 @@ func (r *NotificationLineResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	line := notification.Line{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

@@ -177,7 +177,7 @@ func (r *NotificationVKResource) Read(ctx context.Context, req resource.ReadRequ
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(vk.Name)
 	data.IsDefault = types.BoolValue(vk.IsDefault)
-	data.ApplyExisting = types.BoolValue(vk.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.AccessTokenWOVersion.IsNull() {
 		data.AccessToken = types.StringValue(vk.AccessToken)
@@ -205,6 +205,11 @@ func (r *NotificationVKResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -216,6 +221,7 @@ func (r *NotificationVKResource) Update(
 	}
 
 	vk := vkFromModel(&data)
+	vk.ApplyExisting = applyExisting
 	vk.AccessToken = writeOnlyOrPlan(ctx, req.Config, "access_token", data.AccessToken, &resp.Diagnostics)
 	vk.ID = id
 

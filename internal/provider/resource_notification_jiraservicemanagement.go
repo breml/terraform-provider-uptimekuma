@@ -209,7 +209,7 @@ func (r *NotificationJiraServiceManagementResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(jiraServiceManagement.Name)
 	data.IsDefault = types.BoolValue(jiraServiceManagement.IsDefault)
-	data.ApplyExisting = types.BoolValue(jiraServiceManagement.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.CloudID = types.StringValue(jiraServiceManagement.CloudID)
 	data.Email = types.StringValue(jiraServiceManagement.Email)
@@ -238,10 +238,15 @@ func (r *NotificationJiraServiceManagementResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	jiraServiceManagement := notification.JiraServiceManagement{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

@@ -176,7 +176,7 @@ func (r *NotificationNotifyAppResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(notifyApp.Name)
 	data.IsDefault = types.BoolValue(notifyApp.IsDefault)
-	data.ApplyExisting = types.BoolValue(notifyApp.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 	data.DeviceID = types.StringValue(notifyApp.DeviceID)
 	data.IconURL = ptrToTypes(notifyApp.IconURL)
 
@@ -202,6 +202,11 @@ func (r *NotificationNotifyAppResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -213,6 +218,7 @@ func (r *NotificationNotifyAppResource) Update(
 	}
 
 	notifyApp := notifyAppFromModel(&data)
+	notifyApp.ApplyExisting = applyExisting
 	notifyApp.Token = writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics)
 	notifyApp.ID = id
 

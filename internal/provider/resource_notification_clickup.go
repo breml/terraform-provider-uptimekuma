@@ -189,7 +189,7 @@ func (r *NotificationClickUpResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(clickUp.Name)
 	data.IsDefault = types.BoolValue(clickUp.IsDefault)
-	data.ApplyExisting = types.BoolValue(clickUp.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.TokenWOVersion.IsNull() {
 		data.Token = types.StringValue(clickUp.Token)
@@ -217,6 +217,11 @@ func (r *NotificationClickUpResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -228,6 +233,7 @@ func (r *NotificationClickUpResource) Update(
 	}
 
 	clickUp := clickUpFromModel(&data)
+	clickUp.ApplyExisting = applyExisting
 	clickUp.Token = writeOnlyOrPlan(ctx, req.Config, "token", data.Token, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {

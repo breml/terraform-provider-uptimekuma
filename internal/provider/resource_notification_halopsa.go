@@ -185,7 +185,7 @@ func (r *NotificationHaloPSAResource) Read(ctx context.Context, req resource.Rea
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(haloPSA.Name)
 	data.IsDefault = types.BoolValue(haloPSA.IsDefault)
-	data.ApplyExisting = types.BoolValue(haloPSA.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(haloPSA.WebhookURL)
@@ -211,6 +211,11 @@ func (r *NotificationHaloPSAResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -222,6 +227,7 @@ func (r *NotificationHaloPSAResource) Update(
 	}
 
 	haloPSA := haloPSAFromModel(&data)
+	haloPSA.ApplyExisting = applyExisting
 	haloPSA.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
 	haloPSA.Password = writeOnlyOrPlan(ctx, req.Config, "password", data.Password, &resp.Diagnostics)
 

@@ -349,10 +349,15 @@ func (r *NotificationSMTPResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	smtp := notification.SMTP{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),
@@ -438,7 +443,7 @@ func populateSMTPModelFromAPI(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smtp.Name)
 	data.IsDefault = types.BoolValue(smtp.IsDefault)
-	data.ApplyExisting = types.BoolValue(smtp.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.Host = types.StringValue(smtp.Host)
 	data.Port = types.Int64Value(int64(smtp.Port))

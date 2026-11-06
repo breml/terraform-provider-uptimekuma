@@ -168,7 +168,7 @@ func (r *NotificationSpugPushResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(spugpush.Name)
 	data.IsDefault = types.BoolValue(spugpush.IsDefault)
-	data.ApplyExisting = types.BoolValue(spugpush.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.TemplateKeyWOVersion.IsNull() && spugpush.TemplateKey != "" {
 		data.TemplateKey = types.StringValue(spugpush.TemplateKey)
@@ -192,10 +192,15 @@ func (r *NotificationSpugPushResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	spugpush := notification.SpugPush{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

@@ -206,7 +206,7 @@ func (r *NotificationBrevoResource) Read(ctx context.Context, req resource.ReadR
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(brevo.Name)
 	data.IsDefault = types.BoolValue(brevo.IsDefault)
-	data.ApplyExisting = types.BoolValue(brevo.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(brevo.APIKey)
@@ -257,10 +257,15 @@ func (r *NotificationBrevoResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	brevo := notification.Brevo{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

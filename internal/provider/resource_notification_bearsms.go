@@ -192,7 +192,7 @@ func (r *NotificationBearSMSResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(bearSMS.Name)
 	data.IsDefault = types.BoolValue(bearSMS.IsDefault)
-	data.ApplyExisting = types.BoolValue(bearSMS.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.Username = types.StringValue(bearSMS.Username)
 
@@ -223,6 +223,11 @@ func (r *NotificationBearSMSResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -234,6 +239,7 @@ func (r *NotificationBearSMSResource) Update(
 	}
 
 	bearSMS := bearSMSFromModel(&data)
+	bearSMS.ApplyExisting = applyExisting
 	bearSMS.ID = id
 	bearSMS.HashKey = writeOnlyOrPlan(ctx, req.Config, "hash_key", data.HashKey, &resp.Diagnostics)
 

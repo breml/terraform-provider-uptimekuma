@@ -46,7 +46,7 @@ resource "uptimekuma_notification_opsgenie" "write_only" {
 - `api_key` (String, Sensitive) OpsGenie API key. Stored in state; use `api_key_wo` to keep it out of state.
 - `api_key_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) OpsGenie API key, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `api_key`; requires `api_key_wo_version`. An imported resource has no `api_key_wo_version` yet, so `terraform import` may store the server's value in `api_key` until the next apply with `api_key_wo` set removes it from state.
 - `api_key_wo_version` (String) Any value that changes whenever `api_key_wo` changes, for example a counter or a hash of the secret's encrypted source. A change triggers an update that sends the current `api_key_wo`.
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors you detach from the notification afterwards stay detached. Uptime Kuma does not store the value, so the provider does not refresh it from the server; the value in state is the one last applied. An imported notification starts with `false`, so the first apply of a configuration with `true` after an import attaches it to all monitors.
 - `is_default` (Boolean)
 - `priority` (Number) Alert priority level (1-5)
 

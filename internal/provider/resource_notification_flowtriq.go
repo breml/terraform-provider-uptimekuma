@@ -184,7 +184,7 @@ func (r *NotificationFlowtriqResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(flowtriq.Name)
 	data.IsDefault = types.BoolValue(flowtriq.IsDefault)
-	data.ApplyExisting = types.BoolValue(flowtriq.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(flowtriq.WebhookURL)
@@ -218,6 +218,11 @@ func (r *NotificationFlowtriqResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -229,6 +234,7 @@ func (r *NotificationFlowtriqResource) Update(
 	}
 
 	flowtriq := flowtriqFromModel(&data)
+	flowtriq.ApplyExisting = applyExisting
 	flowtriq.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
 	flowtriq.APIKey = strToPtr(writeOnlyOrPlanValue(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics))
 

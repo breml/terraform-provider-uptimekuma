@@ -186,7 +186,7 @@ func (r *NotificationOneChatResource) Read(ctx context.Context, req resource.Rea
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(onechat.Name)
 	data.IsDefault = types.BoolValue(onechat.IsDefault)
-	data.ApplyExisting = types.BoolValue(onechat.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.AccessTokenWOVersion.IsNull() {
 		data.AccessToken = types.StringValue(onechat.AccessToken)
@@ -213,10 +213,15 @@ func (r *NotificationOneChatResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	onechat := notification.OneChat{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

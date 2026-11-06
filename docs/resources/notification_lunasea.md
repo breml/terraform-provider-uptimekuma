@@ -38,7 +38,7 @@ resource "uptimekuma_notification_lunasea" "device_target" {
 
 ### Optional
 
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors you detach from the notification afterwards stay detached. Uptime Kuma does not store the value, so the provider does not refresh it from the server; the value in state is the one last applied. An imported notification starts with `false`, so the first apply of a configuration with `true` after an import attaches it to all monitors.
 - `device` (String, Sensitive) Lunasea device ID (required when target is "device")
 - `is_default` (Boolean)
 - `lunasea_user_id` (String, Sensitive) Lunasea user ID (required when target is "user")

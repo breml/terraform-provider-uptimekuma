@@ -168,7 +168,7 @@ func (r *NotificationSignalgridResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(signalgrid.Name)
 	data.IsDefault = types.BoolValue(signalgrid.IsDefault)
-	data.ApplyExisting = types.BoolValue(signalgrid.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 	data.Channel = types.StringValue(signalgrid.Channel)
 
 	if data.ClientKeyWOVersion.IsNull() {
@@ -193,6 +193,11 @@ func (r *NotificationSignalgridResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -204,6 +209,7 @@ func (r *NotificationSignalgridResource) Update(
 	}
 
 	signalgrid := signalgridFromModel(&data)
+	signalgrid.ApplyExisting = applyExisting
 	signalgrid.ClientKey = writeOnlyOrPlan(ctx, req.Config, "client_key", data.ClientKey, &resp.Diagnostics)
 	signalgrid.ID = id
 

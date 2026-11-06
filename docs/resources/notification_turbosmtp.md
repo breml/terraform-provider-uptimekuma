@@ -64,7 +64,7 @@ resource "uptimekuma_notification_turbosmtp" "write_only" {
 
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors you detach from the notification afterwards stay detached. Uptime Kuma does not store the value, so the provider does not refresh it from the server; the value in state is the one last applied. An imported notification starts with `false`, so the first apply of a configuration with `true` after an import attaches it to all monitors.
 - `bcc_email` (String) A comma-separated list of BCC email addresses.
 - `cc_email` (String) A comma-separated list of CC email addresses.
 - `consumer_secret` (String, Sensitive) The TurboSMTP consumer secret used to authenticate requests. Stored in state; use `consumer_secret_wo` to keep it out of state.

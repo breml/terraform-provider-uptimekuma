@@ -43,7 +43,7 @@ resource "uptimekuma_notification_goalert" "write_only" {
 
 > **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
 
-- `apply_existing` (Boolean)
+- `apply_existing` (Boolean) Attach this notification to all existing monitors. This is a one-time action: it runs when the notification is created with `true`, or when the value changes from `false` to `true`. Other updates do not attach it again, so monitors you detach from the notification afterwards stay detached. Uptime Kuma does not store the value, so the provider does not refresh it from the server; the value in state is the one last applied. An imported notification starts with `false`, so the first apply of a configuration with `true` after an import attaches it to all monitors.
 - `is_default` (Boolean)
 - `token` (String, Sensitive) GoAlert integration token. Stored in state; use `token_wo` to keep it out of state.
 - `token_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) GoAlert integration token, write-only: sent to Uptime Kuma on create and update but never stored in plan or state. Requires Terraform 1.11 or OpenTofu 1.11 or later. Conflicts with `token`; requires `token_wo_version`. An imported resource has no `token_wo_version` yet, so `terraform import` may store the server's value in `token` until the next apply with `token_wo` set removes it from state.

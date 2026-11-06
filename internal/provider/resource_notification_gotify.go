@@ -191,7 +191,7 @@ func (r *NotificationGotifyResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(gotify.Name)
 	data.IsDefault = types.BoolValue(gotify.IsDefault)
-	data.ApplyExisting = types.BoolValue(gotify.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.ServerURL = types.StringValue(gotify.ServerURL)
 	if data.ApplicationTokenWOVersion.IsNull() {
@@ -218,10 +218,15 @@ func (r *NotificationGotifyResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	gotify := notification.Gotify{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

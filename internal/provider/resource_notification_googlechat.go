@@ -187,7 +187,7 @@ func (r *NotificationGoogleChatResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(googleChat.Name)
 	data.IsDefault = types.BoolValue(googleChat.IsDefault)
-	data.ApplyExisting = types.BoolValue(googleChat.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(googleChat.WebhookURL)
@@ -219,10 +219,15 @@ func (r *NotificationGoogleChatResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	googleChat := notification.GoogleChat{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

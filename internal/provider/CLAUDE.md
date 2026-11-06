@@ -343,7 +343,7 @@ Each HTTP attribute has a dedicated getter:
 - `httpURLAttribute()`, `httpTimeoutAttribute()`, `httpMethodAttribute()`, etc.
 - Allows fine-grained control over individual attribute configuration
 
-### NotificationBaseModel ([resource_notification_base.go:12-18](resource_notification_base.go))
+### NotificationBaseModel ([resource_notification_base.go](resource_notification_base.go))
 
 Common fields for ALL notification types:
 
@@ -352,14 +352,23 @@ type NotificationBaseModel struct {
     ID            types.Int64  // Computed
     Name          types.String // Required: Notification name
     IsDefault     types.Bool   // Default notification for new monitors (default: false)
-    ApplyExisting types.Bool   // Apply to existing monitors retroactively (default: false)
+    ApplyExisting types.Bool   // Attach to existing monitors once, see below (default: false)
 }
 ```
 
 There is deliberately no `is_active` attribute: Uptime Kuma ignores the value, so Create and Update
 always send `IsActive: true`. New notification resources do the same.
 
-**Helper Function**: `withNotificationBaseAttributes(attrs map[string]schema.Attribute)` ([resource_notification_base.go:22](resource_notification_base.go))
+`apply_existing` is a one-time action that Uptime Kuma 2.x does not store (`Notification.save`
+clears it, so it always reads back `false`; 1.23 persisted it), so a notification's Read keeps the
+state value with `applyExistingFromState(data.ApplyExisting)` (`false` after an import), and Update
+sends the value returned by `applyExistingOnUpdate(ctx, req, &resp.Diagnostics)`: `true` only when
+the plan changes it from `false` to `true`. Sending the planned value on every Update would attach
+the notification to every monitor again on any unrelated change. Because an import starts at
+`false`, the first apply of a configuration with `true` after an import attaches the notification
+to all monitors. New notification resources do the same.
+
+**Helper Function**: `withNotificationBaseAttributes(attrs map[string]schema.Attribute)` ([resource_notification_base.go](resource_notification_base.go))
 
 **Usage Pattern**:
 
@@ -1282,7 +1291,7 @@ with `task testacc PARALLEL=4`.
 the test creates is uniquely named via `acctest.RandomWithPrefix`, and the test only
 asserts on resources it created itself.
 
-**Four test files must keep using `resource.Test`**, because they touch state shared by
+**Five test files must keep using `resource.Test`**, because they touch state shared by
 the whole Uptime Kuma instance:
 
 | File | Reason |
@@ -1291,10 +1300,12 @@ the whole Uptime Kuma instance:
 | [data_source_settings_test.go](data_source_settings_test.go) | Reads the settings singleton |
 | [data_source_maintenances_test.go](data_source_maintenances_test.go) | Asserts an exact count over *all* maintenances |
 | [resource_proxy_test.go](resource_proxy_test.go) | `default` and `apply_existing` rewrite every other proxy and monitor |
+| [resource_notification_apply_existing_test.go](resource_notification_apply_existing_test.go) | `apply_existing` attaches the notification to every monitor |
 
 Go's `testing` package runs all non-parallel top-level tests to completion *before*
-releasing any parallel ones, so these four files are automatically isolated from the
-concurrent tests -- no extra synchronisation is required.
+releasing any parallel ones, so these five files are automatically isolated from the
+concurrent tests -- no extra synchronisation is required. ([provider_test.go](provider_test.go)
+also uses `resource.Test`, for `t.Setenv`, not for shared state.)
 
 When adding a test that asserts on a list data source (e.g. `uptimekuma_maintenances`)
 or on a resource that mutates instance-wide state, use `resource.Test` and add it to the

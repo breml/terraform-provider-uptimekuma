@@ -190,7 +190,7 @@ func (r *NotificationMatrixResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(matrix.Name)
 	data.IsDefault = types.BoolValue(matrix.IsDefault)
-	data.ApplyExisting = types.BoolValue(matrix.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.HomeserverURL = types.StringValue(matrix.HomeserverURL)
 	data.InternalRoomID = types.StringValue(matrix.InternalRoomID)
@@ -217,10 +217,15 @@ func (r *NotificationMatrixResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	matrix := notification.Matrix{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

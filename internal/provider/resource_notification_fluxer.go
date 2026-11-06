@@ -189,7 +189,7 @@ func (r *NotificationFluxerResource) Read(ctx context.Context, req resource.Read
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(fluxer.Name)
 	data.IsDefault = types.BoolValue(fluxer.IsDefault)
-	data.ApplyExisting = types.BoolValue(fluxer.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(fluxer.WebhookURL)
@@ -230,6 +230,11 @@ func (r *NotificationFluxerResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -241,6 +246,7 @@ func (r *NotificationFluxerResource) Update(
 	}
 
 	fluxer := fluxerFromModel(&data)
+	fluxer.ApplyExisting = applyExisting
 	fluxer.WebhookURL = writeOnlyOrPlan(ctx, req.Config, "webhook_url", data.WebhookURL, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {

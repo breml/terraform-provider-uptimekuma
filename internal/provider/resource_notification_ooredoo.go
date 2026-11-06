@@ -208,7 +208,7 @@ func (r *NotificationOoredooResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(ooredoo.Name)
 	data.IsDefault = types.BoolValue(ooredoo.IsDefault)
-	data.ApplyExisting = types.BoolValue(ooredoo.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.Username = types.StringValue(ooredoo.Username)
 
@@ -249,6 +249,11 @@ func (r *NotificationOoredooResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -260,6 +265,7 @@ func (r *NotificationOoredooResource) Update(
 	}
 
 	ooredoo := ooredooFromModel(&data)
+	ooredoo.ApplyExisting = applyExisting
 	ooredoo.ID = id
 	ooredoo.AccessKey = writeOnlyOrPlan(ctx, req.Config, "access_key", data.AccessKey, &resp.Diagnostics)
 	ooredoo.BearerToken = writeOnlyOrPlan(ctx, req.Config, "bearer_token", data.BearerToken, &resp.Diagnostics)

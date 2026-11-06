@@ -207,7 +207,7 @@ func (r *NotificationTwilioResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(twilio.Name)
 	data.IsDefault = types.BoolValue(twilio.IsDefault)
-	data.ApplyExisting = types.BoolValue(twilio.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	data.AccountSID = types.StringValue(twilio.AccountSID)
 	if data.APIKeyWOVersion.IsNull() {
@@ -243,10 +243,15 @@ func (r *NotificationTwilioResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	twilio := notification.Twilio{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

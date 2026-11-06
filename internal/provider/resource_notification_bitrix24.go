@@ -174,7 +174,7 @@ func (r *NotificationBitrix24Resource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(bitrix24.Name)
 	data.IsDefault = types.BoolValue(bitrix24.IsDefault)
-	data.ApplyExisting = types.BoolValue(bitrix24.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.WebhookURLWOVersion.IsNull() {
 		data.WebhookURL = types.StringValue(bitrix24.WebhookURL)
@@ -200,10 +200,15 @@ func (r *NotificationBitrix24Resource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	bitrix24 := notification.Bitrix24{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

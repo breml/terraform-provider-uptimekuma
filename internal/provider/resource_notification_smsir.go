@@ -172,7 +172,7 @@ func (r *NotificationSMSIRResource) Read(ctx context.Context, req resource.ReadR
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(smsir.Name)
 	data.IsDefault = types.BoolValue(smsir.IsDefault)
-	data.ApplyExisting = types.BoolValue(smsir.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(smsir.APIKey)
@@ -199,6 +199,11 @@ func (r *NotificationSMSIRResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -210,6 +215,7 @@ func (r *NotificationSMSIRResource) Update(
 	}
 
 	smsir := smsirFromModel(&data)
+	smsir.ApplyExisting = applyExisting
 	smsir.ID = id
 	smsir.APIKey = writeOnlyOrPlan(ctx, req.Config, "api_key", data.APIKey, &resp.Diagnostics)
 

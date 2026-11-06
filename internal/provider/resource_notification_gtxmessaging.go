@@ -182,7 +182,7 @@ func (r *NotificationGTXMessagingResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(gtxmessaging.Name)
 	data.IsDefault = types.BoolValue(gtxmessaging.IsDefault)
-	data.ApplyExisting = types.BoolValue(gtxmessaging.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.APIKeyWOVersion.IsNull() {
 		data.APIKey = types.StringValue(gtxmessaging.APIKey)
@@ -208,10 +208,15 @@ func (r *NotificationGTXMessagingResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	gtxmessaging := notification.GTXMessaging{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),

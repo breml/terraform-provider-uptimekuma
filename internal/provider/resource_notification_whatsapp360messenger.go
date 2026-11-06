@@ -207,7 +207,7 @@ func (r *NotificationWhatsapp360messengerResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(whatsapp360messenger.Name)
 	data.IsDefault = types.BoolValue(whatsapp360messenger.IsDefault)
-	data.ApplyExisting = types.BoolValue(whatsapp360messenger.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.AuthTokenWOVersion.IsNull() {
 		data.AuthToken = types.StringValue(whatsapp360messenger.AuthToken)
@@ -249,6 +249,11 @@ func (r *NotificationWhatsapp360messengerResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	id := data.ID.ValueInt64()
 	if id == 0 {
 		resp.Diagnostics.AddError(
@@ -260,6 +265,7 @@ func (r *NotificationWhatsapp360messengerResource) Update(
 	}
 
 	whatsapp360messenger := whatsapp360messengerFromModel(ctx, &data, &resp.Diagnostics)
+	whatsapp360messenger.ApplyExisting = applyExisting
 	whatsapp360messenger.AuthToken = writeOnlyOrPlan(
 		ctx, req.Config, "auth_token", data.AuthToken, &resp.Diagnostics,
 	)

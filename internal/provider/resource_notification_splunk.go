@@ -200,7 +200,7 @@ func (r *NotificationSplunkResource) Read(
 	data.ID = types.Int64Value(id)
 	data.Name = types.StringValue(splunk.Name)
 	data.IsDefault = types.BoolValue(splunk.IsDefault)
-	data.ApplyExisting = types.BoolValue(splunk.ApplyExisting)
+	data.ApplyExisting = applyExistingFromState(data.ApplyExisting)
 
 	if data.RestURLWOVersion.IsNull() {
 		data.RestURL = types.StringValue(splunk.RestURL)
@@ -231,10 +231,15 @@ func (r *NotificationSplunkResource) Update(
 		return
 	}
 
+	applyExisting := applyExistingOnUpdate(ctx, req, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	splunk := notification.Splunk{
 		Base: notification.Base{
 			ID:            data.ID.ValueInt64(),
-			ApplyExisting: data.ApplyExisting.ValueBool(),
+			ApplyExisting: applyExisting,
 			IsDefault:     data.IsDefault.ValueBool(),
 			IsActive:      true,
 			Name:          data.Name.ValueString(),
