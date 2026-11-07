@@ -152,16 +152,10 @@ func (d *MonitorSFTPDataSource) readByName(
 		return
 	}
 
-	var sftpMon monitor.SFTP
-	err := found.As(&sftpMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(sftpMon.ID)
-	populateSFTPDataSourceDetails(&sftpMon, data)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }
 
 // populateSFTPDataSourceDetails copies the SFTP specific fields into the data source model.

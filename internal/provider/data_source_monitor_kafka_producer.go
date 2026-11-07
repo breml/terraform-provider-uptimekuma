@@ -157,20 +157,8 @@ func (d *MonitorKafkaProducerDataSource) readByName(
 		return
 	}
 
-	var kafkaMon monitor.KafkaProducer
-	err := found.As(&kafkaMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(kafkaMon.ID)
-	data.Topic = types.StringValue(kafkaMon.Topic)
-	data.Timeout = float64PtrToTypes(kafkaMon.Timeout)
-
-	brokers, d2 := types.ListValueFrom(ctx, types.StringType, kafkaMon.Brokers)
-	resp.Diagnostics.Append(d2...)
-	data.Brokers = brokers
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

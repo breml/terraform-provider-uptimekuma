@@ -161,18 +161,8 @@ func (d *MonitorTCPPortDataSource) readByName(
 		return
 	}
 
-	var tcpMon monitor.TCPPort
-	err := found.As(&tcpMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(tcpMon.ID)
-	data.Hostname = types.StringValue(tcpMon.Hostname)
-	data.Port = types.Int64Value(int64(tcpMon.Port))
-	data.SMTPSecurity = ptrToTypes(tcpMon.SMTPSecurity)
-	data.ExpiryNotification = types.BoolValue(tcpMon.ExpiryNotification)
-	data.DomainExpiryNotification = types.BoolValue(tcpMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

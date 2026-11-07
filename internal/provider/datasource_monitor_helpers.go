@@ -14,6 +14,10 @@ import (
 // findMonitorByName searches for a monitor by name and type.
 // Returns nil if not found or if multiple matches exist.
 //
+// The monitor it returns comes from the monitor list and is only good for its
+// ID: Uptime Kuma 3.x sends a compact list entry without the type specific
+// fields. Callers read the monitor by that ID.
+//
 // A miss is believed only after a second GetMonitors. GetMonitors waits for a
 // monitorList broadcast that follows its request and is ordered with this
 // client's monitor writes, so a monitor created earlier in the apply is normally

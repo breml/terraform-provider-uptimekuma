@@ -161,18 +161,8 @@ func (d *MonitorGameDigDataSource) readByName(
 		return
 	}
 
-	var gameDigMon monitor.GameDig
-	err := found.As(&gameDigMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(gameDigMon.ID)
-	data.Hostname = types.StringValue(gameDigMon.Hostname)
-	data.Port = types.Int64Value(int64(gameDigMon.Port))
-	data.Game = types.StringValue(gameDigMon.Game)
-	data.GameDigGivenPortOnly = types.BoolValue(gameDigMon.GameDigGivenPortOnly)
-	data.DomainExpiryNotification = types.BoolValue(gameDigMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

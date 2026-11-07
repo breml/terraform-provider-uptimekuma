@@ -142,14 +142,8 @@ func (d *MonitorGrpcKeywordDataSource) readByName(
 		return
 	}
 
-	var grpcKeywordMon monitor.GrpcKeyword
-	err := found.As(&grpcKeywordMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(grpcKeywordMon.ID)
-	data.DomainExpiryNotification = types.BoolValue(grpcKeywordMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

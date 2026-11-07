@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -146,28 +145,8 @@ func (d *MonitorSystemServiceDataSource) readByName(
 		return
 	}
 
-	var systemServiceMon monitor.SystemService
-	err := found.As(&systemServiceMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	if actual := systemServiceMon.Base.Type(); actual != "" && actual != systemServiceMon.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor %q has type %q, expected %q.",
-				data.Name.ValueString(), actual, systemServiceMon.Type(),
-			),
-		)
-		return
-	}
-
-	data.ID = types.Int64Value(systemServiceMon.ID)
-	data.SystemServiceName = types.StringValue(systemServiceMon.SystemServiceName)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

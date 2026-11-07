@@ -195,7 +195,38 @@ func TestDataSourceReadByIDGuards(t *testing.T) {
 			if typeGuard > nameGuard {
 				t.Error("monitorTypeMatches is called after dataSourceNameMatches")
 			}
+
+			checkReadByNameDelegates(t, src)
 		})
+	}
+}
+
+// checkReadByNameDelegates fails the test unless the readByName in src hands the
+// monitor it found over to readByID. The monitor list only identifies a monitor:
+// Uptime Kuma 3.x sends a compact entry without the type specific fields, so
+// decoding the list entry yields their zero values.
+func checkReadByNameDelegates(t *testing.T, src string) {
+	t.Helper()
+
+	start := strings.Index(src, ") readByName(")
+	if start < 0 {
+		t.Fatal("found no readByName")
+	}
+
+	body := src[start:]
+
+	end := strings.Index(body, "\n}\n")
+	if end >= 0 {
+		body = body[:end]
+	}
+
+	if !strings.Contains(body, "data.ID = types.Int64Value(found.GetID())") ||
+		!strings.Contains(body, "d.readByID(ctx, data, resp)") {
+		t.Error("readByName does not read the monitor it found by its ID")
+	}
+
+	if strings.Contains(body, ".As(") {
+		t.Error("readByName decodes the monitor list entry instead of reading the monitor by its ID")
 	}
 }
 
