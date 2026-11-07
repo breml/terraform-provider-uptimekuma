@@ -44,7 +44,7 @@ provide:
 ## Compatibility
 
 This provider targets **Uptime Kuma 2.5.x and 3.0.x**. The acceptance tests run against
-`louislam/uptime-kuma:2.5.6`, and against the 3.0 nightly `louislam/uptime-kuma:nightly3` until
+`louislam/uptime-kuma:2.5.9`, and against the 3.0 nightly `louislam/uptime-kuma:nightly3` until
 Uptime Kuma 3.0 is released.
 
 Uptime Kuma 3.0 replaces the socket login with an HTTP sign-in. The provider detects which one the

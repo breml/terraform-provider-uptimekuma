@@ -1234,7 +1234,7 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 2. Create Docker pool and ping daemon
 3. Run the Uptime Kuma container with `AutoRemove`, publishing its port 3001 on a random
    host port. The image is `UPTIME_KUMA_IMAGE` if set (CI also runs
-   `louislam/uptime-kuma:nightly3`), otherwise `defaultKumaImage` (`louislam/uptime-kuma:2.5.6`).
+   `louislam/uptime-kuma:nightly3`), otherwise `defaultKumaImage` (`louislam/uptime-kuma:2.5.9`).
    `UPTIME_KUMA_DISABLE_LEAK_PWD_CHECK=1` keeps a 3.x server from checking the test password
    against Have I Been Pwned
 4. Register the cleanup before connecting, so the container is purged even if the

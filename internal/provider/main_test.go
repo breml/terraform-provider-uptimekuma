@@ -30,7 +30,7 @@ const (
 // defaultKumaImage is the Uptime Kuma the acceptance tests run against unless
 // UPTIME_KUMA_IMAGE names another one, such as louislam/uptime-kuma:nightly3
 // for the 3.x line. The CI workflow reads this constant to pre-pull the image.
-const defaultKumaImage = "louislam/uptime-kuma:2.5.6"
+const defaultKumaImage = "louislam/uptime-kuma:2.5.9"
 
 // kumaImage returns the repository and tag of the Uptime Kuma image to test
 // against.
