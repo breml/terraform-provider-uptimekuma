@@ -126,13 +126,8 @@ func (d *MonitorGroupDataSource) readByName(
 		return
 	}
 
-	var groupMon monitor.Group
-	err := found.As(&groupMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(groupMon.ID)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

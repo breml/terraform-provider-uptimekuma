@@ -149,16 +149,8 @@ func (d *MonitorSteamDataSource) readByName(
 		return
 	}
 
-	var steamMon monitor.Steam
-	err := found.As(&steamMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(steamMon.ID)
-	data.Hostname = types.StringValue(steamMon.Hostname)
-	data.Port = types.Int64Value(int64(steamMon.Port))
-	data.DomainExpiryNotification = types.BoolValue(steamMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

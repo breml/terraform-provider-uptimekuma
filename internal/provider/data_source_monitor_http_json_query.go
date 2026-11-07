@@ -143,15 +143,8 @@ func (d *MonitorHTTPJSONQueryDataSource) readByName(
 		return
 	}
 
-	var httpJSONMon monitor.HTTPJSONQuery
-	err := found.As(&httpJSONMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(httpJSONMon.ID)
-	data.DomainExpiryNotification = types.BoolValue(httpJSONMon.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpJSONMon.IPFamily, types.StringNull(), ipFamilyAuto)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }
