@@ -142,15 +142,8 @@ func (d *MonitorPM2DataSource) readByName(
 		return
 	}
 
-	var pm2Monitor monitor.PM2
-
-	err := found.As(&pm2Monitor)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(pm2Monitor.ID)
-	data.ProcessName = types.StringValue(pm2Monitor.ProcessName)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

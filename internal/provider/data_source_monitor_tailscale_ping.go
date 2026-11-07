@@ -148,15 +148,8 @@ func (d *MonitorTailscalePingDataSource) readByName(
 		return
 	}
 
-	var tailscalePingMon monitor.TailscalePing
-	err := found.As(&tailscalePingMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(tailscalePingMon.ID)
-	data.Hostname = types.StringValue(tailscalePingMon.Hostname)
-	data.DomainExpiryNotification = types.BoolValue(tailscalePingMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

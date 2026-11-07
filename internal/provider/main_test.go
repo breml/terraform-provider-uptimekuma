@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,10 +18,42 @@ import (
 	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
+// The account the acceptance tests sign in as. The password satisfies the
+// rules an Uptime Kuma 3.x server applies to the first user (at least eight
+// characters); `admin1` cannot be created there. The leak check is turned off
+// on the container, see kumaContainerEnv.
 const (
 	username = "admin"
-	password = "admin1"
+	password = "Kuma-Test-8f4Q2xR9p"
 )
+
+// defaultKumaImage is the Uptime Kuma the acceptance tests run against unless
+// UPTIME_KUMA_IMAGE names another one, such as louislam/uptime-kuma:nightly3
+// for the 3.x line. The CI workflow reads this constant to pre-pull the image.
+const defaultKumaImage = "louislam/uptime-kuma:2.5.9"
+
+// kumaImage returns the repository and tag of the Uptime Kuma image to test
+// against.
+func kumaImage() (repository string, tag string) {
+	image := os.Getenv("UPTIME_KUMA_IMAGE")
+	if image == "" {
+		image = defaultKumaImage
+	}
+
+	repository, tag, ok := strings.Cut(image, ":")
+	if !ok {
+		return image, "latest"
+	}
+
+	return repository, tag
+}
+
+// kumaContainerEnv is the environment of the test container: a 3.x server
+// checks the first user's password against the Have I Been Pwned database,
+// which the test password has no business with. 2.x ignores the variable.
+func kumaContainerEnv() []string {
+	return []string{"UPTIME_KUMA_DISABLE_LEAK_PWD_CHECK=1"}
+}
 
 var endpoint string //nolint:gochecknoglobals // OK in tests.
 
@@ -52,10 +85,13 @@ func runTests(m *testing.M) (exitcode int) {
 			log.Fatalf("Could not connect to Docker: %v", err)
 		}
 
+		repository, tag := kumaImage()
+
 		// pulls an image, creates a container based on it and runs it
 		container, err := pool.RunWithOptions(&dockertest.RunOptions{
-			Repository: "louislam/uptime-kuma",
-			Tag:        "2.5.5",
+			Repository: repository,
+			Tag:        tag,
+			Env:        kumaContainerEnv(),
 		}, func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
 			config.AutoRemove = true
@@ -115,6 +151,10 @@ func runTests(m *testing.M) (exitcode int) {
 		// might not be ready to accept connections yet. This first connection
 		// performs autosetup (creating the admin user) and is kept as the
 		// out-of-band client for disappears tests.
+		//
+		// Together with the pooled provider connection this is all the suite
+		// signs in. Keep it that way: a 3.x server allows three sign-ins per
+		// ten seconds per address, so per-test logins would get rate limited.
 		err = pool.Retry(func() error {
 			var retryErr error
 			outOfBandClient, retryErr = kuma.New(

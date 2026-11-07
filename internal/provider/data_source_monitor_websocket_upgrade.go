@@ -160,20 +160,8 @@ func (d *MonitorWebsocketUpgradeDataSource) readByName(
 		return
 	}
 
-	var wsMon monitor.WebsocketUpgrade
-	err := found.As(&wsMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(wsMon.ID)
-	data.URL = types.StringValue(wsMon.URL)
-	data.WSIgnoreSecWebsocketAcceptHeader = types.BoolValue(wsMon.IgnoreSecWebsocketAcceptHeader)
-	data.WSSubprotocol = types.StringValue(wsMon.Subprotocol)
-	data.DomainExpiryNotification = types.BoolValue(wsMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

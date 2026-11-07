@@ -148,15 +148,8 @@ func (d *MonitorHTTPKeywordDataSource) readByName(
 		return
 	}
 
-	var httpKeywordMon monitor.HTTPKeyword
-	err := found.As(&httpKeywordMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(httpKeywordMon.ID)
-	data.DomainExpiryNotification = types.BoolValue(httpKeywordMon.DomainExpiryNotification)
-	data.IPFamily = ipFamilyFromAPI(httpKeywordMon.IPFamily, types.StringNull(), ipFamilyAuto)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

@@ -166,16 +166,10 @@ func (d *MonitorNTPDataSource) readByName(
 		return
 	}
 
-	var ntpMon monitor.NTP
-	err := found.As(&ntpMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(ntpMon.ID)
-	populateNTPDataSourceDetails(&ntpMon, data)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }
 
 // populateNTPDataSourceDetails copies the NTP specific fields into the data source model.

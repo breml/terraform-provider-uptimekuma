@@ -184,8 +184,8 @@ github.com/breml/errchkjson v0.4.1 h1:keFSS8D7A2T0haP9kzZTi7o26r7kE3vymjZNeNDRDw
 github.com/breml/errchkjson v0.4.1/go.mod h1:a23OvR6Qvcl7DG/Z4o0el6BRAjKnaReoPQFciAl9U3s=
 github.com/breml/githooks v0.0.0-20260808071746-3d243ec03632 h1:7A/dzr+F8LRCGVAUp7ZmmD0lS/B9VWhiEQUZdCKd0pA=
 github.com/breml/githooks v0.0.0-20260808071746-3d243ec03632/go.mod h1:DFBI0bX9tHKAqQv/aQE76CKwzsr5UJy334BErEJY0N8=
-github.com/breml/go-uptime-kuma-client v0.7.0 h1:G8X+FXvWXx++MmjQxdXOldQKbhtDPz70ZymzYJM6+R4=
-github.com/breml/go-uptime-kuma-client v0.7.0/go.mod h1:gU7uWi8Ia5wwBRYSkwOP0c+JBZah6Y2M9IHw3PX9wJA=
+github.com/breml/go-uptime-kuma-client v0.7.2 h1:7gtcVwdTIBI5Tpo5mp4/95bZqVqE9/eI9qxhswjHmI8=
+github.com/breml/go-uptime-kuma-client v0.7.2/go.mod h1:D1/64xCQlbdkuKCbeDHcPN9vzi2BbMQmqsd98kElYv0=
 github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31 h1:l5fVxSzbJHJ1jcLxmcOLVY0uxZFfB1yuztPJVtMfLRg=
 github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31/go.mod h1:H1EoWDJvqfV2WryM8F9og6ZkH7NsZDlHr0BRkKb58tY=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 h1:ilIWXePccxYq7HvA/max1ZqS0kTkIB/sKzBPDneECts=
@@ -324,8 +324,8 @@ github.com/go-git/go-git/v5 v5.19.2 h1:wkfn7vOlUBu8ivAWKBWisTiwJK4jYHzTF8Ndv1LyG
 github.com/go-git/go-git/v5 v5.19.2/go.mod h1:QqCBE1EFN5ddFmrliLQ3/ntRCUjZU3EJuwuB/jWEHjk=
 github.com/go-jose/go-jose/v4 v4.1.5 h1:RjgjO2LOtWOJKUC5wpwY9LR3B3vwVAz6JS2YHfYU6eA=
 github.com/go-jose/go-jose/v4 v4.1.5/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
-github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 h1:KZaTBSyshWX3MP5jukJcNSuXDQTO+rNpt0J564dX/eg=
-github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68/go.mod h1:tphK2c80bpPhMOI4v6bIc2xWywPfbqi1Z06+RcrMkDg=
+github.com/go-json-experiment/json v1.27.2 h1:rZIyqYh+Qq+nEa+Y5iwohr8h7G/MfLJqu2CD4/ZONqM=
+github.com/go-json-experiment/json v1.27.2/go.mod h1:tphK2c80bpPhMOI4v6bIc2xWywPfbqi1Z06+RcrMkDg=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
 github.com/go-logr/logr v1.4.4 h1:tG4xh9yMsRCAiodLVTxyrkzSZ9+o0L1Kg/+cPVcbP/8=
 github.com/go-logr/logr v1.4.4/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=

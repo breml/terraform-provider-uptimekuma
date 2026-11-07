@@ -43,8 +43,21 @@ provide:
 
 ## Compatibility
 
-This provider targets **Uptime Kuma 2.5.0 or later**. The acceptance tests run against
-`louislam/uptime-kuma:2.5.5`. Against older servers some attributes behave differently:
+This provider targets **Uptime Kuma 2.5.x and 3.0.x**. The acceptance tests run against
+`louislam/uptime-kuma:2.5.9`, and against the 3.0 nightly `louislam/uptime-kuma:nightly3` until
+Uptime Kuma 3.0 is released.
+
+Uptime Kuma 3.0 replaces the socket login with an HTTP sign-in. The provider detects which one the
+server speaks, so the provider configuration is the same for both. On 3.0 the following applies:
+
+- API keys still cannot authenticate the socket connection, the server only accepts the session of
+  a signed-in user. Configure `username` and `password` as for 2.5.x.
+- The server allows three sign-ins per ten seconds from one address. Many provider instances
+  signing in at once, such as several `terraform apply` runs in parallel, can hit that limit.
+- The first user's password must have at least eight characters and is checked against the Have I
+  Been Pwned database.
+
+Against servers older than 2.5.0 some attributes behave differently:
 
 - `interval` and `retry_interval` lost their 24 day maximum in 2.5.0. The provider no longer
   enforces an upper bound, so earlier servers reject large values at apply time.

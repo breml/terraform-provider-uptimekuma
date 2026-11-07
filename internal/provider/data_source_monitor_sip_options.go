@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -153,30 +152,8 @@ func (d *MonitorSIPOptionsDataSource) readByName(
 		return
 	}
 
-	var sipMon monitor.SIPOptions
-	err := found.As(&sipMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	if actual := sipMon.Base.Type(); actual != "" && actual != sipMon.Type() {
-		resp.Diagnostics.AddError(
-			"Monitor type mismatch",
-			fmt.Sprintf(
-				"Monitor %q has type %q, expected %q.",
-				data.Name.ValueString(), actual, sipMon.Type(),
-			),
-		)
-		return
-	}
-
-	data.ID = types.Int64Value(sipMon.ID)
-	data.Hostname = types.StringValue(sipMon.Hostname)
-	data.Port = types.Int64Value(int64(sipMon.Port))
-	data.DomainExpiryNotification = types.BoolValue(sipMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

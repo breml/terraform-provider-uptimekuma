@@ -139,15 +139,8 @@ func (d *MonitorMQTTDataSource) readByName(
 		return
 	}
 
-	var mqttMon monitor.MQTT
-	err := found.As(&mqttMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(mqttMon.ID)
-	data.Topic = types.StringValue(mqttMon.MQTTTopic)
-	data.DomainExpiryNotification = types.BoolValue(mqttMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }

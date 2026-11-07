@@ -142,14 +142,8 @@ func (d *MonitorRealBrowserDataSource) readByName(
 		return
 	}
 
-	var realBrowserMon monitor.RealBrowser
-	err := found.As(&realBrowserMon)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert monitor type", err.Error())
-		return
-	}
-
-	data.ID = types.Int64Value(realBrowserMon.ID)
-	data.DomainExpiryNotification = types.BoolValue(realBrowserMon.DomainExpiryNotification)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// The monitor list only identifies the monitor: Uptime Kuma 3.x sends a
+	// compact entry without the type specific fields, so read it by its ID.
+	data.ID = types.Int64Value(found.GetID())
+	d.readByID(ctx, data, resp)
 }
