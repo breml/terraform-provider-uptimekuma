@@ -27,7 +27,8 @@ Plugin SDK). The provider enables managing Uptime Kuma resources via Terraform i
 - **Single test**: `go test -v -timeout=120s ./internal/provider -run TestName`
 - **Acceptance tests**: `task testacc` - starts an Uptime Kuma container via Docker and runs the suite
   in parallel (`-parallel 8`). Run one shard with `task testacc SHARD=1 SHARDS=4`, which is how CI
-  splits it across four concurrent jobs.
+  splits it across four concurrent jobs. Prefix `UPTIME_KUMA_IMAGE=louislam/uptime-kuma:nightly3`
+  to run against Uptime Kuma 3.x instead of the default 2.5.x image; CI runs both.
 - **Generate docs**: `task generate-docs` - generates Terraform provider documentation
 - **Clean**: `task clean` - removes coverage files and build artifacts
 

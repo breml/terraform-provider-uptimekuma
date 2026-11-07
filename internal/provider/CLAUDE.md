@@ -1232,13 +1232,18 @@ _, err := r.client.AddMonitorTag(ctx, tagID, monitorID, value)
 
 1. Check `TF_ACC` environment variable (the container is only started when it is set)
 2. Create Docker pool and ping daemon
-3. Run a `louislam/uptime-kuma:2.5.5` container with `AutoRemove`, publishing its port
-   3001 on a random host port
+3. Run the Uptime Kuma container with `AutoRemove`, publishing its port 3001 on a random
+   host port. The image is `UPTIME_KUMA_IMAGE` if set (CI also runs
+   `louislam/uptime-kuma:nightly3`), otherwise `defaultKumaImage` (`louislam/uptime-kuma:2.5.6`).
+   `UPTIME_KUMA_DISABLE_LEAK_PWD_CHECK=1` keeps a 3.x server from checking the test password
+   against Have I Been Pwned
 4. Register the cleanup before connecting, so the container is purged even if the
    connection below never succeeds
 5. Connect with `pool.Retry` (exponential backoff, up to dockertest's default 1 minute).
    This first connection runs autosetup, which creates the admin user
-6. Keep that connection as `outOfBandClient` rather than closing it, see below
+6. Keep that connection as `outOfBandClient` rather than closing it, see below. With the
+   pooled provider connection that is the suite's whole sign-in budget: a 3.x server allows
+   three sign-ins per ten seconds per address, so do not add per-test logins
 7. Run all tests (provider creates its own pooled connection, shared across tests)
 8. Cleanup: disconnect `outOfBandClient`, close the pool, purge the container
 
@@ -1252,7 +1257,7 @@ never the safety net it looked like. See the comment in
 ```go
 const (
     username = "admin"
-    password = "admin1"  // throwaway credentials for the test container
+    password = "Kuma-Test-8f4Q2xR9p"  // throwaway credentials for the test container
 )
 
 var (
