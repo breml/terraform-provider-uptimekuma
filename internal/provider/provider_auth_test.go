@@ -1,7 +1,9 @@
 package provider
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"maps"
 	"regexp"
 	"strings"
@@ -17,6 +19,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+
+	"github.com/breml/terraform-provider-uptimekuma/internal/client"
 )
 
 // clearCredentialEnvironment unsets every credential environment variable for
@@ -279,10 +283,13 @@ func providerConfigValue(t *testing.T, values map[string]tftypes.Value) tfsdk.Co
 	}
 }
 
-// TestValidateConfig pins that ValidateConfig judges the credential shape
-// with the environment defaults applied, and leaves a shape alone that still
-// depends on an unknown value.
+// TestValidateConfig pins that ValidateConfig checks the values from the
+// environment the schema validators never see, and leaves the credential
+// shape to Configure: a credential missing at `terraform validate` may come
+// from an environment that only the apply job has.
 func TestValidateConfig(t *testing.T) {
+	str := func(value string) tftypes.Value { return tftypes.NewValue(tftypes.String, value) }
+
 	tests := []struct {
 		name      string
 		env       map[string]string
@@ -292,25 +299,16 @@ func TestValidateConfig(t *testing.T) {
 		{
 			name:   "username in config, password in environment",
 			env:    map[string]string{"UPTIMEKUMA_PASSWORD": "secret"},
-			values: map[string]tftypes.Value{"username": tftypes.NewValue(tftypes.String, "admin")},
+			values: map[string]tftypes.Value{"username": str("admin")},
 		},
 		{
-			name:      "username without password",
-			values:    map[string]tftypes.Value{"username": tftypes.NewValue(tftypes.String, "admin")},
-			wantError: "password required",
+			// The password may only be set in the environment of the apply.
+			name:   "username without password is left to Configure",
+			values: map[string]tftypes.Value{"username": str("admin")},
 		},
 		{
-			name: "unknown password",
-			values: map[string]tftypes.Value{
-				"username": tftypes.NewValue(tftypes.String, "admin"),
-				"password": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
-			},
-		},
-		{
-			name:      "totp secret from environment with a session token",
-			env:       map[string]string{"UPTIMEKUMA_TOTP_SECRET": "JBSWY3DPEHPK3PXP"},
-			values:    map[string]tftypes.Value{"session_token": tftypes.NewValue(tftypes.String, "token")},
-			wantError: "username and password required",
+			name:   "totp secret with a session token is left to Configure",
+			values: map[string]tftypes.Value{"session_token": str("token"), "totp_secret": str("JBSWY3DPEHPK3PXP")},
 		},
 		{
 			name:      "auth scheme from environment",
@@ -318,15 +316,39 @@ func TestValidateConfig(t *testing.T) {
 			wantError: "invalid auth_scheme",
 		},
 		{
+			// An empty attribute counts as unset, so the environment applies.
+			name:      "auth scheme from environment behind an empty attribute",
+			env:       map[string]string{"UPTIMEKUMA_AUTH_SCHEME": "cookie"},
+			values:    map[string]tftypes.Value{"auth_scheme": str("")},
+			wantError: "invalid auth_scheme",
+		},
+		{
 			// The schema validator reports a configured value; ValidateConfig
 			// must not report it a second time.
 			name:   "auth scheme from config is left to the schema validator",
-			values: map[string]tftypes.Value{"auth_scheme": tftypes.NewValue(tftypes.String, "cookie")},
+			env:    map[string]string{"UPTIMEKUMA_AUTH_SCHEME": "socket"},
+			values: map[string]tftypes.Value{"auth_scheme": str("cookie")},
 		},
 		{
 			name:   "auth scheme from environment, valid",
 			env:    map[string]string{"UPTIMEKUMA_AUTH_SCHEME": "socket"},
 			values: map[string]tftypes.Value{},
+		},
+		{
+			name:      "malformed totp secret from environment",
+			env:       map[string]string{"UPTIMEKUMA_TOTP_SECRET": "JBSWY3DPEHPK3PX0"},
+			wantError: "Invalid TOTP secret",
+		},
+		{
+			name:   "totp secret from environment, valid",
+			env:    map[string]string{"UPTIMEKUMA_TOTP_SECRET": "jbsw y3dp-ehpk 3pxp"},
+			values: map[string]tftypes.Value{},
+		},
+		{
+			// The schema validator reports a configured value.
+			name:   "totp secret from config is left to the schema validator",
+			env:    map[string]string{"UPTIMEKUMA_TOTP_SECRET": "JBSWY3DPEHPK3PX0"},
+			values: map[string]tftypes.Value{"totp_secret": str("JBSWY3DPEHPK3PXP")},
 		},
 	}
 
@@ -372,14 +394,22 @@ func TestParseAuthScheme(t *testing.T) {
 		authSchemeSocket: kuma.AuthSchemeSocket,
 		authSchemeHTTP:   kuma.AuthSchemeHTTP,
 	} {
-		if got := parseAuthScheme(value); got != want {
-			t.Errorf("parseAuthScheme(%q): expected %s, got %s", value, want, got)
+		got, ok := parseAuthScheme(value)
+		if !ok || got != want {
+			t.Errorf("parseAuthScheme(%q): expected %s, true, got %s, %t", value, want, got, ok)
 		}
 
 		// The attribute values are the client's own names for the schemes,
 		// which the pool mismatch message prints.
 		if value != "" && want.String() != value {
 			t.Errorf("expected kuma.AuthScheme %d to be named %q, got %q", want, value, want.String())
+		}
+	}
+
+	// An unknown name must be reported, never mapped to the detection.
+	for _, value := range []string{"cookie", "Socket", " http"} {
+		if _, ok := parseAuthScheme(value); ok {
+			t.Errorf("parseAuthScheme(%q): expected an unknown name to be rejected", value)
 		}
 	}
 }
@@ -395,9 +425,8 @@ func TestBuildClientConfig(t *testing.T) {
 	model.Password = types.StringValue("secret")
 	model.SessionToken = types.StringValue("token")
 	model.TOTPSecret = types.StringValue("JBSWY3DPEHPK3PXP")
-	model.AuthScheme = types.StringValue(authSchemeHTTP)
 
-	config := buildClientConfig(&model, clientOptions{maxRetries: 2})
+	config := buildClientConfig(&model, clientOptions{maxRetries: 2, authScheme: kuma.AuthSchemeHTTP})
 
 	if config.Endpoint != "http://localhost:3001" || config.Username != "admin" || config.Password != "secret" {
 		t.Errorf("expected endpoint, username and password to be passed on, got %q, %q, %q",
@@ -693,6 +722,164 @@ func TestConfigure_FailsBeforeConnecting(t *testing.T) {
 
 			if resp.ResourceData != nil {
 				t.Error("expected no provider data after a failed Configure")
+			}
+		})
+	}
+}
+
+// TestConnect pins the wiring of the session token rejection: connect must
+// hand the client a callback, and report what it heard whether or not the
+// connection then succeeded. TestWarnRejectedSessionToken covers the warning
+// itself; this covers that it is ever raised.
+func TestConnect(t *testing.T) {
+	t.Parallel()
+
+	rejection := fmt.Errorf("login by token: %w", kuma.ErrInvalidSessionToken)
+
+	tests := []struct {
+		name        string
+		rejected    bool
+		connectErr  error
+		wantWarning bool
+		wantError   bool
+	}{
+		{name: "token accepted"},
+		{name: "token rejected, password login succeeded", rejected: true, wantWarning: true},
+		{
+			name: "token rejected, connection failed afterwards", rejected: true,
+			connectErr: errors.New("wait for ready events: timeout"), wantWarning: true, wantError: true,
+		},
+		{name: "connection failed", connectErr: errors.New("dial tcp: connection refused"), wantError: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			newClient := func(_ context.Context, config *client.Config) (*kuma.Client, error) {
+				if config.OnSessionTokenRejected == nil {
+					t.Fatal("expected connect to set OnSessionTokenRejected")
+				}
+
+				if tc.rejected {
+					config.OnSessionTokenRejected(rejection)
+				}
+
+				if tc.connectErr != nil {
+					return nil, tc.connectErr
+				}
+
+				return &kuma.Client{}, nil
+			}
+
+			var diags diag.Diagnostics
+
+			got := connect("http://localhost:3001", &client.Config{}, newClient, &diags)
+
+			if (got == nil) != tc.wantError {
+				t.Errorf("expected a client %t, got %v", !tc.wantError, got)
+			}
+
+			if diags.HasError() != tc.wantError {
+				t.Errorf("expected an error %t, got %v", tc.wantError, diags.Errors())
+			}
+
+			warnings := diags.Warnings()
+			if got := len(warnings) == 1; got != tc.wantWarning {
+				t.Fatalf("expected exactly one warning %t, got %v", tc.wantWarning, warnings)
+			}
+
+			if tc.wantWarning && warnings[0].Summary() != "session token rejected, fell back to password" {
+				t.Errorf("expected the session token warning, got %q", warnings[0].Summary())
+			}
+		})
+	}
+}
+
+// TestRejectUnknownCredentials pins that every credential and the auth scheme
+// is rejected while unknown, by name: one left out of the list would reach the
+// client as an empty string and silently change the login.
+func TestRejectUnknownCredentials(t *testing.T) {
+	t.Parallel()
+
+	fields := map[string]func(*UptimeKumaProviderModel) *types.String{
+		"username":      func(m *UptimeKumaProviderModel) *types.String { return &m.Username },
+		"password":      func(m *UptimeKumaProviderModel) *types.String { return &m.Password },
+		"session_token": func(m *UptimeKumaProviderModel) *types.String { return &m.SessionToken },
+		"totp_secret":   func(m *UptimeKumaProviderModel) *types.String { return &m.TOTPSecret },
+		"auth_scheme":   func(m *UptimeKumaProviderModel) *types.String { return &m.AuthScheme },
+	}
+
+	for name, field := range fields {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			model := nullProviderModel()
+			*field(&model) = types.StringUnknown()
+
+			var diags diag.Diagnostics
+
+			rejectUnknownCredentials(&model, &diags)
+
+			if count := diags.ErrorsCount(); count != 1 {
+				t.Fatalf("expected exactly one error, got %v", diags.Errors())
+			}
+
+			withPath, ok := diags.Errors()[0].(diag.DiagnosticWithPath)
+			if !ok || !withPath.Path().Equal(path.Root(name)) {
+				t.Errorf("expected the error on %s, got %v", name, diags.Errors()[0])
+			}
+		})
+	}
+
+	t.Run("every unknown one is reported", func(t *testing.T) {
+		t.Parallel()
+
+		model := nullProviderModel()
+		model.Password = types.StringUnknown()
+		model.SessionToken = types.StringUnknown()
+
+		var diags diag.Diagnostics
+
+		rejectUnknownCredentials(&model, &diags)
+
+		if count := diags.ErrorsCount(); count != 2 {
+			t.Errorf("expected two errors, got %v", diags.Errors())
+		}
+	})
+}
+
+// TestAuthSchemeValidator pins the names `auth_scheme` accepts, and that the
+// empty string counts as unset like it does for the credentials.
+func TestAuthSchemeValidator(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		value     types.String
+		wantError bool
+	}{
+		{name: "null", value: types.StringNull()},
+		{name: "unknown", value: types.StringUnknown()},
+		{name: "empty", value: types.StringValue("")},
+		{name: "auto", value: types.StringValue(authSchemeAuto)},
+		{name: "socket", value: types.StringValue(authSchemeSocket)},
+		{name: "http", value: types.StringValue(authSchemeHTTP)},
+		{name: "unknown name", value: types.StringValue("cookie"), wantError: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := validator.StringRequest{Path: path.Root("auth_scheme"), ConfigValue: tc.value}
+
+			var resp validator.StringResponse
+
+			authSchemeValidator{}.ValidateString(t.Context(), req, &resp)
+
+			if got := resp.Diagnostics.HasError(); got != tc.wantError {
+				t.Errorf("expected error %t, got %v", tc.wantError, resp.Diagnostics.Errors())
 			}
 		})
 	}

@@ -64,17 +64,21 @@ an unset variable does not shadow it. An unknown value is never replaced by the 
 - Unknown credentials: `Configure` rejects a credential or `auth_scheme` that is still unknown
   (`rejectUnknownCredentials`), naming the attribute: the provider logs in during plan, and an
   unknown value would reach the client as an empty string
-- Credentials (`validateCredentials`, called from `ValidateConfig` after the environment defaults,
-  and again from `Configure`, because `ValidateConfig` skips the shape while any credential is
-  unknown - as every variable is under `terraform validate`). Accepted shapes: nothing;
+- Credentials (`validateCredentials`, called only from `Configure`, which runs before the provider
+  connects). Not from `ValidateConfig`: every shape error is a missing credential, and the
+  environment of `terraform validate` (a CI lint job without secrets) need not be the one of the
+  apply that supplies it. Accepted shapes: nothing;
   `username` + `password`, optionally with `totp_secret`; `session_token` alone or with
   `username` + `password`. Rejected: `username` without `password` and the other way round, and
   `totp_secret` without both. Shapes are judged by value, so an empty string counts as unset
-- `auth_scheme`: `stringvalidator.OneOf` on the attribute; `validateAuthScheme` checks a value from
+- `auth_scheme`: `parseAuthScheme` is the one table of the names. `authSchemeValidator` checks the
+  attribute (accepting `""` as unset), and `resolveAuthScheme` checks a value from
   `UPTIMEKUMA_AUTH_SCHEME`, which the schema validator never sees, in `ValidateConfig` and again in
-  `Configure`
-- `totp_secret`: `totpSecretValidator` rejects a value that is not base32 at plan time; the client
-  package checks the environment value before connecting (`client.ErrInvalidTOTPSecret`)
+  `Configure`, which hands the resolved scheme to `buildClientConfig` through `clientOptions`
+- `totp_secret`: `totpSecretValidator` rejects a value that is not base32 at plan time;
+  `ValidateConfig` checks the environment value (`validateEnvironmentTOTPSecret`), and the client
+  package checks it again before connecting (`kuma.ErrInvalidTOTPSecret`). All three use
+  `kuma.ValidateTOTPSecret`, the rules `kuma.WithTOTPSecret` applies
 - Precedence: Terraform config > environment variables
 
 **Login diagnostics** (`connectionError` / `loginErrorAdvice` in [provider.go](provider.go)): every
@@ -83,8 +87,9 @@ token followed by a failed password login arrives as one `*kuma.SessionTokenFall
 always wraps `kuma.ErrInvalidSessionToken`; `passwordFallbackAdvice` classifies it ahead of the switch by its
 password half (`client.PasswordFallbackCause`), with a transport-style default for a half it does not
 recognise, so the user is never told to add the `username` and `password` they already set.
-`warnRejectedSessionToken` warns when the token was refused and the password login succeeded, from
-the `OnSessionTokenRejected` callback.
+`connect` sets the `OnSessionTokenRejected` callback and calls `warnRejectedSessionToken` whenever
+the token was refused and the password login took over, also when the connection then failed; it
+takes the client constructor as a parameter so `TestConnect` can pin that wiring.
 
 ### Provider Configuration ([provider.go](provider.go))
 

@@ -157,43 +157,6 @@ func TestNewClientDirectWithRetry_CredentialOptions(t *testing.T) {
 	}
 }
 
-// TestValidateTOTPSecret pins the tolerances the upstream client documents for
-// a secret copied out of Uptime Kuma's two-factor dialog, and the rejection
-// that keeps a typo from being retried as an unreachable server.
-func TestValidateTOTPSecret(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		secret    string
-		wantError bool
-	}{
-		{name: "base32", secret: "JBSWY3DPEHPK3PXP"},
-		{name: "lower case", secret: "jbswy3dpehpk3pxp"},
-		{name: "spaces and hyphens", secret: "jbsw y3dp-ehpk 3pxp"},
-		{name: "missing padding", secret: "JBSWY3DPEHPK3PX"},
-		{name: "empty", secret: "", wantError: true},
-		{name: "only separators", secret: " - = ", wantError: true},
-		{name: "not base32", secret: "JBSWY3DPEHPK3PX0", wantError: true},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := kuma.ValidateTOTPSecret(tc.secret)
-
-			if got := err != nil; got != tc.wantError {
-				t.Fatalf("expected error %t, got %v", tc.wantError, err)
-			}
-
-			if tc.wantError && !errors.Is(err, kuma.ErrInvalidTOTPSecret) {
-				t.Errorf("expected error to match kuma.ErrInvalidTOTPSecret, got %v", err)
-			}
-		})
-	}
-}
-
 // TestNew_MalformedTOTPSecretIsNotRetried pins that a secret no code can be
 // derived from fails before the first connection attempt. Retrying it would
 // spend the server's login budget on a value that cannot improve, and report
@@ -343,6 +306,8 @@ func TestPool_GetOrCreate_MismatchRedactsSecrets(t *testing.T) {
 	for _, want := range []string{
 		`existing endpoint="http://localhost:3001" username="" totp_secret=set session_token=set auth_scheme=http`,
 		`requested endpoint="http://localhost:3001" username="" totp_secret=unset session_token=set auth_scheme=auto`,
+		// Both sides print session_token=set, so only this says it differs.
+		`differing secrets: totp_secret, session_token`,
 	} {
 		if !strings.Contains(message, want) {
 			t.Errorf("expected the mismatch message to contain %q, got %q", want, message)

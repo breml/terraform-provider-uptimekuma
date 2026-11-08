@@ -113,7 +113,8 @@ type Config struct {
 - Each credential option is only passed to `kuma.New` when its field is set (`connectOptions`):
   `kuma.WithTOTPSecret("")` is not inert, it fails `kuma.New`
 - `TOTPSecret`, `SessionToken` and `AuthScheme` are part of the pool's config identity, and the
-  mismatch message names whether each secret is set without printing it. `OnSessionTokenRejected`
+  mismatch message names whether each secret is set, and which secrets differ
+  (`differingSecrets`), without printing any of them. `OnSessionTokenRejected`
   is not: only the Configure that opens the pooled connection hears about a fallback
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
 - `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; this value bounds the overall
@@ -310,23 +311,18 @@ In [../provider/provider.go](../provider/provider.go), the provider creates a cl
 func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
     // ... read config from req.Config
 
-    // The callback runs on this goroutine before client.New returns.
-    var sessionTokenRejection error
-
     // buildClientConfig maps every provider attribute, credentials included,
     // and always sets EnableConnectionPool.
     config := buildClientConfig(&data, opts)
-    config.OnSessionTokenRejected = func(err error) { sessionTokenRejection = err }
 
-    // Use context.Background() not ctx (Terraform's context cancels too early)
-    kumaClient, err := client.New(context.Background(), config)
-    if err != nil {
-        resp.Diagnostics.AddError(connectionError(data.Endpoint.ValueString(), err))
+    // connect sets OnSessionTokenRejected, calls client.New with
+    // context.Background() (Terraform's context cancels too early), and warns
+    // about a token the server refused and the password took over from - also
+    // when the connection then failed, with the error added after it.
+    kumaClient := connect(data.Endpoint.ValueString(), config, client.New, &resp.Diagnostics)
+    if kumaClient == nil {
         return
     }
-
-    // A token the server refused and the password took over from is a warning
-    warnRejectedSessionToken(sessionTokenRejection, &resp.Diagnostics)
 
     // Wrapped in a *providerData, see "Resource Configure Method" below
     pd := &providerData{client: kumaClient, password: data.Password.ValueString()}

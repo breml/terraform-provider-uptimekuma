@@ -272,3 +272,39 @@ func (v totpSecretValidator) ValidateString(
 		)
 	}
 }
+
+// authSchemeValidator rejects an `auth_scheme` that is not one of the names
+// parseAuthScheme knows. The empty string is accepted, like for the
+// credentials: it is what an unset variable leaves behind, and the provider
+// treats it as unset, so the environment or the detection applies.
+type authSchemeValidator struct{}
+
+// Description returns a plain text description of the validator's behavior.
+func (authSchemeValidator) Description(_ context.Context) string {
+	return fmt.Sprintf("value must be one of %q, %q or %q", authSchemeAuto, authSchemeSocket, authSchemeHTTP)
+}
+
+// MarkdownDescription returns a markdown description of the validator's behavior.
+func (v authSchemeValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// ValidateString reports an error if the configured value is not a scheme name.
+func (v authSchemeValidator) ValidateString(
+	ctx context.Context,
+	req validator.StringRequest,
+	resp *validator.StringResponse,
+) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	_, ok := parseAuthScheme(req.ConfigValue.ValueString())
+	if !ok {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid Attribute Value",
+			fmt.Sprintf("Attribute %s %s, got: %q", req.Path, v.Description(ctx), req.ConfigValue.ValueString()),
+		)
+	}
+}

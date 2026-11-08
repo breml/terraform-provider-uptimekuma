@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -98,7 +97,7 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 				MarkdownDescription: authSchemeDescription,
 				Optional:            true,
 				Validators: []validator.String{
-					stringvalidator.OneOf(authSchemeAuto, authSchemeSocket, authSchemeHTTP),
+					authSchemeValidator{},
 				},
 			},
 			"timeout": schema.StringAttribute{
@@ -180,12 +179,12 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
-	// ValidateConfig checks the shape already, but skips it while a credential
-	// is unknown, as every variable is under `terraform validate`. Here every
-	// credential is known, so the shape is judged on the values the client is
-	// handed. The auth scheme is checked again for the same reason.
+	// The credential shape is judged here and not in ValidateConfig, see
+	// there: ValidateConfig cannot tell `terraform validate` from a plan, and
+	// only here is every credential known. The auth scheme is resolved here
+	// because the client configuration needs it.
 	validateCredentials(&data, &resp.Diagnostics)
-	validateAuthScheme(&data, &resp.Diagnostics)
+	authScheme := resolveAuthScheme(&data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -196,21 +195,12 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
-	// The callback runs on this goroutine before client.New returns, so the
-	// rejection is in hand by the time it is read.
-	var sessionTokenRejection error
+	opts.authScheme = authScheme
 
-	config := buildClientConfig(&data, opts)
-	config.OnSessionTokenRejected = func(err error) { sessionTokenRejection = err }
-
-	kumaClient, err := client.New(context.Background(), config)
-	if err != nil {
-		resp.Diagnostics.AddError(connectionError(data.Endpoint.ValueString(), err))
-
+	kumaClient := connect(data.Endpoint.ValueString(), buildClientConfig(&data, opts), client.New, &resp.Diagnostics)
+	if kumaClient == nil {
 		return
 	}
-
-	warnRejectedSessionToken(sessionTokenRejection, &resp.Diagnostics)
 
 	// Context is cancelled on shutdown - you can use defer or goroutine
 	go func() {
@@ -225,6 +215,40 @@ func (*UptimeKumaProvider) Configure(
 
 	resp.DataSourceData = pd
 	resp.ResourceData = pd
+}
+
+// newClientFunc creates the client, see client.New. connect takes it as a
+// parameter so that a test can stand in for the server.
+type newClientFunc func(ctx context.Context, config *client.Config) (*kuma.Client, error)
+
+// connect creates the client for config, and reports a configured session
+// token the server refused and the password login took over from. It returns
+// nil, with an error in diags, when the connection fails.
+//
+// The rejection is reported on failure too: the password login may have taken
+// over from the refused token before the connection failed for another
+// reason, and the connection error alone would not say that the stored token
+// has died.
+func connect(endpoint string, config *client.Config, newClient newClientFunc, diags *diag.Diagnostics) *kuma.Client {
+	// The callback runs on this goroutine before newClient returns, so the
+	// rejection is in hand by the time it is read.
+	var sessionTokenRejection error
+
+	config.OnSessionTokenRejected = func(err error) { sessionTokenRejection = err }
+
+	// Context is not the one of Configure: Terraform cancels that once
+	// Configure returns, and the connection must outlive it.
+	kumaClient, err := newClient(context.Background(), config)
+
+	warnRejectedSessionToken(sessionTokenRejection, diags)
+
+	if err != nil {
+		diags.AddError(connectionError(endpoint, err))
+
+		return nil
+	}
+
+	return kumaClient
 }
 
 // connectionError returns the summary and detail of the diagnostic for a
@@ -295,7 +319,7 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 	case errors.Is(err, kuma.ErrInvalidTOTPCode):
 		return "Uptime Kuma rejected the two-factor authentication code",
 			"The one-time code derived from the TOTP secret in `totp_secret` was refused. Uptime Kuma " +
-				"refuses a code it has already accepted for the account, and every Terraform command logs " +
+				"2.x refuses a code it has already accepted for the account, and every Terraform command logs " +
 				"in on its own: `terraform apply` alone logs in twice, for the plan and for the apply, and " +
 				"the second login often falls into the 30 second step of the first. The provider then waits " +
 				"for the next step, which fails when `timeout` or `per_attempt_timeout` cannot cover the " +
@@ -369,13 +393,14 @@ type clientOptions struct {
 	perAttemptTimeout time.Duration
 	operationTimeout  time.Duration
 	maxRetries        int
+
+	// authScheme is the resolved `auth_scheme`, see resolveAuthScheme.
+	authScheme kuma.AuthScheme
 }
 
 // buildClientConfig turns the provider model, with the environment defaults
 // applied and validated, and the parsed connection options into the
-// configuration of the client. The auth scheme has passed the schema
-// validator, or ValidateConfig for one from the environment, so
-// parseAuthScheme sees only the names it knows.
+// configuration of the client.
 func buildClientConfig(data *UptimeKumaProviderModel, opts clientOptions) *client.Config {
 	return &client.Config{
 		Endpoint:             data.Endpoint.ValueString(),
@@ -383,7 +408,7 @@ func buildClientConfig(data *UptimeKumaProviderModel, opts clientOptions) *clien
 		Password:             data.Password.ValueString(),
 		SessionToken:         data.SessionToken.ValueString(),
 		TOTPSecret:           data.TOTPSecret.ValueString(),
-		AuthScheme:           parseAuthScheme(data.AuthScheme.ValueString()),
+		AuthScheme:           opts.authScheme,
 		EnableConnectionPool: true,
 		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 		ConnectTimeout:       opts.connectTimeout,

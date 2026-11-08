@@ -45,7 +45,7 @@ const totpSecretDescription = "Shared secret of an account with two-factor authe
 	"while two-factor authentication is set up; spaces, hyphens, lower case and missing padding are " +
 	"accepted. The provider derives the one-time code the server asks for from it, and only once the " +
 	"server asks, so it is inert on an account without two-factor authentication. Requires `username` " +
-	"and `password`. Uptime Kuma refuses a code it has already accepted for the account, and every " +
+	"and `password`. Uptime Kuma 2.x refuses a code it has already accepted for the account, and every " +
 	"Terraform command logs in on its own: `terraform apply` logs in twice, for the plan and for the " +
 	"apply, and the second login often falls into the 30 second step of the first. The provider then " +
 	"waits for the next step, so set `timeout` to at least 60s, and leave `per_attempt_timeout` unset " +
@@ -61,29 +61,37 @@ const authSchemeDescription = "How the provider authenticates: `auto` (default) 
 	"Kuma 2.x, and `http` is the HTTP sign-in of Uptime Kuma 3.x. The detection is right for every " +
 	"Uptime Kuma release; pin the scheme only for a reverse proxy that answers the detection request " +
 	"itself. A pinned scheme the server does not speak fails the login. Can be set via " +
-	"`UPTIMEKUMA_AUTH_SCHEME` environment variable, which applies when the attribute is unset."
+	"`UPTIMEKUMA_AUTH_SCHEME` environment variable, which applies when the attribute is unset or " +
+	"empty."
 
-// parseAuthScheme maps an `auth_scheme` value to the client's scheme. An empty
-// value, which is what an unset attribute reads as, is the detection. Any other
-// value has passed the schema validator, which allows only the three names.
-func parseAuthScheme(value string) kuma.AuthScheme {
+// parseAuthScheme maps an `auth_scheme` value to the client's scheme, and
+// reports whether the value is one of the names. An empty value, which is what
+// an unset attribute reads as, is the detection. This is the one table of the
+// names: the schema validator, the check of the environment value and the
+// client configuration all go through it, so an unknown name can never become
+// the detection silently.
+func parseAuthScheme(value string) (kuma.AuthScheme, bool) {
 	switch value {
+	case "", authSchemeAuto:
+		return kuma.AuthSchemeAuto, true
+
 	case authSchemeSocket:
-		return kuma.AuthSchemeSocket
+		return kuma.AuthSchemeSocket, true
 
 	case authSchemeHTTP:
-		return kuma.AuthSchemeHTTP
+		return kuma.AuthSchemeHTTP, true
 
 	default:
-		return kuma.AuthSchemeAuto
+		return kuma.AuthSchemeAuto, false
 	}
 }
 
 // applyCredentialEnvironmentDefaults applies the environment defaults of the
 // credentials and the auth scheme.
 //
-// Unlike the other attributes in applyEnvironmentDefaults, these fall back on
-// the value rather than on IsNull: an attribute that is null or empty is unset,
+// Unlike the other attributes in applyEnvironmentDefaults, these consult the
+// environment when the value is null or empty, not only when it is null: an
+// empty attribute counts as unset,
 // so an attribute fed from an unset variable reaches the environment rather
 // than shadowing it with an empty string. An unknown value is left alone,
 // because it is not unset, merely not known yet; Configure rejects it.
@@ -147,14 +155,17 @@ func rejectUnknownCredentials(data *UptimeKumaProviderModel, diags *diag.Diagnos
 	}
 }
 
-// ValidateConfig checks the provider configuration before Terraform plans with
-// it, so that a credential shape the provider cannot use is reported by
-// `terraform validate` and before any connection is attempted.
+// ValidateConfig checks the values the schema validators cannot see, because
+// they come from the environment: an `auth_scheme` from UPTIMEKUMA_AUTH_SCHEME
+// and a `totp_secret` from UPTIMEKUMA_TOTP_SECRET. A malformed value is wrong
+// whatever else is set, so `terraform validate` reports it.
 //
-// The environment defaults are applied first, because a username in the
-// configuration and a password in the environment is a valid shape. Their
-// warnings are dropped here, since Configure applies them again and reports
-// them there.
+// The credential shape is deliberately not judged here but only in Configure.
+// Every shape error is a credential that is missing, and the environment may
+// supply it: a configuration with a literal `username` whose password comes
+// from UPTIMEKUMA_PASSWORD only in the apply job is valid, yet a `terraform
+// validate` run without that secret would reject it. Configure runs before
+// the provider connects, so the shape is still reported before any login.
 func (*UptimeKumaProvider) ValidateConfig(
 	ctx context.Context,
 	req provider.ValidateConfigRequest,
@@ -168,42 +179,74 @@ func (*UptimeKumaProvider) ValidateConfig(
 		return
 	}
 
-	// A configured auth_scheme has been checked by the schema validator, so
-	// only one taken from the environment still needs checking.
-	authSchemeFromEnvironment := data.AuthScheme.IsNull()
+	// A configured value has been checked by the schema validator, so only one
+	// taken from the environment still needs checking.
+	authSchemeFromEnvironment := data.AuthScheme.IsNull() || data.AuthScheme.ValueString() == ""
+	totpSecretFromEnvironment := data.TOTPSecret.IsNull() || data.TOTPSecret.ValueString() == ""
 
-	applyEnvironmentDefaults(&data, &diag.Diagnostics{})
+	applyCredentialEnvironmentDefaults(&data)
 
 	if authSchemeFromEnvironment {
-		validateAuthScheme(&data, &resp.Diagnostics)
+		resolveAuthScheme(&data, &resp.Diagnostics)
 	}
 
-	validateCredentials(&data, &resp.Diagnostics)
+	if totpSecretFromEnvironment {
+		validateEnvironmentTOTPSecret(&data, &resp.Diagnostics)
+	}
 }
 
-// validateAuthScheme rejects an `auth_scheme` that is not one of the three
-// names. The schema validator only sees the configuration, so without this a
-// typo in UPTIMEKUMA_AUTH_SCHEME would silently fall back to the detection. A
-// null or unknown value passes; Configure rejects the unknown one itself.
-func validateAuthScheme(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
-	if data.AuthScheme.IsNull() || data.AuthScheme.IsUnknown() {
+// validateEnvironmentTOTPSecret rejects a `totp_secret` taken from
+// UPTIMEKUMA_TOTP_SECRET that is not a base32 shared secret. The schema
+// validator only sees the configuration; without this, the environment value
+// would only be caught by client.New during Configure, after `terraform
+// validate` had passed. An unset value passes.
+func validateEnvironmentTOTPSecret(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
+	secret := data.TOTPSecret.ValueString()
+	if data.TOTPSecret.IsUnknown() || secret == "" {
 		return
 	}
 
-	switch data.AuthScheme.ValueString() {
-	case authSchemeAuto, authSchemeSocket, authSchemeHTTP:
+	err := kuma.ValidateTOTPSecret(secret)
+	if err == nil {
 		return
 	}
 
 	diags.AddAttributeError(
-		path.Root("auth_scheme"),
-		"invalid auth_scheme",
+		path.Root("totp_secret"),
+		"Invalid TOTP secret",
 		fmt.Sprintf(
-			"auth_scheme (or the environment variable UPTIMEKUMA_AUTH_SCHEME) must be one of %q, %q or "+
-				"%q, got %q",
-			authSchemeAuto, authSchemeSocket, authSchemeHTTP, data.AuthScheme.ValueString(),
+			"The environment variable UPTIMEKUMA_TOTP_SECRET is not a base32 shared secret, so no "+
+				"one-time code can be derived from it. Copy the `secret` out of the `otpauth://` URI "+
+				"Uptime Kuma showed while two-factor authentication was set up.\n\nUnderlying error: %v",
+			err,
 		),
 	)
+}
+
+// resolveAuthScheme returns the client's scheme for `auth_scheme`, and
+// rejects a value that is not one of the names. The schema validator only sees
+// the configuration, so without this a typo in UPTIMEKUMA_AUTH_SCHEME would
+// silently fall back to the detection. A null or unknown value resolves to the
+// detection without an error; Configure rejects the unknown one itself.
+func resolveAuthScheme(data *UptimeKumaProviderModel, diags *diag.Diagnostics) kuma.AuthScheme {
+	if data.AuthScheme.IsUnknown() {
+		return kuma.AuthSchemeAuto
+	}
+
+	scheme, ok := parseAuthScheme(data.AuthScheme.ValueString())
+	if !ok {
+		diags.AddAttributeError(
+			path.Root("auth_scheme"),
+			"invalid auth_scheme",
+			fmt.Sprintf(
+				"auth_scheme (or the environment variable UPTIMEKUMA_AUTH_SCHEME) must be one of %q, %q or "+
+					"%q, got %q",
+				authSchemeAuto, authSchemeSocket, authSchemeHTTP, data.AuthScheme.ValueString(),
+			),
+		)
+	}
+
+	return scheme
 }
 
 // validateCredentials checks that the configured credentials form one of the
@@ -222,8 +265,8 @@ func validateAuthScheme(data *UptimeKumaProviderModel, diags *diag.Diagnostics) 
 // the attribute is null: `totp_secret = var.secret` with an empty default is a
 // value the client ignores, and rejecting it would fail a configuration that
 // works. A credential that is still unknown cannot be judged at all, so the
-// check is skipped until it is known; Configure calls this again for that
-// reason.
+// check is skipped; Configure, its only caller, rejects an unknown credential
+// before it gets here.
 func validateCredentials(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
 	for _, value := range []types.String{data.Username, data.Password, data.SessionToken, data.TOTPSecret} {
 		if value.IsUnknown() {
@@ -282,8 +325,8 @@ func warnRejectedSessionToken(rejection error, diags *diag.Diagnostics) {
 		"session token rejected, fell back to password",
 		"Uptime Kuma refused the configured session_token and the provider logged in with username "+
 			"and password instead. Replace it with the token of a fresh login, or remove the attribute. "+
-			"On Uptime Kuma 2.x a token is invalidated by a password change or by the account being "+
-			"deactivated; on Uptime Kuma 3.x it also lapses after 7 days without use.\n\n"+
+			"On Uptime Kuma 2.x a token is invalidated by a password change; on Uptime Kuma 3.x it also "+
+			"lapses after 7 days without use.\n\n"+
 			"Reason given: "+rejection.Error(),
 	)
 }
@@ -298,7 +341,10 @@ func warnRejectedSessionToken(rejection error, diags *diag.Diagnostics) {
 //
 // It returns empty strings for every other error, including a token rejection
 // on its own: the client only falls back when there is a password to offer,
-// and never for kuma.ErrUserInactive, which no password recovers from.
+// and never when the token itself was refused with kuma.ErrUserInactive, which
+// no password recovers from. The password login can still fail with it, on
+// Uptime Kuma 3.x for a banned account whose session lapsed, so the password
+// half is matched against it like against every other typed error.
 func passwordFallbackAdvice(err error) (summary string, nextStep string) {
 	passwordErr := client.PasswordFallbackCause(err)
 	if passwordErr == nil {
@@ -311,6 +357,11 @@ func passwordFallbackAdvice(err error) (summary string, nextStep string) {
 	var rateLimited *kuma.RateLimitedError
 
 	switch {
+	case errors.Is(passwordErr, kuma.ErrUserInactive):
+		return "Uptime Kuma rejected the session token and the account is inactive", prefix +
+			"the account is deactivated or deleted. Reactivate it in Uptime Kuma or configure the " +
+			"credentials of an active account."
+
 	case errors.Is(passwordErr, kuma.ErrInvalidCredentials):
 		return "Uptime Kuma rejected the session token and the password", prefix +
 			"the username or password was rejected too. A password change is what invalidates a " +
@@ -319,13 +370,24 @@ func passwordFallbackAdvice(err error) (summary string, nextStep string) {
 
 	case errors.Is(passwordErr, kuma.ErrTwoFactorRequired):
 		return "Uptime Kuma rejected the session token and requires two-factor authentication", prefix +
-			"the account has two-factor authentication enabled and no TOTP secret is configured. " +
-			"Set `totp_secret`, or replace `session_token` with the token of a fresh login."
+			"the account has two-factor authentication enabled and asked for a one-time code. Set " +
+			"`totp_secret` if it is not set; if it is, the two-factor step expired before the code was " +
+			"sent, so run Terraform again. Replace `session_token` with the token of a fresh login " +
+			"either way."
 
-	case errors.Is(passwordErr, kuma.ErrInvalidTOTPCode), errors.Is(passwordErr, kuma.ErrTwoFactorLocked):
+	case errors.Is(passwordErr, kuma.ErrInvalidTOTPCode):
 		return "Uptime Kuma rejected the session token and the two-factor authentication code", prefix +
-			"the one-time code derived from the TOTP secret was refused. Check `totp_secret` and the " +
-			"clock of this host, and replace `session_token` with the token of a fresh login."
+			"the one-time code derived from the TOTP secret was refused. On Uptime Kuma 2.x a code the " +
+			"server has already accepted is refused too, and the wait for the next one fails when " +
+			"`timeout` or `per_attempt_timeout` is too short, see the attribute documentation of " +
+			"`totp_secret`. Otherwise check `totp_secret` and the clock of this host. Replace " +
+			"`session_token` with the token of a fresh login either way."
+
+	case errors.Is(passwordErr, kuma.ErrTwoFactorLocked):
+		return "Uptime Kuma rejected the session token and locked the two-factor authentication", prefix +
+			"the server refuses further two-factor codes for this login after too many wrong ones. Check " +
+			"`totp_secret` and the clock of this host, then run Terraform again, and replace " +
+			"`session_token` with the token of a fresh login."
 
 	case errors.As(passwordErr, &rateLimited) && rateLimited.RetryAfter > 0:
 		return "Uptime Kuma rejected the session token and rate limited the login", prefix +

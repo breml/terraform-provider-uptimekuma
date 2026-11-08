@@ -121,19 +121,34 @@ func TestConnectionError(t *testing.T) {
 			name:        "session token rejected, two factor required",
 			err:         passwordFallbackError(kuma.ErrTwoFactorRequired),
 			wantSummary: "Uptime Kuma rejected the session token and requires two-factor authentication",
-			wantDetail:  []string{"fell back to failed as well", "Set `totp_secret`"},
+			// On 3.x the two-factor step can expire with totp_secret set, so
+			// the advice must not claim that no secret is configured.
+			wantDetail: []string{"fell back to failed as well", "Set `totp_secret` if it is not set", "expired"},
+			notDetail:  []string{"no TOTP secret is configured"},
 		},
 		{
 			name:        "session token rejected, totp code refused",
 			err:         passwordFallbackError(kuma.ErrInvalidTOTPCode),
 			wantSummary: "Uptime Kuma rejected the session token and the two-factor authentication code",
-			wantDetail:  []string{"fell back to failed as well", "Check `totp_secret`"},
+			wantDetail: []string{
+				"fell back to failed as well", "check `totp_secret`", "Uptime Kuma 2.x", "`per_attempt_timeout`",
+			},
 		},
 		{
 			name:        "session token rejected, two factor locked",
 			err:         passwordFallbackError(kuma.ErrTwoFactorLocked),
-			wantSummary: "Uptime Kuma rejected the session token and the two-factor authentication code",
-			wantDetail:  []string{"fell back to failed as well"},
+			wantSummary: "Uptime Kuma rejected the session token and locked the two-factor authentication",
+			wantDetail:  []string{"fell back to failed as well", "too many wrong ones"},
+		},
+		{
+			// Uptime Kuma 3.x reports a banned account on the password login
+			// that follows a lapsed session, so the password half can be
+			// inactive even though the token half never is.
+			name:        "session token rejected, account inactive",
+			err:         passwordFallbackError(kuma.ErrUserInactive),
+			wantSummary: "Uptime Kuma rejected the session token and the account is inactive",
+			wantDetail:  []string{"fell back to failed as well", "deactivated or deleted"},
+			notDetail:   []string{"does not recognize", "Common causes"},
 		},
 		{
 			name:        "session token rejected, rate limited",

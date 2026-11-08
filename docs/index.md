@@ -49,9 +49,10 @@ take one of these shapes:
   be replaced.
 
 `totp_secret` without `username` and `password` is rejected, and so is `username` without
-`password` or the other way round. Every attribute can also come from an environment variable:
-`UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`, `UPTIMEKUMA_TOTP_SECRET`,
-`UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_AUTH_SCHEME`. For the credentials an empty attribute
+`password` or the other way round. The endpoint, the credentials and the scheme can also come from
+an environment variable: `UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`,
+`UPTIMEKUMA_TOTP_SECRET`, `UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_AUTH_SCHEME`. The connection
+options have their own, see the schema below. For the credentials and the scheme an empty attribute
 counts as unset, so the environment variable applies to it too; that is what an attribute fed from
 a variable without a value leaves behind.
 
@@ -95,14 +96,14 @@ second factor. Store both the way the password is stored.
 ### Rate limits and two-factor authentication
 
 Every Terraform command that configures the provider logs in once: `terraform plan` once, and
-`terraform apply` twice, because the plan and the apply run in separate provider processes. The
-provider does not retry a rejected credential. Uptime Kuma limits logins: 2.x allows 20 per minute
-for the whole server, and a login that answers a one-time code costs two of them; 3.x allows three
-sign-ins per ten seconds per client address. Many Terraform runs starting at once can reach the
-limit.
+`terraform apply` twice, because the plan and the apply run in separate provider processes. A login
+the server rejected is not repeated on the next connection attempt. Uptime Kuma limits logins: 2.x
+allows 20 per minute for the whole server, and a login that answers a one-time code costs two of
+them; 3.x allows three sign-ins per ten seconds per client address. Many Terraform runs starting at
+once can reach the limit.
 
-Uptime Kuma also refuses a one-time code it has already accepted for the account. The two logins of
-one `terraform apply` therefore often collide when they fall into the same 30 second step, and so
+Uptime Kuma 2.x also refuses a one-time code it has already accepted for the account. The two logins
+of one `terraform apply` therefore often collide when they fall into the same 30 second step, and so
 do parallel runs with the same `totp_secret`. The provider then waits for the next step and retries
 once, which settles two logins in one step but not more, and only when the connection budget can
 cover the wait of up to 30 seconds. With `totp_secret`, set `timeout` to at least `60s` and leave
@@ -259,7 +260,7 @@ The provider supports managing the following resources:
 
 ### Optional
 
-- `auth_scheme` (String) How the provider authenticates: `auto` (default) detects it with one request before connecting, `socket` is the login command on the Socket.IO connection of Uptime Kuma 2.x, and `http` is the HTTP sign-in of Uptime Kuma 3.x. The detection is right for every Uptime Kuma release; pin the scheme only for a reverse proxy that answers the detection request itself. A pinned scheme the server does not speak fails the login. Can be set via `UPTIMEKUMA_AUTH_SCHEME` environment variable, which applies when the attribute is unset.
+- `auth_scheme` (String) How the provider authenticates: `auto` (default) detects it with one request before connecting, `socket` is the login command on the Socket.IO connection of Uptime Kuma 2.x, and `http` is the HTTP sign-in of Uptime Kuma 3.x. The detection is right for every Uptime Kuma release; pin the scheme only for a reverse proxy that answers the detection request itself. A pinned scheme the server does not speak fails the login. Can be set via `UPTIMEKUMA_AUTH_SCHEME` environment variable, which applies when the attribute is unset or empty.
 - `endpoint` (String) Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable.
 - `max_retries` (Number) Maximum number of connection retry attempts (default: `3`). All retry attempts must complete within the overall `timeout` budget. Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.
 - `operation_timeout` (String) Timeout for a single Uptime Kuma command as a Go duration string (e.g. `30s`, `2m`) (default: `60s`). Bounds how long the provider waits for the server to acknowledge one create, read, update or delete and to confirm it, so an instance that accepts a command and never answers it fails the operation instead of blocking the apply indefinitely. It also bounds the login and setup performed while connecting, so during connect the effective bound is whichever of `timeout` and `operation_timeout` expires first. The bound is on the round trip and not on the whole call: a write that has to queue behind other writes to the same list waits its turn outside this budget. A value of `0s` means "not configured" and falls back to the default; the bound cannot be disabled, so set a large value instead. Can be set via `UPTIMEKUMA_OPERATION_TIMEOUT` environment variable.
@@ -267,5 +268,5 @@ The provider supports managing the following resources:
 - `per_attempt_timeout` (String) Optional per-attempt connection timeout as a Go duration string (e.g. `5s`, `10s`). Caps the time spent on each individual connection attempt. The effective per-attempt timeout is the smaller of this value and the remaining `timeout` budget. When unset, each attempt may use the full remaining `timeout` budget. Can be set via `UPTIMEKUMA_PER_ATTEMPT_TIMEOUT` environment variable.
 - `session_token` (String, Sensitive) Session token from an earlier login, used instead of the password. It bypasses two-factor authentication, so it needs neither the password nor a one-time code. On Uptime Kuma 2.x it is the JWT the server hands out on every login; it does not expire, and only a password change or a deactivated account invalidates it. On Uptime Kuma 3.x it is the value of the `better-auth.session_token` cookie, which lapses after 7 days without use and on a password change, so keep `username` and `password` next to it there. Set it alone, or together with `username` and `password`: the token is tried first, and the password login is the fallback for a token the server refuses, which the provider reports with a warning. `uptimekuma_settings` needs `password` on the provider, because Uptime Kuma asks for the account password again when settings are written. Can be set via `UPTIMEKUMA_SESSION_TOKEN` environment variable, which applies when the attribute is unset or empty.
 - `timeout` (String) Overall connection timeout as a Go duration string (e.g. `30s`, `2m`). Bounds the total time spent attempting to connect to Uptime Kuma, including all retry attempts and backoff. Defaults to `30s` if not specified. Can be set via `UPTIMEKUMA_TIMEOUT` environment variable.
-- `totp_secret` (String, Sensitive) Shared secret of an account with two-factor authentication enabled, for the password login. This is the base32 `secret` from the `otpauth://` URI Uptime Kuma shows while two-factor authentication is set up; spaces, hyphens, lower case and missing padding are accepted. The provider derives the one-time code the server asks for from it, and only once the server asks, so it is inert on an account without two-factor authentication. Requires `username` and `password`. Uptime Kuma refuses a code it has already accepted for the account, and every Terraform command logs in on its own: `terraform apply` logs in twice, for the plan and for the apply, and the second login often falls into the 30 second step of the first. The provider then waits for the next step, so set `timeout` to at least 60s, and leave `per_attempt_timeout` unset or above 35s. The same applies to parallel runs, where the single retry settles two logins in one step but not more; set `session_token` next to the password to need no code. Can be set via `UPTIMEKUMA_TOTP_SECRET` environment variable, which applies when the attribute is unset or empty.
+- `totp_secret` (String, Sensitive) Shared secret of an account with two-factor authentication enabled, for the password login. This is the base32 `secret` from the `otpauth://` URI Uptime Kuma shows while two-factor authentication is set up; spaces, hyphens, lower case and missing padding are accepted. The provider derives the one-time code the server asks for from it, and only once the server asks, so it is inert on an account without two-factor authentication. Requires `username` and `password`. Uptime Kuma 2.x refuses a code it has already accepted for the account, and every Terraform command logs in on its own: `terraform apply` logs in twice, for the plan and for the apply, and the second login often falls into the 30 second step of the first. The provider then waits for the next step, so set `timeout` to at least 60s, and leave `per_attempt_timeout` unset or above 35s. The same applies to parallel runs, where the single retry settles two logins in one step but not more; set `session_token` next to the password to need no code. Can be set via `UPTIMEKUMA_TOTP_SECRET` environment variable, which applies when the attribute is unset or empty.
 - `username` (String) Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable, which applies when the attribute is unset or empty.

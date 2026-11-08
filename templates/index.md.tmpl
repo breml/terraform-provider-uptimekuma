@@ -49,9 +49,10 @@ take one of these shapes:
   be replaced.
 
 `totp_secret` without `username` and `password` is rejected, and so is `username` without
-`password` or the other way round. Every attribute can also come from an environment variable:
-`UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`, `UPTIMEKUMA_TOTP_SECRET`,
-`UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_AUTH_SCHEME`. For the credentials an empty attribute
+`password` or the other way round. The endpoint, the credentials and the scheme can also come from
+an environment variable: `UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`,
+`UPTIMEKUMA_TOTP_SECRET`, `UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_AUTH_SCHEME`. The connection
+options have their own, see the schema below. For the credentials and the scheme an empty attribute
 counts as unset, so the environment variable applies to it too; that is what an attribute fed from
 a variable without a value leaves behind.
 
@@ -95,14 +96,14 @@ second factor. Store both the way the password is stored.
 ### Rate limits and two-factor authentication
 
 Every Terraform command that configures the provider logs in once: `terraform plan` once, and
-`terraform apply` twice, because the plan and the apply run in separate provider processes. The
-provider does not retry a rejected credential. Uptime Kuma limits logins: 2.x allows 20 per minute
-for the whole server, and a login that answers a one-time code costs two of them; 3.x allows three
-sign-ins per ten seconds per client address. Many Terraform runs starting at once can reach the
-limit.
+`terraform apply` twice, because the plan and the apply run in separate provider processes. A login
+the server rejected is not repeated on the next connection attempt. Uptime Kuma limits logins: 2.x
+allows 20 per minute for the whole server, and a login that answers a one-time code costs two of
+them; 3.x allows three sign-ins per ten seconds per client address. Many Terraform runs starting at
+once can reach the limit.
 
-Uptime Kuma also refuses a one-time code it has already accepted for the account. The two logins of
-one `terraform apply` therefore often collide when they fall into the same 30 second step, and so
+Uptime Kuma 2.x also refuses a one-time code it has already accepted for the account. The two logins
+of one `terraform apply` therefore often collide when they fall into the same 30 second step, and so
 do parallel runs with the same `totp_secret`. The provider then waits for the next step and retries
 once, which settles two logins in one step but not more, and only when the connection budget can
 cover the wait of up to 30 seconds. With `totp_secret`, set `timeout` to at least `60s` and leave
