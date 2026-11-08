@@ -109,6 +109,29 @@ type Config struct {
 	// turn.
 	OperationTimeout time.Duration
 	MaxRetries       int
+	// TOTPSecret is the shared secret of an account with two-factor
+	// authentication enabled. The client derives the one-time code the
+	// server asks for from it, so a login needs no human at the keyboard.
+	// It is only used once the server asks for a code, which makes it inert
+	// on an account without two-factor authentication.
+	TOTPSecret string
+	// SessionToken authenticates with the credential an earlier login
+	// produced instead of with the password, and bypasses two-factor
+	// authentication: the JWT of a 2.x server or the session cookie of a 3.x
+	// server. When a Username and Password are configured as well, the token
+	// is tried first and the password login is the fallback for a token the
+	// server refuses.
+	SessionToken string
+	// AuthScheme pins how the client authenticates, see kuma.WithAuthScheme.
+	// The zero value, kuma.AuthSchemeAuto, detects it.
+	AuthScheme kuma.AuthScheme
+	// OnSessionTokenRejected is called when the server refused SessionToken
+	// and the password login took over, with the error it was refused with.
+	// The connection succeeds in that case and nothing about the returned
+	// client says that the stored token is dead, so this is the only place the
+	// reason can be read. It runs on the goroutine that called New, before New
+	// returns, and is never called for a token the server accepted.
+	OnSessionTokenRejected func(err error)
 }
 
 // New creates a new Uptime Kuma client with optional connection pooling.
@@ -117,6 +140,17 @@ type Config struct {
 func New(ctx context.Context, config *Config) (*kuma.Client, error) {
 	if config.Endpoint == "" {
 		return nil, errors.New("endpoint is required")
+	}
+
+	// A secret that cannot produce a code is worth rejecting before the first
+	// connection attempt, and before the pool: kuma.New rejects it as well,
+	// but from inside the retry loop, which would repeat it as though the
+	// server were unreachable.
+	if config.TOTPSecret != "" {
+		err := kuma.ValidateTOTPSecret(config.TOTPSecret)
+		if err != nil {
+			return nil, fmt.Errorf("check totp secret: %w", err)
+		}
 	}
 
 	if config.EnableConnectionPool {
@@ -161,7 +195,20 @@ type connectFunc func(
 // login rate limit, so retrying a wrong password can lock the address out for
 // a while. kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is
 // covered by it.
+//
+// A session token the server refused, followed by a password login that
+// failed too, wraps kuma.ErrInvalidSessionToken whatever the password login
+// failed with, see PasswordFallbackCause. Such an error is judged by its
+// password half instead: the token is refused again on the next attempt, but
+// the password login that follows it may well succeed after a timeout, a
+// transport failure or a rate limit. retryDelay then reads the wait of a rate
+// limit out of the password half, since the token half carries none.
 func isPermanentLoginError(err error) bool {
+	passwordErr := PasswordFallbackCause(err)
+	if passwordErr != nil {
+		return isPermanentLoginError(passwordErr)
+	}
+
 	for _, target := range []error{
 		kuma.ErrInvalidCredentials,
 		kuma.ErrTwoFactorRequired,
@@ -260,18 +307,12 @@ func newClientDirectWithRetry(
 			return nil, newTimeoutError(attempt, err)
 		}
 
-		opts := []kuma.Option{
-			kuma.WithLogLevel(config.LogLevel),
-			kuma.WithConnectTimeout(attemptTimeout),
-			kuma.WithOperationTimeout(effectiveOperationTimeout(config.OperationTimeout)),
-		}
-
 		kumaClient, err = connect(
 			ctx,
 			config.Endpoint,
 			config.Username,
 			config.Password,
-			opts...,
+			connectOptions(config, attemptTimeout)...,
 		)
 		if err == nil {
 			return kumaClient, nil
@@ -308,6 +349,42 @@ func newClientDirectWithRetry(
 	}
 
 	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries+1, err)
+}
+
+// connectOptions builds the kuma options for a single connection attempt.
+// attemptTimeout is this attempt's share of the overall ConnectTimeout budget.
+//
+// The credential options are only passed when configured, so that a client
+// without them keeps the plain username and password login. For the TOTP
+// secret that guard is load bearing rather than tidiness:
+// kuma.WithTOTPSecret("") is not inert, it fails kuma.New with an empty secret
+// error, which would break every client that never configured one.
+// kuma.WithSessionToken("") and kuma.WithAuthScheme(kuma.AuthSchemeAuto) are
+// inert, and guarded for symmetry.
+func connectOptions(config *Config, attemptTimeout time.Duration) []kuma.Option {
+	opts := []kuma.Option{
+		kuma.WithLogLevel(config.LogLevel),
+		kuma.WithConnectTimeout(attemptTimeout),
+		kuma.WithOperationTimeout(effectiveOperationTimeout(config.OperationTimeout)),
+	}
+
+	if config.TOTPSecret != "" {
+		opts = append(opts, kuma.WithTOTPSecret(config.TOTPSecret))
+	}
+
+	if config.SessionToken != "" {
+		opts = append(opts, kuma.WithSessionToken(config.SessionToken))
+	}
+
+	if config.AuthScheme != kuma.AuthSchemeAuto {
+		opts = append(opts, kuma.WithAuthScheme(config.AuthScheme))
+	}
+
+	if config.OnSessionTokenRejected != nil {
+		opts = append(opts, kuma.WithSessionTokenRejectedCallback(config.OnSessionTokenRejected))
+	}
+
+	return opts
 }
 
 // remainingAttemptTimeout returns the timeout to use for the next attempt.

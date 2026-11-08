@@ -33,13 +33,119 @@ resource "uptimekuma_monitor_http" "example" {
 
 ## Authentication
 
-The provider uses basic authentication to connect to your Uptime Kuma instance. This is verified
-to work with Uptime Kuma instances that support basic authentication via API. You need to
-provide:
+`endpoint`, the URL of your Uptime Kuma instance, is always required. The credentials next to it
+take one of these shapes:
 
-- `endpoint` - The URL of your Uptime Kuma instance
-- `username` - Your Uptime Kuma username
-- `password` - Your Uptime Kuma password
+- **Nothing**, for a server with authentication disabled.
+- **`username` and `password`**, the usual login. For an account with two-factor authentication
+  (2FA) enabled, add `totp_secret`: the base32 `secret` from the `otpauth://` URI Uptime Kuma shows
+  while 2FA is set up. The provider derives the one-time code from it whenever the server asks for
+  one, so nothing has to be typed at apply time. Spaces, hyphens, lower case and missing padding are
+  accepted, and the secret is inert on an account without 2FA.
+- **`session_token`**, the credential Uptime Kuma hands out on a successful login and accepts in
+  place of one. It needs neither the password nor a one-time code. Set it alone, or together with
+  `username` and `password`: the token is tried first, and the password login is the fallback for a
+  token the server refuses. The provider warns when that fallback happens, so the stored token can
+  be replaced.
+
+`totp_secret` without `username` and `password` is rejected, and so is `username` without
+`password` or the other way round. Every attribute can also come from an environment variable:
+`UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`, `UPTIMEKUMA_TOTP_SECRET`,
+`UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_AUTH_SCHEME`. For the credentials an empty attribute
+counts as unset, so the environment variable applies to it too; that is what an attribute fed from
+a variable without a value leaves behind.
+
+The credentials must be known when Terraform plans, because the provider logs in to plan at all. A
+provider attribute that refers to a resource created in the same run is rejected.
+
+```hcl
+# Username and password, with a TOTP secret for an account with 2FA enabled.
+provider "uptimekuma" {
+  endpoint    = "https://uptime-kuma.example.com"
+  username    = "admin"
+  password    = var.uptimekuma_password
+  totp_secret = var.uptimekuma_totp_secret
+}
+
+# A session token, with the password to fall back on.
+provider "uptimekuma" {
+  alias         = "token"
+  endpoint      = "https://uptime-kuma.example.com"
+  session_token = var.uptimekuma_session_token
+  username      = "admin"
+  password      = var.uptimekuma_password
+}
+```
+
+### Session tokens on Uptime Kuma 2.x and 3.x
+
+- On **Uptime Kuma 2.x** the session token is the JWT the server answers a login with, the `token`
+  entry the web interface keeps in the browser's local storage (or session storage, when "Remember
+  me" was not ticked). It does not expire: only a password change or a deactivated account
+  invalidates it. The server accepts it without asking for a one-time code, even for an account
+  with 2FA enabled.
+- On **Uptime Kuma 3.x** the session token is the value of the `better-auth.session_token` cookie.
+  It lapses after 7 days without use and on a password change, so keep `username` and `password`
+  next to it for the provider to fall back on.
+
+A session token is a bearer credential. For an account with 2FA enabled it is a *stronger*
+credential than the password, because it needs no second factor, and `totp_secret` is the whole
+second factor. Store both the way the password is stored.
+
+### Rate limits and two-factor authentication
+
+Every Terraform command that configures the provider logs in once: `terraform plan` once, and
+`terraform apply` twice, because the plan and the apply run in separate provider processes. The
+provider does not retry a rejected credential. Uptime Kuma limits logins: 2.x allows 20 per minute
+for the whole server, and a login that answers a one-time code costs two of them; 3.x allows three
+sign-ins per ten seconds per client address. Many Terraform runs starting at once can reach the
+limit.
+
+Uptime Kuma also refuses a one-time code it has already accepted for the account. The two logins of
+one `terraform apply` therefore often collide when they fall into the same 30 second step, and so
+do parallel runs with the same `totp_secret`. The provider then waits for the next step and retries
+once, which settles two logins in one step but not more, and only when the connection budget can
+cover the wait of up to 30 seconds. With `totp_secret`, set `timeout` to at least `60s` and leave
+`per_attempt_timeout` unset or above `35s`. A `session_token` next to the password avoids the
+one-time code altogether, and is the credential to share between parallel runs such as CI jobs.
+
+```hcl
+provider "uptimekuma" {
+  endpoint    = "https://uptime-kuma.example.com"
+  username    = "admin"
+  password    = var.uptimekuma_password
+  totp_secret = var.uptimekuma_totp_secret
+  timeout     = "60s"
+}
+```
+
+### Authentication and `uptimekuma_settings`
+
+Uptime Kuma asks for the account password again whenever settings are written, so
+`uptimekuma_settings` needs `password` on the provider. A provider that authenticates with
+`session_token` alone can manage every other resource.
+
+### Keeping credentials out of the configuration
+
+Provider attributes cannot be write-only, but Terraform never stores the provider configuration in
+the state. Pass credentials through environment variables, or through
+[ephemeral input variables](https://developer.hashicorp.com/terraform/language/values/variables#exclude-values-from-state-and-plan)
+(Terraform 1.10 or later), which also keeps them out of saved plan files:
+
+```hcl
+variable "uptimekuma_session_token" {
+  type      = string
+  sensitive = true
+  ephemeral = true
+}
+```
+
+### Pinning the authentication scheme
+
+Uptime Kuma 3.0 replaces the login command on the Socket.IO connection with an HTTP sign-in. The
+provider detects which one the server speaks with one request before it connects. `auth_scheme`
+pins it instead (`socket` for 2.x, `http` for 3.x), which is only needed for a reverse proxy that
+answers that request itself.
 
 ## Compatibility
 
@@ -51,9 +157,12 @@ Uptime Kuma 3.0 replaces the socket login with an HTTP sign-in. The provider det
 server speaks, so the provider configuration is the same for both. On 3.0 the following applies:
 
 - API keys still cannot authenticate the socket connection, the server only accepts the session of
-  a signed-in user. Configure `username` and `password` as for 2.5.x.
+  a signed-in user. Configure `username` and `password` as for 2.5.x, or a `session_token`; on 3.0
+  the token is a session cookie that lapses after 7 days without use, so keep `username` and
+  `password` next to it, see [Session tokens on Uptime Kuma 2.x and 3.x](#session-tokens-on-uptime-kuma-2x-and-3x).
 - The server allows three sign-ins per ten seconds from one address. Many provider instances
-  signing in at once, such as several `terraform apply` runs in parallel, can hit that limit.
+  signing in at once, such as several `terraform apply` runs in parallel, can hit that limit. See
+  [Rate limits and two-factor authentication](#rate-limits-and-two-factor-authentication).
 - The first user's password must have at least eight characters and is checked against the Have I
   Been Pwned database.
 

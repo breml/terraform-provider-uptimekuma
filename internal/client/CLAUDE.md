@@ -14,7 +14,10 @@ pooling support.
 
 - [client.go](client.go) - Client creation with retry logic
 - [pool.go](pool.go) - Connection pooling implementation
+- [fallback.go](fallback.go) - `PasswordFallbackCause`, the password half of a `*kuma.SessionTokenFallbackError`
 - [client_test.go](client_test.go) - Client tests
+- [client_retry_test.go](client_retry_test.go) - Retry decisions, through the `connectFunc` fake
+- [client_auth_test.go](client_auth_test.go) - Credential options, TOTP secret check, pool identity
 - [pool_test.go](pool_test.go) - Pool tests
 
 ## Key Constants
@@ -85,6 +88,10 @@ type Config struct {
     PerAttemptTimeout    time.Duration  // Optional per-attempt cap; defaults to remaining ConnectTimeout budget
     OperationTimeout     time.Duration  // Bound on a single operation once connected (default: 60s)
     MaxRetries           int            // Max retry attempts (default: 3)
+    TOTPSecret           string         // Optional: 2FA shared secret, for kuma.WithTOTPSecret
+    SessionToken         string         // Optional: token login, for kuma.WithSessionToken
+    AuthScheme           kuma.AuthScheme // Optional: pinned scheme, for kuma.WithAuthScheme (default: auto)
+    OnSessionTokenRejected func(error)  // Optional: told when the token was refused and the password took over
 }
 ```
 
@@ -92,6 +99,22 @@ type Config struct {
 
 - `Endpoint` is always required
 - `Username` and `Password` are both optional or both required (not one without the other)
+- `TOTPSecret` is the base32 secret of an account with two-factor authentication enabled; the
+  client derives the one-time code the server asks for from it, and never sends one unless the
+  server asks, so it is inert on an account without two-factor authentication. `New` rejects a
+  secret that is not base32 before the first attempt and before the pool, with
+  `kuma.ValidateTOTPSecret` (`kuma.ErrInvalidTOTPSecret`), because inside the retry loop it would
+  be repeated as though the server were unreachable
+- `SessionToken` authenticates with the credential an earlier login produced (the JWT on 2.x, the
+  `better-auth.session_token` cookie on 3.x). With a `Username` and `Password` set as well, the
+  token is tried first and the password login is the fallback for a token the server refuses;
+  `OnSessionTokenRejected` is called for that fallback, before `New` returns
+- `AuthScheme` defaults to `kuma.AuthSchemeAuto`, which detects the scheme
+- Each credential option is only passed to `kuma.New` when its field is set (`connectOptions`):
+  `kuma.WithTOTPSecret("")` is not inert, it fails `kuma.New`
+- `TOTPSecret`, `SessionToken` and `AuthScheme` are part of the pool's config identity, and the
+  mismatch message names whether each secret is set without printing it. `OnSessionTokenRejected`
+  is not: only the Configure that opens the pooled connection hears about a fallback
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
 - `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; this value bounds the overall
   connection process across all retry attempts and backoff
@@ -150,6 +173,12 @@ if err != nil {
 - Permanent login failures (`kuma.ErrInvalidCredentials`, `ErrTwoFactorRequired`, `ErrInvalidTOTPCode`,
   `ErrTwoFactorLocked`, `ErrInvalidSessionToken` including `ErrUserInactive`, `ErrAuthRequired`) are returned
   after the first attempt: retrying them only burns attempts against the server's login rate limit
+- A refused session token followed by a failed password login arrives as one error wrapping both
+  (`"%w, and the password login that followed: %w"`), so it always matches `ErrInvalidSessionToken`.
+  `PasswordFallbackCause` ([fallback.go](fallback.go)) recognises it by that shape - two wrapped errors,
+  the first the token rejection - and `isPermanentLoginError` judges it by the password half: a timeout,
+  transport failure or rate limit there is retried like any other, and `retryDelay` reads the
+  `RetryAfter` of the password half
 - A rate limited login (`kuma.ErrRateLimited`) waits `RetryAfter` (`*kuma.RateLimitedError`, Uptime Kuma 3.x)
   or, where the server names none (2.x, which allows 20 logins per minute), `rateLimitWindow` of 1 minute
   instead of the backoff. That wait is not capped by `maxRetryDelay`; a wait at or beyond the remaining budget
@@ -172,7 +201,7 @@ During acceptance tests, the same pooled configuration is used:
 config := &Config{
     Endpoint: "http://localhost:3001",
     Username: "admin",
-    Password: "admin",  // Same as main_test.go
+    Password: "Kuma-Test-8f4Q2xR9p",  // Same as main_test.go
     EnableConnectionPool: true,
 }
 
@@ -219,7 +248,8 @@ client, err := pool.GetOrCreate(ctx, config)
 
 **Validation:**
 
-- If pool has existing client, validates config matches (endpoint, username, password)
+- If pool has existing client, validates config matches (endpoint, credentials including TOTP
+  secret and session token, auth scheme, timeouts, max retries)
 - LogLevel not validated (first connection's level is used)
 - Increments reference count on success
 - Returns error on config mismatch to prevent credential confusion
@@ -280,14 +310,23 @@ In [../provider/provider.go](../provider/provider.go), the provider creates a cl
 func (p *UptimeKumaProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
     // ... read config from req.Config
 
+    // The callback runs on this goroutine before client.New returns.
+    var sessionTokenRejection error
+
+    // buildClientConfig maps every provider attribute, credentials included,
+    // and always sets EnableConnectionPool.
+    config := buildClientConfig(&data, opts)
+    config.OnSessionTokenRejected = func(err error) { sessionTokenRejection = err }
+
     // Use context.Background() not ctx (Terraform's context cancels too early)
-    kumaClient, err := client.New(context.Background(), &client.Config{
-        Endpoint:             data.Endpoint.ValueString(),
-        Username:             data.Username.ValueString(),
-        Password:             data.Password.ValueString(),
-        EnableConnectionPool: true,  // Always enabled
-        LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
-    })
+    kumaClient, err := client.New(context.Background(), config)
+    if err != nil {
+        resp.Diagnostics.AddError(connectionError(data.Endpoint.ValueString(), err))
+        return
+    }
+
+    // A token the server refused and the password took over from is a warning
+    warnRejectedSessionToken(sessionTokenRejection, &resp.Diagnostics)
 
     // Wrapped in a *providerData, see "Resource Configure Method" below
     pd := &providerData{client: kumaClient, password: data.Password.ValueString()}
@@ -376,7 +415,7 @@ var (
 
 const (
     username = "admin"
-    password = "admin1"  // throwaway credentials for the test container
+    password = "Kuma-Test-8f4Q2xR9p"  // throwaway credentials for the test container
 )
 ```
 
@@ -423,6 +462,7 @@ if err != nil {
 **Common Errors:**
 
 - `"endpoint is required"` - Config validation failure
+- `kuma.ErrInvalidTOTPSecret` - a `TOTPSecret` that is not base32, rejected before connecting
 - `"failed after 4 attempts: ..."` - Connection retry exhaustion (with default `max_retries=3`)
 - `"connection cancelled: ..."` - Context cancellation during retry
 - `"pool config mismatch: ..."` - Credential confusion prevention
