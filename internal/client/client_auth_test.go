@@ -122,7 +122,7 @@ func TestNewClientDirectWithRetry_CredentialOptions(t *testing.T) {
 
 			var captured []kuma.Option
 
-			_, err := newClientDirectWithRetry(t.Context(), &config, capturingConnect(&captured))
+			_, err := newClientDirectWithRetry(t.Context(), &config, capturingConnect(&captured), retryDelay)
 			if !errors.Is(err, kuma.ErrInvalidCredentials) {
 				t.Fatalf("expected the fake's error, got %v", err)
 			}

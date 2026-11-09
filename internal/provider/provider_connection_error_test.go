@@ -41,15 +41,17 @@ func TestConnectionError(t *testing.T) {
 			name:        "two factor required",
 			err:         kuma.ErrTwoFactorRequired,
 			wantSummary: "Uptime Kuma requires two-factor authentication",
-			wantDetail:  []string{"TOTP secret", "`totp_secret`", "`session_token`"},
-			notDetail:   []string{"issues/404"},
+			// The client also reports an expired 3.x two-factor step with
+			// totp_secret set, so the advice must cover a configured secret too.
+			wantDetail: []string{"TOTP secret", "If `totp_secret`", "is not set", "expired", "`session_token`"},
+			notDetail:  []string{"issues/404"},
 		},
 		{
 			name:        "invalid totp code",
 			err:         kuma.ErrInvalidTOTPCode,
 			wantSummary: "Uptime Kuma rejected the two-factor authentication code",
-			wantDetail:  []string{"TOTP secret", "`totp_secret`", "30 second step", "`session_token`"},
-			notDetail:   []string{"issues/404"},
+			wantDetail:  []string{"TOTP secret", "`totp_secret`", "30 second step", "retries once", "`session_token`"},
+			notDetail:   []string{"issues/404", "per_attempt_timeout"},
 		},
 		{
 			name:        "two factor locked",
@@ -131,7 +133,7 @@ func TestConnectionError(t *testing.T) {
 			err:         passwordFallbackError(kuma.ErrInvalidTOTPCode),
 			wantSummary: "Uptime Kuma rejected the session token and the two-factor authentication code",
 			wantDetail: []string{
-				"fell back to failed as well", "check `totp_secret`", "Uptime Kuma 2.x", "`per_attempt_timeout`",
+				"fell back to failed as well", "check `totp_secret`", "Uptime Kuma 2.x", "retry in the next step",
 			},
 		},
 		{

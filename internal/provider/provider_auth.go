@@ -48,8 +48,8 @@ const totpSecretDescription = "Shared secret of an account with two-factor authe
 	"and `password`. Uptime Kuma 2.x refuses a code it has already accepted for the account, and every " +
 	"Terraform command logs in on its own: `terraform apply` logs in twice, for the plan and for the " +
 	"apply, and the second login often falls into the 30 second step of the first. The provider then " +
-	"waits for the next step, so set `timeout` to at least 60s, and leave `per_attempt_timeout` unset " +
-	"or above 35s. The same applies to parallel runs, where the single retry settles " +
+	"retries once in the next step, so set `timeout` to at least 60s. The same applies to parallel " +
+	"runs, where the single retry settles " +
 	"two logins in one step but not more; set `session_token` next to the password to need no code. " +
 	"Can be set via `UPTIMEKUMA_TOTP_SECRET` environment variable, which applies when the attribute is " +
 	"unset or empty."
@@ -119,18 +119,20 @@ func stringFromEnvironment(value types.String, name string) types.String {
 	return types.StringValue(env)
 }
 
-// rejectUnknownCredentials reports every credential attribute, and the auth
-// scheme, that is still unknown when the provider is configured. That happens
+// rejectUnknownConnectionAttributes reports the endpoint, every credential
+// attribute and the auth scheme where it is still unknown when the provider is
+// configured. That happens
 // when the provider configuration refers to a value Terraform only learns
 // during apply, such as an attribute of a resource that does not exist yet.
 // The provider has to log in to plan at all, and an unknown value would reach
 // the client as an empty string: a login as nobody, failing with an error that
 // names the wrong cause.
-func rejectUnknownCredentials(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
+func rejectUnknownConnectionAttributes(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
 	for _, attribute := range []struct {
 		name  string
 		value types.String
 	}{
+		{name: "endpoint", value: data.Endpoint},
 		{name: "username", value: data.Username},
 		{name: "password", value: data.Password},
 		{name: "session_token", value: data.SessionToken},
@@ -146,7 +148,8 @@ func rejectUnknownCredentials(data *UptimeKumaProviderModel, diags *diag.Diagnos
 			fmt.Sprintf("unknown %s", attribute.name),
 			fmt.Sprintf(
 				"The provider attribute %s refers to a value that is not known until apply, but the "+
-					"provider logs in to Uptime Kuma during plan, so its credentials must be known at plan "+
+					"provider connects and logs in to Uptime Kuma during plan, so its endpoint and credentials "+
+					"must be known at plan "+
 					"time. Set %s from a variable, a data source or an environment variable instead of from "+
 					"a resource that is created in the same run.",
 				attribute.name, attribute.name,
@@ -378,9 +381,9 @@ func passwordFallbackAdvice(err error) (summary string, nextStep string) {
 	case errors.Is(passwordErr, kuma.ErrInvalidTOTPCode):
 		return "Uptime Kuma rejected the session token and the two-factor authentication code", prefix +
 			"the one-time code derived from the TOTP secret was refused. On Uptime Kuma 2.x a code the " +
-			"server has already accepted is refused too, and the wait for the next one fails when " +
-			"`timeout` or `per_attempt_timeout` is too short, see the attribute documentation of " +
-			"`totp_secret`. Otherwise check `totp_secret` and the clock of this host. Replace " +
+			"server has already accepted is refused too, and the retry in the next step fails when " +
+			"`timeout` is too short, see the attribute documentation of `totp_secret`. Otherwise check " +
+			"`totp_secret` and the clock of this host. Replace " +
 			"`session_token` with the token of a fresh login either way."
 
 	case errors.Is(passwordErr, kuma.ErrTwoFactorLocked):

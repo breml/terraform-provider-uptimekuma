@@ -46,6 +46,23 @@ const maxRetryDelay = 30 * time.Second
 // attempt within the minute is refused again and counts against the limit too.
 const rateLimitWindow = time.Minute
 
+// totpStep is the time step of the one-time codes Uptime Kuma accepts, the
+// RFC 6238 default of 30 seconds. A code belongs to the step it was generated
+// in, so a code generated in a later step is a different one.
+const totpStep = 30 * time.Second
+
+// totpStepMargin is added to the wait for the next time step, so that the
+// attempt after it is certain to generate its code in that step rather than on
+// its boundary.
+const totpStepMargin = time.Second
+
+// totpReplayAttemptTimeout is the attempt timeout at or below which a refused
+// one-time code may be the replay guard of Uptime Kuma 2.x rather than a wrong
+// secret, see isTOTPReplayRetryable. The client waits for the next time step
+// within an attempt only when the attempt's deadline covers that wait of up to
+// totpStep, plus the connection and login that precede it.
+const totpReplayAttemptTimeout = totpStep + 5*time.Second
+
 // effectiveTimeout returns the configured timeout, or defaultConnectTimeout if
 // the configured value is zero or negative.
 func effectiveTimeout(configured time.Duration) time.Duration {
@@ -175,7 +192,7 @@ func newClientDirect(ctx context.Context, config *Config) (*kuma.Client, error) 
 	resolved := *config
 	resolved.ConnectTimeout = timeout
 
-	return newClientDirectWithRetry(ctx, &resolved, kuma.New)
+	return newClientDirectWithRetry(ctx, &resolved, kuma.New, retryDelay)
 }
 
 // connectFunc opens a single connection to Uptime Kuma. It has the signature of
@@ -188,6 +205,11 @@ type connectFunc func(
 	password string,
 	opts ...kuma.Option,
 ) (*kuma.Client, error)
+
+// retryDelayFunc decides how long to wait before the next connection attempt,
+// see retryDelay, which is what the provider uses; tests pass one that does
+// not wait, to exercise retry decisions whose real wait is a time step long.
+type retryDelayFunc func(err error, attempt int, remaining time.Duration) (time.Duration, bool)
 
 // isPermanentLoginError reports whether err is a login failure that another
 // attempt with the same configuration cannot overcome. Retrying those only
@@ -203,6 +225,9 @@ type connectFunc func(
 // the password login that follows it may well succeed after a timeout, a
 // transport failure or a rate limit. retryDelay then reads the wait of a rate
 // limit out of the password half, since the token half carries none.
+//
+// kuma.ErrInvalidTOTPCode is permanent here, but newClientDirectWithRetry
+// makes an exception for it, see isTOTPReplayRetryable.
 func isPermanentLoginError(err error) bool {
 	passwordErr := PasswordFallbackCause(err)
 	if passwordErr != nil {
@@ -225,6 +250,62 @@ func isPermanentLoginError(err error) bool {
 	return false
 }
 
+// isTOTPReplayRetryable reports whether err is a refused one-time code that
+// another attempt in a later time step may overcome, given the timeout of the
+// attempt that failed with it.
+//
+// Uptime Kuma 2.x refuses a code it has already accepted for the account, so
+// two logins in one 30 second step collide: the two logins of one `terraform
+// apply`, parallel runs, or an attempt that logged in and then failed, followed
+// by one that replays its code. The client settles that itself by retrying in
+// the next step, but only when the attempt's deadline covers the wait;
+// otherwise it gives up with kuma.ErrInvalidTOTPCode. It reports a code
+// refused in two consecutive steps, which is a wrong secret or clock, with the
+// same sentinel, and the two cannot be told apart by anything but the error
+// text. The attempt timeout tells them apart instead: an attempt longer than
+// totpReplayAttemptTimeout could cover the wait, so its refusal is not the
+// replay guard. A refusal from a shorter attempt is retried, and only once,
+// see newClientDirectWithRetry, after the wait retryDelay names for it.
+//
+// A token fallback error is judged by its password half, as in
+// isPermanentLoginError.
+func isTOTPReplayRetryable(err error, attemptTimeout time.Duration) bool {
+	passwordErr := PasswordFallbackCause(err)
+	if passwordErr != nil {
+		err = passwordErr
+	}
+
+	return errors.Is(err, kuma.ErrInvalidTOTPCode) && attemptTimeout <= totpReplayAttemptTimeout
+}
+
+// endsRetries reports whether err, from an attempt with the given timeout, is a
+// permanent login failure that ends the retries at once, see
+// isPermanentLoginError. A refused one-time code that isTOTPReplayRetryable
+// allows is not, the first time: totpRetried records that it was retried, so
+// a second refusal, after the wait for the next time step, ends the retries.
+func endsRetries(err error, attemptTimeout time.Duration, totpRetried *bool) bool {
+	if !isPermanentLoginError(err) {
+		return false
+	}
+
+	if *totpRetried || !isTOTPReplayRetryable(err, attemptTimeout) {
+		return true
+	}
+
+	*totpRetried = true
+
+	return false
+}
+
+// nextTOTPStepDelay returns the wait from now until the start of the next
+// one-time code time step, plus totpStepMargin. Time steps count from the Unix
+// epoch.
+func nextTOTPStepDelay(now time.Time) time.Duration {
+	stepStart := time.Unix(0, now.UnixNano()-now.UnixNano()%int64(totpStep))
+
+	return stepStart.Add(totpStep).Sub(now) + totpStepMargin
+}
+
 // retryDelay returns how long to wait after the failed attempt with the given
 // zero-based index before the next one, and false if no further attempt should
 // be made. remaining is the rest of the overall budget: it caps the backoff,
@@ -238,9 +319,24 @@ func isPermanentLoginError(err error) bool {
 // that it is rate limited rather than that it timed out. With the default
 // ConnectTimeout that is always the case for 2.x. A wait just short of the
 // budget leaves the next attempt little time, which then ends in a timeout.
+//
+// A refused one-time code, which only reaches this function when
+// isTOTPReplayRetryable allowed it, is retried once its time step has passed,
+// see nextTOTPStepDelay; a wait at or beyond the remaining budget ends the
+// retries as for a rate limit.
+//
 // Every other error gets the regular exponential backoff, capped to
 // maxRetryDelay.
 func retryDelay(err error, attempt int, remaining time.Duration) (time.Duration, bool) {
+	if errors.Is(err, kuma.ErrInvalidTOTPCode) {
+		wait := nextTOTPStepDelay(time.Now())
+		if wait >= remaining {
+			return 0, false
+		}
+
+		return wait, true
+	}
+
 	if errors.Is(err, kuma.ErrRateLimited) {
 		wait := rateLimitWindow
 
@@ -276,11 +372,15 @@ func retryDelay(err error, attempt int, remaining time.Duration) (time.Duration,
 //
 // A permanent login failure, see isPermanentLoginError, is returned after the
 // first attempt, and a rate limited login waits out the rate limit or ends the
-// retries, see retryDelay.
+// retries, see retryDelay. The exception is a one-time code the replay guard
+// of Uptime Kuma 2.x may have refused, see isTOTPReplayRetryable: it is
+// retried once in the next time step. A code refused again after that wait was
+// refused in two steps, so the second refusal is permanent.
 func newClientDirectWithRetry(
 	ctx context.Context,
 	config *Config,
 	connect connectFunc,
+	delay retryDelayFunc,
 ) (*kuma.Client, error) {
 	maxRetries := effectiveMaxRetries(config.MaxRetries)
 
@@ -292,6 +392,8 @@ func newClientDirectWithRetry(
 
 	var kumaClient *kuma.Client
 	var err error
+
+	totpRetried := false
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		// Check overall deadline before each attempt.
@@ -318,7 +420,7 @@ func newClientDirectWithRetry(
 			return kumaClient, nil
 		}
 
-		if isPermanentLoginError(err) {
+		if endsRetries(err, attemptTimeout, &totpRetried) {
 			return nil, fmt.Errorf("login failed: %w", err)
 		}
 
@@ -331,7 +433,7 @@ func newClientDirectWithRetry(
 			return nil, newTimeoutError(attempt+1, err)
 		}
 
-		sleepDuration, retry := retryDelay(err, attempt, remaining)
+		sleepDuration, retry := delay(err, attempt, remaining)
 		if !retry {
 			return nil, fmt.Errorf("failed after %d attempt(s): %w", attempt+1, err)
 		}

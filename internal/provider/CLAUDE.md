@@ -54,15 +54,15 @@ schemas), so the secrets are only `Sensitive`; the docs point at `ephemeral` var
   `UPTIMEKUMA_MAX_RETRIES` - Connection options
 - `SOCKETIO_LOG_LEVEL` - Socket.IO client logging level (for debugging)
 
-The credentials (`username`, `password`, `session_token`, `totp_secret`) and `auth_scheme` fall back
+The `endpoint`, the credentials (`username`, `password`, `session_token`, `totp_secret`) and `auth_scheme` fall back
 to the environment when they are null *or empty* (`stringFromEnvironment`), so an attribute fed from
 an unset variable does not shadow it. An unknown value is never replaced by the environment.
 
 **Configuration Validation**:
 
-- Endpoint: Always required (checked in `Configure`)
-- Unknown credentials: `Configure` rejects a credential or `auth_scheme` that is still unknown
-  (`rejectUnknownCredentials`), naming the attribute: the provider logs in during plan, and an
+- Endpoint: Always required (checked in `Configure`, where an empty value counts as missing)
+- Unknown values: `Configure` rejects an `endpoint`, credential or `auth_scheme` that is still unknown
+  (`rejectUnknownConnectionAttributes`), naming the attribute: the provider logs in during plan, and an
   unknown value would reach the client as an empty string
 - Credentials (`validateCredentials`, called only from `Configure`, which runs before the provider
   connects). Not from `ValidateConfig`: every shape error is a missing credential, and the

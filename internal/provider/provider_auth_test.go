@@ -796,13 +796,14 @@ func TestConnect(t *testing.T) {
 	}
 }
 
-// TestRejectUnknownCredentials pins that every credential and the auth scheme
-// is rejected while unknown, by name: one left out of the list would reach the
+// TestRejectUnknownConnectionAttributes pins that the endpoint, every
+// credential and the auth scheme is rejected while unknown, by name: one left out of the list would reach the
 // client as an empty string and silently change the login.
-func TestRejectUnknownCredentials(t *testing.T) {
+func TestRejectUnknownConnectionAttributes(t *testing.T) {
 	t.Parallel()
 
 	fields := map[string]func(*UptimeKumaProviderModel) *types.String{
+		"endpoint":      func(m *UptimeKumaProviderModel) *types.String { return &m.Endpoint },
 		"username":      func(m *UptimeKumaProviderModel) *types.String { return &m.Username },
 		"password":      func(m *UptimeKumaProviderModel) *types.String { return &m.Password },
 		"session_token": func(m *UptimeKumaProviderModel) *types.String { return &m.SessionToken },
@@ -819,7 +820,7 @@ func TestRejectUnknownCredentials(t *testing.T) {
 
 			var diags diag.Diagnostics
 
-			rejectUnknownCredentials(&model, &diags)
+			rejectUnknownConnectionAttributes(&model, &diags)
 
 			if count := diags.ErrorsCount(); count != 1 {
 				t.Fatalf("expected exactly one error, got %v", diags.Errors())
@@ -841,7 +842,7 @@ func TestRejectUnknownCredentials(t *testing.T) {
 
 		var diags diag.Diagnostics
 
-		rejectUnknownCredentials(&model, &diags)
+		rejectUnknownConnectionAttributes(&model, &diags)
 
 		if count := diags.ErrorsCount(); count != 2 {
 			t.Errorf("expected two errors, got %v", diags.Errors())

@@ -57,13 +57,16 @@ func TestNewClientDirectWithRetry_Attempts(t *testing.T) {
 
 			var attempts atomic.Int32
 
+			// An attempt of a minute could have waited out the replay guard
+			// itself, so a refused one-time code is permanent here, see
+			// TestNewClientDirectWithRetry_TOTPReplay for shorter attempts.
 			config := &Config{
 				Endpoint:       "http://uptime-kuma.invalid",
-				ConnectTimeout: 30 * time.Second,
+				ConnectTimeout: time.Minute,
 				MaxRetries:     2,
 			}
 
-			_, err := newClientDirectWithRetry(t.Context(), config, failingConnect(tc.err, &attempts))
+			_, err := newClientDirectWithRetry(t.Context(), config, failingConnect(tc.err, &attempts), retryDelay)
 			if !errors.Is(err, tc.err) {
 				t.Fatalf("expected error wrapping %v, got: %v", tc.err, err)
 			}
@@ -94,6 +97,8 @@ func TestNewClientDirectWithRetry_RateLimitedWaitsRetryAfter(t *testing.T) {
 		t.Context(),
 		config,
 		failingConnect(&kuma.RateLimitedError{RetryAfter: retryAfter}, &attempts),
+
+		retryDelay,
 	)
 
 	elapsed := time.Since(start)
@@ -130,6 +135,8 @@ func TestNewClientDirectWithRetry_RateLimitedBeyondBudgetStops(t *testing.T) {
 		t.Context(),
 		config,
 		failingConnect(&kuma.RateLimitedError{RetryAfter: time.Minute}, &attempts),
+
+		retryDelay,
 	)
 
 	var rateLimited *kuma.RateLimitedError
@@ -260,6 +267,20 @@ func TestRetryDelay(t *testing.T) {
 			remaining: defaultConnectTimeout,
 			wantRetry: false,
 		},
+		{
+			name:      "refused totp code waits for the next step",
+			err:       fallbackError(kuma.ErrInvalidTOTPCode),
+			remaining: time.Hour,
+			wantMin:   totpStepMargin,
+			wantMax:   totpStep + totpStepMargin,
+			wantRetry: true,
+		},
+		{
+			name:      "refused totp code beyond remaining",
+			err:       kuma.ErrInvalidTOTPCode,
+			remaining: totpStepMargin,
+			wantRetry: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -356,13 +377,16 @@ func TestNewClientDirectWithRetry_FallbackAttempts(t *testing.T) {
 
 			var attempts atomic.Int32
 
+			// An attempt of a minute could have waited out the replay guard
+			// itself, so a refused one-time code is permanent here, see
+			// TestNewClientDirectWithRetry_TOTPReplay for shorter attempts.
 			config := &Config{
 				Endpoint:       "http://uptime-kuma.invalid",
-				ConnectTimeout: 30 * time.Second,
+				ConnectTimeout: time.Minute,
 				MaxRetries:     2,
 			}
 
-			_, err := newClientDirectWithRetry(t.Context(), config, failingConnect(tc.err, &attempts))
+			_, err := newClientDirectWithRetry(t.Context(), config, failingConnect(tc.err, &attempts), retryDelay)
 			if !errors.Is(err, kuma.ErrInvalidSessionToken) {
 				t.Fatalf("expected the fallback error, got: %v", err)
 			}
@@ -396,6 +420,8 @@ func TestNewClientDirectWithRetry_FallbackRateLimitedWaitsRetryAfter(t *testing.
 		t.Context(),
 		config,
 		failingConnect(fallbackError(&kuma.RateLimitedError{RetryAfter: retryAfter}), &attempts),
+
+		retryDelay,
 	)
 
 	elapsed := time.Since(start)
@@ -411,5 +437,174 @@ func TestNewClientDirectWithRetry_FallbackRateLimitedWaitsRetryAfter(t *testing.
 	// The regular backoff before the second attempt is 400ms to 600ms.
 	if elapsed < retryAfter || elapsed >= 400*time.Millisecond {
 		t.Errorf("expected a wait of about %s, took %s", retryAfter, elapsed)
+	}
+}
+
+// noDelay is a retryDelayFunc that retries at once, for retry decisions whose
+// real wait is up to a time step long.
+func noDelay(error, int, time.Duration) (time.Duration, bool) {
+	return 0, true
+}
+
+// TestNewClientDirectWithRetry_TOTPReplay pins that a refused one-time code is
+// retried once when the attempt was too short to wait out the replay guard of
+// Uptime Kuma 2.x itself, and never otherwise.
+func TestNewClientDirectWithRetry_TOTPReplay(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		err               error
+		perAttemptTimeout time.Duration
+		wantAttempts      int32
+	}{
+		{name: "short attempt", err: kuma.ErrInvalidTOTPCode, perAttemptTimeout: 20 * time.Second, wantAttempts: 2},
+		{
+			name:              "short attempt, wrapped",
+			err:               fmt.Errorf("login: %w", kuma.ErrInvalidTOTPCode),
+			perAttemptTimeout: totpReplayAttemptTimeout,
+			wantAttempts:      2,
+		},
+		{
+			name:              "short attempt, password half of a fallback",
+			err:               fallbackError(kuma.ErrInvalidTOTPCode),
+			perAttemptTimeout: 20 * time.Second,
+			wantAttempts:      2,
+		},
+		{name: "long attempt", err: kuma.ErrInvalidTOTPCode, wantAttempts: 1},
+		{
+			name:              "short attempt, other permanent error",
+			err:               kuma.ErrInvalidCredentials,
+			perAttemptTimeout: 20 * time.Second,
+			wantAttempts:      1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var attempts atomic.Int32
+
+			config := &Config{
+				Endpoint:          "http://uptime-kuma.invalid",
+				ConnectTimeout:    90 * time.Second,
+				PerAttemptTimeout: tc.perAttemptTimeout,
+				MaxRetries:        3,
+			}
+
+			_, err := newClientDirectWithRetry(t.Context(), config, failingConnect(tc.err, &attempts), noDelay)
+			if !errors.Is(err, tc.err) {
+				t.Fatalf("expected error wrapping %v, got: %v", tc.err, err)
+			}
+
+			if !strings.HasPrefix(err.Error(), "login failed: ") {
+				t.Errorf("expected a permanent login failure, got: %v", err)
+			}
+
+			if got := attempts.Load(); got != tc.wantAttempts {
+				t.Errorf("expected %d attempt(s), got %d", tc.wantAttempts, got)
+			}
+		})
+	}
+}
+
+// TestNewClientDirectWithRetry_TOTPReplayBeyondBudgetStops pins that the wait
+// for the next time step ends the retries at once when the budget cannot
+// cover it.
+func TestNewClientDirectWithRetry_TOTPReplayBeyondBudgetStops(t *testing.T) {
+	t.Parallel()
+
+	var attempts atomic.Int32
+
+	config := &Config{
+		Endpoint:       "http://uptime-kuma.invalid",
+		ConnectTimeout: totpStepMargin / 2,
+		MaxRetries:     3,
+	}
+
+	start := time.Now()
+
+	_, err := newClientDirectWithRetry(
+		t.Context(),
+		config,
+		failingConnect(kuma.ErrInvalidTOTPCode, &attempts),
+		retryDelay,
+	)
+	if !errors.Is(err, kuma.ErrInvalidTOTPCode) {
+		t.Fatalf("expected refused totp code error, got: %v", err)
+	}
+
+	if got := attempts.Load(); got != 1 {
+		t.Errorf("expected 1 attempt, got %d", got)
+	}
+
+	if elapsed := time.Since(start); elapsed > totpStepMargin/2 {
+		t.Errorf("expected an immediate return, took %s", elapsed)
+	}
+}
+
+func TestIsTOTPReplayRetryable(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		err            error
+		attemptTimeout time.Duration
+		want           bool
+	}{
+		{name: "short attempt", err: kuma.ErrInvalidTOTPCode, attemptTimeout: 20 * time.Second, want: true},
+		{name: "at the limit", err: kuma.ErrInvalidTOTPCode, attemptTimeout: totpReplayAttemptTimeout, want: true},
+		{
+			name:           "above the limit",
+			err:            kuma.ErrInvalidTOTPCode,
+			attemptTimeout: totpReplayAttemptTimeout + time.Millisecond,
+		},
+		{
+			name:           "fallback",
+			err:            fallbackError(kuma.ErrInvalidTOTPCode),
+			attemptTimeout: 20 * time.Second,
+			want:           true,
+		},
+		{name: "other error", err: kuma.ErrTwoFactorLocked, attemptTimeout: 20 * time.Second},
+		{name: "plain token rejection", err: kuma.ErrInvalidSessionToken, attemptTimeout: 20 * time.Second},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := isTOTPReplayRetryable(tc.err, tc.attemptTimeout); got != tc.want {
+				t.Errorf("isTOTPReplayRetryable(%v, %s) = %t, want %t", tc.err, tc.attemptTimeout, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestNextTOTPStepDelay(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		now  time.Time
+		want time.Duration
+	}{
+		{name: "step start", now: time.Unix(1_800_000_000, 0), want: totpStep + totpStepMargin},
+		{name: "mid step", now: time.Unix(1_800_000_010, 0), want: 20*time.Second + totpStepMargin},
+		{
+			name: "just before the next step",
+			now:  time.Unix(1_800_000_029, 900_000_000),
+			want: 100*time.Millisecond + totpStepMargin,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := nextTOTPStepDelay(tc.now); got != tc.want {
+				t.Errorf("nextTOTPStepDelay(%s) = %s, want %s", tc.now, got, tc.want)
+			}
+		})
 	}
 }

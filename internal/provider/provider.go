@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -66,8 +67,9 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable.",
-				Optional:            true,
+				MarkdownDescription: "Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable, " +
+					"which applies when the attribute is unset or empty.",
+				Optional: true,
 			},
 			"username": schema.StringAttribute{
 				MarkdownDescription: "Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable, " +
@@ -166,14 +168,20 @@ func (*UptimeKumaProvider) Configure(
 	// Precedence: Terraform config > environment variables > nothing
 	applyEnvironmentDefaults(&data, &resp.Diagnostics)
 
-	// Endpoint is always required to connect to Uptime Kuma.
-	if data.Endpoint.IsNull() {
-		resp.Diagnostics.AddError("endpoint required", "endpoint is required")
+	// Endpoint is always required to connect to Uptime Kuma. An unknown one is
+	// reported by rejectUnknownConnectionAttributes instead.
+	if !data.Endpoint.IsUnknown() && data.Endpoint.ValueString() == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("endpoint"),
+			"endpoint required",
+			"The provider attribute endpoint is required: set it, or the environment variable "+
+				"UPTIMEKUMA_ENDPOINT, to the URL of the Uptime Kuma instance.",
+		)
 	}
 
-	// A credential that is still unknown would reach the client as an empty
-	// string, so it is an error here rather than a login with nothing.
-	rejectUnknownCredentials(&data, &resp.Diagnostics)
+	// An endpoint or credential that is still unknown would reach the client as
+	// an empty string, so it is an error here rather than a login with nothing.
+	rejectUnknownConnectionAttributes(&data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -312,21 +320,22 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 	case errors.Is(err, kuma.ErrTwoFactorRequired):
 		return "Uptime Kuma requires two-factor authentication",
 			"The account has two-factor authentication (2FA) enabled, so the login needs a one-time code. " +
-				"Set the TOTP secret of the account in `totp_secret` (or the environment variable " +
-				"`UPTIMEKUMA_TOTP_SECRET`) for the provider to derive the code from, or authenticate with " +
-				"`session_token`, which needs no code."
+				"If `totp_secret` (or the environment variable `UPTIMEKUMA_TOTP_SECRET`) is not set, set " +
+				"it to the TOTP secret of the account for the provider to derive the code from, or " +
+				"authenticate with `session_token`, which needs no code. If it is set, the server asked for " +
+				"a code again or the two-factor step expired before the code was sent, so run Terraform " +
+				"again."
 
 	case errors.Is(err, kuma.ErrInvalidTOTPCode):
 		return "Uptime Kuma rejected the two-factor authentication code",
 			"The one-time code derived from the TOTP secret in `totp_secret` was refused. Uptime Kuma " +
 				"2.x refuses a code it has already accepted for the account, and every Terraform command logs " +
 				"in on its own: `terraform apply` alone logs in twice, for the plan and for the apply, and " +
-				"the second login often falls into the 30 second step of the first. The provider then waits " +
-				"for the next step, which fails when `timeout` or `per_attempt_timeout` cannot cover the " +
-				"wait: set `timeout` to at least 60s, and leave `per_attempt_timeout` unset or above 35s. " +
-				"A code refused in two " +
-				"consecutive steps points at the secret itself or the clock of this host. A `session_token` " +
-				"next to the password needs no code at all."
+				"the second login often falls into the 30 second step of the first. The provider then " +
+				"retries once in the next step, which fails when `timeout` cannot cover the wait of up to " +
+				"30 seconds: set `timeout` to at least 60s. A code refused in two consecutive steps points " +
+				"at the secret itself or the clock of this host. A `session_token` next to the password " +
+				"needs no code at all."
 
 	case errors.Is(err, kuma.ErrTwoFactorLocked):
 		return "Uptime Kuma locked the two-factor authentication",
@@ -548,10 +557,9 @@ func parseDurationAttribute(
 // applyEnvironmentDefaults applies environment variable defaults to the provider model.
 // Terraform config values take precedence over environment variables.
 func applyEnvironmentDefaults(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
-	envEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
-	if data.Endpoint.IsNull() && envEndpoint != "" {
-		data.Endpoint = types.StringValue(envEndpoint)
-	}
+	// The endpoint falls back to the environment when empty, like the
+	// credentials, see applyCredentialEnvironmentDefaults.
+	data.Endpoint = stringFromEnvironment(data.Endpoint, "UPTIMEKUMA_ENDPOINT")
 
 	applyCredentialEnvironmentDefaults(data)
 

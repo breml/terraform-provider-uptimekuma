@@ -174,10 +174,17 @@ if err != nil {
 - Permanent login failures (`kuma.ErrInvalidCredentials`, `ErrTwoFactorRequired`, `ErrInvalidTOTPCode`,
   `ErrTwoFactorLocked`, `ErrInvalidSessionToken` including `ErrUserInactive`, `ErrAuthRequired`) are returned
   after the first attempt: retrying them only burns attempts against the server's login rate limit
-- A refused session token followed by a failed password login arrives as one error wrapping both
-  (`"%w, and the password login that followed: %w"`), so it always matches `ErrInvalidSessionToken`.
-  `PasswordFallbackCause` ([fallback.go](fallback.go)) recognises it by that shape - two wrapped errors,
-  the first the token rejection - and `isPermanentLoginError` judges it by the password half: a timeout,
+- Except a refused one-time code (`ErrInvalidTOTPCode`) from an attempt of at most
+  `totpReplayAttemptTimeout` (35s): the client only waits out the 2.x replay guard (a code the server
+  has already accepted) within an attempt that can cover the wait, and reports a refusal it could not
+  wait out with the same sentinel as a wrong secret. `isTOTPReplayRetryable` tells the two apart by
+  the attempt timeout, and the loop retries such a refusal once, after `nextTOTPStepDelay` (the next
+  30s step plus a second), if the remaining budget covers it. A second refusal is permanent.
+  `newClientDirectWithRetry` takes the delay function as a parameter, so tests skip that wait
+- A refused session token followed by a failed password login arrives as one
+  `*kuma.SessionTokenFallbackError` wrapping both, so it always matches `ErrInvalidSessionToken`.
+  `PasswordFallbackCause` ([fallback.go](fallback.go)) reads its `PasswordErr` with `errors.As`,
+  and `isPermanentLoginError` judges it by the password half: a timeout,
   transport failure or rate limit there is retried like any other, and `retryDelay` reads the
   `RetryAfter` of the password half
 - A rate limited login (`kuma.ErrRateLimited`) waits `RetryAfter` (`*kuma.RateLimitedError`, Uptime Kuma 3.x)

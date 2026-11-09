@@ -139,6 +139,20 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			expectedTimeout:  "",
 		},
 		{
+			name: "empty config endpoint falls back to env var",
+			initial: UptimeKumaProviderModel{
+				Endpoint: types.StringValue(""),
+				Username: types.StringNull(),
+				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
+			},
+			envEndpoint:      "http://localhost:3001",
+			expectedEndpoint: "http://localhost:3001",
+			expectedUsername: "",
+			expectedPassword: "",
+			expectedTimeout:  "",
+		},
+		{
 			name: "timeout from env var only",
 			initial: UptimeKumaProviderModel{
 				Endpoint: types.StringNull(),
