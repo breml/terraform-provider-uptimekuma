@@ -316,8 +316,11 @@ func (r *SettingsResource) applySettings(
 	if r.password == "" {
 		diags.AddError(
 			"password required",
-			"The provider password must be configured to update settings. "+
-				"Set the password in the provider configuration or via the UPTIMEKUMA_PASSWORD environment variable.",
+			"The provider password must be configured to update settings, because Uptime Kuma asks for "+
+				"the account password again whenever settings are written. A provider that authenticates "+
+				"with session_token alone has no password to answer with. Set username and password in the "+
+				"provider configuration or via the UPTIMEKUMA_USERNAME and UPTIMEKUMA_PASSWORD environment "+
+				"variables, next to session_token if you use one.",
 		)
 
 		return

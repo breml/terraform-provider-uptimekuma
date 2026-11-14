@@ -3,7 +3,10 @@
 #   export UPTIMEKUMA_ENDPOINT="http://localhost:3001"
 #   export UPTIMEKUMA_USERNAME="admin"
 #   export UPTIMEKUMA_PASSWORD="password"
-#   export UPTIMEKUMA_TIMEOUT="30s"  # Optional: connection timeout
+#   export UPTIMEKUMA_TOTP_SECRET="JBSWY3DPEHPK3PXP"  # Optional: 2FA shared secret
+#   export UPTIMEKUMA_SESSION_TOKEN="..."             # Optional: instead of, or before, the password
+#   export UPTIMEKUMA_AUTH_SCHEME="auto"              # Optional: auto, socket or http
+#   export UPTIMEKUMA_TIMEOUT="30s"                   # Optional: connection timeout
 #
 # The provider block can be empty when all configuration is provided via environment variables.
 

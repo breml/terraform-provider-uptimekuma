@@ -11,9 +11,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -23,7 +26,8 @@ import (
 
 // Ensure UptimeKumaProvider satisfies various provider interfaces.
 var (
-	_ provider.Provider = &UptimeKumaProvider{}
+	_ provider.Provider                   = &UptimeKumaProvider{}
+	_ provider.ProviderWithValidateConfig = &UptimeKumaProvider{}
 )
 
 // UptimeKumaProvider defines the provider implementation.
@@ -39,6 +43,9 @@ type UptimeKumaProviderModel struct {
 	Endpoint          types.String `tfsdk:"endpoint"`
 	Username          types.String `tfsdk:"username"`
 	Password          types.String `tfsdk:"password"`
+	SessionToken      types.String `tfsdk:"session_token"`
+	TOTPSecret        types.String `tfsdk:"totp_secret"`
+	AuthScheme        types.String `tfsdk:"auth_scheme"`
 	Timeout           types.String `tfsdk:"timeout"`
 	PerAttemptTimeout types.String `tfsdk:"per_attempt_timeout"`
 	OperationTimeout  types.String `tfsdk:"operation_timeout"`
@@ -60,17 +67,40 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable.",
-				Optional:            true,
+				MarkdownDescription: "Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable, " +
+					"which applies when the attribute is unset or empty.",
+				Optional: true,
 			},
 			"username": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable.",
-				Optional:            true,
+				MarkdownDescription: "Uptime Kuma username. Can be set via `UPTIMEKUMA_USERNAME` environment variable, " +
+					"which applies when the attribute is unset or empty.",
+				Optional: true,
 			},
 			"password": schema.StringAttribute{
-				MarkdownDescription: "Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable.",
+				MarkdownDescription: "Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable, " +
+					"which applies when the attribute is unset or empty.",
+				Optional:  true,
+				Sensitive: true,
+			},
+			"session_token": schema.StringAttribute{
+				MarkdownDescription: sessionTokenDescription,
 				Optional:            true,
 				Sensitive:           true,
+			},
+			"totp_secret": schema.StringAttribute{
+				MarkdownDescription: totpSecretDescription,
+				Optional:            true,
+				Sensitive:           true,
+				Validators: []validator.String{
+					totpSecretValidator{},
+				},
+			},
+			"auth_scheme": schema.StringAttribute{
+				MarkdownDescription: authSchemeDescription,
+				Optional:            true,
+				Validators: []validator.String{
+					authSchemeValidator{},
+				},
 			},
 			"timeout": schema.StringAttribute{
 				MarkdownDescription: "Overall connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
@@ -136,27 +166,33 @@ func (*UptimeKumaProvider) Configure(
 
 	// Apply environment variable defaults where Terraform config is not provided.
 	// Precedence: Terraform config > environment variables > nothing
-	applyEnvironmentDefaults(&data, resp)
+	applyEnvironmentDefaults(&data, &resp.Diagnostics)
 
-	// Validate configuration
-	// Endpoint is always required to connect to Uptime Kuma
-	// Username and password are optional (client will skip login if both are empty)
-	// However, if either username or password is provided, both must be present
-	hasUsername := !data.Username.IsNull()
-	hasPassword := !data.Password.IsNull()
-
-	if data.Endpoint.IsNull() {
-		resp.Diagnostics.AddError("endpoint required", "endpoint is required")
+	// Endpoint is always required to connect to Uptime Kuma. An unknown one is
+	// reported by rejectUnknownConnectionAttributes instead.
+	if !data.Endpoint.IsUnknown() && data.Endpoint.ValueString() == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("endpoint"),
+			"endpoint required",
+			"The provider attribute endpoint is required: set it, or the environment variable "+
+				"UPTIMEKUMA_ENDPOINT, to the URL of the Uptime Kuma instance.",
+		)
 	}
 
-	// If credentials are partially provided, require both
-	if hasUsername && !hasPassword {
-		resp.Diagnostics.AddError("password required", "password is required when username is provided")
+	// An endpoint or credential that is still unknown would reach the client as
+	// an empty string, so it is an error here rather than a login with nothing.
+	rejectUnknownConnectionAttributes(&data, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	if hasPassword && !hasUsername {
-		resp.Diagnostics.AddError("username required", "username is required when password is provided")
-	}
+	// The credential shape is judged here and not in ValidateConfig, see
+	// there: ValidateConfig cannot tell `terraform validate` from a plan, and
+	// only here is every credential known. The auth scheme is resolved here
+	// because the client configuration needs it.
+	validateCredentials(&data, &resp.Diagnostics)
+	authScheme := resolveAuthScheme(&data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -167,20 +203,10 @@ func (*UptimeKumaProvider) Configure(
 		return
 	}
 
-	kumaClient, err := client.New(context.Background(), &client.Config{
-		Endpoint:             data.Endpoint.ValueString(),
-		Username:             data.Username.ValueString(),
-		Password:             data.Password.ValueString(),
-		EnableConnectionPool: true,
-		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
-		ConnectTimeout:       opts.connectTimeout,
-		PerAttemptTimeout:    opts.perAttemptTimeout,
-		OperationTimeout:     opts.operationTimeout,
-		MaxRetries:           opts.maxRetries,
-	})
-	if err != nil {
-		resp.Diagnostics.AddError(connectionError(data.Endpoint.ValueString(), err))
+	opts.authScheme = authScheme
 
+	kumaClient := connect(data.Endpoint.ValueString(), buildClientConfig(&data, opts), client.New, &resp.Diagnostics)
+	if kumaClient == nil {
 		return
 	}
 
@@ -199,13 +225,61 @@ func (*UptimeKumaProvider) Configure(
 	resp.ResourceData = pd
 }
 
+// newClientFunc creates the client, see client.New. connect takes it as a
+// parameter so that a test can stand in for the server.
+type newClientFunc func(ctx context.Context, config *client.Config) (*kuma.Client, error)
+
+// connect creates the client for config, and reports a configured session
+// token the server refused and the password login took over from. It returns
+// nil, with an error in diags, when the connection fails.
+//
+// The rejection is reported on failure too: the password login may have taken
+// over from the refused token before the connection failed for another
+// reason, and the connection error alone would not say that the stored token
+// has died.
+func connect(endpoint string, config *client.Config, newClient newClientFunc, diags *diag.Diagnostics) *kuma.Client {
+	// The callback runs on this goroutine before newClient returns, so the
+	// rejection is in hand by the time it is read.
+	var sessionTokenRejection error
+
+	config.OnSessionTokenRejected = func(err error) { sessionTokenRejection = err }
+
+	// Context is not the one of Configure: Terraform cancels that once
+	// Configure returns, and the connection must outlive it.
+	kumaClient, err := newClient(context.Background(), config)
+
+	warnRejectedSessionToken(sessionTokenRejection, diags)
+
+	if err != nil {
+		diags.AddError(connectionError(endpoint, err))
+
+		return nil
+	}
+
+	return kumaClient
+}
+
 // connectionError returns the summary and detail of the diagnostic for a
 // failed connection to Uptime Kuma. A login failure the client reports with a
 // typed error gets a diagnostic of its own that names the next step, since
 // transport advice does not help with a rejected password. Every other error,
 // including a login rejection the client has no typed error for, gets the
-// generic connection advice.
+// generic connection advice, and a malformed TOTP secret, which never reached
+// the server, a diagnostic of its own.
 func connectionError(endpoint string, err error) (summary string, detail string) {
+	// The secret is rejected before any connection is attempted, so neither
+	// the login nor the transport advice fits it. The schema validator catches
+	// a configured one at plan time; this is the one from the environment.
+	if errors.Is(err, kuma.ErrInvalidTOTPSecret) {
+		return "Invalid TOTP secret", fmt.Sprintf(
+			"The TOTP secret in `totp_secret` (or the environment variable `UPTIMEKUMA_TOTP_SECRET`) is "+
+				"not a base32 shared secret, so no one-time code can be derived from it. Copy the `secret` "+
+				"out of the `otpauth://` URI Uptime Kuma showed while two-factor authentication was set "+
+				"up.\n\nUnderlying error: %v",
+			err,
+		)
+	}
+
 	summary, nextStep := loginErrorAdvice(err)
 	if summary == "" {
 		return "failed to connect to Uptime Kuma", transportErrorDetail(endpoint, err)
@@ -223,14 +297,17 @@ func connectionError(endpoint string, err error) (summary string, detail string)
 
 // loginErrorAdvice returns the summary and the next step for a login failure
 // the client reports with a typed error, or empty strings for any other error.
-// kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is therefore
-// matched first.
 //
-// The provider logs in with username and password only, so the two-factor code
-// and session token cases are not expected today. Their advice is written for
-// that setup and must be revisited when issue #404 adds two-factor
-// authentication or session token login.
+// The order matters twice over. A refused session token followed by a failed
+// password login arrives as one error wrapping both sentinels, which
+// passwordFallbackAdvice describes ahead of the switch. And kuma.ErrUserInactive
+// wraps kuma.ErrInvalidSessionToken, so it is matched first.
 func loginErrorAdvice(err error) (summary string, nextStep string) {
+	summary, nextStep = passwordFallbackAdvice(err)
+	if summary != "" {
+		return summary, nextStep
+	}
+
 	var rateLimited *kuma.RateLimitedError
 
 	switch {
@@ -242,22 +319,29 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 
 	case errors.Is(err, kuma.ErrTwoFactorRequired):
 		return "Uptime Kuma requires two-factor authentication",
-			"The account has two-factor authentication (2FA) enabled, which the provider does not support " +
-				"yet, see https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account " +
-				"without 2FA for Terraform."
+			"The account has two-factor authentication (2FA) enabled, so the login needs a one-time code. " +
+				"If `totp_secret` (or the environment variable `UPTIMEKUMA_TOTP_SECRET`) is not set, set " +
+				"it to the TOTP secret of the account for the provider to derive the code from, or " +
+				"authenticate with `session_token`, which needs no code. If it is set, the server asked for " +
+				"a code again or the two-factor step expired before the code was sent, so run Terraform " +
+				"again."
 
 	case errors.Is(err, kuma.ErrInvalidTOTPCode):
 		return "Uptime Kuma rejected the two-factor authentication code",
-			"The account has two-factor authentication (2FA) enabled, which the provider does not support " +
-				"yet, see https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account " +
-				"without 2FA for Terraform."
+			"The one-time code derived from the TOTP secret in `totp_secret` was refused. Uptime Kuma " +
+				"2.x refuses a code it has already accepted for the account, and every Terraform command logs " +
+				"in on its own: `terraform apply` alone logs in twice, for the plan and for the apply, and " +
+				"the second login often falls into the 30 second step of the first. The provider then " +
+				"retries once in the next step, which fails when `timeout` cannot cover the wait of up to " +
+				"30 seconds: set `timeout` to at least 60s. A code refused in two consecutive steps points " +
+				"at the secret itself or the clock of this host. A `session_token` next to the password " +
+				"needs no code at all."
 
 	case errors.Is(err, kuma.ErrTwoFactorLocked):
 		return "Uptime Kuma locked the two-factor authentication",
-			"The server refuses further two-factor codes for this login after too many wrong ones. The " +
-				"provider does not support two-factor authentication (2FA) yet, see " +
-				"https://github.com/breml/terraform-provider-uptimekuma/issues/404. Use an account without " +
-				"2FA for Terraform."
+			"The server refuses further two-factor codes for this login after too many wrong ones. Check " +
+				"the TOTP secret in `totp_secret` and the clock of this host, then run Terraform again, or " +
+				"authenticate with `session_token`, which needs no code."
 
 	case errors.Is(err, kuma.ErrUserInactive):
 		return "Uptime Kuma account is inactive",
@@ -266,10 +350,11 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 
 	case errors.Is(err, kuma.ErrInvalidSessionToken):
 		return "Uptime Kuma rejected the session token",
-			"The server rejected the session of this login, for example because the password of the " +
-				"account was changed meanwhile. Check the provider attributes `username` and `password` " +
-				"(or the environment variables `UPTIMEKUMA_USERNAME` and `UPTIMEKUMA_PASSWORD`), then run " +
-				"Terraform again."
+			"The server rejected the configured `session_token`. On Uptime Kuma 2.x that happens when the " +
+				"password of the account was changed meanwhile; on Uptime Kuma 3.x the token also lapses " +
+				"after 7 days without use. Replace it with the token of a fresh login, or set the provider " +
+				"attributes `username` and `password` next to it (or the environment variables " +
+				"`UPTIMEKUMA_USERNAME` and `UPTIMEKUMA_PASSWORD`) for the provider to fall back on."
 
 	case errors.As(err, &rateLimited) && rateLimited.RetryAfter > 0:
 		return "Uptime Kuma rate limited the login",
@@ -284,7 +369,7 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 		return "Uptime Kuma requires authentication",
 			"The server requires a login, but no credentials are configured. Set the provider attributes " +
 				"`username` and `password` (or the environment variables `UPTIMEKUMA_USERNAME` and " +
-				"`UPTIMEKUMA_PASSWORD`)."
+				"`UPTIMEKUMA_PASSWORD`), or `session_token` (or `UPTIMEKUMA_SESSION_TOKEN`)."
 	}
 
 	return "", ""
@@ -317,6 +402,29 @@ type clientOptions struct {
 	perAttemptTimeout time.Duration
 	operationTimeout  time.Duration
 	maxRetries        int
+
+	// authScheme is the resolved `auth_scheme`, see resolveAuthScheme.
+	authScheme kuma.AuthScheme
+}
+
+// buildClientConfig turns the provider model, with the environment defaults
+// applied and validated, and the parsed connection options into the
+// configuration of the client.
+func buildClientConfig(data *UptimeKumaProviderModel, opts clientOptions) *client.Config {
+	return &client.Config{
+		Endpoint:             data.Endpoint.ValueString(),
+		Username:             data.Username.ValueString(),
+		Password:             data.Password.ValueString(),
+		SessionToken:         data.SessionToken.ValueString(),
+		TOTPSecret:           data.TOTPSecret.ValueString(),
+		AuthScheme:           opts.authScheme,
+		EnableConnectionPool: true,
+		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
+		ConnectTimeout:       opts.connectTimeout,
+		PerAttemptTimeout:    opts.perAttemptTimeout,
+		OperationTimeout:     opts.operationTimeout,
+		MaxRetries:           opts.maxRetries,
+	}
 }
 
 // parseClientOptions extracts and validates timeout, per_attempt_timeout,
@@ -448,21 +556,12 @@ func parseDurationAttribute(
 
 // applyEnvironmentDefaults applies environment variable defaults to the provider model.
 // Terraform config values take precedence over environment variables.
-func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.ConfigureResponse) {
-	envEndpoint := os.Getenv("UPTIMEKUMA_ENDPOINT")
-	if data.Endpoint.IsNull() && envEndpoint != "" {
-		data.Endpoint = types.StringValue(envEndpoint)
-	}
+func applyEnvironmentDefaults(data *UptimeKumaProviderModel, diags *diag.Diagnostics) {
+	// The endpoint falls back to the environment when empty, like the
+	// credentials, see applyCredentialEnvironmentDefaults.
+	data.Endpoint = stringFromEnvironment(data.Endpoint, "UPTIMEKUMA_ENDPOINT")
 
-	envUsername := os.Getenv("UPTIMEKUMA_USERNAME")
-	if data.Username.IsNull() && envUsername != "" {
-		data.Username = types.StringValue(envUsername)
-	}
-
-	envPassword := os.Getenv("UPTIMEKUMA_PASSWORD")
-	if data.Password.IsNull() && envPassword != "" {
-		data.Password = types.StringValue(envPassword)
-	}
+	applyCredentialEnvironmentDefaults(data)
 
 	envTimeout := os.Getenv("UPTIMEKUMA_TIMEOUT")
 	if data.Timeout.IsNull() && envTimeout != "" {
@@ -485,7 +584,7 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel, resp *provider.Conf
 		if err == nil {
 			data.MaxRetries = types.Int64Value(val)
 		} else {
-			resp.Diagnostics.AddWarning(
+			diags.AddWarning(
 				"invalid UPTIMEKUMA_MAX_RETRIES",
 				fmt.Sprintf("invalid UPTIMEKUMA_MAX_RETRIES value %q; ignore value from environment variable", envMaxRetries),
 			)

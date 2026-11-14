@@ -25,24 +25,71 @@ type UptimeKumaProvider struct {
 
 ```go
 type UptimeKumaProviderModel struct {
-    Endpoint types.String `tfsdk:"endpoint"`  // Required: Uptime Kuma server URL
-    Username types.String `tfsdk:"username"`  // Optional: Login username
-    Password types.String `tfsdk:"password"`  // Optional: Login password (sensitive)
+    Endpoint          types.String `tfsdk:"endpoint"`            // Required: Uptime Kuma server URL
+    Username          types.String `tfsdk:"username"`            // Optional: Login username
+    Password          types.String `tfsdk:"password"`            // Optional: Login password (sensitive)
+    SessionToken      types.String `tfsdk:"session_token"`       // Optional: token login (sensitive)
+    TOTPSecret        types.String `tfsdk:"totp_secret"`         // Optional: 2FA shared secret (sensitive)
+    AuthScheme        types.String `tfsdk:"auth_scheme"`         // Optional: auto, socket or http
+    Timeout           types.String `tfsdk:"timeout"`             // Optional: overall connect budget
+    PerAttemptTimeout types.String `tfsdk:"per_attempt_timeout"` // Optional: per-attempt cap
+    OperationTimeout  types.String `tfsdk:"operation_timeout"`   // Optional: per-command bound
+    MaxRetries        types.Int64  `tfsdk:"max_retries"`         // Optional: connect retries
 }
 ```
+
+The credential attributes and their helpers live in [provider_auth.go](provider_auth.go).
+Provider attributes cannot be write-only (the framework's `IsWriteOnly()` is false for provider
+schemas), so the secrets are only `Sensitive`; the docs point at `ephemeral` variables instead.
 
 **Environment Variables**:
 
 - `UPTIMEKUMA_ENDPOINT` - Provider endpoint (e.g., `https://uptime-kuma.example.com`)
 - `UPTIMEKUMA_USERNAME` - Login username
 - `UPTIMEKUMA_PASSWORD` - Login password
+- `UPTIMEKUMA_SESSION_TOKEN` - Session token from an earlier login
+- `UPTIMEKUMA_TOTP_SECRET` - Base32 shared secret of an account with two-factor authentication
+- `UPTIMEKUMA_AUTH_SCHEME` - `auto`, `socket` or `http`
+- `UPTIMEKUMA_TIMEOUT`, `UPTIMEKUMA_PER_ATTEMPT_TIMEOUT`, `UPTIMEKUMA_OPERATION_TIMEOUT`,
+  `UPTIMEKUMA_MAX_RETRIES` - Connection options
 - `SOCKETIO_LOG_LEVEL` - Socket.IO client logging level (for debugging)
+
+The `endpoint`, the credentials (`username`, `password`, `session_token`, `totp_secret`) and `auth_scheme` fall back
+to the environment when they are null *or empty* (`stringFromEnvironment`), so an attribute fed from
+an unset variable does not shadow it. An unknown value is never replaced by the environment.
 
 **Configuration Validation**:
 
-- Endpoint: Always required
-- Credentials: Both or neither (if username provided, password required; if password provided, username required)
+- Endpoint: Always required (checked in `Configure`, where an empty value counts as missing)
+- Unknown values: `Configure` rejects an `endpoint`, credential or `auth_scheme` that is still unknown
+  (`rejectUnknownConnectionAttributes`), naming the attribute: the provider logs in during plan, and an
+  unknown value would reach the client as an empty string
+- Credentials (`validateCredentials`, called only from `Configure`, which runs before the provider
+  connects). Not from `ValidateConfig`: every shape error is a missing credential, and the
+  environment of `terraform validate` (a CI lint job without secrets) need not be the one of the
+  apply that supplies it. Accepted shapes: nothing;
+  `username` + `password`, optionally with `totp_secret`; `session_token` alone or with
+  `username` + `password`. Rejected: `username` without `password` and the other way round, and
+  `totp_secret` without both. Shapes are judged by value, so an empty string counts as unset
+- `auth_scheme`: `parseAuthScheme` is the one table of the names. `authSchemeValidator` checks the
+  attribute (accepting `""` as unset), and `resolveAuthScheme` checks a value from
+  `UPTIMEKUMA_AUTH_SCHEME`, which the schema validator never sees, in `ValidateConfig` and again in
+  `Configure`, which hands the resolved scheme to `buildClientConfig` through `clientOptions`
+- `totp_secret`: `totpSecretValidator` rejects a value that is not base32 at plan time;
+  `ValidateConfig` checks the environment value (`validateEnvironmentTOTPSecret`), and the client
+  package checks it again before connecting (`kuma.ErrInvalidTOTPSecret`). All three use
+  `kuma.ValidateTOTPSecret`, the rules `kuma.WithTOTPSecret` applies
 - Precedence: Terraform config > environment variables
+
+**Login diagnostics** (`connectionError` / `loginErrorAdvice` in [provider.go](provider.go)): every
+typed login failure gets a summary and next step naming the attribute to fix. A refused session
+token followed by a failed password login arrives as one `*kuma.SessionTokenFallbackError`, which
+always wraps `kuma.ErrInvalidSessionToken`; `passwordFallbackAdvice` classifies it ahead of the switch by its
+password half (`client.PasswordFallbackCause`), with a transport-style default for a half it does not
+recognise, so the user is never told to add the `username` and `password` they already set.
+`connect` sets the `OnSessionTokenRejected` callback and calls `warnRejectedSessionToken` whenever
+the token was refused and the password login took over, also when the connection then failed; it
+takes the client constructor as a parameter so `TestConnect` can pin that wiring.
 
 ### Provider Configuration ([provider.go](provider.go))
 
@@ -50,9 +97,11 @@ The `Configure()` method:
 
 1. Reads configuration from Terraform
 2. Applies environment variable defaults
-3. Validates configuration (endpoint required, credential pairing)
-4. Creates client using [../client/client.go](../client/client.go)
-5. Passes client to resources via `resp.ResourceData`
+3. Validates configuration (endpoint required, credential shape)
+4. Builds the client configuration with `buildClientConfig()` and creates the client using
+   [../client/client.go](../client/client.go)
+5. Warns if the session token was refused and the password login took over
+6. Passes client to resources via `resp.ResourceData`
 
 **Critical Context Detail**:
 

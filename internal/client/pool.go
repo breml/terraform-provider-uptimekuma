@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -47,21 +48,30 @@ func (p *Pool) GetOrCreate(ctx context.Context, config *Config) (*kuma.Client, e
 	if p.client != nil {
 		if !p.configMatches(config) {
 			return nil, fmt.Errorf(
-				"pool config mismatch: existing endpoint=%q username=%q timeout=%s per_attempt_timeout=%s"+
-					" operation_timeout=%s max_retries=%d, requested endpoint=%q username=%q timeout=%s"+
-					" per_attempt_timeout=%s operation_timeout=%s max_retries=%d",
+				"pool config mismatch: existing endpoint=%q username=%q totp_secret=%s session_token=%s"+
+					" auth_scheme=%s timeout=%s per_attempt_timeout=%s operation_timeout=%s max_retries=%d,"+
+					" requested endpoint=%q username=%q totp_secret=%s session_token=%s auth_scheme=%s"+
+					" timeout=%s per_attempt_timeout=%s operation_timeout=%s max_retries=%d;"+
+					" differing secrets: %s",
 				p.config.Endpoint,
 				p.config.Username,
+				secretState(p.config.TOTPSecret),
+				secretState(p.config.SessionToken),
+				p.config.AuthScheme,
 				effectiveTimeout(p.config.ConnectTimeout),
 				p.config.PerAttemptTimeout,
 				effectiveOperationTimeout(p.config.OperationTimeout),
 				effectiveMaxRetries(p.config.MaxRetries),
 				config.Endpoint,
 				config.Username,
+				secretState(config.TOTPSecret),
+				secretState(config.SessionToken),
+				config.AuthScheme,
 				effectiveTimeout(config.ConnectTimeout),
 				config.PerAttemptTimeout,
 				effectiveOperationTimeout(config.OperationTimeout),
 				effectiveMaxRetries(config.MaxRetries),
+				differingSecrets(p.config, config),
 			)
 		}
 
@@ -150,11 +160,54 @@ func (p *Pool) closeLocked() error {
 	return nil
 }
 
+// secretState renders whether a credential is configured, for the config
+// mismatch message. The values themselves stay out of it, the way the password
+// does: the message reaches the user through a Terraform diagnostic.
+func secretState(secret string) string {
+	if secret == "" {
+		return "unset"
+	}
+
+	return "set"
+}
+
+// differingSecrets names the secrets that differ between two configurations,
+// without their values. The mismatch message prints a secret only as set or
+// unset, so without this a mismatch in a secret that is set on both sides
+// would print two identical halves.
+func differingSecrets(existing *Config, requested *Config) string {
+	var names []string
+
+	for _, secret := range []struct {
+		name                string
+		existing, requested string
+	}{
+		{name: "password", existing: existing.Password, requested: requested.Password},
+		{name: "totp_secret", existing: existing.TOTPSecret, requested: requested.TOTPSecret},
+		{name: "session_token", existing: existing.SessionToken, requested: requested.SessionToken},
+	} {
+		if secret.existing != secret.requested {
+			names = append(names, secret.name)
+		}
+	}
+
+	if len(names) == 0 {
+		return "none"
+	}
+
+	return strings.Join(names, ", ")
+}
+
 // configMatches checks if the provided config matches the pool's config.
-// Only connection-critical fields (endpoint, credentials, timeout,
-// per_attempt_timeout, max_retries) are compared. LogLevel and
-// EnableConnectionPool are intentionally excluded as they don't affect the
-// connection identity - the first connection's LogLevel is used.
+// Only connection-critical fields (endpoint, credentials, auth scheme,
+// timeout, per_attempt_timeout, operation_timeout, max_retries) are compared.
+// LogLevel, EnableConnectionPool and OnSessionTokenRejected are intentionally
+// excluded as they don't affect the connection identity - the first connection's
+// LogLevel is used, and its callback is the only one ever called.
+//
+// The TOTP secret and the session token are part of that identity as much as
+// the password is: two provider blocks authenticating as different accounts
+// must not share one connection just because neither names a username.
 func (p *Pool) configMatches(config *Config) bool {
 	if p.config == nil {
 		return false
@@ -163,6 +216,9 @@ func (p *Pool) configMatches(config *Config) bool {
 	return p.config.Endpoint == config.Endpoint &&
 		p.config.Username == config.Username &&
 		p.config.Password == config.Password &&
+		p.config.TOTPSecret == config.TOTPSecret &&
+		p.config.SessionToken == config.SessionToken &&
+		p.config.AuthScheme == config.AuthScheme &&
 		effectiveTimeout(p.config.ConnectTimeout) == effectiveTimeout(config.ConnectTimeout) &&
 		p.config.PerAttemptTimeout == config.PerAttemptTimeout &&
 		effectiveOperationTimeout(p.config.OperationTimeout) ==

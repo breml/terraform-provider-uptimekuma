@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -138,6 +139,20 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			expectedTimeout:  "",
 		},
 		{
+			name: "empty config endpoint falls back to env var",
+			initial: UptimeKumaProviderModel{
+				Endpoint: types.StringValue(""),
+				Username: types.StringNull(),
+				Password: types.StringNull(),
+				Timeout:  types.StringNull(),
+			},
+			envEndpoint:      "http://localhost:3001",
+			expectedEndpoint: "http://localhost:3001",
+			expectedUsername: "",
+			expectedPassword: "",
+			expectedTimeout:  "",
+		},
+		{
 			name: "timeout from env var only",
 			initial: UptimeKumaProviderModel{
 				Endpoint: types.StringNull(),
@@ -187,7 +202,7 @@ func TestApplyEnvironmentDefaults(t *testing.T) {
 			}
 
 			// Apply defaults
-			applyEnvironmentDefaults(&tc.initial, &provider.ConfigureResponse{})
+			applyEnvironmentDefaults(&tc.initial, &diag.Diagnostics{})
 
 			// Verify endpoint
 			if tc.expectedEndpoint == "" {
@@ -335,7 +350,7 @@ func TestEnvironmentVariablePrecedence(t *testing.T) {
 			}
 
 			// Apply environment defaults
-			applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+			applyEnvironmentDefaults(&model, &diag.Diagnostics{})
 
 			// Verify results
 			if tc.expectedEndpoint == "" {
@@ -467,7 +482,7 @@ func TestApplyEnvironmentDefaults_PerAttemptTimeout(t *testing.T) {
 		PerAttemptTimeout: types.StringNull(),
 	}
 
-	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+	applyEnvironmentDefaults(&model, &diag.Diagnostics{})
 
 	if model.PerAttemptTimeout.ValueString() != "5s" {
 		t.Errorf("expected per_attempt_timeout %q from env, got %q", "5s", model.PerAttemptTimeout.ValueString())
@@ -485,7 +500,7 @@ func TestApplyEnvironmentDefaults_PerAttemptTimeoutConfigOverridesEnv(t *testing
 		PerAttemptTimeout: types.StringValue("10s"),
 	}
 
-	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+	applyEnvironmentDefaults(&model, &diag.Diagnostics{})
 
 	if model.PerAttemptTimeout.ValueString() != "10s" {
 		t.Errorf("expected config per_attempt_timeout %q to take precedence, got %q",
@@ -503,7 +518,7 @@ func TestApplyEnvironmentDefaults_OperationTimeout(t *testing.T) {
 		OperationTimeout: types.StringNull(),
 	}
 
-	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+	applyEnvironmentDefaults(&model, &diag.Diagnostics{})
 
 	if model.OperationTimeout.ValueString() != "45s" {
 		t.Errorf("expected operation_timeout %q from env, got %q", "45s", model.OperationTimeout.ValueString())
@@ -520,7 +535,7 @@ func TestApplyEnvironmentDefaults_OperationTimeoutConfigOverridesEnv(t *testing.
 		OperationTimeout: types.StringValue("90s"),
 	}
 
-	applyEnvironmentDefaults(&model, &provider.ConfigureResponse{})
+	applyEnvironmentDefaults(&model, &diag.Diagnostics{})
 
 	if model.OperationTimeout.ValueString() != "90s" {
 		t.Errorf("expected config operation_timeout %q to take precedence, got %q",
