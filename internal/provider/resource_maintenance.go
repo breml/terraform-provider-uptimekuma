@@ -301,6 +301,16 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	data.ID = types.Int64Value(created.ID)
+
+	// The object returned by CreateMaintenance lacks server-computed values
+	// (status, timezone_offset, timezone_resolved), so read the window back like Update does.
+	read, err := r.client.GetMaintenance(ctx, created.ID)
+	if err != nil {
+		resp.Diagnostics.AddWarning("failed to read created maintenance", err.Error())
+	} else {
+		created = read
+	}
+
 	r.populateModelFromMaintenance(ctx, created, &data, &resp.Diagnostics)
 
 	// Populate state.
