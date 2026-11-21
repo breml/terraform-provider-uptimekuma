@@ -135,10 +135,10 @@ resource "uptimekuma_maintenance" "example_manual" {
 - `days_of_month` (List of String) Days of month for recurring-day-of-month (1-31 or lastDay1-lastDay4)
 - `description` (String) Additional details about the maintenance
 - `duration_minutes` (Number) Duration in minutes for cron strategy
-- `end_date` (String) End date/time for single strategy (RFC3339 format)
+- `end_date` (String) End date/time for single strategy (RFC3339 format). A window created in the Uptime Kuma UI stores wall-clock time without UTC offset in the window's timezone, which is read back as those digits in UTC (`Z`), e.g. `2030-06-29T13:39` as `2030-06-29T13:39:00Z`. Configuring the same digits with `Z` matches such a window.
 - `end_time` (Attributes) End time for recurring strategies (see [below for nested schema](#nestedatt--end_time))
 - `interval_day` (Number) Interval in days for recurring-interval strategy
-- `start_date` (String) Start date/time for single strategy (RFC3339 format)
+- `start_date` (String) Start date/time for single strategy (RFC3339 format). A window created in the Uptime Kuma UI stores wall-clock time without UTC offset in the window's timezone, which is read back as those digits in UTC (`Z`), e.g. `2030-06-29T13:39` as `2030-06-29T13:39:00Z`. Configuring the same digits with `Z` matches such a window.
 - `start_time` (Attributes) Start time for recurring strategies (see [below for nested schema](#nestedatt--start_time))
 - `timezone` (String) Timezone option: UTC, SAME_AS_SERVER, or IANA timezone (e.g., America/New_York)
 - `weekdays` (List of Number) Days of week for recurring-weekday (1=Monday...7=Sunday)
@@ -177,5 +177,5 @@ Required:
 
 Read-Only:
 
-- `end_date` (String) RFC3339 timestamp
-- `start_date` (String) RFC3339 timestamp
+- `end_date` (String) RFC3339 timestamp, or null when Uptime Kuma returns none. For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, as `start_date` and `end_date` do; for the recurring strategies and cron it is an instant in UTC.
+- `start_date` (String) RFC3339 timestamp, or null when Uptime Kuma returns none. For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, as `start_date` and `end_date` do; for the recurring strategies and cron it is an instant in UTC.

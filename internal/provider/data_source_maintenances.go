@@ -2,13 +2,17 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
+	"github.com/breml/go-uptime-kuma-client/maintenance"
 )
 
 var _ datasource.DataSource = &MaintenancesDataSource{}
@@ -56,7 +60,7 @@ func (*MaintenancesDataSource) Schema(
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "List all maintenance windows",
+		MarkdownDescription: "List all maintenance windows. A window the provider cannot decode is left out, with a warning naming it.",
 		Attributes: map[string]schema.Attribute{
 			"maintenances": schema.ListNestedAttribute{
 				MarkdownDescription: "List of maintenance windows",
@@ -126,9 +130,8 @@ func (d *MaintenancesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	// short list rather than a miss, so there is nothing to hang a resync on,
 	// and resyncing on every read would mean a login per read on the shared
 	// pooled connection.
-	maintenances, err := d.client.GetMaintenances(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read maintenances", err.Error())
+	maintenances, ok := listMaintenances(ctx, d.client, &resp.Diagnostics)
+	if !ok {
 		return
 	}
 
@@ -169,4 +172,38 @@ func (d *MaintenancesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	data.Maintenances = listValue
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// listMaintenances returns the maintenance windows the client holds. It reports
+// false, with an error in diags, when the list cannot be read.
+//
+// A window the client could not decode (kuma.ErrMaintenanceDecode) is left out
+// with a warning naming it rather than failing the read, so that one window
+// the client does not understand does not hide all the others.
+func listMaintenances(
+	ctx context.Context,
+	client maintenanceLister,
+	diags *diag.Diagnostics,
+) ([]maintenance.Maintenance, bool) {
+	maintenances, err := client.GetMaintenances(ctx)
+	if err == nil {
+		return maintenances, true
+	}
+
+	if !errors.Is(err, kuma.ErrMaintenanceDecode) {
+		diags.AddError("failed to read maintenances", err.Error())
+
+		return nil, false
+	}
+
+	diags.AddWarning(
+		"Some maintenance windows left out",
+		fmt.Sprintf(
+			"These maintenance windows could not be decoded and are missing from the list: %v. "+
+				"Correct their dates in Uptime Kuma to list them.",
+			err,
+		),
+	)
+
+	return maintenances, true
 }

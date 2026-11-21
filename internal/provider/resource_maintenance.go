@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -38,6 +37,19 @@ var (
 func NewMaintenanceResource() resource.Resource {
 	return &MaintenanceResource{}
 }
+
+// maintenanceUIDateNote explains in the descriptions of start_date and end_date
+// how a date the Uptime Kuma UI wrote is read back, see maintenanceDateValue.
+const maintenanceUIDateNote = "A window created in the Uptime Kuma UI stores wall-clock time without UTC offset " +
+	"in the window's timezone, which is read back as those digits in UTC (`Z`), " +
+	"e.g. `2030-06-29T13:39` as `2030-06-29T13:39:00Z`. " +
+	"Configuring the same digits with `Z` matches such a window."
+
+// maintenanceTimeslotDateNote describes the dates of timeslot_list, which go
+// through the same mapping as start_date and end_date, see maintenanceDateValue.
+const maintenanceTimeslotDateNote = "RFC3339 timestamp, or null when Uptime Kuma returns none. " +
+	"For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, " +
+	"as `start_date` and `end_date` do; for the recurring strategies and cron it is an instant in UTC."
 
 // MaintenanceResource defines the resource implementation for maintenance windows.
 type MaintenanceResource struct {
@@ -135,12 +147,14 @@ func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Default:             booldefault.StaticBool(true),
 			},
 			"start_date": schema.StringAttribute{
-				MarkdownDescription: "Start date/time for single strategy (RFC3339 format)",
-				Optional:            true,
+				MarkdownDescription: "Start date/time for single strategy (RFC3339 format). " +
+					maintenanceUIDateNote,
+				Optional: true,
 			},
 			"end_date": schema.StringAttribute{
-				MarkdownDescription: "End date/time for single strategy (RFC3339 format)",
-				Optional:            true,
+				MarkdownDescription: "End date/time for single strategy (RFC3339 format). " +
+					maintenanceUIDateNote,
+				Optional: true,
 			},
 			"interval_day": schema.Int64Attribute{
 				MarkdownDescription: "Interval in days for recurring-interval strategy",
@@ -229,17 +243,17 @@ func (*MaintenanceResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"timeslot_list": schema.ListNestedAttribute{
 				MarkdownDescription: "Scheduled maintenance windows",
 				Computed:            true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
+				// No UseStateForUnknown: the server computes the list from the
+				// dates and the schedule, so a change to either changes it, and
+				// keeping the prior list in the plan fails the apply.
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"start_date": schema.StringAttribute{
-							MarkdownDescription: "RFC3339 timestamp",
+							MarkdownDescription: maintenanceTimeslotDateNote,
 							Computed:            true,
 						},
 						"end_date": schema.StringAttribute{
-							MarkdownDescription: "RFC3339 timestamp",
+							MarkdownDescription: maintenanceTimeslotDateNote,
 							Computed:            true,
 						},
 					},
@@ -287,32 +301,99 @@ func (r *MaintenanceResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	created, err := r.client.CreateMaintenance(ctx, m)
-	// Handle error. The client returns the created maintenance alongside an
-	// update event timeout, so it can be adopted instead of being orphaned.
-	if err != nil {
-		var id int64
-		if created != nil {
-			id = created.ID
-		}
 
-		if !createdWithoutEvent(&resp.Diagnostics, err, id, "failed to create maintenance") {
-			return
-		}
+	created, ok := maintenanceCreated(&resp.Diagnostics, m, created, err)
+	if !ok {
+		return
 	}
 
-	data.ID = types.Int64Value(created.ID)
-	r.populateModelFromMaintenance(ctx, created, &data, &resp.Diagnostics)
+	r.populateModelFromCreated(ctx, created, &data, &resp.Diagnostics)
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// maintenanceLister is the part of *kuma.Client maintenanceExists needs. It is a
-// seam of its own for the reason monitorLister is one: the presence check can then
-// be exercised without a socket.io server.
+// maintenanceCreated reports a failed CreateMaintenance and tells the caller
+// whether the window exists on the server nevertheless, returning the window
+// to adopt into state.
+//
+// CreateMaintenance sets sent.ID only from an acknowledgement the server
+// reported as successful, so a non-zero ID means the window exists whatever
+// went wrong afterwards. That covers the lost update event createdWithoutEvent
+// handles, where the client returns sent itself, a window the server broadcast
+// in a form the client could not decode (kuma.ErrMaintenanceDecode), where it
+// returns sent too, and a failed read-back, where GetMaintenance returns nil
+// and sent is all there is. Reporting a plain error would orphan the window
+// and make the next apply create a duplicate, so it is adopted with a warning.
+// The lost update event keeps createdWithoutEvent's own warning.
+func maintenanceCreated(
+	diags *diag.Diagnostics,
+	sent *maintenance.Maintenance,
+	created *maintenance.Maintenance,
+	err error,
+) (*maintenance.Maintenance, bool) {
+	if err == nil {
+		return created, true
+	}
+
+	if created == nil {
+		created = sent
+	}
+
+	var id int64
+	if created != nil {
+		id = created.ID
+	}
+
+	if id == 0 || errors.Is(err, kuma.ErrUpdateEventTimeout) {
+		if !createdWithoutEvent(diags, err, id, "failed to create maintenance") {
+			return nil, false
+		}
+
+		return created, true
+	}
+
+	diags.AddWarning(
+		"Maintenance created but could not be read back",
+		fmt.Sprintf(
+			"Uptime Kuma created the maintenance window with ID %d, but reading it back failed: %v. "+
+				"State holds the values as configured, with the computed ones null. The next refresh "+
+				"reads the server's values or, if the window cannot be decoded, fails until its dates "+
+				"are fixed in Uptime Kuma.",
+			id, err,
+		),
+	)
+
+	return created, true
+}
+
+// nullUnknownMaintenanceComputed sets the computed attributes the server fills
+// in to null where they are still unknown. A window adopted by
+// maintenanceCreated holds only what was sent, and Terraform rejects a create
+// that leaves a value unknown; the next refresh reads the server's values.
+func nullUnknownMaintenanceComputed(data *MaintenanceResourceModel) {
+	if data.Status.IsUnknown() {
+		data.Status = types.StringNull()
+	}
+
+	if data.TimezoneResolved.IsUnknown() {
+		data.TimezoneResolved = types.StringNull()
+	}
+
+	if data.TimezoneOffset.IsUnknown() {
+		data.TimezoneOffset = types.StringNull()
+	}
+}
+
+// maintenanceLister is the part of *kuma.Client the maintenance list lookups
+// need: maintenanceExists, findMaintenanceByTitle and listMaintenances. It is a
+// seam of its own for the reason monitorLister is one: the lookups can then be
+// exercised without a socket.io server.
 type maintenanceLister interface {
 	// GetMaintenances returns the maintenance windows the client's state cache
-	// holds. It emits nothing and cannot fail.
+	// holds. It emits nothing. A window the client could not decode is left
+	// out, and the windows that did decode come with an error wrapping
+	// kuma.ErrMaintenanceDecode that names it.
 	GetMaintenances(ctx context.Context) ([]maintenance.Maintenance, error)
 }
 
@@ -328,19 +409,38 @@ type maintenanceLister interface {
 // as absent and this confirmation is a no-op: the server's verdict then stands, as
 // it did before there was a confirmation at all. removeOnServerMiss says so too.
 //
-// The error branch is defensive rather than live - GetMaintenances returns a nil
-// error unconditionally - but the closure signature requires it and upstream may
-// yet make the getter ask the server.
+// The windows are searched before the error is looked at, because GetMaintenances
+// returns those that decoded alongside an error naming those that did not: a hit
+// is an answer either way. Without a hit an error gives no verdict, since the
+// window left out may be the one asked about. So one undecodable window, however
+// unrelated, keeps every maintenance resource whose read fails from being
+// removed after an out-of-band deletion until it is fixed. That is accepted:
+// the client names the undecodable windows only in error text, not as IDs to
+// rule this window out with, and a false absence would cost a duplicate window
+// where this costs an error.
 func maintenanceExists(client maintenanceLister, id int64) func(context.Context) (bool, error) {
 	return func(ctx context.Context) (bool, error) {
 		windows, err := client.GetMaintenances(ctx)
+
+		if slices.ContainsFunc(windows, func(window maintenance.Maintenance) bool {
+			return window.ID == id
+		}) {
+			return true, nil
+		}
+
+		if errors.Is(err, kuma.ErrMaintenanceDecode) {
+			return false, fmt.Errorf(
+				"list maintenance windows: the windows named here could not be decoded and window %d "+
+					"may be among them; if it really is gone, `terraform state rm` removes it: %w",
+				id, err,
+			)
+		}
+
 		if err != nil {
 			return false, fmt.Errorf("list maintenance windows: %w", err)
 		}
 
-		return slices.ContainsFunc(windows, func(window maintenance.Maintenance) bool {
-			return window.ID == id
-		}), nil
+		return false, nil
 	}
 }
 
@@ -383,6 +483,14 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	// The stored window tells which dates to keep as they are, see
+	// preserveStoredMaintenanceDates.
+	stored, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read maintenance before update", err.Error())
+		return
+	}
+
 	m := &maintenance.Maintenance{
 		ID:          data.ID.ValueInt64(),
 		Title:       data.Title.ValueString(),
@@ -391,12 +499,14 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		Active:      data.Active.ValueBool(),
 	}
 
-	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+	err = r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
 		return
 	}
+
+	preserveStoredMaintenanceDates(m, stored)
 
 	err = r.client.UpdateMaintenance(ctx, m)
 	if err != nil && !updatedWithoutEvent(&resp.Diagnostics, err, "failed to update maintenance") {
@@ -414,6 +524,81 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// preserveStoredMaintenanceDates keeps the dates of the stored window that the
+// payload built from the plan would otherwise rewrite or erase without a plan
+// line showing it. Create does not call it: a new window has nothing stored.
+//
+//   - single: a date whose stored counterpart is floating, as the Uptime Kuma
+//     UI writes it, is sent floating again, with the digits of the planned
+//     value, which are the digits state shows for a floating date. Sending them
+//     with Z instead would change how the server schedules the window, keep the
+//     UI's edit form from showing them, and be rejected by MariaDB. A planned
+//     value with an offset other than zero is sent as planned: a floating date
+//     reads back with Z, which would not be the value that was planned.
+//   - recurring strategies and cron: the stored date range, which the UI calls
+//     the effective date range and the provider does not manage, is sent back
+//     as stored as long as the stored strategy is one of these too, also when
+//     it changes between them. The range of a stored single window is that
+//     window itself, not an effective date range, and is not carried over.
+//   - manual, or a strategy changed from single or manual: the payload is left
+//     as built.
+func preserveStoredMaintenanceDates(planned *maintenance.Maintenance, stored *maintenance.Maintenance) {
+	if stored == nil {
+		return
+	}
+
+	switch planned.Strategy {
+	case "single":
+		for i, date := range planned.DateRange {
+			if date.IsZero() || !storedMaintenanceDate(stored, i).Floating() {
+				continue
+			}
+
+			if _, offset := date.Time().Zone(); offset != 0 {
+				continue
+			}
+
+			planned.DateRange[i] = maintenance.NewFloatingDateTime(date.Time())
+		}
+
+	default:
+		// manual sends no dates.
+		if !maintenanceHasEffectiveDateRange(planned.Strategy) ||
+			!maintenanceHasEffectiveDateRange(stored.Strategy) {
+			return
+		}
+
+		// Normalised to the two elements the server expects; copy leaves a
+		// missing element absent.
+		dateRange := make([]maintenance.DateTime, 2)
+		copy(dateRange, stored.DateRange)
+		planned.DateRange = dateRange
+	}
+}
+
+// maintenanceHasEffectiveDateRange reports whether the date range of a window
+// with strategy is the effective date range the Uptime Kuma UI offers for the
+// recurring strategies and cron.
+func maintenanceHasEffectiveDateRange(strategy string) bool {
+	switch strategy {
+	case "recurring-interval", "recurring-weekday", "recurring-day-of-month", "cron":
+		return true
+
+	default:
+		return false
+	}
+}
+
+// storedMaintenanceDate returns element i of the stored date range, absent
+// when the range is shorter.
+func storedMaintenanceDate(stored *maintenance.Maintenance, i int) maintenance.DateTime {
+	if i >= len(stored.DateRange) {
+		return maintenance.DateTime{}
+	}
+
+	return stored.DateRange[i]
 }
 
 // Delete deletes the resource.
@@ -571,6 +756,19 @@ func (*MaintenanceResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
+// populateModelFromCreated fills data, the plan of a create, from the window
+// CreateMaintenance created or maintenanceCreated adopted.
+func (r *MaintenanceResource) populateModelFromCreated(
+	ctx context.Context,
+	created *maintenance.Maintenance,
+	data *MaintenanceResourceModel,
+	diags *diag.Diagnostics,
+) {
+	data.ID = types.Int64Value(created.ID)
+	r.populateModelFromMaintenance(ctx, created, data, diags)
+	nullUnknownMaintenanceComputed(data)
+}
+
 func (r *MaintenanceResource) populateMaintenanceFromModel(
 	ctx context.Context,
 	data *MaintenanceResourceModel,
@@ -596,7 +794,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModel(
 		return r.populateMaintenanceFromModelCron(data, m)
 
 	default:
-		m.DateRange = []*time.Time{nil, nil}
+		m.DateRange = make([]maintenance.DateTime, 2)
 	}
 
 	return nil
@@ -617,7 +815,7 @@ func (*MaintenanceResource) populateMaintenanceFromModelSingle(
 			return fmt.Errorf("invalid end_date: %w", err)
 		}
 
-		m.DateRange = []*time.Time{&startDate, &endDate}
+		m.DateRange = []maintenance.DateTime{maintenance.NewDateTime(startDate), maintenance.NewDateTime(endDate)}
 	}
 
 	if !data.Timezone.IsNull() {
@@ -637,7 +835,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModelRecurringInterval(
 		m.IntervalDay = int(data.IntervalDay.ValueInt64())
 	}
 
-	m.DateRange = []*time.Time{nil, nil}
+	m.DateRange = make([]maintenance.DateTime, 2)
 	err := r.populateTimeRange(ctx, data, m, diags)
 	if err != nil {
 		return err
@@ -669,7 +867,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModelRecurringWeekday(
 		}
 	}
 
-	m.DateRange = []*time.Time{nil, nil}
+	m.DateRange = make([]maintenance.DateTime, 2)
 	err := r.populateTimeRange(ctx, data, m, diags)
 	if err != nil {
 		return err
@@ -701,7 +899,7 @@ func (r *MaintenanceResource) populateMaintenanceFromModelRecurringDayOfMonth(
 		}
 	}
 
-	m.DateRange = []*time.Time{nil, nil}
+	m.DateRange = make([]maintenance.DateTime, 2)
 	err := r.populateTimeRange(ctx, data, m, diags)
 	if err != nil {
 		return err
@@ -726,7 +924,7 @@ func (*MaintenanceResource) populateMaintenanceFromModelCron(
 		m.DurationMinutes = int(data.DurationMinutes.ValueInt64())
 	}
 
-	m.DateRange = []*time.Time{nil, nil}
+	m.DateRange = make([]maintenance.DateTime, 2)
 	if !data.Timezone.IsNull() {
 		m.TimezoneOption = data.Timezone.ValueString()
 	}
@@ -838,10 +1036,34 @@ func (*MaintenanceResource) populateModelFromMaintenanceSingle(
 	m *maintenance.Maintenance,
 	data *MaintenanceResourceModel,
 ) {
-	if len(m.DateRange) == 2 && m.DateRange[0] != nil && m.DateRange[1] != nil {
-		data.StartDate = types.StringValue(m.DateRange[0].Format(time.RFC3339))
-		data.EndDate = types.StringValue(m.DateRange[1].Format(time.RFC3339))
+	// Each date is set from what the server returns, and null when it returns
+	// none, so a date cleared out of band shows up as a change in the plan.
+	data.StartDate = types.StringNull()
+	if len(m.DateRange) > 0 {
+		data.StartDate = maintenanceDateValue(m.DateRange[0])
 	}
+
+	data.EndDate = types.StringNull()
+	if len(m.DateRange) > 1 {
+		data.EndDate = maintenanceDateValue(m.DateRange[1])
+	}
+}
+
+// maintenanceDateValue returns d as RFC 3339, or null for the absent value
+// (IsZero, decoded from null), so an absent date never shows up as
+// 0001-01-01T00:00:00Z.
+//
+// A floating date, which is what a window created in the Uptime Kuma UI holds,
+// is formatted as its wall-clock digits with a Z, the same digits the UI shows
+// and the form a configuration of the provider's own single windows takes.
+// Converting it with In instead would make the digits differ from both.
+// preserveStoredMaintenanceDates writes such a date back floating.
+func maintenanceDateValue(d maintenance.DateTime) types.String {
+	if d.IsZero() {
+		return types.StringNull()
+	}
+
+	return types.StringValue(d.Time().Format(time.RFC3339))
 }
 
 func (r *MaintenanceResource) populateModelFromMaintenanceRecurringInterval(
@@ -921,8 +1143,8 @@ func (*MaintenanceResource) populateMaintenanceTimeslotList(
 		timeslots := make([]TimeslotModel, len(m.TimeslotList))
 		for i, ts := range m.TimeslotList {
 			timeslots[i] = TimeslotModel{
-				StartDate: types.StringValue(ts.StartDate.Format(time.RFC3339)),
-				EndDate:   types.StringValue(ts.EndDate.Format(time.RFC3339)),
+				StartDate: maintenanceDateValue(ts.StartDate),
+				EndDate:   maintenanceDateValue(ts.EndDate),
 			}
 		}
 
