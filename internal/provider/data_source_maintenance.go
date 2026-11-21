@@ -112,6 +112,15 @@ func (d *MaintenanceDataSource) readByID(
 	resp *datasource.ReadResponse,
 ) {
 	window, err := d.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	if errors.Is(err, kuma.ErrMaintenanceDecode) {
+		resp.Diagnostics.AddError(
+			"Maintenance window could not be decoded",
+			maintenanceDecodeErrorDetail(data.ID.ValueInt64(), err),
+		)
+
+		return
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
 
@@ -163,7 +172,8 @@ func findMaintenanceByTitle(
 	title string,
 	diags *diag.Diagnostics,
 ) (maintenance.Maintenance, bool) {
-	// decodeErr is the one of the last look, which is the one the outcome rests on.
+	// decodeErr holds the decode error of the last list read, after any resync,
+	// since that read decides the result.
 	var decodeErr error
 
 	matches, found, err := findWithResync(
@@ -185,9 +195,9 @@ func findMaintenanceByTitle(
 		detail := fmt.Sprintf("No maintenance window with title '%s' found.", title)
 		if decodeErr != nil {
 			detail += fmt.Sprintf(
-				" Some maintenance windows could not be decoded and could be the one looked for: %v. "+
-					"Correct their dates in Uptime Kuma; looking the window up by id does not help.",
-				decodeErr,
+				" Some maintenance windows could not be decoded and could be the one looked for: %v. %s "+
+					"Looking the window up by id does not help.",
+				decodeErr, maintenanceDecodeAdvice,
 			)
 		}
 
@@ -214,8 +224,8 @@ func findMaintenanceByTitle(
 			"Some maintenance windows could not be decoded",
 			fmt.Sprintf(
 				"The maintenance window with title '%s' is unique only among the windows that could be "+
-					"decoded: %v. Correct their dates in Uptime Kuma.",
-				title, decodeErr,
+					"decoded: %v. %s",
+				title, decodeErr, maintenanceDecodeAdvice,
 			),
 		)
 	}

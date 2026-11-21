@@ -49,7 +49,8 @@ const maintenanceUIDateNote = "A window created in the Uptime Kuma UI stores wal
 // through the same mapping as start_date and end_date, see maintenanceDateValue.
 const maintenanceTimeslotDateNote = "RFC3339 timestamp, or null when Uptime Kuma returns none. " +
 	"For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, " +
-	"as `start_date` and `end_date` do; for the recurring strategies and cron it is an instant in UTC."
+	"as `start_date` and `end_date` do; for a single window the provider created it holds the dates as " +
+	"configured; for the recurring strategies and cron it is an instant in UTC."
 
 // MaintenanceResource defines the resource implementation for maintenance windows.
 type MaintenanceResource struct {
@@ -353,24 +354,60 @@ func maintenanceCreated(
 		return created, true
 	}
 
-	diags.AddWarning(
-		"Maintenance created but could not be read back",
-		fmt.Sprintf(
-			"Uptime Kuma created the maintenance window with ID %d, but reading it back failed: %v. "+
-				"State holds the values as configured, with the computed ones null. The next refresh "+
-				"reads the server's values or, if the window cannot be decoded, fails until its dates "+
-				"are fixed in Uptime Kuma.",
-			id, err,
-		),
-	)
+	addMaintenanceReadBackWarning(diags, "created", id, err)
 
 	return created, true
 }
 
-// nullUnknownMaintenanceComputed sets the computed attributes the server fills
-// in to null where they are still unknown. A window adopted by
-// maintenanceCreated holds only what was sent, and Terraform rejects a create
-// that leaves a value unknown; the next refresh reads the server's values.
+// maintenanceDecodeAdvice tells the user how to repair a maintenance window the
+// client could not decode. kuma.ErrMaintenanceDecode wraps any failure to
+// decode a window, not only one of its dates, so it points at the field the
+// error names.
+const maintenanceDecodeAdvice = "Correct the field the error names, usually a date, in Uptime Kuma."
+
+// maintenanceIncompatibilityAdvice is added for a window the provider wrote
+// itself and then could not decode: its values came from the provider, so the
+// cause is more likely an Uptime Kuma version the provider does not support
+// than data to correct.
+const maintenanceIncompatibilityAdvice = "If the provider wrote the window, this points to an Uptime Kuma " +
+	"version the provider does not support yet; please report it."
+
+// addMaintenanceReadBackWarning warns that a maintenance window was written
+// (action is "created" or "updated") but reading it back failed, so state
+// holds what was sent. For a window the client could not decode it explains
+// that every refresh will fail until the window is fixed.
+func addMaintenanceReadBackWarning(diags *diag.Diagnostics, action string, id int64, err error) {
+	detail := fmt.Sprintf(
+		"Uptime Kuma %s the maintenance window with ID %d, but reading it back failed: %v. "+
+			"State holds the values as sent; the computed ones are filled in by the next refresh.",
+		action, id, err,
+	)
+
+	if errors.Is(err, kuma.ErrMaintenanceDecode) {
+		detail += " The window cannot be decoded, so that refresh fails until it is fixed. " +
+			maintenanceIncompatibilityAdvice
+	}
+
+	diags.AddWarning("Maintenance "+action+" but could not be read back", detail)
+}
+
+// maintenanceDecodeErrorDetail explains a failed read of maintenance window id
+// that the client could not decode, and how to get past it.
+func maintenanceDecodeErrorDetail(id int64, err error) string {
+	return fmt.Sprintf(
+		"Maintenance window %d exists in Uptime Kuma, but the provider could not decode it: %v. %s %s "+
+			"Until then, `terraform plan -refresh=false` skips the read, and `terraform state rm` "+
+			"stops managing the window.",
+		id, err, maintenanceDecodeAdvice, maintenanceIncompatibilityAdvice,
+	)
+}
+
+// nullUnknownMaintenanceComputed sets status, timezone_resolved and
+// timezone_offset to null where they are still unknown; populateModelFromMaintenance
+// always sets the other computed attributes, duration and timeslot_list. A
+// window adopted after a failed read-back holds only what was sent, and
+// Terraform rejects an apply that leaves a value unknown; the next refresh
+// reads the server's values.
 func nullUnknownMaintenanceComputed(data *MaintenanceResourceModel) {
 	if data.Status.IsUnknown() {
 		data.Status = types.StringNull()
@@ -395,6 +432,14 @@ type maintenanceLister interface {
 	// out, and the windows that did decode come with an error wrapping
 	// kuma.ErrMaintenanceDecode that names it.
 	GetMaintenances(ctx context.Context) ([]maintenance.Maintenance, error)
+}
+
+// maintenanceGetter is the part of *kuma.Client storedMaintenance needs, a seam
+// so it can be exercised without a socket.io server.
+type maintenanceGetter interface {
+	// GetMaintenance asks the server for window id. A window it cannot decode
+	// comes back as nil with an error wrapping kuma.ErrMaintenanceDecode.
+	GetMaintenance(ctx context.Context, id int64) (*maintenance.Maintenance, error)
 }
 
 // maintenanceExists builds the presence check removeOnServerMiss confirms a
@@ -456,6 +501,17 @@ func (r *MaintenanceResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	m, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	if errors.Is(err, kuma.ErrMaintenanceDecode) {
+		// The window exists; suspectedNotFound would not take this for a miss
+		// either, but the user needs to be told how to get past it.
+		resp.Diagnostics.AddError(
+			"Maintenance window could not be decoded",
+			maintenanceDecodeErrorDetail(data.ID.ValueInt64(), err),
+		)
+
+		return
+	}
+
 	if err != nil {
 		// GetMaintenance asks the server, so a window deleted outside Terraform
 		// comes back in the server's own words rather than as kuma.ErrNotFound.
@@ -483,11 +539,8 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	// The stored window tells which dates to keep as they are, see
-	// preserveStoredMaintenanceDates.
-	stored, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to read maintenance before update", err.Error())
+	stored, ok := storedMaintenance(ctx, r.client, data.ID.ValueInt64(), &resp.Diagnostics)
+	if !ok {
 		return
 	}
 
@@ -499,7 +552,7 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		Active:      data.Active.ValueBool(),
 	}
 
-	err = r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
+	err := r.populateMaintenanceFromModel(ctx, &data, m, &resp.Diagnostics)
 	// Handle error.
 	if err != nil {
 		resp.Diagnostics.AddError("failed to populate maintenance", err.Error())
@@ -513,17 +566,59 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	// The update landed, so a failed read-back must not fail the apply: that
+	// would keep the prior values in state for a window the server already
+	// changed. As in Create, state takes what was sent.
 	updated, err := r.client.GetMaintenance(ctx, data.ID.ValueInt64())
-	// Handle error.
 	if err != nil {
-		resp.Diagnostics.AddError("failed to read updated maintenance", err.Error())
-		return
+		addMaintenanceReadBackWarning(&resp.Diagnostics, "updated", m.ID, err)
+
+		updated = m
 	}
 
 	r.populateModelFromMaintenance(ctx, updated, &data, &resp.Diagnostics)
+	nullUnknownMaintenanceComputed(&data)
 
 	// Populate state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// storedMaintenance reads the window Update is about to overwrite, which tells
+// preserveStoredMaintenanceDates which dates to keep as they are. It reports
+// false, with an error in diags, when the read fails.
+//
+// A window the client cannot decode is the one exception: the update may be
+// the repair, applied with -refresh=false, so it goes ahead with a warning and
+// no stored window, sending the planned values as they are.
+func storedMaintenance(
+	ctx context.Context,
+	client maintenanceGetter,
+	id int64,
+	diags *diag.Diagnostics,
+) (*maintenance.Maintenance, bool) {
+	stored, err := client.GetMaintenance(ctx, id)
+	if err == nil {
+		return stored, true
+	}
+
+	if !errors.Is(err, kuma.ErrMaintenanceDecode) {
+		diags.AddError("failed to read maintenance before update", err.Error())
+
+		return nil, false
+	}
+
+	diags.AddWarning(
+		"Stored maintenance window could not be decoded",
+		fmt.Sprintf(
+			"Maintenance window %d could not be decoded before the update: %v. The planned values are "+
+				"sent as they are and replace what is stored, so dates the Uptime Kuma UI stored without "+
+				"UTC offset are sent with one, and the effective date range of a recurring or cron "+
+				"window is cleared.",
+			id, err,
+		),
+	)
+
+	return nil, true
 }
 
 // preserveStoredMaintenanceDates keeps the dates of the stored window that the
@@ -533,8 +628,9 @@ func (r *MaintenanceResource) Update(ctx context.Context, req resource.UpdateReq
 //   - single: a date whose stored counterpart is floating, as the Uptime Kuma
 //     UI writes it, is sent floating again, with the digits of the planned
 //     value, which are the digits state shows for a floating date. Sending them
-//     with Z instead would change how the server schedules the window, keep the
-//     UI's edit form from showing them, and be rejected by MariaDB. A planned
+//     with Z instead would keep the UI's edit form from showing them, be
+//     rejected by MariaDB, and, depending on the Uptime Kuma version, change
+//     how the server schedules the window. A planned
 //     value with an offset other than zero is sent as planned: a floating date
 //     reads back with Z, which would not be the value that was planned.
 //   - recurring strategies and cron: the stored date range, which the UI calls
@@ -564,7 +660,7 @@ func preserveStoredMaintenanceDates(planned *maintenance.Maintenance, stored *ma
 		}
 
 	default:
-		// manual sends no dates.
+		// manual sends two absent dates, nothing to keep.
 		if !maintenanceHasEffectiveDateRange(planned.Strategy) ||
 			!maintenanceHasEffectiveDateRange(stored.Strategy) {
 			return

@@ -177,5 +177,5 @@ Required:
 
 Read-Only:
 
-- `end_date` (String) RFC3339 timestamp, or null when Uptime Kuma returns none. For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, as `start_date` and `end_date` do; for the recurring strategies and cron it is an instant in UTC.
-- `start_date` (String) RFC3339 timestamp, or null when Uptime Kuma returns none. For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, as `start_date` and `end_date` do; for the recurring strategies and cron it is an instant in UTC.
+- `end_date` (String) RFC3339 timestamp, or null when Uptime Kuma returns none. For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, as `start_date` and `end_date` do; for a single window the provider created it holds the dates as configured; for the recurring strategies and cron it is an instant in UTC.
+- `start_date` (String) RFC3339 timestamp, or null when Uptime Kuma returns none. For a single window created in the Uptime Kuma UI it holds the wall-clock digits with `Z`, as `start_date` and `end_date` do; for a single window the provider created it holds the dates as configured; for the recurring strategies and cron it is an instant in UTC.

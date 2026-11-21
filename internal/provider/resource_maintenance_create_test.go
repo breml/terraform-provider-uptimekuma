@@ -53,7 +53,7 @@ func TestMaintenanceCreated(t *testing.T) {
 			err:           decodeErr,
 			wantID:        5,
 			wantWarning:   "Maintenance created but could not be read back",
-			wantInWarning: []string{"ID 5", decodeErr.Error(), "fixed in Uptime Kuma"},
+			wantInWarning: []string{"ID 5", decodeErr.Error(), "fails until it is fixed", maintenanceIncompatibilityAdvice},
 		},
 		// GetMaintenance returns nil on any failure after the server acknowledged
 		// the create; the ID CreateMaintenance set on what was sent is the window.
@@ -62,7 +62,7 @@ func TestMaintenanceCreated(t *testing.T) {
 			err:           readBackErr,
 			wantID:        5,
 			wantWarning:   "Maintenance created but could not be read back",
-			wantInWarning: []string{"ID 5", readBackErr.Error(), "computed ones null"},
+			wantInWarning: []string{"ID 5", readBackErr.Error(), "filled in by the next refresh"},
 		},
 		"a decode error without an ID is a failure": {
 			sent:        &maintenance.Maintenance{},

@@ -283,44 +283,55 @@ pattern with type-specific fields:
 
 Maintenance dates are `maintenance.DateTime`, not `time.Time` (issue #358). A window
 created in the Uptime Kuma UI stores wall-clock time without UTC offset
-(`"2026-06-29T13:39"`), a "floating" value; the UI also stores an "Effective Date Range"
-for every scheduled strategy, which the provider does not manage.
+(`"2026-06-29T13:39"`), a "floating" value; for the recurring strategies and cron the UI
+also stores an "Effective Date Range", which the provider does not manage.
 
 - **Read**: `maintenanceDateValue()` in [resource_maintenance.go](resource_maintenance.go)
   formats `DateTime.Time()`, so a floating value reads back as the same digits with `Z`,
-  the form of the provider's own dates; do not convert it through `In`. `start_date` and
-  `end_date` are each set from what the server returns and are null when it returns no
-  date (a shorter range, or `IsZero()`, decoded from null; `DateRange` holds values, not
-  pointers), so a date cleared out of band shows up in the plan. An absent date is never
-  written as `0001-01-01T00:00:00Z`; a year-1 date the server actually stores is present
-  and read as stored. `timeslot_list` dates go through the same mapping.
-- **Update**: `Update` reads the stored window with `GetMaintenance` first and hands it to
-  `preserveStoredMaintenanceDates()`, which changes the payload built from the plan. For
-  `single`, a date whose stored counterpart is floating is sent floating again, with the
-  digits of the planned value. A planned value with an offset other than zero is sent as
-  planned, because a floating date reads back with `Z` and Terraform would reject that as
-  not being the planned value. For the recurring strategies and cron, the stored
-  date range is sent back as stored (normalised to two elements) while the stored strategy
-  is one of those too, also across a change between them; a stored `single` range is the
-  window itself and is not carried over. Without it an unrelated change would rewrite a UI window's dates with `Z` or
-  erase its effective date range, with no plan line showing either. `Create` does not call
-  it: a window the provider creates is written as configured.
+  the form a UTC configuration takes; do not convert it through `In`. For `single`,
+  `start_date` and `end_date` are each set from what the server returns, and are null
+  when the range is shorter or the element is absent (`IsZero()`, decoded from JSON null;
+  `DateRange` holds values, not pointers), so a date cleared out of band shows up in the
+  plan. An absent date is never written as `0001-01-01T00:00:00Z`; a year-1 date the
+  server actually stores is present and read as stored. `timeslot_list` dates go through
+  the same mapping.
+- **Update**: `Update` reads the stored window with `GetMaintenance` first
+  (`storedMaintenance()`) and hands it to `preserveStoredMaintenanceDates()`, which
+  changes the payload built from the plan. For `single`, a date whose stored counterpart
+  is floating is sent floating again, with the digits of the planned value. A planned
+  value with an offset other than zero is sent as planned, because a floating date reads
+  back with `Z` and Terraform would reject that as not being the planned value. For the
+  recurring strategies and cron, the stored date range is sent back as stored (normalised
+  to two elements) while the stored strategy is one of those too, also across a change
+  between them; a stored `single` range is the window itself and is not carried over.
+  Without it an unrelated change would rewrite a UI window's dates with `Z` or erase its
+  effective date range, with no plan line showing either. `Create` does not call it: a
+  window the provider creates is written as configured.
 
-The client decodes `maintenanceList` window by window: `GetMaintenances` returns the
-windows that decoded together with an error wrapping `kuma.ErrMaintenanceDecode` that
-names the rest, so check `errors.Is` before discarding the list. The by-name data source
-searches the partial list (a miss still resyncs and then names the undecodable windows),
-a hit next to undecodable windows and `uptimekuma_maintenances` warn, and
-`maintenanceExists` accepts a hit but treats a miss next to any error as no verdict. So one
-unrelated undecodable window keeps every maintenance resource from being dropped after an
-out-of-band deletion until it is fixed; accepted, because the client names the undecodable
-windows only in error text, not as IDs to rule a window out with, and a false absence would
-cost a duplicate. `Create` adopts any window the server acknowledged (non-zero `m.ID`)
-whose read-back failed, with a warning (`maintenanceCreated()`); the lost update event
-keeps `createdWithoutEvent()`. `suspectedNotFound()` never takes a decode error for a miss.
-`timeslot_list` has no `UseStateForUnknown`: the server recomputes it whenever the dates
-change. Never store an undecodable window on the shared acceptance test server: it would
-turn up in every parallel test's list.
+The client decodes `maintenanceList` window by window. `kuma.ErrMaintenanceDecode` wraps
+any failure to decode a window, not only a bad date, so messages point at "the field the
+error names" (`maintenanceDecodeAdvice`).
+
+- **Lists**: `GetMaintenances` returns the windows that decoded together with an error
+  wrapping `kuma.ErrMaintenanceDecode` that names the rest, so check `errors.Is` before
+  discarding the list. The by-name data source searches the partial list (a miss still
+  resyncs and then names the undecodable windows); a hit next to undecodable windows and
+  `uptimekuma_maintenances` warn.
+- **Existence check**: `maintenanceExists` accepts a hit but treats a miss next to any
+  decode error as no verdict; see its doc comment for why that trade-off is accepted.
+  `suspectedNotFound()` never takes a decode error for a miss.
+- **Read of one window**: the resource's `Read` and the data source's lookup by id report
+  a decode error with `maintenanceDecodeErrorDetail()`, which names the escape hatches
+  (`-refresh=false`, `terraform state rm`).
+- **Writes**: `Create` adopts any window the server acknowledged (non-zero `m.ID`) whose
+  read-back failed, with a warning (`maintenanceCreated()`); the lost update event keeps
+  `createdWithoutEvent()`. `Update` likewise keeps what it sent when the read-back after a
+  landed write fails, and goes ahead without a stored window when the read before it
+  cannot decode the window, because that update may be the repair.
+- `timeslot_list` has no `UseStateForUnknown`: the server recomputes it whenever the
+  dates or the schedule change.
+- Never store an undecodable window on the shared acceptance test server: it would turn
+  up in every parallel test's list.
 
 Acceptance tests create such a window out of band with `testAccCreateUIMaintenance()`
 (`single` or `cron`) from a `PreConfig`, never before `resource.ParallelTest`, which would

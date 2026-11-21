@@ -199,9 +199,8 @@ func listMaintenances(
 	diags.AddWarning(
 		"Some maintenance windows left out",
 		fmt.Sprintf(
-			"These maintenance windows could not be decoded and are missing from the list: %v. "+
-				"Correct their dates in Uptime Kuma to list them.",
-			err,
+			"These maintenance windows could not be decoded and are missing from the list: %v. %s",
+			err, maintenanceDecodeAdvice,
 		),
 	)
 

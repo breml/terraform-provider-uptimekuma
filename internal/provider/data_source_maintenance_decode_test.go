@@ -68,8 +68,7 @@ func TestFindMaintenanceByTitle(t *testing.T) {
 			before: maintenanceListing{windows: []maintenance.Maintenance{wanted}, err: undecodable()},
 			wantID: 7,
 			wantWarning: "The maintenance window with title 'wanted' is unique only among the windows that " +
-				"could be decoded: get maintenances: maintenance 8: maintenance window could not be decoded: " +
-				"bad date. Correct their dates in Uptime Kuma.",
+				"could be decoded: " + undecodable().Error() + ". " + maintenanceDecodeAdvice,
 			wantLooks: 1,
 		},
 		// A miss next to an undecodable window is still a miss worth a resync,
@@ -87,8 +86,8 @@ func TestFindMaintenanceByTitle(t *testing.T) {
 				summary: "Maintenance not found",
 				detail: "No maintenance window with title 'wanted' found. Some maintenance windows " +
 					"could not be decoded and could be the one looked for: ",
-				inDetail: "maintenance 8: maintenance window could not be decoded: bad date. " +
-					"Correct their dates in Uptime Kuma; looking the window up by id does not help.",
+				inDetail: undecodable().Error() + ". " + maintenanceDecodeAdvice +
+					" Looking the window up by id does not help.",
 			},
 			wantLooks: 2,
 		},
@@ -174,11 +173,10 @@ func TestListMaintenances(t *testing.T) {
 			wantCount: 2,
 		},
 		"an undecodable window is left out with a warning": {
-			client:    &fakeMaintenanceLister{windows: listed, err: undecodable()},
-			wantOK:    true,
-			wantCount: 2,
-			wantWarning: "maintenance 8: maintenance window could not be decoded: bad date. " +
-				"Correct their dates in Uptime Kuma to list them.",
+			client:      &fakeMaintenanceLister{windows: listed, err: undecodable()},
+			wantOK:      true,
+			wantCount:   2,
+			wantWarning: undecodable().Error() + ". " + maintenanceDecodeAdvice,
 		},
 		"another error fails the read": {
 			client:    &fakeMaintenanceLister{windows: listed, err: errors.New("socket closed")},

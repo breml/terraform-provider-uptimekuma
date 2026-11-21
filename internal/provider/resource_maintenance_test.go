@@ -577,7 +577,7 @@ func testAccUIMaintenanceFloating(hour int, minute int) maintenance.DateTime {
 // strategy is "single", with the window from testAccUIMaintenanceStart to
 // testAccUIMaintenanceEnd, or "cron", running testAccUIMaintenanceCron for an
 // hour within an effective date range over the same digits, which the UI
-// offers for every scheduled strategy and the provider does not manage.
+// offers for the recurring strategies and cron and the provider does not manage.
 //
 // Call it from a PreConfig, never before resource.ParallelTest: until t.Parallel
 // the non-parallel tests are still running, and data_source_maintenances_test.go
