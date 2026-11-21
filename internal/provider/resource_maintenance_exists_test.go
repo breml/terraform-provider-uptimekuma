@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
+	kuma "github.com/breml/go-uptime-kuma-client"
 	"github.com/breml/go-uptime-kuma-client/maintenance"
 )
 
@@ -18,14 +20,21 @@ type fakeMaintenanceLister struct {
 	calls int
 }
 
+// GetMaintenances returns windows and err together, as the client does for a
+// list it could decode only in part.
 func (f *fakeMaintenanceLister) GetMaintenances(context.Context) ([]maintenance.Maintenance, error) {
 	f.calls++
 
-	if f.err != nil {
-		return nil, f.err
-	}
+	return f.windows, f.err
+}
 
-	return f.windows, nil
+// undecodable is the error the client returns alongside the windows it could
+// decode when it could not decode window 8.
+func undecodable() error {
+	return fmt.Errorf(
+		"get maintenances: %w",
+		errors.Join(fmt.Errorf("maintenance 8: %w: bad date", kuma.ErrMaintenanceDecode)),
+	)
 }
 
 func TestMaintenanceExists(t *testing.T) {
@@ -69,6 +78,27 @@ func TestMaintenanceExists(t *testing.T) {
 			client:    &fakeMaintenanceLister{err: errors.New("socket closed")},
 			id:        7,
 			wantError: "list maintenance windows: socket closed",
+		},
+		// GetMaintenances returns the windows that decoded alongside an error
+		// naming those that did not, and a hit among them is an answer.
+		"a listed window is present although another could not be decoded": {
+			client: &fakeMaintenanceLister{windows: listed, err: undecodable()},
+			id:     7,
+			want:   true,
+		},
+		"a listed window is present whatever the error": {
+			client: &fakeMaintenanceLister{windows: listed, err: errors.New("socket closed")},
+			id:     9,
+			want:   true,
+		},
+		// The window left out may be the one asked about, so its absence from
+		// the rest is no verdict.
+		"an unlisted window next to an undecodable one is an error, not an absence": {
+			client: &fakeMaintenanceLister{windows: listed, err: undecodable()},
+			id:     8,
+			wantError: "the windows named here could not be decoded and window 8 may be among them; " +
+				"if it really is gone, `terraform state rm` removes it: get maintenances: " +
+				"maintenance 8: maintenance window could not be decoded",
 		},
 	}
 

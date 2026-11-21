@@ -812,6 +812,16 @@ func TestSuspectedNotFound(t *testing.T) {
 			err:  errors.New("get monitor 5 as *monitor.HTTP: json: cannot unmarshal string into int64"),
 			want: false,
 		},
+		// The payload a decode error quotes may hold any text, the server's
+		// wording for a miss included.
+		"an undecodable maintenance window is not a miss": {
+			err: fmt.Errorf(
+				"get maintenance 5: %w: %w",
+				kuma.ErrMaintenanceDecode,
+				errors.New(`maintenance date "Cannot read properties of null": invalid`),
+			),
+			want: false,
+		},
 		"a transport error is not a miss": {
 			err:  errors.New("socket closed"),
 			want: false,
