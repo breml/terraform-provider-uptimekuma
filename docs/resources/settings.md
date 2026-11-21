@@ -48,7 +48,7 @@ resource "uptimekuma_settings" "write_only" {
 
 - `check_update` (Boolean) Enable automatic update checks.
 - `chrome_executable` (String) Path to Chrome/Chromium executable for Real Browser monitoring.
-- `entry_page` (String) Entry page shown after login (e.g. `dashboard`).
+- `entry_page` (String) Entry page shown after login (e.g. `dashboard` or `statusPage-<slug>`).
 - `keep_data_period_days` (Number) Number of days to keep monitoring data.
 - `nscd` (Boolean) Enable NSCD (Name Service Cache Daemon) for DNS caching.
 - `primary_base_url` (String) Primary base URL for the Uptime Kuma instance.
