@@ -47,14 +47,19 @@ take one of these shapes:
   `username` and `password`: the token is tried first, and the password login is the fallback for a
   token the server refuses. The provider warns when that fallback happens, so the stored token can
   be replaced.
+- **`api_key`**, on Uptime Kuma 3.0 only, see [API keys on Uptime Kuma 3.0](#api-keys-on-uptime-kuma-30).
+  The key is the only credential: it cannot be combined with `username`, `password`,
+  `session_token` or `totp_secret`.
 
 `totp_secret` without `username` and `password` is rejected, and so is `username` without
 `password` or the other way round. The endpoint, the credentials and the scheme can also come from
 an environment variable: `UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`,
-`UPTIMEKUMA_TOTP_SECRET`, `UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_AUTH_SCHEME`. The connection
-options have their own, see the schema below. For the endpoint, the credentials and the scheme an
-empty attribute counts as unset, so the environment variable applies to it too; that is what an attribute fed from
-a variable without a value leaves behind.
+`UPTIMEKUMA_TOTP_SECRET`, `UPTIMEKUMA_SESSION_TOKEN`, `UPTIMEKUMA_API_KEY` and
+`UPTIMEKUMA_AUTH_SCHEME`, and `headers` from `UPTIMEKUMA_HEADERS` as a JSON object of strings. The
+connection options have their own, see the schema below. For the endpoint, the credentials, the
+scheme and the headers an empty attribute counts as unset, so the environment variable applies to it
+too; that is what an attribute fed from a variable without a value leaves behind. A credential from
+the environment next to `api_key` is a conflict like one in the configuration.
 
 The credentials must be known when Terraform plans, because the provider logs in to plan at all. A
 provider attribute that refers to a resource created in the same run is rejected.
@@ -120,11 +125,70 @@ provider "uptimekuma" {
 }
 ```
 
+### API keys on Uptime Kuma 3.0
+
+Uptime Kuma 3.0 accepts an API key on the Socket.IO connection, presented as
+`Authorization: Bearer <key>`, once "API and MCP" (`apiEnabled`) is enabled in its settings. Create
+the key under Settings > API Keys, then configure it alone:
+
+```hcl
+provider "uptimekuma" {
+  endpoint = "https://uptime-kuma.example.com"
+  api_key  = var.uptimekuma_api_key
+}
+```
+
+- The "API and MCP" setting is marked alpha upstream, so its behaviour may still change.
+- The server authenticates the connection as the user who created the key, without a second factor.
+  The key is valid until it expires or is revoked: store it the way a password is stored.
+- A refused key and a disabled "API and MCP" setting look the same to the provider; the error names
+  both causes.
+- Uptime Kuma 2.x and earlier have no API key login on the Socket.IO API, so `api_key` fails there
+  with an error saying so, and `auth_scheme = "socket"` next to `api_key` is rejected.
+- A server with authentication disabled ignores the key and lets every connection in.
+- No session is created, so the key needs no sign-in and does not count against the sign-in rate
+  limit.
+
+### Access proxies: `headers` and `user_agent`
+
+`headers` adds HTTP headers to every request the provider makes, the Socket.IO handshake included.
+It is meant for what sits in front of Uptime Kuma, such as a Cloudflare Access service token or a
+forward-auth proxy:
+
+```hcl
+provider "uptimekuma" {
+  endpoint = "https://uptime-kuma.example.com"
+  username = "admin"
+  password = var.uptimekuma_password
+
+  headers = {
+    "CF-Access-Client-Id"     = var.cf_access_client_id
+    "CF-Access-Client-Secret" = var.cf_access_client_secret
+  }
+}
+```
+
+- The headers are sent to the origin (scheme, host and port) of `endpoint` only.
+- The provider follows no redirect that leaves that origin, and that includes an upgrade from
+  `http` to `https` on the same host. The error names the URL to use: set `endpoint` to the final
+  URL instead.
+- The headers the client and its transport set themselves cannot be configured: `Host`, `Origin`,
+  `Connection`, `Upgrade`, `Accept`, `Accept-Encoding`, `Content-Type`, `Content-Length`,
+  `Transfer-Encoding`, `TE`, `Trailer` and `Sec-WebSocket-*`. Neither can an `Authorization`
+  header with a `Bearer` token, which is what `api_key` is for; `Authorization: Basic` for a reverse
+  proxy is accepted.
+- `headers` is sensitive, because its values are often credentials.
+
+`user_agent` sets the User-Agent of every request. It defaults to
+`terraform-provider-uptimekuma/<provider version>`.
+
 ### Authentication and `uptimekuma_settings`
 
 Uptime Kuma asks for the account password again whenever settings are written, so
 `uptimekuma_settings` needs `password` on the provider. A provider that authenticates with
-`session_token` alone can manage every other resource.
+`session_token` alone can manage every other resource. A provider with `api_key` has no password
+either, and cannot have one next to the key, so manage `uptimekuma_settings` through a second
+provider configuration (an alias) that logs in with `username` and `password`.
 
 ### Keeping credentials out of the configuration
 
@@ -157,10 +221,11 @@ Uptime Kuma 3.0 is released.
 Uptime Kuma 3.0 replaces the socket login with an HTTP sign-in. The provider detects which one the
 server speaks, so the provider configuration is the same for both. On 3.0 the following applies:
 
-- API keys still cannot authenticate the socket connection, the server only accepts the session of
-  a signed-in user. Configure `username` and `password` as for 2.5.x, or a `session_token`; on 3.0
-  the token is a session cookie that lapses after 7 days without use, so keep `username` and
-  `password` next to it, see [Session tokens on Uptime Kuma 2.x and 3.x](#session-tokens-on-uptime-kuma-2x-and-3x).
+- `username` and `password` work as for 2.5.x, and so does a `session_token`; on 3.0 the token is a
+  session cookie that lapses after 7 days without use, so keep `username` and `password` next to
+  it, see [Session tokens on Uptime Kuma 2.x and 3.x](#session-tokens-on-uptime-kuma-2x-and-3x).
+- An API key authenticates the socket connection once "API and MCP" (`apiEnabled`, alpha) is enabled
+  in the settings, see [API keys on Uptime Kuma 3.0](#api-keys-on-uptime-kuma-30).
 - The server allows three sign-ins per ten seconds from one address. Many provider instances
   signing in at once, such as several `terraform apply` runs in parallel, can hit that limit. See
   [Rate limits and two-factor authentication](#rate-limits-and-two-factor-authentication).

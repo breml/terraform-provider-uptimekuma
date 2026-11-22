@@ -20,6 +20,7 @@ import (
 // else of it, which is why they take the resyncer interface.
 type fakeResyncer struct {
 	token   string
+	scheme  kuma.AuthScheme
 	missing []string
 	err     error
 
@@ -34,7 +35,54 @@ func (f *fakeResyncer) Resync(context.Context) error {
 
 func (f *fakeResyncer) SessionToken() string { return f.token }
 
+func (f *fakeResyncer) AuthScheme() kuma.AuthScheme { return f.scheme }
+
 func (f *fakeResyncer) MissingReadyEvents() []string { return f.missing }
+
+// TestCanResync pins that a 3.x client resyncs without a session token: one
+// authenticated by an API key holds none, and a resync there connects again
+// with the key rather than logging in.
+func TestCanResync(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		client *fakeResyncer
+		want   bool
+	}{
+		{name: "2.x with session token", client: &fakeResyncer{token: "t", scheme: kuma.AuthSchemeSocket}, want: true},
+		{name: "2.x without session token", client: &fakeResyncer{scheme: kuma.AuthSchemeSocket}, want: false},
+		{name: "3.x api key, no session token", client: &fakeResyncer{scheme: kuma.AuthSchemeHTTP}, want: true},
+		{name: "3.x with session token", client: &fakeResyncer{token: "t", scheme: kuma.AuthSchemeHTTP}, want: true},
+		{name: "scheme not reported, session token", client: &fakeResyncer{token: "t"}, want: true},
+		{name: "scheme not reported, no session token", client: &fakeResyncer{}, want: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := canResync(tc.client); got != tc.want {
+				t.Errorf("expected canResync %t, got %t", tc.want, got)
+			}
+		})
+	}
+}
+
+func TestResyncCacheWithAPIKeyResyncs(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeResyncer{scheme: kuma.AuthSchemeHTTP}
+
+	retry, err := resyncCache(t.Context(), client)
+	if err != nil || !retry {
+		t.Fatalf("expected a resync for a 3.x client without session token, got %t, %v", retry, err)
+	}
+
+	if client.resyncs != 1 {
+		t.Errorf("expected one resync, got %d", client.resyncs)
+	}
+}
 
 // loggedIn is the ordinary client: it holds a session token and the server sent
 // every list.

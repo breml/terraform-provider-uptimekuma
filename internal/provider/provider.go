@@ -46,6 +46,9 @@ type UptimeKumaProviderModel struct {
 	SessionToken      types.String `tfsdk:"session_token"`
 	TOTPSecret        types.String `tfsdk:"totp_secret"`
 	AuthScheme        types.String `tfsdk:"auth_scheme"`
+	APIKey            types.String `tfsdk:"api_key"`
+	Headers           types.Map    `tfsdk:"headers"`
+	UserAgent         types.String `tfsdk:"user_agent"`
 	Timeout           types.String `tfsdk:"timeout"`
 	PerAttemptTimeout types.String `tfsdk:"per_attempt_timeout"`
 	OperationTimeout  types.String `tfsdk:"operation_timeout"`
@@ -102,6 +105,21 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 					authSchemeValidator{},
 				},
 			},
+			"api_key": schema.StringAttribute{
+				MarkdownDescription: apiKeyDescription,
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"headers": schema.MapAttribute{
+				MarkdownDescription: headersDescription,
+				ElementType:         types.StringType,
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"user_agent": schema.StringAttribute{
+				MarkdownDescription: userAgentDescription,
+				Optional:            true,
+			},
 			"timeout": schema.StringAttribute{
 				MarkdownDescription: "Overall connection timeout as a Go duration string (e.g. `30s`, `2m`). " +
 					"Bounds the total time spent attempting to connect to Uptime Kuma, including all retry " +
@@ -151,7 +169,7 @@ func (*UptimeKumaProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 }
 
 // Configure configures the provider with the API client.
-func (*UptimeKumaProvider) Configure(
+func (p *UptimeKumaProvider) Configure(
 	ctx context.Context,
 	req provider.ConfigureRequest,
 	resp *provider.ConfigureResponse,
@@ -192,6 +210,7 @@ func (*UptimeKumaProvider) Configure(
 	// only here is every credential known. The auth scheme is resolved here
 	// because the client configuration needs it.
 	validateCredentials(&data, &resp.Diagnostics)
+	validateAPIKey(&data, &resp.Diagnostics)
 	authScheme := resolveAuthScheme(&data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
@@ -204,6 +223,7 @@ func (*UptimeKumaProvider) Configure(
 	}
 
 	opts.authScheme = authScheme
+	opts.userAgent = resolveUserAgent(&data, p.version)
 
 	kumaClient := connect(data.Endpoint.ValueString(), buildClientConfig(&data, opts), client.New, &resp.Diagnostics)
 	if kumaClient == nil {
@@ -219,6 +239,7 @@ func (*UptimeKumaProvider) Configure(
 	pd := &providerData{
 		client:   kumaClient,
 		password: data.Password.ValueString(),
+		apiKey:   data.APIKey.ValueString() != "",
 	}
 
 	resp.DataSourceData = pd
@@ -278,6 +299,11 @@ func connectionError(endpoint string, err error) (summary string, detail string)
 				"up.\n\nUnderlying error: %v",
 			err,
 		)
+	}
+
+	summary, detail = requestConfigErrorAdvice(endpoint, err)
+	if summary != "" {
+		return summary, detail
 	}
 
 	summary, nextStep := loginErrorAdvice(err)
@@ -369,7 +395,71 @@ func loginErrorAdvice(err error) (summary string, nextStep string) {
 		return "Uptime Kuma requires authentication",
 			"The server requires a login, but no credentials are configured. Set the provider attributes " +
 				"`username` and `password` (or the environment variables `UPTIMEKUMA_USERNAME` and " +
-				"`UPTIMEKUMA_PASSWORD`), or `session_token` (or `UPTIMEKUMA_SESSION_TOKEN`)."
+				"`UPTIMEKUMA_PASSWORD`), `session_token` (or `UPTIMEKUMA_SESSION_TOKEN`), or on Uptime " +
+				"Kuma 3.0 `api_key` (or `UPTIMEKUMA_API_KEY`)."
+	}
+
+	return apiKeyErrorAdvice(err)
+}
+
+// apiKeyErrorAdvice returns the summary and the next step for a refused
+// `api_key`, or empty strings for any other error. It is the tail of
+// loginErrorAdvice.
+func apiKeyErrorAdvice(err error) (summary string, nextStep string) {
+	switch {
+	case errors.Is(err, kuma.ErrAPIKeyUnsupported):
+		return "Uptime Kuma does not accept API keys for this connection",
+			"API keys authenticate the socket only on Uptime Kuma 3.0. This server is Uptime Kuma 2.x or " +
+				"earlier, or `auth_scheme` pins the 2.x login. Authenticate with `username` and `password` " +
+				"or `session_token` instead of `api_key`, or upgrade Uptime Kuma."
+
+	case errors.Is(err, kuma.ErrAPIKeyRejected):
+		return "Uptime Kuma rejected the API key",
+			"The server asked for a login instead of accepting `api_key` (or `UPTIMEKUMA_API_KEY`): the key " +
+				"is invalid, expired or revoked, or \"API and MCP\" is disabled in Settings (`apiEnabled`). " +
+				"The server does not tell the two apart. Check the key under Settings > API Keys and that " +
+				"\"API and MCP\" is enabled."
+
+	case errors.Is(err, kuma.ErrAPIKeySetupRequired):
+		return "Uptime Kuma is not set up yet",
+			"The server has not been set up, so it has no API keys, and an API key cannot run the setup. " +
+				"Set Uptime Kuma up with a username and password first, create an API key, then use it in " +
+				"`api_key`."
+	}
+
+	return "", ""
+}
+
+// requestConfigErrorAdvice returns the summary and the detail of the
+// diagnostic for a connection the client refused to make the way it was
+// configured: an `api_key`, `headers` or `user_agent` it rejects, or a
+// redirect that leaves the origin of `endpoint`. Neither is a refused login nor
+// a transport failure. It returns empty strings for any other error.
+func requestConfigErrorAdvice(endpoint string, err error) (summary string, detail string) {
+	switch {
+	case client.IsRequestConfigError(err):
+		return "Invalid api_key, headers or user_agent", fmt.Sprintf(
+			"The provider could not connect to Uptime Kuma at %q with the configured `api_key`, `headers` "+
+				"or `user_agent` (or `UPTIMEKUMA_API_KEY` and `UPTIMEKUMA_HEADERS`).\n\n"+
+				"Underlying error: %v\n\n"+
+				"`headers` cannot set what the client and its transport set themselves (Host, Origin, "+
+				"Connection, Upgrade, Accept, Accept-Encoding, Content-Type, Content-Length, "+
+				"Transfer-Encoding, TE, Trailer and Sec-WebSocket-*), nor an `Authorization: Bearer` token, "+
+				"which belongs in `api_key`. Names and values must be valid HTTP header fields. `api_key` is "+
+				"passed without the `Bearer ` prefix and cannot be combined with an `Authorization` header or "+
+				"with a user and password in the endpoint URL.",
+			endpoint, err,
+		)
+
+	case client.IsRefusedRedirect(err):
+		return "Uptime Kuma redirected to another origin", fmt.Sprintf(
+			"Uptime Kuma at %q answered with a redirect to another origin (scheme, host or port), an "+
+				"upgrade from http to https included. The provider follows no such redirect, so that the "+
+				"API key and the configured headers stay with the server.\n\n"+
+				"Underlying error: %v\n\n"+
+				"Set `endpoint` (or `UPTIMEKUMA_ENDPOINT`) to the URL the redirect leads to, as named above.",
+			endpoint, err,
+		)
 	}
 
 	return "", ""
@@ -405,6 +495,9 @@ type clientOptions struct {
 
 	// authScheme is the resolved `auth_scheme`, see resolveAuthScheme.
 	authScheme kuma.AuthScheme
+
+	// userAgent is the resolved `user_agent`, see resolveUserAgent.
+	userAgent string
 }
 
 // buildClientConfig turns the provider model, with the environment defaults
@@ -418,6 +511,9 @@ func buildClientConfig(data *UptimeKumaProviderModel, opts clientOptions) *clien
 		SessionToken:         data.SessionToken.ValueString(),
 		TOTPSecret:           data.TOTPSecret.ValueString(),
 		AuthScheme:           opts.authScheme,
+		APIKey:               data.APIKey.ValueString(),
+		Headers:              headersFromModel(data.Headers),
+		UserAgent:            opts.userAgent,
 		EnableConnectionPool: true,
 		LogLevel:             kuma.LogLevel(os.Getenv("SOCKETIO_LOG_LEVEL")),
 		ConnectTimeout:       opts.connectTimeout,
@@ -562,6 +658,7 @@ func applyEnvironmentDefaults(data *UptimeKumaProviderModel, diags *diag.Diagnos
 	data.Endpoint = stringFromEnvironment(data.Endpoint, "UPTIMEKUMA_ENDPOINT")
 
 	applyCredentialEnvironmentDefaults(data)
+	applyHeadersEnvironmentDefault(data, diags)
 
 	envTimeout := os.Getenv("UPTIMEKUMA_TIMEOUT")
 	if data.Timeout.IsNull() && envTimeout != "" {

@@ -13,6 +13,10 @@ import (
 type providerData struct {
 	client   *kuma.Client
 	password string
+	// apiKey reports whether the provider authenticates with `api_key`, which
+	// rules out a password, so that uptimekuma_settings can name the reason
+	// it has none.
+	apiKey bool
 }
 
 // configureClient extracts the Uptime Kuma client from provider data.

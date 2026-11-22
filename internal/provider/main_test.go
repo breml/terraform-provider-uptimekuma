@@ -64,6 +64,11 @@ var endpoint string //nolint:gochecknoglobals // OK in tests.
 // Kuma's login rate limiting.
 var outOfBandClient *kuma.Client //nolint:gochecknoglobals // OK in tests.
 
+// kumaContainer is the Uptime Kuma container of the acceptance tests, for the
+// few that have to act on the server by other means than the client, see
+// testAccEnableAPIKey. It is nil unless TF_ACC is set.
+var kumaContainer *dockertest.Resource //nolint:gochecknoglobals // OK in tests.
+
 func TestMain(m *testing.M) {
 	//nolint:revive // Exit is needed to propagate exitcode set by deferred cleanup.
 	os.Exit(runTests(m))
@@ -102,6 +107,8 @@ func runTests(m *testing.M) (exitcode int) {
 		if err != nil {
 			log.Fatalf("Could not start resource: %v", err)
 		}
+
+		kumaContainer = container
 
 		// No container.Expire here, on purpose. dockertest implements it as
 		// `go StopContainer(id, seconds)`, an immediate

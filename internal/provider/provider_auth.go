@@ -101,6 +101,7 @@ func applyCredentialEnvironmentDefaults(data *UptimeKumaProviderModel) {
 	data.SessionToken = stringFromEnvironment(data.SessionToken, "UPTIMEKUMA_SESSION_TOKEN")
 	data.TOTPSecret = stringFromEnvironment(data.TOTPSecret, "UPTIMEKUMA_TOTP_SECRET")
 	data.AuthScheme = stringFromEnvironment(data.AuthScheme, "UPTIMEKUMA_AUTH_SCHEME")
+	data.APIKey = stringFromEnvironment(data.APIKey, "UPTIMEKUMA_API_KEY")
 }
 
 // stringFromEnvironment returns value, or the value of the environment variable
@@ -138,6 +139,8 @@ func rejectUnknownConnectionAttributes(data *UptimeKumaProviderModel, diags *dia
 		{name: "session_token", value: data.SessionToken},
 		{name: "totp_secret", value: data.TOTPSecret},
 		{name: "auth_scheme", value: data.AuthScheme},
+		{name: "api_key", value: data.APIKey},
+		{name: "user_agent", value: data.UserAgent},
 	} {
 		if !attribute.value.IsUnknown() {
 			continue
@@ -156,12 +159,17 @@ func rejectUnknownConnectionAttributes(data *UptimeKumaProviderModel, diags *dia
 			),
 		)
 	}
+
+	rejectUnknownHeaders(data.Headers, diags)
 }
 
 // ValidateConfig checks the values the schema validators cannot see, because
-// they come from the environment: an `auth_scheme` from UPTIMEKUMA_AUTH_SCHEME
-// and a `totp_secret` from UPTIMEKUMA_TOTP_SECRET. A malformed value is wrong
-// whatever else is set, so `terraform validate` reports it.
+// they come from the environment: an `auth_scheme` from UPTIMEKUMA_AUTH_SCHEME,
+// a `totp_secret` from UPTIMEKUMA_TOTP_SECRET and `headers` from
+// UPTIMEKUMA_HEADERS. A malformed value is wrong whatever else is set, so
+// `terraform validate` reports it. It also rejects a configuration that writes
+// `api_key` next to another credential or `auth_scheme = "socket"`, see
+// validateAPIKey.
 //
 // The credential shape is deliberately not judged here but only in Configure.
 // Every shape error is a credential that is missing, and the environment may
@@ -182,6 +190,11 @@ func (*UptimeKumaProvider) ValidateConfig(
 		return
 	}
 
+	// A conflict with api_key written in the configuration is wrong whatever
+	// the environment holds, so it is judged before the environment applies.
+	// Configure judges it again with the environment applied.
+	validateAPIKey(&data, &resp.Diagnostics)
+
 	// A configured value has been checked by the schema validator, so only one
 	// taken from the environment still needs checking.
 	authSchemeFromEnvironment := data.AuthScheme.IsNull() || data.AuthScheme.ValueString() == ""
@@ -196,6 +209,9 @@ func (*UptimeKumaProvider) ValidateConfig(
 	if totpSecretFromEnvironment {
 		validateEnvironmentTOTPSecret(&data, &resp.Diagnostics)
 	}
+
+	// Only reads UPTIMEKUMA_HEADERS where the attribute does not shadow it.
+	applyHeadersEnvironmentDefault(&data, &resp.Diagnostics)
 }
 
 // validateEnvironmentTOTPSecret rejects a `totp_secret` taken from

@@ -205,6 +205,53 @@ func TestConnectionError(t *testing.T) {
 			},
 			notDetail: []string{"Two-factor", "2FA"},
 		},
+		{
+			name:        "api key on a 2.x server",
+			err:         fmt.Errorf("create pooled connection: login failed: %w", kuma.ErrAPIKeyUnsupported),
+			wantSummary: "Uptime Kuma does not accept API keys for this connection",
+			wantDetail:  []string{endpoint, "only on Uptime Kuma 3.0", "`auth_scheme`"},
+			notDetail:   []string{"Common causes"},
+		},
+		{
+			name:        "api key rejected",
+			err:         fmt.Errorf("create pooled connection: login failed: %w", kuma.ErrAPIKeyRejected),
+			wantSummary: "Uptime Kuma rejected the API key",
+			wantDetail:  []string{"invalid, expired or revoked", `"API and MCP" is disabled in Settings`},
+		},
+		{
+			name:        "api key against a server that is not set up",
+			err:         fmt.Errorf("login failed: %w", kuma.ErrAPIKeySetupRequired),
+			wantSummary: "Uptime Kuma is not set up yet",
+			wantDetail:  []string{"username and password first", "`api_key`"},
+		},
+		{
+			name: "rejected header",
+			err: errors.New("create pooled connection: login failed: " +
+				"headers: Host is set by the client or its transport and cannot be configured"),
+			wantSummary: "Invalid api_key, headers or user_agent",
+			wantDetail:  []string{endpoint, "Host is set by the client", "`Authorization: Bearer`"},
+			notDetail:   []string{"refused the login", "Common causes"},
+		},
+		{
+			name:        "rejected api key format",
+			err:         errors.New("api key: pass the key without the Bearer prefix"),
+			wantSummary: "Invalid api_key, headers or user_agent",
+		},
+		{
+			name: "refused redirect",
+			err: errors.New(`create pooled connection: login failed: Get "http://kuma.example.com/api/entry-page": ` +
+				"redirect from http://kuma.example.com/api/entry-page to https://kuma.example.com/api/entry-page " +
+				"upgrades to https; use https://kuma.example.com as the base URL"),
+			wantSummary: "Uptime Kuma redirected to another origin",
+			wantDetail:  []string{"use https://kuma.example.com as the base URL", "`endpoint`"},
+			notDetail:   []string{"refused the login", "Common causes"},
+		},
+		{
+			name:        "auth required names api_key",
+			err:         kuma.ErrAuthRequired,
+			wantSummary: "Uptime Kuma requires authentication",
+			wantDetail:  []string{"`api_key`"},
+		},
 	}
 
 	for _, tc := range tests {
