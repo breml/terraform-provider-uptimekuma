@@ -3,12 +3,12 @@
 page_title: "uptimekuma_maintenances Data Source - uptimekuma"
 subcategory: ""
 description: |-
-  List all maintenance windows
+  List all maintenance windows. A window the provider cannot decode is left out, with a warning naming it.
 ---
 
 # uptimekuma_maintenances (Data Source)
 
-List all maintenance windows
+List all maintenance windows. A window the provider cannot decode is left out, with a warning naming it.
 
 ## Example Usage
 

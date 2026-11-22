@@ -463,8 +463,12 @@ func removeOnMiss(
 // that do - GetNotification, GetProxy, GetDockerHost, GetTag and GetMonitorTags -
 // never reach here, so testing for it would be dead code dressed up as a
 // guarantee.
+//
+// A window GetMaintenance could not decode (kuma.ErrMaintenanceDecode) is a
+// window the server returned, so it is never a suspicion, whatever the decode
+// error quotes from the payload.
 func suspectedNotFound(err error) bool {
-	if err == nil {
+	if err == nil || errors.Is(err, kuma.ErrMaintenanceDecode) {
 		return false
 	}
 

@@ -2,10 +2,12 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -110,6 +112,15 @@ func (d *MaintenanceDataSource) readByID(
 	resp *datasource.ReadResponse,
 ) {
 	window, err := d.client.GetMaintenance(ctx, data.ID.ValueInt64())
+	if errors.Is(err, kuma.ErrMaintenanceDecode) {
+		resp.Diagnostics.AddError(
+			"Maintenance window could not be decoded",
+			maintenanceDecodeErrorDetail(data.ID.ValueInt64(), err),
+		)
+
+		return
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read maintenance", err.Error())
 
@@ -127,68 +138,123 @@ func (d *MaintenanceDataSource) readByName(
 	data *MaintenanceDataSourceModel,
 	resp *datasource.ReadResponse,
 ) {
-	// The list serves from the state cache, so a resync is forced once before
-	// a miss is believed, see findWithResync.
+	window, ok := findMaintenanceByTitle(ctx, d.client, data.Name.ValueString(), &resp.Diagnostics)
+	if !ok {
+		return
+	}
+
+	// Populate ID and title from matched result.
+	data.ID = types.Int64Value(window.ID)
+	data.Title = types.StringValue(window.Title)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// maintenanceListResyncer is the part of *kuma.Client findMaintenanceByTitle
+// needs, a seam so the lookup can be exercised without a socket.io server.
+type maintenanceListResyncer interface {
+	resyncer
+	maintenanceLister
+}
+
+// findMaintenanceByTitle returns the one maintenance window carrying title. It
+// reports false, with an error in diags, on a failed lookup, on a miss and on an
+// ambiguous title.
+//
+// The list serves from the state cache, so a resync is forced once before a
+// miss is believed, see findWithResync. A list that left out windows it could
+// not decode (kuma.ErrMaintenanceDecode) is still searched: a match among the
+// decoded windows comes with a warning, because it is unique only among those,
+// and a miss names the undecodable windows, because one of them may be the
+// window looked for.
+func findMaintenanceByTitle(
+	ctx context.Context,
+	client maintenanceListResyncer,
+	title string,
+	diags *diag.Diagnostics,
+) (maintenance.Maintenance, bool) {
+	// decodeErr holds the decode error of the last list read, after any resync,
+	// since that read decides the result.
+	var decodeErr error
+
 	matches, found, err := findWithResync(
-		ctx, d.client,
+		ctx, client,
 		func(ctx context.Context) ([]maintenance.Maintenance, bool, error) {
-			matched, matchErr := d.matchMaintenancesByTitle(ctx, data.Name.ValueString())
+			matched, listDecodeErr, matchErr := matchMaintenancesByTitle(ctx, client, title)
+			decodeErr = listDecodeErr
 
 			return matched, len(matched) > 0, matchErr
 		},
 	)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to read maintenances", err.Error())
+		diags.AddError("failed to read maintenances", err.Error())
 
-		return
+		return maintenance.Maintenance{}, false
 	}
 
-	// Error if no matching maintenance found.
 	if !found {
-		reportMiss(
-			&resp.Diagnostics, d.client, maintenanceListEvent,
-			"Maintenance not found",
-			fmt.Sprintf("No maintenance window with title '%s' found.", data.Name.ValueString()),
-		)
+		detail := fmt.Sprintf("No maintenance window with title '%s' found.", title)
+		if decodeErr != nil {
+			detail += fmt.Sprintf(
+				" Some maintenance windows could not be decoded and could be the one looked for: %v. %s "+
+					"Looking the window up by id does not help.",
+				decodeErr, maintenanceDecodeAdvice,
+			)
+		}
 
-		return
+		reportMiss(diags, client, maintenanceListEvent, "Maintenance not found", detail)
+
+		return maintenance.Maintenance{}, false
 	}
 
 	// Error if multiple matches found.
 	if len(matches) > 1 {
-		resp.Diagnostics.AddError(
+		diags.AddError(
 			"Multiple maintenances found",
 			fmt.Sprintf(
 				"Multiple maintenance windows with title '%s' found. Please use 'id' to specify the maintenance uniquely.",
-				data.Name.ValueString(),
+				title,
 			),
 		)
 
-		return
+		return maintenance.Maintenance{}, false
 	}
 
-	// Populate ID and title from matched result.
-	data.ID = types.Int64Value(matches[0].ID)
-	data.Title = types.StringValue(matches[0].Title)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if decodeErr != nil {
+		diags.AddWarning(
+			"Some maintenance windows could not be decoded",
+			fmt.Sprintf(
+				"The maintenance window with title '%s' is unique only among the windows that could be "+
+					"decoded: %v. %s",
+				title, decodeErr, maintenanceDecodeAdvice,
+			),
+		)
+	}
+
+	return matches[0], true
 }
 
 // matchMaintenancesByTitle returns the cached maintenance windows carrying
 // title. It reports every match rather than the first, so that the caller can
 // tell an ambiguous title from a missing one.
 //
-// A failure to read the list is returned as an error rather than as an empty
-// result, because findWithResync must not mistake it for a miss and resync.
-func (d *MaintenanceDataSource) matchMaintenancesByTitle(
+// An error wrapping kuma.ErrMaintenanceDecode comes with the windows that did
+// decode, which are searched all the same; it is returned as decodeErr, for the
+// caller to mention. Any other failure to read the list is returned as err
+// rather than as an empty result, because findWithResync must not mistake it
+// for a miss and resync.
+func matchMaintenancesByTitle(
 	ctx context.Context,
+	client maintenanceLister,
 	title string,
-) ([]maintenance.Maintenance, error) {
-	maintenances, err := d.client.GetMaintenances(ctx)
+) (matched []maintenance.Maintenance, decodeErr error, err error) {
+	maintenances, err := client.GetMaintenances(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get maintenances: %w", err)
-	}
+		if !errors.Is(err, kuma.ErrMaintenanceDecode) {
+			return nil, nil, fmt.Errorf("get maintenances: %w", err)
+		}
 
-	var matched []maintenance.Maintenance
+		decodeErr = err
+	}
 
 	for i := range maintenances {
 		if maintenances[i].Title == title {
@@ -196,5 +262,5 @@ func (d *MaintenanceDataSource) matchMaintenancesByTitle(
 		}
 	}
 
-	return matched, nil
+	return matched, decodeErr, nil
 }
