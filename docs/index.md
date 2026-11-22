@@ -246,7 +246,10 @@ variable "uptimekuma_session_token" {
 Uptime Kuma 3.0 replaces the login command on the Socket.IO connection with an HTTP sign-in. The
 provider detects which one the server speaks with one request before it connects. `auth_scheme`
 pins it instead (`socket` for 2.x, `http` for 3.x), which is only needed for a reverse proxy that
-answers that request itself.
+answers that request itself. Provider versions up to 0.6.0 took any answer to it that was not JSON
+for Uptime Kuma 2.x; the provider now reports such an answer as an error, so behind such a proxy pin
+`auth_scheme = "socket"` for a 2.x server. A `4xx` answer is not retried, because it is a proxy
+refusing the request.
 
 ## Compatibility
 

@@ -252,6 +252,7 @@ func TestIsRequestConfigError(t *testing.T) {
 		// rejected configuration.
 		{err: fmt.Errorf("login failed: %w", kuma.ErrAPIKeyUnsupported)},
 		{err: fmt.Errorf("login failed: %w", kuma.ErrAPIKeySetupRequired)},
+		{err: fmt.Errorf("login failed: %w", kuma.ErrAPIKeyRejected)},
 		{err: errors.New("dial tcp: connection refused")},
 	}
 

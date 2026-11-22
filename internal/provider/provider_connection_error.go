@@ -3,7 +3,12 @@ package provider
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
 
@@ -40,9 +45,11 @@ func requestSecretsOf(config *client.Config) requestSecrets {
 // own.
 //
 // secrets tells whether the provider sends `headers` or `api_key`, which
-// changes what a refused redirect most likely means. The endpoint is
-// shown with its password redacted.
+// changes what a refused redirect and an unexpected auth scheme detection
+// most likely mean. The endpoint is shown with its password redacted, and the
+// password is removed from what err says too.
 func connectionError(endpoint string, err error, secrets requestSecrets) (summary string, detail string) {
+	err = withoutEndpointPassword(err, endpoint)
 	endpoint = client.RedactURL(endpoint)
 
 	// The secret is rejected before any connection is attempted, so neither
@@ -136,17 +143,7 @@ func requestConfigErrorAdvice(endpoint string, err error, secrets requestSecrets
 		return redirectErrorAdvice(endpoint, err, secrets)
 
 	case client.IsAuthSchemeProbeError(err):
-		return "Unexpected answer to the auth scheme detection", fmt.Sprintf(
-			"Before it connects, the provider asks %q whether it runs Uptime Kuma 2.x or 3.x, and the answer "+
-				"was neither.\n\n"+
-				"Underlying error: %v\n\n"+
-				"An access proxy in front of Uptime Kuma may be redirecting the request to its sign-in, or "+
-				"rejecting it: check the credentials the proxy expects in `headers` (or "+
-				"`UPTIMEKUMA_HEADERS`), such as the service token of Cloudflare Access. A reverse proxy that "+
-				"answers this request itself can be bypassed by pinning `auth_scheme` (`http` for Uptime Kuma "+
-				"3.x, `socket` for 2.x).",
-			endpoint, err,
-		)
+		return "Unexpected answer to the auth scheme detection", probeErrorDetail(endpoint, err, secrets)
 	}
 
 	return "", ""
@@ -220,5 +217,130 @@ func redirectErrorAdvice(endpoint string, err error, secrets requestSecrets) (su
 			"Underlying error: %v\n\n"+
 			"%s Set `endpoint` (or `UPTIMEKUMA_ENDPOINT`) to the URL the redirect leads to, as named above.",
 		endpoint, err, postsReason,
+	)
+}
+
+// probeErrorDetail returns the detail of the diagnostic for an auth scheme
+// detection that got an answer no Uptime Kuma gives, see
+// requestConfigErrorAdvice.
+//
+// With `headers` or `api_key` configured, the answer most likely comes from
+// an access proxy that wants other credentials. Without them, it most likely
+// comes from a reverse proxy that answers the detection request itself, such
+// as one serving its own page for an unknown path: provider versions up to
+// 0.6.0 read any answer that was not JSON as Uptime Kuma 2.x, so pinning
+// `auth_scheme = "socket"` restores what they did for a 2.x server.
+func probeErrorDetail(endpoint string, err error, secrets requestSecrets) string {
+	const intro = "Before it connects, the provider asks %q whether it runs Uptime Kuma 2.x or 3.x (GET " +
+		"/api/auth/ok), and the answer was neither.\n\nUnderlying error: %v\n\n"
+
+	if secrets == withRequestSecrets {
+		return fmt.Sprintf(intro+
+			"An access proxy in front of Uptime Kuma may be redirecting the request to its sign-in, or "+
+			"rejecting it: check the credentials the proxy expects in `headers` (or `UPTIMEKUMA_HEADERS`), "+
+			"such as the service token of Cloudflare Access. A reverse proxy that answers this request "+
+			"itself can be bypassed by pinning `auth_scheme` (`http` for Uptime Kuma 3.x, `socket` for 2.x).",
+			endpoint, err)
+	}
+
+	return fmt.Sprintf(intro+
+		"A reverse proxy in front of the server most likely answered the request itself, with the status "+
+		"or the redirect named above. For an Uptime Kuma 2.x server, pin `auth_scheme = \"socket\"`: "+
+		"provider versions up to 0.6.0 took any such answer for Uptime Kuma 2.x, and pinning restores that. "+
+		"For an Uptime Kuma 3.x server, pin `auth_scheme = \"http\"`. If the proxy guards the server and "+
+		"wants credentials of its own, set them in `headers`.",
+		endpoint, err)
+}
+
+// redactedPasswordError replaces the password of the endpoint's userinfo in what
+// err says, see connectionError.
+type redactedPasswordError struct {
+	err  error
+	text string
+}
+
+func (e redactedPasswordError) Error() string { return e.text }
+
+func (e redactedPasswordError) Unwrap() error { return e.err }
+
+// withoutEndpointPassword returns err with every occurrence of the password in
+// the userinfo of endpoint replaced, keeping err for errors.Is and errors.As.
+// The client quotes the raw base URL in some of its errors, such as one it
+// cannot parse, and the diagnostics must not repeat the password from it.
+// Configure rejects such an endpoint before connecting; this is the second
+// line of defence.
+func withoutEndpointPassword(err error, endpoint string) error {
+	password := endpointPassword(endpoint)
+	if err == nil || password == "" || !strings.Contains(err.Error(), password) {
+		return err
+	}
+
+	return redactedPasswordError{err: err, text: strings.ReplaceAll(err.Error(), password, "xxxxx")}
+}
+
+// endpointPassword returns the password of the userinfo of endpoint, read
+// without url.Parse, so that it is found in an endpoint that does not parse
+// as well.
+func endpointPassword(endpoint string) string {
+	authority := endpoint
+	if _, rest, ok := strings.Cut(authority, "://"); ok {
+		authority = rest
+	}
+
+	if end := strings.IndexAny(authority, "/?#"); end >= 0 {
+		authority = authority[:end]
+	}
+
+	at := strings.LastIndex(authority, "@")
+	if at < 0 {
+		return ""
+	}
+
+	_, password, _ := strings.Cut(authority[:at], ":")
+
+	return password
+}
+
+// validateEndpoint rejects an endpoint that does not parse as a URL, or whose
+// scheme is not one the client connects with (http, https, ws, wss). The
+// client rejects both as well, but with an error that quotes the raw URL,
+// password included, so it is checked here, before connecting, with a
+// diagnostic that does not repeat the value. An empty or unknown endpoint is
+// reported elsewhere in Configure.
+func validateEndpoint(endpoint types.String, diags *diag.Diagnostics) {
+	raw := endpoint.ValueString()
+	if endpoint.IsUnknown() || raw == "" {
+		return
+	}
+
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		reason := err
+		if urlErr, ok := errors.AsType[*url.Error](err); ok {
+			reason = urlErr.Err
+		}
+
+		diags.AddAttributeError(
+			path.Root("endpoint"),
+			"invalid endpoint",
+			fmt.Sprintf("The endpoint (or the environment variable UPTIMEKUMA_ENDPOINT) is not a valid URL: "+
+				"%v. Set it to the URL of the Uptime Kuma instance, such as https://uptime-kuma.example.com.",
+				withoutEndpointPassword(reason, raw)),
+		)
+
+		return
+	}
+
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https", "ws", "wss":
+		return
+	}
+
+	diags.AddAttributeError(
+		path.Root("endpoint"),
+		"invalid endpoint",
+		fmt.Sprintf("The endpoint (or the environment variable UPTIMEKUMA_ENDPOINT) has the scheme %q, but "+
+			"Uptime Kuma is reached on http or https (ws and wss are accepted too). Set it to a URL such as "+
+			"https://uptime-kuma.example.com.", parsed.Scheme),
 	)
 }

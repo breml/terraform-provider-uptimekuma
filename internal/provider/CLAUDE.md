@@ -73,7 +73,10 @@ cannot have defaults, so `resolveUserAgent` applies `terraform-provider-uptimeku
 
 **Configuration Validation**:
 
-- Endpoint: Always required (checked in `Configure`, where an empty value counts as missing)
+- Endpoint: Always required (checked in `Configure`, where an empty value counts as missing).
+  `validateEndpoint` rejects one that does not parse or whose scheme is not http, https, ws or wss,
+  before connecting, without repeating the value: the client's own errors for both quote the raw
+  URL, password included
 - Unknown values: `Configure` rejects an `endpoint`, credential or `auth_scheme` that is still unknown
   (`rejectUnknownConnectionAttributes`), naming the attribute: the provider logs in during plan, and an
   unknown value would reach the client as an empty string
@@ -124,9 +127,13 @@ API key or User-Agent (`IsRequestConfigError`; whitespace in the key adds a `tri
 refused redirect (`IsHTTPSUpgradeRedirect`: set the https URL; `IsRefusedRedirect` to another host:
 with `headers` or `api_key` configured, the access proxy most likely rejected the request, so the
 service token comes first; without, the reason is that POSTs would become GETs) and an auth scheme
-detection answered by neither 2.x nor 3.x (`IsAuthSchemeProbeError`: check `headers`, or pin
-`auth_scheme`). `connect` passes whether `headers` or `api_key` are configured. Every diagnostic and
-the pool mismatch message show the endpoint through `client.RedactURL`.
+detection answered by neither 2.x nor 3.x (`IsAuthSchemeProbeError`, `probeErrorDetail`: with
+`headers` or `api_key` the access proxy and its credentials come first; without, a reverse proxy
+answering the request, so pin `auth_scheme = "socket"` for 2.x, which restores what provider 0.6.0
+and earlier detected). `connect` passes whether `headers` or `api_key` are configured. Every
+diagnostic and the pool mismatch message show the endpoint through `client.RedactURL`, and
+`connectionError` also removes the endpoint's password from the client's error text
+(`withoutEndpointPassword`, which keeps the error for `errors.Is`).
 `connect` sets the `OnSessionTokenRejected` callback and calls `warnRejectedSessionToken` whenever
 the token was refused and the password login took over, also when the connection then failed; it
 takes the client constructor as a parameter so `TestConnect` can pin that wiring.

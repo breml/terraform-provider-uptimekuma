@@ -109,10 +109,17 @@ func TestConnectionError_RealClient(t *testing.T) {
 			wantSummary: "Uptime Kuma redirected to https",
 		},
 		{
-			name:        "auth scheme detection refused by a proxy",
+			name:        "auth scheme detection refused by a reverse proxy",
 			config:      client.Config{Endpoint: forbidden.URL},
 			wantSummary: "Unexpected answer to the auth scheme detection",
-			wantDetail:  "`auth_scheme`",
+			wantDetail:  "A reverse proxy in front of the server most likely answered the request itself",
+			notDetail:   "service token",
+		},
+		{
+			name:        "auth scheme detection refused by a proxy, with headers",
+			config:      client.Config{Endpoint: forbidden.URL, Headers: map[string]string{"X-Token": "t"}},
+			wantSummary: "Unexpected answer to the auth scheme detection",
+			wantDetail:  "An access proxy in front of Uptime Kuma",
 		},
 	}
 
@@ -226,5 +233,72 @@ func TestConfigure_SendsUserAgentAndHeaders(t *testing.T) {
 				t.Errorf("expected X-Acceptance %q, got %q", tc.wantHeader, got)
 			}
 		})
+	}
+}
+
+// TestEndpointPasswordNeverShown pins that the password of an endpoint that
+// the client rejects stays out of every diagnostic: Configure rejects such an
+// endpoint before connecting, and connectionError scrubs the password from
+// the client's error, which quotes the raw URL, in case one gets through.
+func TestEndpointPasswordNeverShown(t *testing.T) {
+	str := func(value string) tftypes.Value { return tftypes.NewValue(tftypes.String, value) }
+
+	for _, endpoint := range []string{
+		"http://admin:s3cr3t@host:bad",
+		"ftp://admin:s3cr3t@host",
+		"localhost:3001",
+	} {
+		t.Run(endpoint, func(t *testing.T) {
+			clearCredentialEnvironment(t)
+			t.Setenv("UPTIMEKUMA_ENDPOINT", "")
+
+			req := provider.ConfigureRequest{Config: providerConfigValue(t, map[string]tftypes.Value{
+				"endpoint": str(endpoint),
+			})}
+
+			var resp provider.ConfigureResponse
+
+			(&UptimeKumaProvider{}).Configure(t.Context(), req, &resp)
+
+			want := "invalid endpoint@endpoint"
+			if got := errorSummariesWithPath(t, resp.Diagnostics); len(got) != 1 || got[0] != want {
+				t.Fatalf("expected exactly the error %q, got %v", want, got)
+			}
+
+			for _, d := range resp.Diagnostics {
+				if strings.Contains(d.Summary()+d.Detail(), "s3cr3t") {
+					t.Errorf("expected no password in the diagnostic, got %q", d.Detail())
+				}
+			}
+
+			// The client quotes the raw URL; connectionError must not.
+			_, err := client.New(t.Context(), &client.Config{Endpoint: endpoint, MaxRetries: 0})
+			if err == nil {
+				t.Fatal("expected the client to reject the endpoint")
+			}
+
+			summary, detail := connectionError(endpoint, err, withoutRequestSecrets)
+			if strings.Contains(summary+detail, "s3cr3t") {
+				t.Errorf("expected no password in the connection error, got:\n%s", detail)
+			}
+		})
+	}
+}
+
+func TestEndpointPassword(t *testing.T) {
+	t.Parallel()
+
+	for endpoint, want := range map[string]string{
+		"https://kuma.example.com":           "",
+		"https://admin@kuma.example.com":     "",
+		"https://admin:pw@kuma.example.com":  "pw",
+		"http://admin:s3cr3t@host:bad/path":  "s3cr3t",
+		"admin:p@ss@host":                    "p@ss",
+		"https://kuma.example.com/a@b":       "",
+		"https://admin:pw@kuma.example.com/": "pw",
+	} {
+		if got := endpointPassword(endpoint); got != want {
+			t.Errorf("endpointPassword(%q): expected %q, got %q", endpoint, want, got)
+		}
 	}
 }

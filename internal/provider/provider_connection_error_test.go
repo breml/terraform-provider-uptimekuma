@@ -287,7 +287,8 @@ func TestConnectionError(t *testing.T) {
 				"an access proxy in front of the server may be rejecting the request (check WithHeaders), or " +
 				"pin the scheme with WithAuthScheme"),
 			wantSummary: "Unexpected answer to the auth scheme detection",
-			wantDetail:  []string{"`headers`", "`auth_scheme`"},
+			wantDetail:  []string{"`auth_scheme = \"socket\"`", "up to 0.6.0", "`headers`"},
+			notDetail:   []string{"service token"},
 		},
 		{
 			name:        "auth required names api_key",

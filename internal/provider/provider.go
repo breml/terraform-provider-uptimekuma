@@ -202,6 +202,8 @@ func (p *UptimeKumaProvider) Configure(
 		)
 	}
 
+	validateEndpoint(data.Endpoint, &resp.Diagnostics)
+
 	// An endpoint or credential that is still unknown would reach the client as
 	// an empty string, so it is an error here rather than a login with nothing.
 	rejectUnknownConnectionAttributes(&data, &resp.Diagnostics)

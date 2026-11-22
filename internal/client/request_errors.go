@@ -3,6 +3,8 @@ package client
 import (
 	"errors"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -87,7 +89,7 @@ func IsHTTPSUpgradeRedirect(err error) bool {
 // redirect within the server's origin, or a status and Content-Type no Uptime
 // Kuma gives, such as an access proxy refusing the request. It matches the
 // client's message text, like IsRequestConfigError. Such an error is retried,
-// because a 5xx from a proxy may well pass.
+// because a 5xx from a proxy may well pass, unless IsPermanentProbeError.
 func IsAuthSchemeProbeError(err error) bool {
 	if err == nil {
 		return false
@@ -109,4 +111,32 @@ func RedactURL(rawURL string) string {
 	}
 
 	return parsed.Redacted()
+}
+
+// probeStatusPattern finds the status in the error of an auth scheme detection
+// that got an answer no Uptime Kuma gives, see IsAuthSchemeProbeError. The text
+// is the client's: "detect auth scheme: GET <url> answered status <code> with
+// Content-Type <type>".
+var probeStatusPattern = regexp.MustCompile(`detect auth scheme: GET \S+ answered status (\d{3}) with Content-Type `)
+
+// IsPermanentProbeError reports whether err is an auth scheme detection that
+// got a 4xx answer no Uptime Kuma gives, see IsAuthSchemeProbeError. Uptime
+// Kuma answers the detection with JSON, or with a 404 or 429 the client
+// reads as 2.x, so a 4xx is something in front of it refusing the request:
+// an access proxy that wants credentials, which another attempt with the same
+// configuration does not bring. A 5xx and a redirect within the origin may
+// pass, and are retried.
+func IsPermanentProbeError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	match := probeStatusPattern.FindStringSubmatch(err.Error())
+	if match == nil {
+		return false
+	}
+
+	status, convErr := strconv.Atoi(match[1])
+
+	return convErr == nil && status >= 400 && status < 500
 }

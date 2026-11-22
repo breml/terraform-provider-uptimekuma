@@ -611,6 +611,21 @@ func TestApplyCredentialEnvironmentDefaults_Groups(t *testing.T) {
 			wantSources: []string{"password", "totp_secret", "username"},
 		},
 		{
+			// An empty attribute counts as unset, here as everywhere else.
+			name:        "empty api key in config reads both",
+			model:       func(m *UptimeKumaProviderModel) { m.APIKey = types.StringValue("") },
+			wantLogin:   true,
+			wantAPIKey:  "uk1_from_env",
+			wantSources: []string{"api_key", "password", "session_token", "totp_secret", "username"},
+		},
+		{
+			name:        "empty username in config reads both",
+			model:       func(m *UptimeKumaProviderModel) { m.Username = types.StringValue("") },
+			wantLogin:   true,
+			wantAPIKey:  "uk1_from_env",
+			wantSources: []string{"api_key", "password", "session_token", "totp_secret", "username"},
+		},
+		{
 			name:        "nothing in config reads both, for validateAPIKey to reject",
 			model:       func(*UptimeKumaProviderModel) {},
 			wantLogin:   true,

@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -157,34 +159,132 @@ func TestRefusedRedirect_RealClient(t *testing.T) {
 	}
 }
 
-// TestAuthSchemeProbeError_RealClient pins the classification of the error
+// TestAuthSchemeProbeError_RealClient pins the classification of the errors
 // the real client reports when its auth scheme detection gets an answer no
-// Uptime Kuma gives, such as an access proxy refusing the request. It is
-// retried, because a proxy's refusal may be passing.
+// Uptime Kuma gives. A 4xx is a proxy refusing the request and ends the
+// retries; a 5xx and a redirect within the origin may pass and are retried.
 func TestAuthSchemeProbeError_RealClient(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.WriteHeader(http.StatusForbidden)
-	}))
-	t.Cleanup(server.Close)
+	tests := []struct {
+		name         string
+		handler      http.HandlerFunc
+		wantAttempts int
+	}{
+		{
+			name: "403 from an access proxy",
+			handler: func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "text/html")
+				w.WriteHeader(http.StatusForbidden)
+			},
+			wantAttempts: 1,
+		},
+		{
+			name: "502 from a reverse proxy",
+			handler: func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "text/html")
+				w.WriteHeader(http.StatusBadGateway)
+			},
+			wantAttempts: 2,
+		},
+		{
+			name: "redirect within the origin",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/api/auth/ok" {
+					http.Redirect(w, r, "/sign-in", http.StatusFound)
 
-	config := Config{Endpoint: server.URL, ConnectTimeout: 10 * time.Second, MaxRetries: 1}
+					return
+				}
 
-	var attempts int
-
-	_, err := newClientDirectWithRetry(t.Context(), &config, countingConnect(&attempts), noDelay)
-
-	if !IsAuthSchemeProbeError(err) {
-		t.Fatalf("expected IsAuthSchemeProbeError for %v", err)
+				w.Header().Set("Content-Type", "text/html")
+				_, _ = w.Write([]byte("<html></html>"))
+			},
+			wantAttempts: 2,
+		},
 	}
 
-	if IsRequestConfigError(err) || IsRefusedRedirect(err) {
-		t.Errorf("expected only the probe classification for %q", err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(tc.handler)
+			t.Cleanup(server.Close)
+
+			config := Config{Endpoint: server.URL, ConnectTimeout: 10 * time.Second, MaxRetries: 1}
+
+			var attempts int
+
+			_, err := newClientDirectWithRetry(t.Context(), &config, countingConnect(&attempts), noDelay)
+
+			if !IsAuthSchemeProbeError(err) {
+				t.Fatalf("expected IsAuthSchemeProbeError for %v", err)
+			}
+
+			if IsRequestConfigError(err) || IsRefusedRedirect(err) {
+				t.Errorf("expected only the probe classification for %q", err)
+			}
+
+			if attempts != tc.wantAttempts {
+				t.Errorf("expected %d attempt(s), got %d", tc.wantAttempts, attempts)
+			}
+		})
+	}
+}
+
+// TestRequestErrorMatchers pins the matchers on the client's message texts,
+// copied from go-uptime-kuma-client v0.7.6.
+func TestRequestErrorMatchers(t *testing.T) {
+	t.Parallel()
+
+	const (
+		userinfo = "base url: userinfo (user:password@) sets an Authorization header of its own, which cannot " +
+			"be combined with WithAPIKey or an Authorization header from WithHeaders"
+		httpsUpgrade = `Get "http://kuma/api/auth/ok": redirect from http://kuma/api/auth/ok to ` +
+			"https://kuma/api/auth/ok upgrades to https; use https://kuma as the base URL"
+		crossOrigin = `Get "http://a/api/auth/ok": redirect from http://a/api/auth/ok to http://b/login ` +
+			"leaves the server's origin; connect to the server on http://b"
+		probeRedirect = "connect to server: detect auth scheme: GET http://kuma/api/auth/ok was redirected to " +
+			"http://kuma/sign-in, which neither Uptime Kuma 2.x nor 3.x does; an access proxy in front of the " +
+			"server may be redirecting to its sign-in (check WithHeaders), or pin the scheme with WithAuthScheme"
+		probeStatus = "connect to server: detect auth scheme: GET http://kuma/api/auth/ok answered status %d " +
+			`with Content-Type "text/html", which is neither Uptime Kuma 2.x nor 3.x; an access proxy in front ` +
+			"of the server may be rejecting the request (check WithHeaders), or pin the scheme with WithAuthScheme"
+	)
+
+	tests := []struct {
+		name                                             string
+		err                                              error
+		userinfo, https, redirect, probe, probePermanent bool
+	}{
+		{name: "nil"},
+		{name: "unrelated", err: errors.New("dial tcp: connection refused")},
+		{name: "userinfo", err: errors.New(userinfo), userinfo: true},
+		{name: "userinfo wrapped", err: fmt.Errorf("login failed: %w", errors.New(userinfo)), userinfo: true},
+		{name: "https upgrade", err: errors.New(httpsUpgrade), https: true, redirect: true},
+		{name: "cross origin", err: errors.New(crossOrigin), redirect: true},
+		{name: "probe redirect", err: errors.New(probeRedirect), probe: true},
+		{name: "probe 401", err: fmt.Errorf(probeStatus, 401), probe: true, probePermanent: true},
+		{name: "probe 403", err: fmt.Errorf(probeStatus, 403), probe: true, probePermanent: true},
+		{name: "probe 500", err: fmt.Errorf(probeStatus, 500), probe: true},
+		{name: "probe 503", err: fmt.Errorf(probeStatus, 503), probe: true},
+		{name: "probe transport error", err: errors.New("connect to server: detect auth scheme: dial tcp: refused")},
 	}
 
-	if attempts != 2 {
-		t.Errorf("expected the probe error to be retried, got %d attempt(s)", attempts)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			for name, got := range map[string][2]bool{
+				"IsUserinfoError":        {IsUserinfoError(tc.err), tc.userinfo},
+				"IsHTTPSUpgradeRedirect": {IsHTTPSUpgradeRedirect(tc.err), tc.https},
+				"IsRefusedRedirect":      {IsRefusedRedirect(tc.err), tc.redirect},
+				"IsAuthSchemeProbeError": {IsAuthSchemeProbeError(tc.err), tc.probe},
+				"IsPermanentProbeError":  {IsPermanentProbeError(tc.err), tc.probePermanent},
+			} {
+				if got[0] != got[1] {
+					t.Errorf("%s(%v): expected %t, got %t", name, tc.err, got[1], got[0])
+				}
+			}
+		})
 	}
 }

@@ -15,7 +15,8 @@ pooling support.
 - [client.go](client.go) - Client creation with retry logic
 - [pool.go](pool.go) - Connection pooling implementation
 - [request_errors.go](request_errors.go) - Matchers for the client's plain errors (`IsRequestConfigError`,
-  `IsUserinfoError`, `IsRefusedRedirect`, `IsHTTPSUpgradeRedirect`, `IsAuthSchemeProbeError`) and `RedactURL`
+  `IsUserinfoError`, `IsRefusedRedirect`, `IsHTTPSUpgradeRedirect`, `IsAuthSchemeProbeError`,
+  `IsPermanentProbeError`) and `RedactURL`
 - [fallback.go](fallback.go) - `PasswordFallbackCause`, the password half of a `*kuma.SessionTokenFallbackError`
 - [client_test.go](client_test.go) - Client tests
 - [client_retry_test.go](client_retry_test.go) - Retry decisions, through the `connectFunc` fake
@@ -193,8 +194,9 @@ if err != nil {
   attempt: retrying them only burns attempts against the server's login rate limit. So are a rejected
   header, API key or User-Agent (`IsRequestConfigError`) and a refused cross-origin redirect
   (`IsRefusedRedirect`), which the client reports as plain errors and are matched on its message text.
-  `client_real_errors_test.go` pins that against the real `kuma.New`. The auth scheme probe error
-  (`IsAuthSchemeProbeError`) is retried, because a proxy's 5xx may pass
+  `client_real_errors_test.go` pins that against the real `kuma.New`. An auth scheme probe error
+  (`IsAuthSchemeProbeError`) with a 4xx status is permanent too (`IsPermanentProbeError`, a proxy
+  refusing the request); a 5xx or a redirect within the origin is retried, because it may pass
 - Except a refused one-time code (`ErrInvalidTOTPCode`) from an attempt of at most
   `totpReplayAttemptTimeout` (35s): the client only waits out the 2.x replay guard (a code the server
   has already accepted) within an attempt that can cover the wait, and reports a refusal it could not

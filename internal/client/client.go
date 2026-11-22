@@ -234,8 +234,9 @@ type retryDelayFunc func(err error, attempt int, remaining time.Duration) (time.
 // login rate limit, so retrying a wrong password can lock the address out for
 // a while. kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is
 // covered by it. A refused API key or one the server cannot take, a rejected
-// header configuration and a refused redirect are permanent too: they say
-// something about the configuration, not about the moment.
+// header configuration, a refused redirect and an auth scheme detection a
+// proxy refused with a 4xx are permanent too: they say something about the
+// configuration, not about the moment.
 //
 // A session token the server refused, followed by a password login that
 // failed too, wraps kuma.ErrInvalidSessionToken whatever the password login
@@ -269,7 +270,7 @@ func isPermanentLoginError(err error) bool {
 		}
 	}
 
-	return IsRequestConfigError(err) || IsRefusedRedirect(err)
+	return IsRequestConfigError(err) || IsRefusedRedirect(err) || IsPermanentProbeError(err)
 }
 
 // isTOTPReplayRetryable reports whether err is a refused one-time code that
