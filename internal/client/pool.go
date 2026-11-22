@@ -143,13 +143,13 @@ func (p *Pool) closeLocked() error {
 }
 
 // describeConfig renders the identity of a configuration for the config
-// mismatch message, with every secret reduced to whether it is set, and the
-// headers to their names.
+// mismatch message, with every secret reduced to whether it is set, the
+// headers to their names and the endpoint's password redacted.
 func describeConfig(config *Config) string {
 	return fmt.Sprintf(
 		"endpoint=%q username=%q totp_secret=%s session_token=%s auth_scheme=%s timeout=%s"+
 			" per_attempt_timeout=%s operation_timeout=%s max_retries=%d api_key=%s headers=%s user_agent=%q",
-		config.Endpoint,
+		RedactURL(config.Endpoint),
 		config.Username,
 		secretState(config.TOTPSecret),
 		secretState(config.SessionToken),

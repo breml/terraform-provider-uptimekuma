@@ -9,7 +9,6 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"slices"
-	"strings"
 	"time"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -271,53 +270,6 @@ func isPermanentLoginError(err error) bool {
 	}
 
 	return IsRequestConfigError(err) || IsRefusedRedirect(err)
-}
-
-// requestConfigErrorPrefixes are the prefixes of the plain errors kuma.New
-// rejects the API key, the headers, the User-Agent and the base URL's userinfo
-// with, see kuma.WithHeaders and kuma.WithAPIKey. The client has no sentinel
-// for them, so the prefixes of its messages are all there is to match.
-//
-//nolint:gochecknoglobals // Read-only table of the client's message prefixes.
-var requestConfigErrorPrefixes = []string{"headers: ", "api key: ", "base url: userinfo"}
-
-// IsRequestConfigError reports whether err is kuma.New rejecting the
-// configured API key, headers or User-Agent, or their combination with the
-// other credentials. Such an error is the configuration's and no further
-// attempt overcomes it. The match is on the client's message text, so it is a
-// best effort: an error it misses is merely retried and reported as a
-// connection failure.
-func IsRequestConfigError(err error) bool {
-	// The API key sentinels share the "api key: " prefix, but are the server's
-	// answer rather than a rejected configuration.
-	if err == nil || errors.Is(err, kuma.ErrAPIKeyUnsupported) || errors.Is(err, kuma.ErrAPIKeySetupRequired) {
-		return false
-	}
-
-	msg := err.Error()
-
-	for _, prefix := range requestConfigErrorPrefixes {
-		if strings.HasPrefix(msg, prefix) || strings.Contains(msg, ": "+prefix) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsRefusedRedirect reports whether err is the client refusing a redirect that
-// leaves the base URL's origin, an upgrade from http to https on the same host
-// included. The client follows no such redirect, so the base URL itself has to
-// change, which the error names. Like IsRequestConfigError, it matches the
-// client's message text.
-func IsRefusedRedirect(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	msg := err.Error()
-
-	return strings.Contains(msg, "leaves the server's origin") || strings.Contains(msg, "upgrades to https;")
 }
 
 // isTOTPReplayRetryable reports whether err is a refused one-time code that

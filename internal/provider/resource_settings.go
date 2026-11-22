@@ -304,7 +304,9 @@ func (r *SettingsResource) passwordRequiredDetail() string {
 		return reason + "This provider authenticates with api_key, which is its only credential and " +
 			"cannot be combined with username and password, so it has no password to answer with. " +
 			"Manage uptimekuma_settings through a second provider configuration (an alias) that logs " +
-			"in with username and password."
+			"in with username and password, and set provider = uptimekuma.<alias> on it. That works " +
+			"with the key in UPTIMEKUMA_API_KEY too: a provider configuration that sets username or " +
+			"password does not read UPTIMEKUMA_API_KEY."
 	}
 
 	return reason + "A provider that authenticates with session_token alone has no password to answer " +

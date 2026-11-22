@@ -107,10 +107,16 @@ func TestPool_ConfigMatches_RequestHeaders(t *testing.T) {
 	pool := &Pool{config: &base}
 
 	same := base
-	same.Headers = map[string]string{"CF-Access-Client-Secret": "secret", "CF-Access-Client-Id": "id"}
 
 	if !pool.configMatches(&same) {
 		t.Error("expected configMatches to return true for identical headers")
+	}
+
+	// The provider hands over nil for no headers, but an empty map means the
+	// same, and must not force a second connection.
+	withoutHeaders := &Pool{config: &Config{Endpoint: base.Endpoint, Headers: nil}}
+	if !withoutHeaders.configMatches(&Config{Endpoint: base.Endpoint, Headers: map[string]string{}}) {
+		t.Error("expected configMatches to treat nil and empty headers alike")
 	}
 
 	tests := []struct {
@@ -253,5 +259,55 @@ func TestIsRequestConfigError(t *testing.T) {
 		if got := IsRequestConfigError(tc.err); got != tc.want {
 			t.Errorf("IsRequestConfigError(%v): expected %t, got %t", tc.err, tc.want, got)
 		}
+	}
+}
+
+// TestPool_GetOrCreate_MismatchNamesDifferingHeaderValue pins that a header
+// whose value alone differs is named among the differing secrets, since the
+// two halves of the message print the same header names.
+func TestPool_GetOrCreate_MismatchNamesDifferingHeaderValue(t *testing.T) {
+	t.Parallel()
+
+	pool := &Pool{
+		client: &kuma.Client{},
+		config: &Config{
+			Endpoint: "http://localhost:3001",
+			Headers:  map[string]string{"CF-Access-Client-Secret": "old-secret"},
+		},
+	}
+
+	_, err := pool.GetOrCreate(t.Context(), &Config{
+		Endpoint: "http://localhost:3001",
+		Headers:  map[string]string{"CF-Access-Client-Secret": "new-secret"},
+	})
+	if err == nil {
+		t.Fatal("expected a config mismatch error, got nil")
+	}
+
+	message := err.Error()
+
+	if !strings.HasSuffix(message, "differing secrets: headers") {
+		t.Errorf("expected the headers named as differing, got %q", message)
+	}
+
+	if strings.Contains(message, "old-secret") || strings.Contains(message, "new-secret") {
+		t.Errorf("expected no header value in the message, got %q", message)
+	}
+}
+
+// TestPool_GetOrCreate_MismatchRedactsEndpoint pins that the password of an
+// endpoint with userinfo stays out of the mismatch message.
+func TestPool_GetOrCreate_MismatchRedactsEndpoint(t *testing.T) {
+	t.Parallel()
+
+	pool := &Pool{client: &kuma.Client{}, config: &Config{Endpoint: "http://admin:s3cr3t@localhost:3001"}}
+
+	_, err := pool.GetOrCreate(t.Context(), &Config{Endpoint: "http://admin:other@localhost:3001"})
+	if err == nil {
+		t.Fatal("expected a config mismatch error, got nil")
+	}
+
+	if message := err.Error(); strings.Contains(message, "s3cr3t") || strings.Contains(message, "other@") {
+		t.Errorf("expected the endpoint passwords redacted, got %q", message)
 	}
 }

@@ -26,6 +26,7 @@ func TestConnectionError(t *testing.T) {
 	tests := []struct {
 		name        string
 		err         error
+		secrets     requestSecrets
 		wantSummary string
 		wantDetail  []string
 		notDetail   []string
@@ -209,14 +210,17 @@ func TestConnectionError(t *testing.T) {
 			name:        "api key on a 2.x server",
 			err:         fmt.Errorf("create pooled connection: login failed: %w", kuma.ErrAPIKeyUnsupported),
 			wantSummary: "Uptime Kuma does not accept API keys for this connection",
-			wantDetail:  []string{endpoint, "only on Uptime Kuma 3.0", "`auth_scheme`"},
-			notDetail:   []string{"Common causes"},
+			wantDetail:  []string{endpoint, "only on Uptime Kuma 3.0", "this server is Uptime Kuma 2.x"},
+			notDetail:   []string{"Common causes", "`auth_scheme`"},
 		},
 		{
 			name:        "api key rejected",
 			err:         fmt.Errorf("create pooled connection: login failed: %w", kuma.ErrAPIKeyRejected),
 			wantSummary: "Uptime Kuma rejected the API key",
-			wantDetail:  []string{"invalid, expired or revoked", `"API and MCP" is disabled in Settings`},
+			wantDetail: []string{
+				"invalid, expired or revoked", `"API and MCP" is disabled in Settings`,
+				"`auth_scheme = \"http\"` is pinned against an Uptime Kuma 2.x server",
+			},
 		},
 		{
 			name:        "api key against a server that is not set up",
@@ -236,15 +240,54 @@ func TestConnectionError(t *testing.T) {
 			name:        "rejected api key format",
 			err:         errors.New("api key: pass the key without the Bearer prefix"),
 			wantSummary: "Invalid api_key, headers or user_agent",
+			notDetail:   []string{"trimspace"},
 		},
 		{
-			name: "refused redirect",
+			name:        "api key with whitespace",
+			err:         errors.New("api key: the key contains whitespace or control characters"),
+			wantSummary: "Invalid api_key, headers or user_agent",
+			wantDetail:  []string{"use trimspace() when reading the key from a file"},
+		},
+		{
+			name: "userinfo next to an api key",
+			err: errors.New("base url: userinfo (user:password@) sets an Authorization header of its own, " +
+				"which cannot be combined with WithAPIKey or an Authorization header from WithHeaders"),
+			wantSummary: "endpoint contains a user name and password",
+			wantDetail:  []string{"Remove the user:password@ part from `endpoint`"},
+		},
+		{
+			name: "redirect to https",
 			err: errors.New(`create pooled connection: login failed: Get "http://kuma.example.com/api/entry-page": ` +
 				"redirect from http://kuma.example.com/api/entry-page to https://kuma.example.com/api/entry-page " +
 				"upgrades to https; use https://kuma.example.com as the base URL"),
+			wantSummary: "Uptime Kuma redirected to https",
+			wantDetail:  []string{"use https://kuma.example.com as the base URL", "to the https URL", "into GET"},
+			notDetail:   []string{"refused the login", "Common causes", "API key", "cloudflareaccess"},
+		},
+		{
+			name:        "redirect to another host with headers",
+			err:         errors.New(crossOriginRedirect),
+			secrets:     withRequestSecrets,
 			wantSummary: "Uptime Kuma redirected to another origin",
-			wantDetail:  []string{"use https://kuma.example.com as the base URL", "`endpoint`"},
-			notDetail:   []string{"refused the login", "Common causes"},
+			wantDetail:  []string{"cloudflareaccess.com", "service token in `headers`", "Otherwise set `endpoint`"},
+		},
+		{
+			name: "redirect to another host without headers",
+			err: errors.New(`Get "https://kuma.example.com/api/entry-page": redirect from ` +
+				"https://kuma.example.com/api/entry-page to https://status.example.com/api/entry-page leaves " +
+				"the server's origin; use https://status.example.com as the base URL"),
+			wantSummary: "Uptime Kuma redirected to another origin",
+			wantDetail:  []string{"into GET", "Set `endpoint`"},
+			notDetail:   []string{"cloudflareaccess", "API key", "`headers`"},
+		},
+		{
+			name: "auth scheme probe answered by a proxy",
+			err: errors.New(`connect to server: detect auth scheme: GET http://kuma.example.com/api/auth/ok ` +
+				`answered status 403 with Content-Type "text/html", which is neither Uptime Kuma 2.x nor 3.x; ` +
+				"an access proxy in front of the server may be rejecting the request (check WithHeaders), or " +
+				"pin the scheme with WithAuthScheme"),
+			wantSummary: "Unexpected answer to the auth scheme detection",
+			wantDetail:  []string{"`headers`", "`auth_scheme`"},
 		},
 		{
 			name:        "auth required names api_key",
@@ -256,7 +299,7 @@ func TestConnectionError(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			summary, detail := connectionError(endpoint, tc.err)
+			summary, detail := connectionError(endpoint, tc.err, tc.secrets)
 			if summary != tc.wantSummary {
 				t.Errorf("expected summary %q, got %q", tc.wantSummary, summary)
 			}
@@ -273,5 +316,33 @@ func TestConnectionError(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// crossOriginRedirect is the error the client refuses a redirect to another
+// host with.
+const crossOriginRedirect = `create pooled connection: login failed: Get "https://kuma.example.com/api/entry-page": ` +
+	"redirect from https://kuma.example.com/api/entry-page to https://team.cloudflareaccess.com/login " +
+	"leaves the server's origin; connect to the server on https://team.cloudflareaccess.com"
+
+// TestConnectionError_RedactsEndpoint pins that the password of an endpoint
+// with userinfo never reaches a diagnostic.
+func TestConnectionError_RedactsEndpoint(t *testing.T) {
+	t.Parallel()
+
+	for _, err := range []error{
+		errors.New("dial tcp: connection refused"),
+		kuma.ErrInvalidCredentials,
+		errors.New("base url: userinfo (user:password@) sets an Authorization header of its own"),
+		errors.New(crossOriginRedirect),
+	} {
+		summary, detail := connectionError("https://admin:s3cr3t@kuma.example.com", err, withRequestSecrets)
+		if strings.Contains(summary+detail, "s3cr3t") {
+			t.Errorf("expected the password redacted for %q, got:\n%s", err, detail)
+		}
+
+		if !strings.Contains(detail, "admin:xxxxx@kuma.example.com") {
+			t.Errorf("expected the redacted endpoint for %q, got:\n%s", err, detail)
+		}
 	}
 }

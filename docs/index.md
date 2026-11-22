@@ -33,8 +33,16 @@ resource "uptimekuma_monitor_http" "example" {
 
 ## Authentication
 
-`endpoint`, the URL of your Uptime Kuma instance, is always required. The credentials next to it
-take one of these shapes:
+`endpoint`, the URL of your Uptime Kuma instance, is always required. The provider follows no
+redirect that leaves its origin (scheme, host and port), and that includes an upgrade from `http` to
+`https` on the same host: a redirect would turn the POST requests of the login and of the Socket.IO
+long polling into GET requests without a body, and would carry `api_key` and `headers` to another
+server. The error names the URL to use, so set `endpoint` to the URL Uptime Kuma is finally served
+from. Behind an access proxy, a redirect to another host such as `<team>.cloudflareaccess.com`
+usually means that the proxy rejected the request, see
+[Access proxies](#access-proxies-headers-and-user_agent).
+
+The credentials next to the endpoint take one of these shapes:
 
 - **Nothing**, for a server with authentication disabled.
 - **`username` and `password`**, the usual login. For an account with two-factor authentication
@@ -58,8 +66,14 @@ an environment variable: `UPTIMEKUMA_ENDPOINT`, `UPTIMEKUMA_USERNAME`, `UPTIMEKU
 `UPTIMEKUMA_AUTH_SCHEME`, and `headers` from `UPTIMEKUMA_HEADERS` as a JSON object of strings. The
 connection options have their own, see the schema below. For the endpoint, the credentials, the
 scheme and the headers an empty attribute counts as unset, so the environment variable applies to it
-too; that is what an attribute fed from a variable without a value leaves behind. A credential from
-the environment next to `api_key` is a conflict like one in the configuration.
+too; that is what an attribute fed from a variable without a value leaves behind.
+
+`api_key` and the login credentials (`username`, `password`, `session_token`, `totp_secret`) fall
+back to the environment by group. A provider block that sets `api_key` does not read
+`UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`, `UPTIMEKUMA_SESSION_TOKEN` or
+`UPTIMEKUMA_TOTP_SECRET`, and one that sets any login credential does not read
+`UPTIMEKUMA_API_KEY`. Both groups set in the configuration, or both in the environment, are a
+conflict, and the error names where each value came from.
 
 The credentials must be known when Terraform plans, because the provider logs in to plan at all. A
 provider attribute that refers to a resource created in the same run is rejected.
@@ -146,8 +160,7 @@ provider "uptimekuma" {
 - Uptime Kuma 2.x and earlier have no API key login on the Socket.IO API, so `api_key` fails there
   with an error saying so, and `auth_scheme = "socket"` next to `api_key` is rejected.
 - A server with authentication disabled ignores the key and lets every connection in.
-- No session is created, so the key needs no sign-in and does not count against the sign-in rate
-  limit.
+- No session is created, so the key needs no sign-in.
 
 ### Access proxies: `headers` and `user_agent`
 
@@ -168,15 +181,18 @@ provider "uptimekuma" {
 }
 ```
 
-- The headers are sent to the origin (scheme, host and port) of `endpoint` only.
-- The provider follows no redirect that leaves that origin, and that includes an upgrade from
-  `http` to `https` on the same host. The error names the URL to use: set `endpoint` to the final
-  URL instead.
+- The headers are sent to the origin (scheme, host and port) of `endpoint` only, and the provider
+  follows no redirect away from it, see [Authentication](#authentication). A redirect to another
+  host such as `<team>.cloudflareaccess.com` usually means that the proxy rejected the request:
+  check the service token in `headers`.
 - The headers the client and its transport set themselves cannot be configured: `Host`, `Origin`,
   `Connection`, `Upgrade`, `Accept`, `Accept-Encoding`, `Content-Type`, `Content-Length`,
   `Transfer-Encoding`, `TE`, `Trailer` and `Sec-WebSocket-*`. Neither can an `Authorization`
   header with a `Bearer` token, which is what `api_key` is for; `Authorization: Basic` for a reverse
-  proxy is accepted.
+  proxy is accepted, but not next to `api_key`.
+- `User-Agent` is rejected in `headers`; set it with `user_agent`.
+- Every header needs a value, and two names that differ only in case are rejected, because HTTP
+  treats them as one header.
 - `headers` is sensitive, because its values are often credentials.
 
 `user_agent` sets the User-Agent of every request. It defaults to
@@ -188,7 +204,27 @@ Uptime Kuma asks for the account password again whenever settings are written, s
 `uptimekuma_settings` needs `password` on the provider. A provider that authenticates with
 `session_token` alone can manage every other resource. A provider with `api_key` has no password
 either, and cannot have one next to the key, so manage `uptimekuma_settings` through a second
-provider configuration (an alias) that logs in with `username` and `password`.
+provider configuration (an alias) that logs in with `username` and `password`. That works with the
+key in `UPTIMEKUMA_API_KEY` too, because a provider block with a login credential does not read it:
+
+```hcl
+provider "uptimekuma" {
+  endpoint = "https://uptime-kuma.example.com"
+  # api_key from UPTIMEKUMA_API_KEY
+}
+
+provider "uptimekuma" {
+  alias    = "settings"
+  endpoint = "https://uptime-kuma.example.com"
+  username = "admin"
+  password = var.uptimekuma_password
+}
+
+resource "uptimekuma_settings" "this" {
+  provider              = uptimekuma.settings
+  keep_data_period_days = 180
+}
+```
 
 ### Keeping credentials out of the configuration
 
@@ -325,10 +361,10 @@ The provider supports managing the following resources:
 
 ### Optional
 
-- `api_key` (String, Sensitive) API key of an Uptime Kuma 3.0 server, used instead of a login. The provider presents it as `Authorization: Bearer <key>` on the Socket.IO handshake, which the server accepts only while "API and MCP" is enabled in its settings (`apiEnabled`, alpha upstream). It is the only credential of a provider that sets it, so it conflicts with `username`, `password`, `session_token` and `totp_secret` (including their environment variables), and with `auth_scheme = "socket"`: Uptime Kuma 2.x has no API key login on the Socket.IO API. A server with authentication disabled ignores the key. `uptimekuma_settings` cannot be written with it, because Uptime Kuma asks for the account password whenever settings are written. Can be set via `UPTIMEKUMA_API_KEY` environment variable, which applies when the attribute is unset or empty.
+- `api_key` (String, Sensitive) API key of an Uptime Kuma 3.0 server, used instead of a login. The provider presents it as `Authorization: Bearer <key>` on the Socket.IO handshake, which the server accepts only while "API and MCP" is enabled in its settings (`apiEnabled`, alpha upstream). It is the only credential of a provider that sets it, so it conflicts with `username`, `password`, `session_token` and `totp_secret`, with an `Authorization` header in `headers`, and with `auth_scheme = "socket"`: Uptime Kuma 2.x has no API key login on the Socket.IO API. Set in the configuration, it keeps the provider from reading `UPTIMEKUMA_USERNAME`, `UPTIMEKUMA_PASSWORD`, `UPTIMEKUMA_SESSION_TOKEN` and `UPTIMEKUMA_TOTP_SECRET`; a login credential set in the configuration keeps it from reading `UPTIMEKUMA_API_KEY`. A server with authentication disabled ignores the key. `uptimekuma_settings` cannot be written with it, because Uptime Kuma asks for the account password whenever settings are written. Can be set via `UPTIMEKUMA_API_KEY` environment variable, which applies when the attribute is unset or empty.
 - `auth_scheme` (String) How the provider authenticates: `auto` (default) detects it with one request before connecting, `socket` is the login command on the Socket.IO connection of Uptime Kuma 2.x, and `http` is the HTTP sign-in of Uptime Kuma 3.x. The detection is right for every Uptime Kuma release; pin the scheme only for a reverse proxy that answers the detection request itself. A pinned scheme the server does not speak fails the login. Can be set via `UPTIMEKUMA_AUTH_SCHEME` environment variable, which applies when the attribute is unset or empty.
-- `endpoint` (String) Uptime Kuma endpoint. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable, which applies when the attribute is unset or empty.
-- `headers` (Map of String, Sensitive) HTTP headers added to every request to Uptime Kuma, the Socket.IO handshake included, for an access proxy in front of it such as Cloudflare Access (`CF-Access-Client-Id` and `CF-Access-Client-Secret`). They are sent to the origin (scheme, host and port) of `endpoint` only, and the provider follows no redirect that leaves that origin, an upgrade from `http` to `https` included: set `endpoint` to the URL the redirect names instead. The headers the client and its transport set themselves (`Host`, `Origin`, `Connection`, `Upgrade`, `Accept`, `Accept-Encoding`, `Content-Type`, `Content-Length`, `Transfer-Encoding`, `TE`, `Trailer` and `Sec-WebSocket-*`) are rejected, and so is an `Authorization` header with a `Bearer` token, which belongs in `api_key`; `Authorization: Basic` for a reverse proxy is accepted. A `User-Agent` here is overridden by `user_agent`. Can be set via `UPTIMEKUMA_HEADERS` environment variable as a JSON object of strings (e.g. `{"CF-Access-Client-Id":"..."}`), which applies when the attribute is unset or empty.
+- `endpoint` (String) Uptime Kuma endpoint. The provider follows no redirect that leaves the origin (scheme, host and port) of the endpoint, an upgrade from `http` to `https` included, so set it to the URL Uptime Kuma is finally served from. Can be set via `UPTIMEKUMA_ENDPOINT` environment variable, which applies when the attribute is unset or empty.
+- `headers` (Map of String, Sensitive) HTTP headers added to every request to Uptime Kuma, the Socket.IO handshake included, for an access proxy in front of it such as Cloudflare Access (`CF-Access-Client-Id` and `CF-Access-Client-Secret`). They are sent to the origin (scheme, host and port) of `endpoint` only, and the provider follows no redirect that leaves that origin, an upgrade from `http` to `https` included: set `endpoint` to the URL the redirect names instead. The headers the client and its transport set themselves (`Host`, `Origin`, `Connection`, `Upgrade`, `Accept`, `Accept-Encoding`, `Content-Type`, `Content-Length`, `Transfer-Encoding`, `TE`, `Trailer` and `Sec-WebSocket-*`) are rejected, and so is an `Authorization` header with a `Bearer` token, which belongs in `api_key`; `Authorization: Basic` for a reverse proxy is accepted, except next to `api_key`. `User-Agent` is rejected too, set it with `user_agent`. A value must not be empty, and two names that differ only in case are rejected. Can be set via `UPTIMEKUMA_HEADERS` environment variable as a JSON object of strings (e.g. `{"CF-Access-Client-Id":"..."}`), which applies when the attribute is unset or empty.
 - `max_retries` (Number) Maximum number of connection retry attempts (default: `3`). All retry attempts must complete within the overall `timeout` budget. Can be set via `UPTIMEKUMA_MAX_RETRIES` environment variable.
 - `operation_timeout` (String) Timeout for a single Uptime Kuma command as a Go duration string (e.g. `30s`, `2m`) (default: `60s`). Bounds how long the provider waits for the server to acknowledge one create, read, update or delete and to confirm it, so an instance that accepts a command and never answers it fails the operation instead of blocking the apply indefinitely. It also bounds the login and setup performed while connecting, so during connect the effective bound is whichever of `timeout` and `operation_timeout` expires first. The bound is on the round trip and not on the whole call: a write that has to queue behind other writes to the same list waits its turn outside this budget. A value of `0s` means "not configured" and falls back to the default; the bound cannot be disabled, so set a large value instead. Can be set via `UPTIMEKUMA_OPERATION_TIMEOUT` environment variable.
 - `password` (String, Sensitive) Uptime Kuma password. Can be set via `UPTIMEKUMA_PASSWORD` environment variable, which applies when the attribute is unset or empty.

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"maps"
+	"slices"
 	"strings"
 	"testing"
 
@@ -92,6 +93,17 @@ func TestValidateAPIKey(t *testing.T) {
 			wantErrors: []string{"api_key requires Uptime Kuma 3.0@auth_scheme"},
 		},
 		{
+			name: "api key with an Authorization header",
+			model: func(m *UptimeKumaProviderModel) {
+				m.APIKey = key
+				m.Headers = types.MapValueMust(types.StringType, map[string]attr.Value{
+					"authorization": types.StringValue("Basic dXNlcjpwYXNz"),
+					"X-Other":       types.StringValue("x"),
+				})
+			},
+			wantErrors: []string{`api_key conflicts with an Authorization header@headers["authorization"]`},
+		},
+		{
 			name: "api key with the 3.x login pinned",
 			model: func(m *UptimeKumaProviderModel) {
 				m.APIKey = key
@@ -116,7 +128,7 @@ func TestValidateAPIKey(t *testing.T) {
 
 			var diags diag.Diagnostics
 
-			validateAPIKey(&model, &diags)
+			validateAPIKey(&model, nil, &diags)
 
 			got := errorSummariesWithPath(t, diags)
 			if strings.Join(got, ",") != strings.Join(tc.wantErrors, ",") {
@@ -229,20 +241,62 @@ func TestConfigure_APIKeyFailsBeforeConnecting(t *testing.T) {
 		values      map[string]tftypes.Value
 		wantSummary string
 		wantPath    path.Path
+		wantDetail  string
 	}{
 		{
-			name:        "session token from the environment",
-			env:         map[string]string{"UPTIMEKUMA_SESSION_TOKEN": "token"},
-			values:      map[string]tftypes.Value{"api_key": str("uk1_key")},
+			name:        "api key and session token both from the environment",
+			env:         map[string]string{"UPTIMEKUMA_API_KEY": "uk1_key", "UPTIMEKUMA_SESSION_TOKEN": "token"},
 			wantSummary: "api_key conflicts with session_token",
 			wantPath:    path.Root("session_token"),
+			wantDetail: "the environment variable UPTIMEKUMA_API_KEY and the environment variable " +
+				"UPTIMEKUMA_SESSION_TOKEN are both set",
 		},
 		{
-			name:        "api key from the environment, session token in config",
-			env:         map[string]string{"UPTIMEKUMA_API_KEY": "uk1_key"},
-			values:      map[string]tftypes.Value{"session_token": str("token")},
+			name:        "api key and session token both in config",
+			values:      map[string]tftypes.Value{"api_key": str("uk1_key"), "session_token": str("token")},
 			wantSummary: "api_key conflicts with session_token",
 			wantPath:    path.Root("session_token"),
+			wantDetail:  "the provider attribute api_key and the provider attribute session_token are both set",
+		},
+		{
+			name:        "authorization header from the environment next to api key",
+			env:         map[string]string{headersEnvironmentVariable: `{"Authorization":"Basic eDp5"}`},
+			values:      map[string]tftypes.Value{"api_key": str("uk1_key")},
+			wantSummary: "api_key conflicts with an Authorization header",
+			wantPath:    path.Root("headers").AtMapKey("Authorization"),
+			wantDetail:  "the environment variable UPTIMEKUMA_HEADERS cannot set one",
+		},
+		{
+			name:        "user agent in headers from the environment",
+			env:         map[string]string{headersEnvironmentVariable: `{"user-agent":"x/1"}`},
+			wantSummary: "User-Agent in headers",
+			wantPath:    path.Root("headers").AtMapKey("user-agent"),
+			wantDetail:  "user_agent",
+		},
+		{
+			name:        "empty header value from the environment",
+			env:         map[string]string{headersEnvironmentVariable: `{"X-Token":""}`},
+			wantSummary: "empty header value",
+			wantPath:    path.Root("headers").AtMapKey("X-Token"),
+			wantDetail:  "UPTIMEKUMA_HEADERS",
+		},
+		{
+			name: "unknown headers",
+			values: map[string]tftypes.Value{
+				"headers": tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, tftypes.UnknownValue),
+			},
+			wantSummary: "unknown headers",
+			wantPath:    path.Root("headers"),
+		},
+		{
+			name: "unknown header value",
+			values: map[string]tftypes.Value{
+				"headers": tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, map[string]tftypes.Value{
+					"X-Token": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				}),
+			},
+			wantSummary: "unknown headers",
+			wantPath:    path.Root("headers"),
 		},
 		{
 			name:        "socket scheme from the environment",
@@ -287,6 +341,10 @@ func TestConfigure_APIKeyFailsBeforeConnecting(t *testing.T) {
 			want := tc.wantSummary + "@" + tc.wantPath.String()
 			if got := errorSummariesWithPath(t, resp.Diagnostics); len(got) != 1 || got[0] != want {
 				t.Fatalf("expected exactly the error %q, got %v", want, got)
+			}
+
+			if detail := resp.Diagnostics.Errors()[0].Detail(); !strings.Contains(detail, tc.wantDetail) {
+				t.Errorf("expected the detail to contain %q, got %q", tc.wantDetail, detail)
 			}
 
 			if resp.ResourceData != nil {
@@ -505,5 +563,166 @@ func TestSettingsPasswordRequiredDetail(t *testing.T) {
 	if detail := (&SettingsResource{}).passwordRequiredDetail(); strings.Contains(detail, "api_key") ||
 		!strings.Contains(detail, "session_token") {
 		t.Errorf("expected the detail to name session_token, not api_key, got %q", detail)
+	}
+}
+
+// TestApplyCredentialEnvironmentDefaults_Groups pins that api_key and the
+// login credentials fall back to the environment by group: a configuration
+// that sets one group keeps the variables of the other unread, so a provider
+// block with api_key ignores a username and password in the environment, and
+// an alias with a username and password ignores UPTIMEKUMA_API_KEY.
+func TestApplyCredentialEnvironmentDefaults_Groups(t *testing.T) {
+	env := map[string]string{
+		"UPTIMEKUMA_USERNAME":      "admin-from-env",
+		"UPTIMEKUMA_PASSWORD":      "password-from-env",
+		"UPTIMEKUMA_SESSION_TOKEN": "token-from-env",
+		"UPTIMEKUMA_TOTP_SECRET":   "JBSWY3DPEHPK3PXP",
+		"UPTIMEKUMA_API_KEY":       "uk1_from_env",
+	}
+
+	tests := []struct {
+		name        string
+		model       func(*UptimeKumaProviderModel)
+		wantLogin   bool
+		wantAPIKey  string
+		wantSources []string
+	}{
+		{
+			name:        "api key in config ignores the login variables",
+			model:       func(m *UptimeKumaProviderModel) { m.APIKey = types.StringValue("uk1_from_config") },
+			wantAPIKey:  "uk1_from_config",
+			wantSources: nil,
+		},
+		{
+			name:        "unknown api key in config ignores the login variables",
+			model:       func(m *UptimeKumaProviderModel) { m.APIKey = types.StringUnknown() },
+			wantSources: nil,
+		},
+		{
+			name:        "username in config ignores the api key variable",
+			model:       func(m *UptimeKumaProviderModel) { m.Username = types.StringValue("admin") },
+			wantLogin:   true,
+			wantSources: []string{"password", "session_token", "totp_secret"},
+		},
+		{
+			name:        "session token in config ignores the api key variable",
+			model:       func(m *UptimeKumaProviderModel) { m.SessionToken = types.StringValue("token") },
+			wantLogin:   true,
+			wantSources: []string{"password", "totp_secret", "username"},
+		},
+		{
+			name:        "nothing in config reads both, for validateAPIKey to reject",
+			model:       func(*UptimeKumaProviderModel) {},
+			wantLogin:   true,
+			wantAPIKey:  "uk1_from_env",
+			wantSources: []string{"api_key", "password", "session_token", "totp_secret", "username"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			clearCredentialEnvironment(t)
+
+			for name, value := range env {
+				t.Setenv(name, value)
+			}
+
+			model := nullProviderModel()
+			tc.model(&model)
+
+			sources := applyCredentialEnvironmentDefaults(&model)
+
+			if got := model.Password.ValueString() != ""; got != tc.wantLogin {
+				t.Errorf("expected a password %t, got %q", tc.wantLogin, model.Password.ValueString())
+			}
+
+			if !model.APIKey.IsUnknown() && model.APIKey.ValueString() != tc.wantAPIKey {
+				t.Errorf("expected api key %q, got %q", tc.wantAPIKey, model.APIKey.ValueString())
+			}
+
+			got := slices.Sorted(maps.Keys(sources))
+			if strings.Join(got, ",") != strings.Join(tc.wantSources, ",") {
+				t.Errorf("expected sources %v, got %v", tc.wantSources, got)
+			}
+		})
+	}
+}
+
+// TestValidateHeaders pins what the provider rejects in `headers` before it
+// connects. The headers the client reserves are left to the client.
+func TestValidateHeaders(t *testing.T) {
+	t.Parallel()
+
+	headers := func(values map[string]attr.Value) types.Map {
+		return types.MapValueMust(types.StringType, values)
+	}
+
+	tests := []struct {
+		name       string
+		headers    types.Map
+		wantErrors []string
+	}{
+		{name: "null", headers: types.MapNull(types.StringType)},
+		{name: "unknown", headers: types.MapUnknown(types.StringType)},
+		{
+			name:    "valid",
+			headers: headers(map[string]attr.Value{"CF-Access-Client-Id": types.StringValue("id")}),
+		},
+		{
+			// The client owns this list; the provider does not repeat it.
+			name:    "reserved name is left to the client",
+			headers: headers(map[string]attr.Value{"Host": types.StringValue("example.com")}),
+		},
+		{
+			name:    "unknown value is left for Configure",
+			headers: headers(map[string]attr.Value{"X-Token": types.StringUnknown()}),
+		},
+		{
+			name:       "null value",
+			headers:    headers(map[string]attr.Value{"X-Token": types.StringNull()}),
+			wantErrors: []string{`empty header value@headers["X-Token"]`},
+		},
+		{
+			name:       "empty value",
+			headers:    headers(map[string]attr.Value{"X-Token": types.StringValue("")}),
+			wantErrors: []string{`empty header value@headers["X-Token"]`},
+		},
+		{
+			name:       "invalid value",
+			headers:    headers(map[string]attr.Value{"X-Token": types.StringValue("a\nb")}),
+			wantErrors: []string{`invalid header value@headers["X-Token"]`},
+		},
+		{
+			name:       "invalid name",
+			headers:    headers(map[string]attr.Value{"X Token": types.StringValue("v")}),
+			wantErrors: []string{`invalid header name@headers["X Token"]`},
+		},
+		{
+			name: "names that differ only in case",
+			headers: headers(map[string]attr.Value{
+				"X-Token": types.StringValue("a"), "x-token": types.StringValue("b"),
+			}),
+			wantErrors: []string{`duplicate header name@headers["x-token"]`},
+		},
+		{
+			name:       "user agent",
+			headers:    headers(map[string]attr.Value{"USER-AGENT": types.StringValue("x/1")}),
+			wantErrors: []string{`User-Agent in headers@headers["USER-AGENT"]`},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var diags diag.Diagnostics
+
+			validateHeaders(tc.headers, "", &diags)
+
+			got := errorSummariesWithPath(t, diags)
+			if strings.Join(got, ",") != strings.Join(tc.wantErrors, ",") {
+				t.Errorf("expected errors %v, got %v", tc.wantErrors, got)
+			}
+		})
 	}
 }

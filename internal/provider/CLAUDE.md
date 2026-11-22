@@ -64,7 +64,11 @@ schemas), so the secrets are only `Sensitive`; the docs point at `ephemeral` var
 The `endpoint`, the credentials (`username`, `password`, `session_token`, `totp_secret`, `api_key`) and
 `auth_scheme` fall back to the environment when they are null *or empty* (`stringFromEnvironment`), so an
 attribute fed from an unset variable does not shadow it; `headers` does the same for a null or empty map.
-An unknown value is never replaced by the environment. `user_agent` has no variable; provider schemas
+An unknown value is never replaced by the environment. `api_key` and the login credentials fall back
+by group (`applyCredentialEnvironmentDefaults`): a configured `api_key` (non-empty or unknown) keeps
+the login variables unread, a configured login credential keeps `UPTIMEKUMA_API_KEY` unread, so a
+conflict can only come from one source. `applyEnvironmentDefaults` returns `envSources`
+(attribute → variable) for diagnostics that name where a value came from. `user_agent` has no variable; provider schemas
 cannot have defaults, so `resolveUserAgent` applies `terraform-provider-uptimekuma/<version>` in `Configure`.
 
 **Configuration Validation**:
@@ -86,30 +90,43 @@ cannot have defaults, so `resolveUserAgent` applies `terraform-provider-uptimeku
   `Configure`, which hands the resolved scheme to `buildClientConfig` through `clientOptions`
 - `api_key` (`validateAPIKey`): the only credential of a provider that sets it, so a non-empty
   `username`, `password`, `session_token` or `totp_secret` next to it is an error on that attribute,
-  and so is `auth_scheme = "socket"` (2.x has no API key login). `ValidateConfig` judges the
-  configuration alone, before the environment applies; `Configure` judges it again with the
-  environment applied. Unknown values are skipped. The provider exposes no autosetup, so the
-  client's `WithAutosetup` conflict cannot arise
-- `headers`: an unknown map or value is rejected in `Configure` (`rejectUnknownHeaders`). Header
-  names and values are validated by the client only (`kuma.New`), see the login diagnostics below
+  and so are an `Authorization` header (on `headers["<name>"]`) and `auth_scheme = "socket"` (2.x has
+  no API key login). Each message names the source of both values (`envSources.source`).
+  `ValidateConfig` judges the configuration alone (sources nil), before the environment applies;
+  `Configure` judges it again with the environment applied. Unknown values are skipped. The provider
+  exposes no autosetup, so the client's `WithAutosetup` conflict cannot arise, and its other
+  `credentials:` errors are unreachable
+- `headers` (`validateHeaders`, in `ValidateConfig` for the configuration and in `Configure` for
+  what it connects with): names and values must pass `httpguts`, a value must not be null or empty,
+  names that differ only in case and `User-Agent` (use `user_agent`) are rejected, each on the
+  element path. The client's reserved-name list is deliberately not duplicated; `kuma.New` rejects
+  those at connect time. An unknown map or value is rejected in `Configure` (`rejectUnknownHeaders`)
 - `totp_secret`: `totpSecretValidator` rejects a value that is not base32 at plan time;
   `ValidateConfig` checks the environment value (`validateEnvironmentTOTPSecret`), and the client
   package checks it again before connecting (`kuma.ErrInvalidTOTPSecret`). All three use
   `kuma.ValidateTOTPSecret`, the rules `kuma.WithTOTPSecret` applies
 - Precedence: Terraform config > environment variables
 
-**Login diagnostics** (`connectionError` / `loginErrorAdvice` in [provider.go](provider.go)): every
+**Login diagnostics** (`connectionError` in [provider_connection_error.go](provider_connection_error.go),
+`loginErrorAdvice` in [provider.go](provider.go)): every
 typed login failure gets a summary and next step naming the attribute to fix. A refused session
 token followed by a failed password login arrives as one `*kuma.SessionTokenFallbackError`, which
 always wraps `kuma.ErrInvalidSessionToken`; `passwordFallbackAdvice` classifies it ahead of the switch by its
 password half (`client.PasswordFallbackCause`), with a transport-style default for a half it does not
 recognise, so the user is never told to add the `username` and `password` they already set.
 `apiKeyErrorAdvice` (the tail of `loginErrorAdvice`) covers `kuma.ErrAPIKeyUnsupported` (2.x),
-`kuma.ErrAPIKeyRejected` (invalid key or "API and MCP" off, which the server does not tell apart)
-and `kuma.ErrAPIKeySetupRequired`. `requestConfigErrorAdvice` runs before it, for the plain errors
-`kuma.New` rejects a header, API key or User-Agent with (`client.IsRequestConfigError`, matched on
-the client's `headers:` / `api key:` / `base url: userinfo` prefixes) and for a refused
-cross-origin redirect (`client.IsRefusedRedirect`), which names the URL to set `endpoint` to.
+`kuma.ErrAPIKeyRejected` (invalid key, "API and MCP" off, or `http` pinned against 2.x, which the
+server does not tell apart) and `kuma.ErrAPIKeySetupRequired`. The typed errors are matched first;
+`requestConfigErrorAdvice` runs after them, for what the client reports as plain errors, matched on
+its message text in [../client/request_errors.go](../client/request_errors.go): an endpoint with
+userinfo next to a key (`IsUserinfoError`, own summary pointing at `endpoint`), a rejected header,
+API key or User-Agent (`IsRequestConfigError`; whitespace in the key adds a `trimspace()` hint), a
+refused redirect (`IsHTTPSUpgradeRedirect`: set the https URL; `IsRefusedRedirect` to another host:
+with `headers` or `api_key` configured, the access proxy most likely rejected the request, so the
+service token comes first; without, the reason is that POSTs would become GETs) and an auth scheme
+detection answered by neither 2.x nor 3.x (`IsAuthSchemeProbeError`: check `headers`, or pin
+`auth_scheme`). `connect` passes whether `headers` or `api_key` are configured. Every diagnostic and
+the pool mismatch message show the endpoint through `client.RedactURL`.
 `connect` sets the `OnSessionTokenRejected` callback and calls `warnRejectedSessionToken` whenever
 the token was refused and the password login took over, also when the connection then failed; it
 takes the client constructor as a parameter so `TestConnect` can pin that wiring.
@@ -1405,7 +1422,10 @@ own `socket.io-client`, to enable "API and MCP" and create an API key (`addAPIKe
 cookie of `outOfBandClient`, which costs no sign-in. The client keeps those helpers test-only and
 has no generic emit. The test is not parallel, because the setting is server-wide and the pool holds
 one connection that refuses any other configuration: `testAccIsolatePool` closes the pooled
-connection before and after it. On 2.x it asserts the `kuma.ErrAPIKeyUnsupported` diagnostic instead.
+connection before and after it. The cleanup that turns "API and MCP" off and revokes the key
+(`deleteAPIKey`) is registered before enabling. A step deletes a notification out of band, so its
+Read resyncs through the API key reconnect and the plan recreates it. On 2.x it asserts the
+`kuma.ErrAPIKeyUnsupported` diagnostic instead.
 
 `outOfBandClient` is deliberately separate from the provider's pooled connection: the
 disappears tests use it to delete a resource behind Terraform's back, which only

@@ -86,8 +86,58 @@ func parseAuthScheme(value string) (kuma.AuthScheme, bool) {
 	}
 }
 
+// envSources names, for every attribute applyEnvironmentDefaults took from the
+// environment, the environment variable it came from, so that a diagnostic
+// can say where a value it objects to was set.
+type envSources map[string]string
+
+// source describes where the value of attribute came from, for a diagnostic.
+func (s envSources) source(attribute string) string {
+	if env, ok := s[attribute]; ok {
+		return "the environment variable " + env
+	}
+
+	return "the provider attribute " + attribute
+}
+
+// loginCredentialVariables are the login credentials and their environment
+// variables: the group `api_key` excludes.
+//
+//nolint:gochecknoglobals // Read-only table of attribute and variable names.
+var loginCredentialVariables = []struct{ attribute, env string }{
+	{attribute: "username", env: "UPTIMEKUMA_USERNAME"},
+	{attribute: "password", env: "UPTIMEKUMA_PASSWORD"},
+	{attribute: "session_token", env: "UPTIMEKUMA_SESSION_TOKEN"},
+	{attribute: "totp_secret", env: "UPTIMEKUMA_TOTP_SECRET"},
+}
+
+// loginCredential returns the field of data that holds the login credential
+// attribute, one of loginCredentialVariables.
+func loginCredential(data *UptimeKumaProviderModel, attribute string) *types.String {
+	switch attribute {
+	case "username":
+		return &data.Username
+
+	case "password":
+		return &data.Password
+
+	case "session_token":
+		return &data.SessionToken
+
+	default:
+		return &data.TOTPSecret
+	}
+}
+
+// isConfigured reports whether a credential attribute is set: a non-empty or
+// an unknown value. An unknown value is set in the configuration, merely not
+// known yet.
+func isConfigured(value types.String) bool {
+	return value.IsUnknown() || value.ValueString() != ""
+}
+
 // applyCredentialEnvironmentDefaults applies the environment defaults of the
-// credentials and the auth scheme.
+// credentials and the auth scheme, and returns where it took values from.
 //
 // Unlike the other attributes in applyEnvironmentDefaults, these consult the
 // environment when the value is null or empty, not only when it is null: an
@@ -95,13 +145,48 @@ func parseAuthScheme(value string) (kuma.AuthScheme, bool) {
 // so an attribute fed from an unset variable reaches the environment rather
 // than shadowing it with an empty string. An unknown value is left alone,
 // because it is not unset, merely not known yet; Configure rejects it.
-func applyCredentialEnvironmentDefaults(data *UptimeKumaProviderModel) {
-	data.Username = stringFromEnvironment(data.Username, "UPTIMEKUMA_USERNAME")
-	data.Password = stringFromEnvironment(data.Password, "UPTIMEKUMA_PASSWORD")
-	data.SessionToken = stringFromEnvironment(data.SessionToken, "UPTIMEKUMA_SESSION_TOKEN")
-	data.TOTPSecret = stringFromEnvironment(data.TOTPSecret, "UPTIMEKUMA_TOTP_SECRET")
-	data.AuthScheme = stringFromEnvironment(data.AuthScheme, "UPTIMEKUMA_AUTH_SCHEME")
-	data.APIKey = stringFromEnvironment(data.APIKey, "UPTIMEKUMA_API_KEY")
+//
+// The credentials fall back to the environment by group. `api_key` and the
+// login credentials (`username`, `password`, `session_token`, `totp_secret`)
+// exclude each other, so a configuration that sets one group decides the
+// login, and the variables of the other group are not read at all: a provider
+// block with `api_key` next to UPTIMEKUMA_USERNAME and UPTIMEKUMA_PASSWORD in
+// the environment logs in with the key, and an alias with `username` and
+// `password` next to UPTIMEKUMA_API_KEY logs in with the password. Only when
+// the configuration sets neither group are both read, and both set in the
+// environment is a conflict, see validateAPIKey.
+func applyCredentialEnvironmentDefaults(data *UptimeKumaProviderModel) envSources {
+	sources := envSources{}
+
+	take := func(value *types.String, attribute string, env string) {
+		taken := stringFromEnvironment(*value, env)
+		if !taken.Equal(*value) {
+			sources[attribute] = env
+		}
+
+		*value = taken
+	}
+
+	apiKeyConfigured := isConfigured(data.APIKey)
+	loginConfigured := false
+
+	for _, credential := range loginCredentialVariables {
+		loginConfigured = loginConfigured || isConfigured(*loginCredential(data, credential.attribute))
+	}
+
+	if !apiKeyConfigured {
+		for _, credential := range loginCredentialVariables {
+			take(loginCredential(data, credential.attribute), credential.attribute, credential.env)
+		}
+	}
+
+	if !loginConfigured {
+		take(&data.APIKey, "api_key", "UPTIMEKUMA_API_KEY")
+	}
+
+	take(&data.AuthScheme, "auth_scheme", "UPTIMEKUMA_AUTH_SCHEME")
+
+	return sources
 }
 
 // stringFromEnvironment returns value, or the value of the environment variable
@@ -190,10 +275,12 @@ func (*UptimeKumaProvider) ValidateConfig(
 		return
 	}
 
-	// A conflict with api_key written in the configuration is wrong whatever
-	// the environment holds, so it is judged before the environment applies.
-	// Configure judges it again with the environment applied.
-	validateAPIKey(&data, &resp.Diagnostics)
+	// A conflict with api_key written in the configuration, and a malformed
+	// header in it, are wrong whatever the environment holds, so they are
+	// judged before the environment applies. Configure judges them again with
+	// the environment applied.
+	validateAPIKey(&data, nil, &resp.Diagnostics)
+	validateHeaders(data.Headers, "", &resp.Diagnostics)
 
 	// A configured value has been checked by the schema validator, so only one
 	// taken from the environment still needs checking.

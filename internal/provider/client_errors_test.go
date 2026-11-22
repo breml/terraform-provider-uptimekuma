@@ -91,7 +91,7 @@ func loggedIn() *fakeResyncer { return &fakeResyncer{token: "session-token"} }
 func TestResyncCacheWithoutSessionTokenSkipsTheResyncInSilence(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeResyncer{token: ""}
+	client := &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket}
 
 	retry, err := resyncCache(t.Context(), client)
 	if err != nil {
@@ -184,7 +184,7 @@ func TestReadWithResync(t *testing.T) {
 			wantGets:    2,
 		},
 		"a miss without a session token skips the resync and stays a miss": {
-			client:      &fakeResyncer{token: ""},
+			client:      &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket},
 			wantFound:   false,
 			wantResyncs: 0,
 			wantGets:    1,
@@ -299,7 +299,7 @@ func TestFindWithResync(t *testing.T) {
 			wantFinds:   1,
 		},
 		"a miss without a session token skips the resync and stays a miss": {
-			client:      &fakeResyncer{token: ""},
+			client:      &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket},
 			wantFound:   false,
 			wantResyncs: 0,
 			wantFinds:   1,
@@ -589,7 +589,7 @@ func TestRemoveOnMissKeepsStateWithoutASessionToken(t *testing.T) {
 	t.Parallel()
 
 	resp := readResponse(t)
-	client := &fakeResyncer{token: ""}
+	client := &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket}
 
 	removeOnMiss(t.Context(), client, notificationListEvent, "notification", resp)
 
@@ -768,7 +768,7 @@ func TestReportMissNamesAMissingSessionToken(t *testing.T) {
 
 	var diags diag.Diagnostics
 
-	reportMiss(&diags, &fakeResyncer{token: ""}, notificationListEvent, summary, detail)
+	reportMiss(&diags, &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket}, notificationListEvent, summary, detail)
 
 	if diags.ErrorsCount() != 1 {
 		t.Fatalf("want 1 error, got %d", diags.ErrorsCount())
@@ -790,7 +790,7 @@ func TestReportMissNamesAMissingSessionToken(t *testing.T) {
 func TestReadWithResyncThenRemoveOnMissReportsTheTokenOnce(t *testing.T) {
 	t.Parallel()
 
-	client := &fakeResyncer{token: ""}
+	client := &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket}
 	resp := readResponse(t)
 
 	_, found, err := readWithResync(
@@ -984,7 +984,7 @@ func TestRemoveOnServerMiss(t *testing.T) {
 		// server's answer was authoritative, and refusing would leave every
 		// credential-less provider unable to see an external deletion at all.
 		"a resource is removed even when the cache could not be refreshed": {
-			client:      &fakeResyncer{token: ""},
+			client:      &fakeResyncer{token: "", scheme: kuma.AuthSchemeSocket},
 			err:         suspicious,
 			wantRemoved: true,
 			wantCalls:   1,
@@ -1079,5 +1079,76 @@ func TestRemoveOnServerMiss(t *testing.T) {
 				t.Errorf("want %d lookups, got %d", test.wantCalls, calls)
 			}
 		})
+	}
+}
+
+// apiKeyClient is a client authenticated by an API key on Uptime Kuma 3.x: it
+// holds no session token, but resyncs by connecting again with the key.
+func apiKeyClient() *fakeResyncer { return &fakeResyncer{scheme: kuma.AuthSchemeHTTP} }
+
+// TestRemoveOnMissWithAPIKeyResyncsThenRemoves pins the read path of an API key
+// client: the miss is resynced, and a miss that survives the resync is a
+// deletion, not the inconclusive miss of a client without a session token.
+func TestRemoveOnMissWithAPIKeyResyncsThenRemoves(t *testing.T) {
+	t.Parallel()
+
+	client := apiKeyClient()
+
+	var gets int
+
+	_, found, err := readWithResync(t.Context(), client, 1, getter(&gets, nil, nil))
+	if err != nil || found {
+		t.Fatalf("want a miss without error, got found %t, %v", found, err)
+	}
+
+	if client.resyncs != 1 {
+		t.Errorf("want one resync, got %d", client.resyncs)
+	}
+
+	resp := readResponse(t)
+
+	removeOnMiss(t.Context(), client, notificationListEvent, "notification", resp)
+
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("want no error, got %v", resp.Diagnostics.Errors())
+	}
+
+	if !resp.State.Raw.IsNull() {
+		t.Error("want the resource removed from state")
+	}
+}
+
+// TestReadWithResyncWithAPIKeyReportsAFailedResync pins that a resync the
+// API key client attempted and that failed is reported as such, rather than
+// as a miss.
+func TestReadWithResyncWithAPIKeyReportsAFailedResync(t *testing.T) {
+	t.Parallel()
+
+	client := &fakeResyncer{scheme: kuma.AuthSchemeHTTP, err: kuma.ErrAPIKeyRejected}
+
+	var gets int
+
+	_, found, err := readWithResync(t.Context(), client, 1, getter(&gets, nil, nil))
+	if found {
+		t.Error("want found false, got true")
+	}
+
+	if err == nil || !strings.Contains(err.Error(), "resync with Uptime Kuma") ||
+		!errors.Is(err, kuma.ErrAPIKeyRejected) {
+		t.Errorf("want the resync failure named, got %v", err)
+	}
+}
+
+func TestReportMissWithAPIKeyIsAPlainMiss(t *testing.T) {
+	t.Parallel()
+
+	const detail = "No notification with ID 3 found."
+
+	var diags diag.Diagnostics
+
+	reportMiss(&diags, apiKeyClient(), notificationListEvent, "Notification not found", detail)
+
+	if diags.ErrorsCount() != 1 || diags.Errors()[0].Detail() != detail {
+		t.Errorf("want the plain miss, got %v", diags.Errors())
 	}
 }

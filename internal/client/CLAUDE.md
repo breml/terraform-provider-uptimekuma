@@ -14,6 +14,8 @@ pooling support.
 
 - [client.go](client.go) - Client creation with retry logic
 - [pool.go](pool.go) - Connection pooling implementation
+- [request_errors.go](request_errors.go) - Matchers for the client's plain errors (`IsRequestConfigError`,
+  `IsUserinfoError`, `IsRefusedRedirect`, `IsHTTPSUpgradeRedirect`, `IsAuthSchemeProbeError`) and `RedactURL`
 - [fallback.go](fallback.go) - `PasswordFallbackCause`, the password half of a `*kuma.SessionTokenFallbackError`
 - [client_test.go](client_test.go) - Client tests
 - [client_retry_test.go](client_retry_test.go) - Retry decisions, through the `connectFunc` fake
@@ -126,7 +128,7 @@ type Config struct {
   `kuma.WithTOTPSecret("")` is not inert, it fails `kuma.New`
 - `TOTPSecret`, `SessionToken`, `AuthScheme`, `APIKey`, `Headers` and `UserAgent` are part of the
   pool's config identity, so an API key provider block is never handed the connection a password
-  login opened. The mismatch message (`describeConfig`) names whether each secret is set, the
+  login opened. The mismatch message (`describeConfig`) redacts the endpoint, names whether each secret is set, the
   header names but not their values, and which secrets differ (`differingSecrets`, which counts
   `headers` as one), without printing any of them. `OnSessionTokenRejected`
   is not: only the Configure that opens the pooled connection hears about a fallback
@@ -190,7 +192,9 @@ if err != nil {
   `ErrAPIKeyUnsupported`, `ErrAPIKeyRejected`, `ErrAPIKeySetupRequired`) are returned after the first
   attempt: retrying them only burns attempts against the server's login rate limit. So are a rejected
   header, API key or User-Agent (`IsRequestConfigError`) and a refused cross-origin redirect
-  (`IsRefusedRedirect`), which the client reports as plain errors and are matched on its message text
+  (`IsRefusedRedirect`), which the client reports as plain errors and are matched on its message text.
+  `client_real_errors_test.go` pins that against the real `kuma.New`. The auth scheme probe error
+  (`IsAuthSchemeProbeError`) is retried, because a proxy's 5xx may pass
 - Except a refused one-time code (`ErrInvalidTOTPCode`) from an attempt of at most
   `totpReplayAttemptTimeout` (35s): the client only waits out the 2.x replay guard (a code the server
   has already accepted) within an attempt that can cover the wait, and reports a refusal it could not
