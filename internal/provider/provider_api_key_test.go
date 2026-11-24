@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
@@ -566,6 +568,51 @@ func TestSettingsPasswordRequiredDetail(t *testing.T) {
 	}
 }
 
+// TestSettingsConfigure_APIKey pins the path from the provider data to the
+// settings diagnostic: Configure takes over whether the provider authenticates
+// with api_key, and applySettings, which refuses before it reaches the client,
+// then names the provider alias as the fix.
+func TestSettingsConfigure_APIKey(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		data     *providerData
+		want     string
+		dontWant string
+	}{
+		{name: "api key", data: &providerData{apiKey: true}, want: "alias", dontWant: "session_token alone"},
+		{name: "session token", data: &providerData{}, want: "session_token alone", dontWant: "api_key"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := &SettingsResource{}
+
+			var configureResp resource.ConfigureResponse
+
+			r.Configure(t.Context(), resource.ConfigureRequest{ProviderData: tc.data}, &configureResp)
+
+			if configureResp.Diagnostics.HasError() {
+				t.Fatalf("expected no error from Configure, got %v", configureResp.Diagnostics.Errors())
+			}
+
+			var diags diag.Diagnostics
+
+			r.applySettings(t.Context(), tfsdk.Config{}, &SettingsResourceModel{}, &diags)
+
+			if len(diags.Errors()) != 1 || diags.Errors()[0].Summary() != "password required" {
+				t.Fatalf("expected exactly the error \"password required\", got %v", diags.Errors())
+			}
+
+			detail := diags.Errors()[0].Detail()
+			if !strings.Contains(detail, tc.want) || strings.Contains(detail, tc.dontWant) {
+				t.Errorf("expected the detail to contain %q and not %q, got %q", tc.want, tc.dontWant, detail)
+			}
+		})
+	}
+}
+
 // TestApplyCredentialEnvironmentDefaults_Groups pins that api_key and the
 // login credentials fall back to the environment by group: a configuration
 // that sets one group keeps the variables of the other unread, so a provider
@@ -603,6 +650,18 @@ func TestApplyCredentialEnvironmentDefaults_Groups(t *testing.T) {
 			model:       func(m *UptimeKumaProviderModel) { m.Username = types.StringValue("admin") },
 			wantLogin:   true,
 			wantSources: []string{"password", "session_token", "totp_secret"},
+		},
+		{
+			name:        "password in config ignores the api key variable",
+			model:       func(m *UptimeKumaProviderModel) { m.Password = types.StringValue("password") },
+			wantLogin:   true,
+			wantSources: []string{"session_token", "totp_secret", "username"},
+		},
+		{
+			name:        "totp secret in config ignores the api key variable",
+			model:       func(m *UptimeKumaProviderModel) { m.TOTPSecret = types.StringValue("JBSWY3DPEHPK3PXP") },
+			wantLogin:   true,
+			wantSources: []string{"password", "session_token", "username"},
 		},
 		{
 			name:        "session token in config ignores the api key variable",

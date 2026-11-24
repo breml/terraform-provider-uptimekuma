@@ -243,10 +243,17 @@ func TestConfigure_SendsUserAgentAndHeaders(t *testing.T) {
 func TestEndpointPasswordNeverShown(t *testing.T) {
 	str := func(value string) tftypes.Value { return tftypes.NewValue(tftypes.String, value) }
 
-	for _, endpoint := range []string{
-		"http://admin:s3cr3t@host:bad",
-		"ftp://admin:s3cr3t@host",
-		"localhost:3001",
+	for endpoint, secretParts := range map[string][]string{
+		"http://admin:s3cr3t@host:bad": {"s3cr3t"},
+		"ftp://admin:s3cr3t@host":      {"s3cr3t"},
+		"localhost:3001":               nil,
+		// An unencoded "/", "?" or "#" ends the authority inside the
+		// password; url.Parse then reports its start as an invalid port.
+		"http://admin:s3cr/3t@host": {"s3cr"},
+		"http://admin:s3cr?3t@host": {"s3cr"},
+		"http://admin:s3cr#3t@host": {"s3cr"},
+		// url.Parse quotes an invalid escape on its own.
+		"http://admin:s3cr%zz@host": {"s3cr", "%zz"},
 	} {
 		t.Run(endpoint, func(t *testing.T) {
 			clearCredentialEnvironment(t)
@@ -266,8 +273,10 @@ func TestEndpointPasswordNeverShown(t *testing.T) {
 			}
 
 			for _, d := range resp.Diagnostics {
-				if strings.Contains(d.Summary()+d.Detail(), "s3cr3t") {
-					t.Errorf("expected no password in the diagnostic, got %q", d.Detail())
+				for _, part := range secretParts {
+					if strings.Contains(d.Summary()+d.Detail(), part) {
+						t.Errorf("expected no part of the password (%q) in the diagnostic, got %q", part, d.Detail())
+					}
 				}
 			}
 
@@ -278,8 +287,10 @@ func TestEndpointPasswordNeverShown(t *testing.T) {
 			}
 
 			summary, detail := connectionError(endpoint, err, withoutRequestSecrets)
-			if strings.Contains(summary+detail, "s3cr3t") {
-				t.Errorf("expected no password in the connection error, got:\n%s", detail)
+			for _, part := range secretParts {
+				if strings.Contains(summary+detail, part) {
+					t.Errorf("expected no part of the password (%q) in the connection error, got:\n%s", part, detail)
+				}
 			}
 		})
 	}
@@ -289,13 +300,19 @@ func TestEndpointPassword(t *testing.T) {
 	t.Parallel()
 
 	for endpoint, want := range map[string]string{
-		"https://kuma.example.com":           "",
-		"https://admin@kuma.example.com":     "",
-		"https://admin:pw@kuma.example.com":  "pw",
-		"http://admin:s3cr3t@host:bad/path":  "s3cr3t",
-		"admin:p@ss@host":                    "p@ss",
-		"https://kuma.example.com/a@b":       "",
-		"https://admin:pw@kuma.example.com/": "pw",
+		"https://kuma.example.com":             "",
+		"https://admin@kuma.example.com":       "",
+		"https://admin:pw@kuma.example.com":    "pw",
+		"http://admin:s3cr3t@host:bad/path":    "s3cr3t",
+		"admin:p@ss@host":                      "p@ss",
+		"https://kuma.example.com/a@b":         "",
+		"https://admin:pw@kuma.example.com/":   "pw",
+		"https://admin:pa/ss@kuma.example.com": "pa/ss",
+		"https://admin:pa?ss@kuma.example.com": "pa?ss",
+		"https://admin:pa#ss@kuma.example.com": "pa#ss",
+		"https://admin:pa%zz@kuma.example.com": "pa%zz",
+		"http://admin:12/ss@host":              "12/ss",
+		"https://kuma.example.com:3001/a@b":    "3001/a",
 	} {
 		if got := endpointPassword(endpoint); got != want {
 			t.Errorf("endpointPassword(%q): expected %q, got %q", endpoint, want, got)

@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -121,11 +122,14 @@ var probeStatusPattern = regexp.MustCompile(`detect auth scheme: GET \S+ answere
 
 // IsPermanentProbeError reports whether err is an auth scheme detection that
 // got a 4xx answer no Uptime Kuma gives, see IsAuthSchemeProbeError. Uptime
-// Kuma answers the detection with JSON, or with a 404 or 429 the client
-// reads as 2.x, so a 4xx is something in front of it refusing the request:
-// an access proxy that wants credentials, which another attempt with the same
-// configuration does not bring. A 5xx and a redirect within the origin may
-// pass, and are retried.
+// Kuma answers the detection with a 2xx (JSON on 3.x, the HTML catch-all on
+// 2.x), with a 429 carrying X-Retry-After (3.x), or with a non-JSON 404 or 429
+// (2.x), none of which the client reports as such an error. Any other 4xx is
+// something in front of it refusing the request, such as an access proxy that
+// wants credentials, which another attempt with the same configuration does
+// not bring. A 408, 425 or 429 says to try again later, as a rate-limiting
+// gateway does; those, a 5xx and a redirect within the origin may pass, and
+// are retried.
 func IsPermanentProbeError(err error) bool {
 	if err == nil {
 		return false
@@ -138,5 +142,15 @@ func IsPermanentProbeError(err error) bool {
 
 	status, convErr := strconv.Atoi(match[1])
 
-	return convErr == nil && status >= 400 && status < 500
+	if convErr != nil || status < 400 || status >= 500 {
+		return false
+	}
+
+	switch status {
+	case http.StatusRequestTimeout, http.StatusTooEarly, http.StatusTooManyRequests:
+		return false
+
+	default:
+		return true
+	}
 }

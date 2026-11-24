@@ -210,8 +210,13 @@ func TestConnectionError(t *testing.T) {
 			name:        "api key on a 2.x server",
 			err:         fmt.Errorf("create pooled connection: login failed: %w", kuma.ErrAPIKeyUnsupported),
 			wantSummary: "Uptime Kuma does not accept API keys for this connection",
-			wantDetail:  []string{endpoint, "only on Uptime Kuma 3.0", "this server is Uptime Kuma 2.x"},
-			notDetail:   []string{"Common causes", "`auth_scheme`"},
+			wantDetail: []string{
+				endpoint,
+				"only on Uptime Kuma 3.0",
+				"answered as Uptime Kuma 2.x",
+				"pin `auth_scheme = \"http\"`",
+			},
+			notDetail: []string{"Common causes", "`auth_scheme`"},
 		},
 		{
 			name:        "api key rejected",

@@ -193,9 +193,11 @@ provider "uptimekuma" {
 }
 
 // TestAccProviderAPIKey runs a provider configured with nothing but an
-// endpoint and an API key. On Uptime Kuma 3.x it creates, reads and destroys
-// a tag with it; on 2.x, which has no API key login, it asserts the error that
-// says so.
+// endpoint and an API key. On Uptime Kuma 3.x it asserts the error for a key
+// the server rejects, manages resources with a valid key, recreates a
+// notification deleted out of band (its Read resyncs by reconnecting with the
+// key), and asserts that `uptimekuma_settings` reports the password it lacks.
+// On 2.x, which has no API key login, it asserts the error that says so.
 //
 // Not resource.ParallelTest: it changes "API and MCP", a setting of the whole
 // server, and it needs the pooled connection to itself, see

@@ -6,7 +6,8 @@
 #   export UPTIMEKUMA_TOTP_SECRET="JBSWY3DPEHPK3PXP"  # Optional: 2FA shared secret
 #   export UPTIMEKUMA_SESSION_TOKEN="..."             # Optional: instead of, or before, the password
 #   export UPTIMEKUMA_AUTH_SCHEME="auto"              # Optional: auto, socket or http
-#   export UPTIMEKUMA_API_KEY="..."                   # Optional: Uptime Kuma 3.0 API key, instead of the above
+#   export UPTIMEKUMA_API_KEY="..."                   # Optional: Uptime Kuma 3.0 API key, instead of
+#                                                     # USERNAME, PASSWORD, TOTP_SECRET and SESSION_TOKEN
 #   export UPTIMEKUMA_HEADERS='{"CF-Access-Client-Id":"...","CF-Access-Client-Secret":"..."}'  # Optional: JSON object
 #   export UPTIMEKUMA_TIMEOUT="30s"                   # Optional: connection timeout
 #

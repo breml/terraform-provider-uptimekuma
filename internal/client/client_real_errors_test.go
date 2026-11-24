@@ -162,7 +162,8 @@ func TestRefusedRedirect_RealClient(t *testing.T) {
 // TestAuthSchemeProbeError_RealClient pins the classification of the errors
 // the real client reports when its auth scheme detection gets an answer no
 // Uptime Kuma gives. A 4xx is a proxy refusing the request and ends the
-// retries; a 5xx and a redirect within the origin may pass and are retried.
+// retries; a gateway's 408, 425 or 429, a 5xx and a redirect within the origin
+// may pass and are retried.
 func TestAuthSchemeProbeError_RealClient(t *testing.T) {
 	t.Parallel()
 
@@ -178,6 +179,16 @@ func TestAuthSchemeProbeError_RealClient(t *testing.T) {
 				w.WriteHeader(http.StatusForbidden)
 			},
 			wantAttempts: 1,
+		},
+		{
+			// Without better-auth's X-Retry-After, a JSON 429 is not Uptime Kuma.
+			name: "JSON 429 from a rate-limiting gateway",
+			handler: func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"message":"API rate limit exceeded"}`))
+			},
+			wantAttempts: 2,
 		},
 		{
 			name: "502 from a reverse proxy",
@@ -265,6 +276,11 @@ func TestRequestErrorMatchers(t *testing.T) {
 		{name: "probe redirect", err: errors.New(probeRedirect), probe: true},
 		{name: "probe 401", err: fmt.Errorf(probeStatus, 401), probe: true, probePermanent: true},
 		{name: "probe 403", err: fmt.Errorf(probeStatus, 403), probe: true, probePermanent: true},
+		{name: "probe 404", err: fmt.Errorf(probeStatus, 404), probe: true, probePermanent: true},
+		// A gateway's "try again later" answers may pass.
+		{name: "probe 408", err: fmt.Errorf(probeStatus, 408), probe: true},
+		{name: "probe 425", err: fmt.Errorf(probeStatus, 425), probe: true},
+		{name: "probe 429", err: fmt.Errorf(probeStatus, 429), probe: true},
 		{name: "probe 500", err: fmt.Errorf(probeStatus, 500), probe: true},
 		{name: "probe 503", err: fmt.Errorf(probeStatus, 503), probe: true},
 		{name: "probe transport error", err: errors.New("connect to server: detect auth scheme: dial tcp: refused")},

@@ -77,9 +77,10 @@ cannot have defaults, so `resolveUserAgent` applies `terraform-provider-uptimeku
   `validateEndpoint` rejects one that does not parse or whose scheme is not http, https, ws or wss,
   before connecting, without repeating the value: the client's own errors for both quote the raw
   URL, password included
-- Unknown values: `Configure` rejects an `endpoint`, credential or `auth_scheme` that is still unknown
-  (`rejectUnknownConnectionAttributes`), naming the attribute: the provider logs in during plan, and an
-  unknown value would reach the client as an empty string
+- Unknown values: `Configure` rejects an `endpoint`, credential, `auth_scheme` or `user_agent` that is
+  still unknown (`rejectUnknownConnectionAttributes`), and an unknown `headers` map or value
+  (`rejectUnknownHeaders`), naming the attribute: the provider logs in during plan, and an unknown
+  value would reach the client as an empty string
 - Credentials (`validateCredentials`, called only from `Configure`, which runs before the provider
   connects). Not from `ValidateConfig`: every shape error is a missing credential, and the
   environment of `terraform validate` (a CI lint job without secrets) need not be the one of the
@@ -1425,12 +1426,13 @@ var (
 
 `kumaContainer` is the dockertest container, for a test that has to reach the server by other
 means than the client: `TestAccProviderAPIKey` runs a `node -e` script inside it, on the image's
-own `socket.io-client`, to enable "API and MCP" and create an API key (`addAPIKey`) with the session
-cookie of `outOfBandClient`, which costs no sign-in. The client keeps those helpers test-only and
+own `socket.io-client` (`runAPIKeyScript`, called by `testAccEnableAPIKey`), to enable "API and MCP"
+and create an API key (the `addAPIKey` socket event) with the session cookie of `outOfBandClient`,
+which costs no sign-in. The client keeps those helpers test-only and
 has no generic emit. The test is not parallel, because the setting is server-wide and the pool holds
 one connection that refuses any other configuration: `testAccIsolatePool` closes the pooled
 connection before and after it. The cleanup that turns "API and MCP" off and revokes the key
-(`deleteAPIKey`) is registered before enabling. A step deletes a notification out of band, so its
+(the `deleteAPIKey` socket event) is registered before enabling. A step deletes a notification out of band, so its
 Read resyncs through the API key reconnect and the plan recreates it. On 2.x it asserts the
 `kuma.ErrAPIKeyUnsupported` diagnostic instead.
 

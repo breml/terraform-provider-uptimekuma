@@ -196,7 +196,8 @@ if err != nil {
   (`IsRefusedRedirect`), which the client reports as plain errors and are matched on its message text.
   `client_real_errors_test.go` pins that against the real `kuma.New`. An auth scheme probe error
   (`IsAuthSchemeProbeError`) with a 4xx status is permanent too (`IsPermanentProbeError`, a proxy
-  refusing the request); a 5xx or a redirect within the origin is retried, because it may pass
+  refusing the request), except 408, 425 and 429 (a gateway asking to try again later); those, a
+  5xx and a redirect within the origin are retried, because they may pass
 - Except a refused one-time code (`ErrInvalidTOTPCode`) from an attempt of at most
   `totpReplayAttemptTimeout` (35s): the client only waits out the 2.x replay guard (a code the server
   has already accepted) within an attempt that can cover the wait, and reports a refusal it could not

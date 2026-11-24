@@ -233,9 +233,11 @@ type retryDelayFunc func(err error, attempt int, remaining time.Duration) (time.
 // costs time and, worse, login attempts: every one counts against the server's
 // login rate limit, so retrying a wrong password can lock the address out for
 // a while. kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is
-// covered by it. A refused API key or one the server cannot take, a rejected
-// header configuration, a refused redirect and an auth scheme detection a
-// proxy refused with a 4xx are permanent too: they say something about the
+// covered by it. A refused API key or one the server cannot take, a request
+// configuration kuma.New rejects (the API key, headers, User-Agent or
+// userinfo in the endpoint, see IsRequestConfigError), a refused redirect and
+// an auth scheme detection a proxy refused with a 4xx (see
+// IsPermanentProbeError) are permanent too: they say something about the
 // configuration, not about the moment.
 //
 // A session token the server refused, followed by a password login that

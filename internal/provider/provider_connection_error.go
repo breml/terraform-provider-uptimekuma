@@ -94,9 +94,10 @@ func apiKeyErrorAdvice(err error) (summary string, nextStep string) {
 	switch {
 	case errors.Is(err, kuma.ErrAPIKeyUnsupported):
 		return "Uptime Kuma does not accept API keys for this connection",
-			"API keys authenticate the socket only on Uptime Kuma 3.0, and this server is Uptime Kuma 2.x " +
-				"or earlier. Authenticate with `username` and `password` or `session_token` instead of " +
-				"`api_key`, or upgrade Uptime Kuma."
+			"API keys authenticate the socket only on Uptime Kuma 3.0, and this server answered as Uptime " +
+				"Kuma 2.x or earlier. Authenticate with `username` and `password` or `session_token` instead " +
+				"of `api_key`, or upgrade Uptime Kuma. If the server does run Uptime Kuma 3.0, a reverse proxy " +
+				"in front of it may answer the auth scheme detection itself: pin `auth_scheme = \"http\"`."
 
 	case errors.Is(err, kuma.ErrAPIKeyRejected):
 		return "Uptime Kuma rejected the API key",
@@ -182,13 +183,15 @@ func requestConfigErrorDetail(endpoint string, err error) string {
 // then it is most likely an access proxy that rejected the request and sends
 // it to its sign-in page, and the endpoint is right.
 func redirectErrorAdvice(endpoint string, err error, secrets requestSecrets) (summary string, detail string) {
-	const postsReason = "A redirect would turn the POST requests of the login and the long polling into GET " +
-		"requests without a body, so the provider follows none that leaves the origin (scheme, host and " +
-		"port) of `endpoint`."
+	const redirectPolicy = "The provider follows a redirect only within the origin (scheme, host and port) " +
+		"of `endpoint` and reports any other with the URL to use instead, so that `endpoint` names the URL " +
+		"Uptime Kuma is served from: a redirect turns the POST requests of the login and the long polling " +
+		"into GET requests without a body, and the WebSocket connection follows none."
 
-	reason := postsReason
+	reason := redirectPolicy
 	if secrets == withRequestSecrets {
-		reason += " It also keeps the API key and the configured headers from reaching another origin."
+		reason += " The API key and the configured headers go to the origin of `endpoint` only, so a " +
+			"request that followed the redirect would arrive without them."
 	}
 
 	if client.IsHTTPSUpgradeRedirect(err) {
@@ -216,7 +219,7 @@ func redirectErrorAdvice(endpoint string, err error, secrets requestSecrets) (su
 		"The request to %q was redirected to another origin.\n\n"+
 			"Underlying error: %v\n\n"+
 			"%s Set `endpoint` (or `UPTIMEKUMA_ENDPOINT`) to the URL the redirect leads to, as named above.",
-		endpoint, err, postsReason,
+		endpoint, err, redirectPolicy,
 	)
 }
 
@@ -271,7 +274,21 @@ func (e redactedPasswordError) Unwrap() error { return e.err }
 // line of defence.
 func withoutEndpointPassword(err error, endpoint string) error {
 	password := endpointPassword(endpoint)
-	if err == nil || password == "" || !strings.Contains(err.Error(), password) {
+	if err == nil || password == "" {
+		return err
+	}
+
+	// The client's error then carries url.Parse's reason, which may quote a
+	// part of the password that the replacement below does not find.
+	_, parseErr := url.Parse(endpoint)
+	if parseErr != nil {
+		return redactedPasswordError{
+			err:  err,
+			text: "the endpoint is not a valid URL: " + endpointParseReason(parseErr, endpoint),
+		}
+	}
+
+	if !strings.Contains(err.Error(), password) {
 		return err
 	}
 
@@ -280,18 +297,28 @@ func withoutEndpointPassword(err error, endpoint string) error {
 
 // endpointPassword returns the password of the userinfo of endpoint, read
 // without url.Parse, so that it is found in an endpoint that does not parse
-// as well.
+// as well. The authority ends at the first "/", "?" or "#". When it holds no
+// "@", a password with one of those characters left unencoded may have ended
+// it early, as in "https://admin:pa/ss@host", so the last "@" of the whole
+// endpoint is taken instead. That may take part of a path for a password
+// ("https://host:3001/a@b" gives "3001/a"), which only redacts too much.
 func endpointPassword(endpoint string) string {
-	authority := endpoint
-	if _, rest, ok := strings.Cut(authority, "://"); ok {
-		authority = rest
+	rest := endpoint
+	if _, afterScheme, ok := strings.Cut(rest, "://"); ok {
+		rest = afterScheme
 	}
 
+	authority := rest
 	if end := strings.IndexAny(authority, "/?#"); end >= 0 {
 		authority = authority[:end]
 	}
 
 	at := strings.LastIndex(authority, "@")
+	if at < 0 {
+		authority = rest
+		at = strings.LastIndex(authority, "@")
+	}
+
 	if at < 0 {
 		return ""
 	}
@@ -299,6 +326,25 @@ func endpointPassword(endpoint string) string {
 	_, password, _ := strings.Cut(authority[:at], ":")
 
 	return password
+}
+
+// endpointParseReason tells why url.Parse rejected endpoint. For an endpoint
+// with a password it does not repeat url.Parse's reason, which may quote part
+// of the password: a "/", "?" or "#" in it turns its start into an "invalid
+// port", and an invalid escape is quoted on its own, out of reach of
+// withoutEndpointPassword, which only replaces the password as a whole.
+func endpointParseReason(err error, endpoint string) string {
+	if endpointPassword(endpoint) != "" {
+		return "the user name or password does not parse; percent-encode the special characters in them, " +
+			"such as / ? # @ and %"
+	}
+
+	reason := err
+	if urlErr, ok := errors.AsType[*url.Error](err); ok {
+		reason = urlErr.Err
+	}
+
+	return reason.Error()
 }
 
 // validateEndpoint rejects an endpoint that does not parse as a URL, or whose
@@ -315,17 +361,12 @@ func validateEndpoint(endpoint types.String, diags *diag.Diagnostics) {
 
 	parsed, err := url.Parse(raw)
 	if err != nil {
-		reason := err
-		if urlErr, ok := errors.AsType[*url.Error](err); ok {
-			reason = urlErr.Err
-		}
-
 		diags.AddAttributeError(
 			path.Root("endpoint"),
 			"invalid endpoint",
 			fmt.Sprintf("The endpoint (or the environment variable UPTIMEKUMA_ENDPOINT) is not a valid URL: "+
-				"%v. Set it to the URL of the Uptime Kuma instance, such as https://uptime-kuma.example.com.",
-				withoutEndpointPassword(reason, raw)),
+				"%s. Set it to the URL of the Uptime Kuma instance, such as https://uptime-kuma.example.com.",
+				endpointParseReason(err, raw)),
 		)
 
 		return

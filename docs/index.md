@@ -33,12 +33,13 @@ resource "uptimekuma_monitor_http" "example" {
 
 ## Authentication
 
-`endpoint`, the URL of your Uptime Kuma instance, is always required. The provider follows no
-redirect that leaves its origin (scheme, host and port), and that includes an upgrade from `http` to
-`https` on the same host: a redirect would turn the POST requests of the login and of the Socket.IO
-long polling into GET requests without a body, and would carry `api_key` and `headers` to another
-server. The error names the URL to use, so set `endpoint` to the URL Uptime Kuma is finally served
-from. Behind an access proxy, a redirect to another host such as `<team>.cloudflareaccess.com`
+`endpoint`, the URL of your Uptime Kuma instance, is always required. The provider follows a
+redirect only within the origin (scheme, host and port) of `endpoint`. Any other, an upgrade from
+`http` to `https` on the same host included, is reported with the URL to use instead: a redirect
+turns the POST requests of the login and of the Socket.IO long polling into GET requests without a
+body, the WebSocket connection follows none, and `api_key` and `headers` go to the origin of
+`endpoint` only, so a redirected request would arrive without them. Set `endpoint` to the URL Uptime
+Kuma is finally served from. Behind an access proxy, a redirect to another host such as `<team>.cloudflareaccess.com`
 usually means that the proxy rejected the request, see
 [Access proxies](#access-proxies-headers-and-user_agent).
 
@@ -158,9 +159,12 @@ provider "uptimekuma" {
 - A refused key and a disabled "API and MCP" setting look the same to the provider; the error names
   both causes.
 - Uptime Kuma 2.x and earlier have no API key login on the Socket.IO API, so `api_key` fails there
-  with an error saying so, and `auth_scheme = "socket"` next to `api_key` is rejected.
-- A server with authentication disabled ignores the key and lets every connection in.
-- No session is created, so the key needs no sign-in.
+  with an error saying so, and `auth_scheme = "socket"` next to `api_key` is rejected. A reverse proxy
+  that answers the auth scheme detection itself can make a 3.0 server look like 2.x; pin
+  `auth_scheme = "http"` then.
+- A 3.0 server with authentication disabled ignores the key and lets every connection in.
+- The key opens no session and takes no sign-in, so it does not count against the server's sign-in
+  rate limit.
 
 ### Access proxies: `headers` and `user_agent`
 
@@ -248,8 +252,9 @@ provider detects which one the server speaks with one request before it connects
 pins it instead (`socket` for 2.x, `http` for 3.x), which is only needed for a reverse proxy that
 answers that request itself. Provider versions up to 0.6.0 took any answer to it that was not JSON
 for Uptime Kuma 2.x; the provider now reports such an answer as an error, so behind such a proxy pin
-`auth_scheme = "socket"` for a 2.x server. A `4xx` answer is not retried, because it is a proxy
-refusing the request.
+`auth_scheme = "socket"` for a 2.x server. Such an answer with a `4xx` status is not retried,
+because it is a proxy refusing the request, except a `408`, `425` or `429`, which asks to try again
+later.
 
 ## Compatibility
 

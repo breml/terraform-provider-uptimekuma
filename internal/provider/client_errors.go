@@ -203,8 +203,7 @@ func deletedWithoutEvent(diags *diag.Diagnostics, err error, summary string) boo
 // resync opens a new connection with whatever authenticated the first one: the
 // session cookie, the API key, which leaves the session token empty, or
 // nothing at all on a server with authentication disabled. So there it always
-// can. The session token still counts on its own, for a client whose scheme is
-// not reported.
+// can.
 func canResync(client resyncer) bool {
 	return client.AuthScheme() == kuma.AuthSchemeHTTP || client.SessionToken() != ""
 }

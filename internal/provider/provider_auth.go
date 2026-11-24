@@ -250,11 +250,13 @@ func rejectUnknownConnectionAttributes(data *UptimeKumaProviderModel, diags *dia
 
 // ValidateConfig checks the values the schema validators cannot see, because
 // they come from the environment: an `auth_scheme` from UPTIMEKUMA_AUTH_SCHEME,
-// a `totp_secret` from UPTIMEKUMA_TOTP_SECRET and `headers` from
-// UPTIMEKUMA_HEADERS. A malformed value is wrong whatever else is set, so
-// `terraform validate` reports it. It also rejects a configuration that writes
-// `api_key` next to another credential or `auth_scheme = "socket"`, see
-// validateAPIKey.
+// a `totp_secret` from UPTIMEKUMA_TOTP_SECRET and an UPTIMEKUMA_HEADERS that
+// is not a JSON object of strings. A malformed value is wrong whatever else is
+// set, so `terraform validate` reports it; the header names and values from
+// UPTIMEKUMA_HEADERS are judged in Configure. It also rejects a configuration
+// that writes `api_key` next to another credential, an `Authorization` header
+// or `auth_scheme = "socket"`, see validateAPIKey, and a malformed header in
+// `headers`, see validateHeaders.
 //
 // The credential shape is deliberately not judged here but only in Configure.
 // Every shape error is a credential that is missing, and the environment may
@@ -297,7 +299,8 @@ func (*UptimeKumaProvider) ValidateConfig(
 		validateEnvironmentTOTPSecret(&data, &resp.Diagnostics)
 	}
 
-	// Only reads UPTIMEKUMA_HEADERS where the attribute does not shadow it.
+	// Reports an UPTIMEKUMA_HEADERS that is not a JSON object of strings at
+	// validate time already.
 	applyHeadersEnvironmentDefault(&data, &resp.Diagnostics)
 }
 
