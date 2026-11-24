@@ -31,6 +31,9 @@ type UptimeKumaProviderModel struct {
     SessionToken      types.String `tfsdk:"session_token"`       // Optional: token login (sensitive)
     TOTPSecret        types.String `tfsdk:"totp_secret"`         // Optional: 2FA shared secret (sensitive)
     AuthScheme        types.String `tfsdk:"auth_scheme"`         // Optional: auto, socket or http
+    APIKey            types.String `tfsdk:"api_key"`             // Optional: 3.0 API key (sensitive)
+    Headers           types.Map    `tfsdk:"headers"`             // Optional: request headers (sensitive)
+    UserAgent         types.String `tfsdk:"user_agent"`          // Optional: default terraform-provider-uptimekuma/<version>
     Timeout           types.String `tfsdk:"timeout"`             // Optional: overall connect budget
     PerAttemptTimeout types.String `tfsdk:"per_attempt_timeout"` // Optional: per-attempt cap
     OperationTimeout  types.String `tfsdk:"operation_timeout"`   // Optional: per-command bound
@@ -38,7 +41,8 @@ type UptimeKumaProviderModel struct {
 }
 ```
 
-The credential attributes and their helpers live in [provider_auth.go](provider_auth.go).
+The credential attributes and their helpers live in [provider_auth.go](provider_auth.go); `api_key`,
+`headers` and `user_agent` in [provider_api_key.go](provider_api_key.go).
 Provider attributes cannot be write-only (the framework's `IsWriteOnly()` is false for provider
 schemas), so the secrets are only `Sensitive`; the docs point at `ephemeral` variables instead.
 
@@ -50,20 +54,33 @@ schemas), so the secrets are only `Sensitive`; the docs point at `ephemeral` var
 - `UPTIMEKUMA_SESSION_TOKEN` - Session token from an earlier login
 - `UPTIMEKUMA_TOTP_SECRET` - Base32 shared secret of an account with two-factor authentication
 - `UPTIMEKUMA_AUTH_SCHEME` - `auto`, `socket` or `http`
+- `UPTIMEKUMA_API_KEY` - API key of an Uptime Kuma 3.0 server
+- `UPTIMEKUMA_HEADERS` - `headers` as a JSON object of strings (`applyHeadersEnvironmentDefault`);
+  anything else is an error on `headers` that never quotes the variable's content
 - `UPTIMEKUMA_TIMEOUT`, `UPTIMEKUMA_PER_ATTEMPT_TIMEOUT`, `UPTIMEKUMA_OPERATION_TIMEOUT`,
   `UPTIMEKUMA_MAX_RETRIES` - Connection options
 - `SOCKETIO_LOG_LEVEL` - Socket.IO client logging level (for debugging)
 
-The `endpoint`, the credentials (`username`, `password`, `session_token`, `totp_secret`) and `auth_scheme` fall back
-to the environment when they are null *or empty* (`stringFromEnvironment`), so an attribute fed from
-an unset variable does not shadow it. An unknown value is never replaced by the environment.
+The `endpoint`, the credentials (`username`, `password`, `session_token`, `totp_secret`, `api_key`) and
+`auth_scheme` fall back to the environment when they are null *or empty* (`stringFromEnvironment`), so an
+attribute fed from an unset variable does not shadow it; `headers` does the same for a null or empty map.
+An unknown value is never replaced by the environment. `api_key` and the login credentials fall back
+by group (`applyCredentialEnvironmentDefaults`): a configured `api_key` (non-empty or unknown) keeps
+the login variables unread, a configured login credential keeps `UPTIMEKUMA_API_KEY` unread, so a
+conflict can only come from one source. `applyEnvironmentDefaults` returns `envSources`
+(attribute → variable) for diagnostics that name where a value came from. `user_agent` has no variable; provider schemas
+cannot have defaults, so `resolveUserAgent` applies `terraform-provider-uptimekuma/<version>` in `Configure`.
 
 **Configuration Validation**:
 
-- Endpoint: Always required (checked in `Configure`, where an empty value counts as missing)
-- Unknown values: `Configure` rejects an `endpoint`, credential or `auth_scheme` that is still unknown
-  (`rejectUnknownConnectionAttributes`), naming the attribute: the provider logs in during plan, and an
-  unknown value would reach the client as an empty string
+- Endpoint: Always required (checked in `Configure`, where an empty value counts as missing).
+  `validateEndpoint` rejects one that does not parse or whose scheme is not http, https, ws or wss,
+  before connecting, without repeating the value: the client's own errors for both quote the raw
+  URL, password included
+- Unknown values: `Configure` rejects an `endpoint`, credential, `auth_scheme` or `user_agent` that is
+  still unknown (`rejectUnknownConnectionAttributes`), and an unknown `headers` map or value
+  (`rejectUnknownHeaders`), naming the attribute: the provider logs in during plan, and an unknown
+  value would reach the client as an empty string
 - Credentials (`validateCredentials`, called only from `Configure`, which runs before the provider
   connects). Not from `ValidateConfig`: every shape error is a missing credential, and the
   environment of `terraform validate` (a CI lint job without secrets) need not be the one of the
@@ -75,18 +92,49 @@ an unset variable does not shadow it. An unknown value is never replaced by the 
   attribute (accepting `""` as unset), and `resolveAuthScheme` checks a value from
   `UPTIMEKUMA_AUTH_SCHEME`, which the schema validator never sees, in `ValidateConfig` and again in
   `Configure`, which hands the resolved scheme to `buildClientConfig` through `clientOptions`
+- `api_key` (`validateAPIKey`): the only credential of a provider that sets it, so a non-empty
+  `username`, `password`, `session_token` or `totp_secret` next to it is an error on that attribute,
+  and so are an `Authorization` header (on `headers["<name>"]`) and `auth_scheme = "socket"` (2.x has
+  no API key login). Each message names the source of both values (`envSources.source`).
+  `ValidateConfig` judges the configuration alone (sources nil), before the environment applies;
+  `Configure` judges it again with the environment applied. Unknown values are skipped. The provider
+  exposes no autosetup, so the client's `WithAutosetup` conflict cannot arise, and its other
+  `credentials:` errors are unreachable
+- `headers` (`validateHeaders`, in `ValidateConfig` for the configuration and in `Configure` for
+  what it connects with): names and values must pass `httpguts`, a value must not be null or empty,
+  names that differ only in case and `User-Agent` (use `user_agent`) are rejected, each on the
+  element path. The client's reserved-name list is deliberately not duplicated; `kuma.New` rejects
+  those at connect time. An unknown map or value is rejected in `Configure` (`rejectUnknownHeaders`)
 - `totp_secret`: `totpSecretValidator` rejects a value that is not base32 at plan time;
   `ValidateConfig` checks the environment value (`validateEnvironmentTOTPSecret`), and the client
   package checks it again before connecting (`kuma.ErrInvalidTOTPSecret`). All three use
   `kuma.ValidateTOTPSecret`, the rules `kuma.WithTOTPSecret` applies
 - Precedence: Terraform config > environment variables
 
-**Login diagnostics** (`connectionError` / `loginErrorAdvice` in [provider.go](provider.go)): every
+**Login diagnostics** (`connectionError` in [provider_connection_error.go](provider_connection_error.go),
+`loginErrorAdvice` in [provider.go](provider.go)): every
 typed login failure gets a summary and next step naming the attribute to fix. A refused session
 token followed by a failed password login arrives as one `*kuma.SessionTokenFallbackError`, which
 always wraps `kuma.ErrInvalidSessionToken`; `passwordFallbackAdvice` classifies it ahead of the switch by its
 password half (`client.PasswordFallbackCause`), with a transport-style default for a half it does not
 recognise, so the user is never told to add the `username` and `password` they already set.
+`apiKeyErrorAdvice` (the tail of `loginErrorAdvice`) covers `kuma.ErrAPIKeyUnsupported` (2.x),
+`kuma.ErrAPIKeyRejected` (invalid key, "API and MCP" off, or `http` pinned against 2.x, which the
+server does not tell apart) and `kuma.ErrAPIKeySetupRequired`. The typed errors are matched first;
+`requestConfigErrorAdvice` runs after them, for what the client reports as plain errors, matched on
+its message text in [../client/request_errors.go](../client/request_errors.go): an endpoint with
+userinfo next to a key (`IsUserinfoError`, own summary pointing at `endpoint`), a rejected header,
+API key or User-Agent (`IsRequestConfigError`; whitespace in the key adds a `trimspace()` hint), a
+refused redirect (`IsHTTPSUpgradeRedirect`: set the https URL; `IsRefusedRedirect` to another host:
+with `headers` or `api_key` configured, the access proxy most likely rejected the request, so the
+service token comes first; without, the reason is that POSTs would become GETs) and an auth scheme
+detection answered by neither 2.x nor 3.x (`IsAuthSchemeProbeError`, `probeErrorDetail`: with
+`headers` or `api_key` the access proxy and its credentials come first; without, a reverse proxy
+answering the request, so pin `auth_scheme = "socket"` for 2.x, which restores what provider 0.6.0
+and earlier detected). `connect` passes whether `headers` or `api_key` are configured. Every
+diagnostic and the pool mismatch message show the endpoint through `client.RedactURL`, and
+`connectionError` also removes the endpoint's password from the client's error text
+(`withoutEndpointPassword`, which keeps the error for `errors.Is`).
 `connect` sets the `OnSessionTokenRejected` callback and calls `warnRejectedSessionToken` whenever
 the token was refused and the password login took over, also when the connection then failed; it
 takes the client constructor as a parameter so `TestConnect` can pin that wiring.
@@ -662,7 +710,10 @@ server already has. Use [client_errors.go](client_errors.go):
 - `findWithResync()` - a whole-list getter, searched by whatever key suits the
   caller, including an ID (see [data_source_status_page.go](data_source_status_page.go))
 
-Both force one `client.Resync()` before a miss is believed. The `find` closure
+Both force one `client.Resync()` before a miss is believed, provided the client can resync at all
+(`canResync`): a 2.x client needs a session token for that, a 3.x client (`AuthScheme() ==
+kuma.AuthSchemeHTTP`) always can, because a resync there reconnects with the cookie, the API key
+(whose client holds no session token) or nothing on a server with authentication disabled. The `find` closure
 must report a failure as an error, never as a miss: only a miss is worth a
 resync, and only a miss may be shown to the user as a resource that does not
 exist.
@@ -1373,6 +1424,18 @@ var (
 )
 ```
 
+`kumaContainer` is the dockertest container, for a test that has to reach the server by other
+means than the client: `TestAccProviderAPIKey` runs a `node -e` script inside it, on the image's
+own `socket.io-client` (`runAPIKeyScript`, called by `testAccEnableAPIKey`), to enable "API and MCP"
+and create an API key (the `addAPIKey` socket event) with the session cookie of `outOfBandClient`,
+which costs no sign-in. The client keeps those helpers test-only and
+has no generic emit. The test is not parallel, because the setting is server-wide and the pool holds
+one connection that refuses any other configuration: `testAccIsolatePool` closes the pooled
+connection before and after it. The cleanup that turns "API and MCP" off and revokes the key
+(the `deleteAPIKey` socket event) is registered before enabling. A step deletes a notification out of band, so its
+Read resyncs through the API key reconnect and the plan recreates it. On 2.x it asserts the
+`kuma.ErrAPIKeyUnsupported` diagnostic instead.
+
 `outOfBandClient` is deliberately separate from the provider's pooled connection: the
 disappears tests use it to delete a resource behind Terraform's back, which only
 simulates an external change if it does not go through the connection the provider
@@ -1403,7 +1466,7 @@ with `task testacc PARALLEL=4`.
 the test creates is uniquely named via `acctest.RandomWithPrefix`, and the test only
 asserts on resources it created itself.
 
-**Five test files must keep using `resource.Test`**, because they touch state shared by
+**Six test files must keep using `resource.Test`**, because they touch state shared by
 the whole Uptime Kuma instance:
 
 | File | Reason |
@@ -1413,9 +1476,10 @@ the whole Uptime Kuma instance:
 | [data_source_maintenances_test.go](data_source_maintenances_test.go) | Asserts an exact count over *all* maintenances |
 | [resource_proxy_test.go](resource_proxy_test.go) | `default` and `apply_existing` rewrite every other proxy and monitor |
 | [resource_notification_apply_existing_test.go](resource_notification_apply_existing_test.go) | `apply_existing` attaches the notification to every monitor |
+| [provider_api_key_acc_test.go](provider_api_key_acc_test.go) | Toggles `apiEnabled` and swaps the pooled connection, see `testAccIsolatePool` |
 
 Go's `testing` package runs all non-parallel top-level tests to completion *before*
-releasing any parallel ones, so these five files are automatically isolated from the
+releasing any parallel ones, so these six files are automatically isolated from the
 concurrent tests -- no extra synchronisation is required. ([provider_test.go](provider_test.go)
 also uses `resource.Test`, for `t.Setenv`, not for shared state.)
 

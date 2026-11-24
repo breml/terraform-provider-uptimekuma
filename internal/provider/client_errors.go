@@ -43,9 +43,11 @@ const (
 type resyncer interface {
 	// Resync asks the server to resend the lists that feed the state cache.
 	Resync(ctx context.Context) error
-	// SessionToken is empty for a client that never logged in, which cannot
-	// resync at all.
+	// SessionToken is empty for a client that never logged in, and for one
+	// authenticated by an API key, see canResync.
 	SessionToken() string
+	// AuthScheme is how the client authenticated, see canResync.
+	AuthScheme() kuma.AuthScheme
 	// MissingReadyEvents names the best-effort lists the server never sent.
 	MissingReadyEvents() []string
 }
@@ -193,20 +195,34 @@ func deletedWithoutEvent(diags *diag.Diagnostics, err error, summary string) boo
 	return true
 }
 
+// canResync reports whether client can resync its cache at all.
+//
+// On Uptime Kuma 2.x (kuma.AuthSchemeSocket) a resync is a login with the
+// session token the client holds, so a client without one - created without
+// credentials - cannot resync. On Uptime Kuma 3.x (kuma.AuthSchemeHTTP) a
+// resync opens a new connection with whatever authenticated the first one: the
+// session cookie, the API key, which leaves the session token empty, or
+// nothing at all on a server with authentication disabled. So there it always
+// can.
+func canResync(client resyncer) bool {
+	return client.AuthScheme() == kuma.AuthSchemeHTTP || client.SessionToken() != ""
+}
+
 // resyncCache rebuilds the client's state cache, so that a lookup which matched
 // nothing can be retried against fresh data.
 //
-// It reports whether that retry is worth making. A client without a session
-// token cannot resync at all: the server hands one out only to a login it
-// performed for a client that asked, and the provider's username and password
-// are optional. That is a limitation of the configuration, not a failure of
-// this read, so it returns false with a nil error and says nothing, leaving the
-// caller to report the miss it already has. removeOnMiss and reportMiss both
-// name the missing token themselves when they come to describe that miss, and a
-// warning here would only duplicate them. A resync that was attempted and did
+// It reports whether that retry is worth making. A client that cannot resync,
+// see canResync, is a 2.x client without a session token: the server hands one
+// out only to a login it performed for a client that asked, and the provider's
+// username and password are optional. That is a limitation of the
+// configuration, not a failure of this read, so it returns false with a nil
+// error and says nothing, leaving the caller to report the miss it already
+// has. removeOnMiss and reportMiss both name the missing token themselves when
+// they come to describe that miss, and a warning here would only duplicate
+// them. A resync that was attempted and did
 // fail returns the error instead.
 func resyncCache(ctx context.Context, client resyncer) (bool, error) {
-	if client.SessionToken() == "" {
+	if !canResync(client) {
 		return false, nil
 	}
 
@@ -342,7 +358,7 @@ func reportMiss(
 			),
 		)
 
-	case client.SessionToken() == "":
+	case !canResync(client):
 		diags.AddError(
 			summary,
 			fmt.Sprintf(
@@ -397,7 +413,7 @@ func removeOnMiss(
 			),
 		)
 
-	case client.SessionToken() == "":
+	case !canResync(client):
 		resp.Diagnostics.AddError(
 			fmt.Sprintf("Could not determine whether the %s still exists", name),
 			fmt.Sprintf(

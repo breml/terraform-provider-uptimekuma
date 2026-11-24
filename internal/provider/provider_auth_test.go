@@ -35,6 +35,8 @@ func clearCredentialEnvironment(t *testing.T) {
 		"UPTIMEKUMA_SESSION_TOKEN",
 		"UPTIMEKUMA_TOTP_SECRET",
 		"UPTIMEKUMA_AUTH_SCHEME",
+		"UPTIMEKUMA_API_KEY",
+		headersEnvironmentVariable,
 	} {
 		t.Setenv(name, "")
 	}
@@ -50,6 +52,9 @@ func nullProviderModel() UptimeKumaProviderModel {
 		SessionToken:      types.StringNull(),
 		TOTPSecret:        types.StringNull(),
 		AuthScheme:        types.StringNull(),
+		APIKey:            types.StringNull(),
+		Headers:           types.MapNull(types.StringType),
+		UserAgent:         types.StringNull(),
 		Timeout:           types.StringNull(),
 		PerAttemptTimeout: types.StringNull(),
 		OperationTimeout:  types.StringNull(),
@@ -809,6 +814,8 @@ func TestRejectUnknownConnectionAttributes(t *testing.T) {
 		"session_token": func(m *UptimeKumaProviderModel) *types.String { return &m.SessionToken },
 		"totp_secret":   func(m *UptimeKumaProviderModel) *types.String { return &m.TOTPSecret },
 		"auth_scheme":   func(m *UptimeKumaProviderModel) *types.String { return &m.AuthScheme },
+		"api_key":       func(m *UptimeKumaProviderModel) *types.String { return &m.APIKey },
+		"user_agent":    func(m *UptimeKumaProviderModel) *types.String { return &m.UserAgent },
 	}
 
 	for name, field := range fields {

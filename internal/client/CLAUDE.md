@@ -14,6 +14,9 @@ pooling support.
 
 - [client.go](client.go) - Client creation with retry logic
 - [pool.go](pool.go) - Connection pooling implementation
+- [request_errors.go](request_errors.go) - Matchers for the client's plain errors (`IsRequestConfigError`,
+  `IsUserinfoError`, `IsRefusedRedirect`, `IsHTTPSUpgradeRedirect`, `IsAuthSchemeProbeError`,
+  `IsPermanentProbeError`) and `RedactURL`
 - [fallback.go](fallback.go) - `PasswordFallbackCause`, the password half of a `*kuma.SessionTokenFallbackError`
 - [client_test.go](client_test.go) - Client tests
 - [client_retry_test.go](client_retry_test.go) - Retry decisions, through the `connectFunc` fake
@@ -91,6 +94,9 @@ type Config struct {
     TOTPSecret           string         // Optional: 2FA shared secret, for kuma.WithTOTPSecret
     SessionToken         string         // Optional: token login, for kuma.WithSessionToken
     AuthScheme           kuma.AuthScheme // Optional: pinned scheme, for kuma.WithAuthScheme (default: auto)
+    APIKey               string         // Optional: 3.0 API key, for kuma.WithAPIKey
+    Headers              map[string]string // Optional: request headers, for kuma.WithHeaders
+    UserAgent            string         // Optional: User-Agent, for kuma.WithUserAgent
     OnSessionTokenRejected func(error)  // Optional: told when the token was refused and the password took over
 }
 ```
@@ -110,11 +116,22 @@ type Config struct {
   token is tried first and the password login is the fallback for a token the server refuses;
   `OnSessionTokenRejected` is called for that fallback, before `New` returns
 - `AuthScheme` defaults to `kuma.AuthSchemeAuto`, which detects the scheme
+- `APIKey` authenticates against Uptime Kuma 3.0 with "API and MCP" enabled, and is the only
+  credential: `kuma.New` rejects it next to a username/password, session token or TOTP secret. The
+  client holds no session token then, and `Resync` reconnects with the key
+- `Headers` go to the base URL's origin only; `kuma.New` rejects the names the client owns (Host,
+  Origin, Connection, Upgrade, Accept, Accept-Encoding, Content-Type, Content-Length,
+  Transfer-Encoding, TE, Trailer, Sec-WebSocket-*), invalid names or values, and an
+  `Authorization: Bearer` value. `httpHeader` adds them in sorted order with `Add`. The client
+  refuses any redirect that leaves the origin, http to https included
+- `APIKey`, `Headers` and `UserAgent` are passed only when set (`requestHeaderOptions`)
 - Each credential option is only passed to `kuma.New` when its field is set (`connectOptions`):
   `kuma.WithTOTPSecret("")` is not inert, it fails `kuma.New`
-- `TOTPSecret`, `SessionToken` and `AuthScheme` are part of the pool's config identity, and the
-  mismatch message names whether each secret is set, and which secrets differ
-  (`differingSecrets`), without printing any of them. `OnSessionTokenRejected`
+- `TOTPSecret`, `SessionToken`, `AuthScheme`, `APIKey`, `Headers` and `UserAgent` are part of the
+  pool's config identity, so an API key provider block is never handed the connection a password
+  login opened. The mismatch message (`describeConfig`) redacts the endpoint, names whether each secret is set, the
+  header names but not their values, and which secrets differ (`differingSecrets`, which counts
+  `headers` as one), without printing any of them. `OnSessionTokenRejected`
   is not: only the Configure that opens the pooled connection hears about a fallback
 - `EnableConnectionPool` is enabled during acceptance tests to prevent "login: Too frequently" errors when pooling
 - `ConnectTimeout` defaults to `defaultConnectTimeout` (30s) when zero or negative; this value bounds the overall
@@ -172,8 +189,15 @@ if err != nil {
 - Backoff capped to 30s (`maxRetryDelay`) and to the remaining overall `ConnectTimeout` budget
 - Respects context cancellation during backoff
 - Permanent login failures (`kuma.ErrInvalidCredentials`, `ErrTwoFactorRequired`, `ErrInvalidTOTPCode`,
-  `ErrTwoFactorLocked`, `ErrInvalidSessionToken` including `ErrUserInactive`, `ErrAuthRequired`) are returned
-  after the first attempt: retrying them only burns attempts against the server's login rate limit
+  `ErrTwoFactorLocked`, `ErrInvalidSessionToken` including `ErrUserInactive`, `ErrAuthRequired`,
+  `ErrAPIKeyUnsupported`, `ErrAPIKeyRejected`, `ErrAPIKeySetupRequired`) are returned after the first
+  attempt: retrying them only burns attempts against the server's login rate limit. So are a rejected
+  header, API key or User-Agent (`IsRequestConfigError`) and a refused cross-origin redirect
+  (`IsRefusedRedirect`), which the client reports as plain errors and are matched on its message text.
+  `client_real_errors_test.go` pins that against the real `kuma.New`. An auth scheme probe error
+  (`IsAuthSchemeProbeError`) with a 4xx status is permanent too (`IsPermanentProbeError`, a proxy
+  refusing the request), except 408, 425 and 429 (a gateway asking to try again later); those, a
+  5xx and a redirect within the origin are retried, because they may pass
 - Except a refused one-time code (`ErrInvalidTOTPCode`) from an attempt of at most
   `totpReplayAttemptTimeout` (35s): the client only waits out the 2.x replay guard (a code the server
   has already accepted) within an attempt that can cover the wait, and reports a refusal it could not

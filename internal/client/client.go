@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand/v2"
+	"net/http"
+	"slices"
 	"time"
 
 	kuma "github.com/breml/go-uptime-kuma-client"
@@ -142,6 +145,20 @@ type Config struct {
 	// AuthScheme pins how the client authenticates, see kuma.WithAuthScheme.
 	// The zero value, kuma.AuthSchemeAuto, detects it.
 	AuthScheme kuma.AuthScheme
+	// APIKey authenticates with an API key of an Uptime Kuma 3.x server, see
+	// kuma.WithAPIKey. It is the only credential of a client that sets it:
+	// kuma.New rejects it next to a Username, Password, SessionToken or
+	// TOTPSecret.
+	APIKey string
+	// Headers are added to every request the client makes, see
+	// kuma.WithHeaders, for an access proxy in front of the server. Their
+	// values may be credentials (Cloudflare Access service tokens), so they are
+	// treated as secrets: the pool mismatch message names them, but never
+	// prints a value.
+	Headers map[string]string
+	// UserAgent is the User-Agent of every request, see kuma.WithUserAgent.
+	// Empty keeps the client's default.
+	UserAgent string
 	// OnSessionTokenRejected is called when the server refused SessionToken
 	// and the password login took over, with the error it was refused with.
 	// The connection succeeds in that case and nothing about the returned
@@ -216,7 +233,12 @@ type retryDelayFunc func(err error, attempt int, remaining time.Duration) (time.
 // costs time and, worse, login attempts: every one counts against the server's
 // login rate limit, so retrying a wrong password can lock the address out for
 // a while. kuma.ErrUserInactive wraps kuma.ErrInvalidSessionToken and is
-// covered by it.
+// covered by it. A refused API key or one the server cannot take, a request
+// configuration kuma.New rejects (the API key, headers, User-Agent or
+// userinfo in the endpoint, see IsRequestConfigError), a refused redirect and
+// an auth scheme detection a proxy refused with a 4xx (see
+// IsPermanentProbeError) are permanent too: they say something about the
+// configuration, not about the moment.
 //
 // A session token the server refused, followed by a password login that
 // failed too, wraps kuma.ErrInvalidSessionToken whatever the password login
@@ -241,13 +263,16 @@ func isPermanentLoginError(err error) bool {
 		kuma.ErrTwoFactorLocked,
 		kuma.ErrInvalidSessionToken,
 		kuma.ErrAuthRequired,
+		kuma.ErrAPIKeyUnsupported,
+		kuma.ErrAPIKeyRejected,
+		kuma.ErrAPIKeySetupRequired,
 	} {
 		if errors.Is(err, target) {
 			return true
 		}
 	}
 
-	return false
+	return IsRequestConfigError(err) || IsRefusedRedirect(err) || IsPermanentProbeError(err)
 }
 
 // isTOTPReplayRetryable reports whether err is a refused one-time code that
@@ -486,7 +511,41 @@ func connectOptions(config *Config, attemptTimeout time.Duration) []kuma.Option 
 		opts = append(opts, kuma.WithSessionTokenRejectedCallback(config.OnSessionTokenRejected))
 	}
 
+	return append(opts, requestHeaderOptions(config)...)
+}
+
+// requestHeaderOptions returns the options for the API key, the headers and the
+// User-Agent, each only when it is configured. kuma.WithAPIKey("") is a no-op,
+// and guarded for symmetry with the credentials in connectOptions.
+func requestHeaderOptions(config *Config) []kuma.Option {
+	var opts []kuma.Option
+
+	if config.APIKey != "" {
+		opts = append(opts, kuma.WithAPIKey(config.APIKey))
+	}
+
+	if len(config.Headers) > 0 {
+		opts = append(opts, kuma.WithHeaders(httpHeader(config.Headers)))
+	}
+
+	if config.UserAgent != "" {
+		opts = append(opts, kuma.WithUserAgent(config.UserAgent))
+	}
+
 	return opts
+}
+
+// httpHeader turns the configured headers into an http.Header. The names are
+// added in sorted order and with Add rather than Set, so two spellings of one
+// name keep both values, in the order kuma.WithHeaders documents for them.
+func httpHeader(headers map[string]string) http.Header {
+	header := make(http.Header, len(headers))
+
+	for _, name := range slices.Sorted(maps.Keys(headers)) {
+		header.Add(name, headers[name])
+	}
+
+	return header
 }
 
 // remainingAttemptTimeout returns the timeout to use for the next attempt.

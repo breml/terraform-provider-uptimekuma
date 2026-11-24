@@ -34,6 +34,9 @@ func NewSettingsResource() resource.Resource {
 type SettingsResource struct {
 	client   *kuma.Client
 	password string
+	// apiKey reports whether the provider authenticates with `api_key`, see
+	// passwordRequiredDetail.
+	apiKey bool
 }
 
 // SettingsResourceModel describes the resource data model.
@@ -200,6 +203,7 @@ func (r *SettingsResource) Configure(
 
 	r.client = pd.client
 	r.password = pd.password
+	r.apiKey = pd.apiKey
 }
 
 // Create applies the planned settings to the server.
@@ -288,6 +292,28 @@ func (*SettingsResource) ImportState(
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), "settings")...)
 }
 
+// passwordRequiredDetail explains why settings cannot be written without the
+// provider password. A provider that authenticates with `api_key` cannot have
+// a password next to it, so the fix differs there: a second provider
+// configuration rather than another attribute.
+func (r *SettingsResource) passwordRequiredDetail() string {
+	const reason = "The provider password must be configured to update settings, because Uptime Kuma asks " +
+		"for the account password again whenever settings are written. "
+
+	if r.apiKey {
+		return reason + "This provider authenticates with api_key, which is its only credential and " +
+			"cannot be combined with username and password, so it has no password to answer with. " +
+			"Manage uptimekuma_settings through a second provider configuration (an alias) that logs " +
+			"in with username and password, and set provider = uptimekuma.<alias> on it. That works " +
+			"with the key in UPTIMEKUMA_API_KEY too: a provider configuration that sets username or " +
+			"password does not read UPTIMEKUMA_API_KEY."
+	}
+
+	return reason + "A provider that authenticates with session_token alone has no password to answer " +
+		"with. Set username and password in the provider configuration or via the UPTIMEKUMA_USERNAME " +
+		"and UPTIMEKUMA_PASSWORD environment variables, next to session_token if you use one."
+}
+
 // hasExplicitlySetFields reports whether any user-configurable attribute
 // in the plan is explicitly set (non-null and non-unknown).
 func hasExplicitlySetFields(data *SettingsResourceModel) bool {
@@ -314,14 +340,7 @@ func (r *SettingsResource) applySettings(
 	diags *diag.Diagnostics,
 ) {
 	if r.password == "" {
-		diags.AddError(
-			"password required",
-			"The provider password must be configured to update settings, because Uptime Kuma asks for "+
-				"the account password again whenever settings are written. A provider that authenticates "+
-				"with session_token alone has no password to answer with. Set username and password in the "+
-				"provider configuration or via the UPTIMEKUMA_USERNAME and UPTIMEKUMA_PASSWORD environment "+
-				"variables, next to session_token if you use one.",
-		)
+		diags.AddError("password required", r.passwordRequiredDetail())
 
 		return
 	}
