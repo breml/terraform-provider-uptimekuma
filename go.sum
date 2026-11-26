@@ -184,8 +184,8 @@ github.com/breml/errchkjson v0.4.1 h1:keFSS8D7A2T0haP9kzZTi7o26r7kE3vymjZNeNDRDw
 github.com/breml/errchkjson v0.4.1/go.mod h1:a23OvR6Qvcl7DG/Z4o0el6BRAjKnaReoPQFciAl9U3s=
 github.com/breml/githooks v0.0.0-20260808071746-3d243ec03632 h1:7A/dzr+F8LRCGVAUp7ZmmD0lS/B9VWhiEQUZdCKd0pA=
 github.com/breml/githooks v0.0.0-20260808071746-3d243ec03632/go.mod h1:DFBI0bX9tHKAqQv/aQE76CKwzsr5UJy334BErEJY0N8=
-github.com/breml/go-uptime-kuma-client v0.7.5 h1:D6bZ3uBILC/dNQIeIwN0AjT6tFosjK7lPA0E/Ig5fWE=
-github.com/breml/go-uptime-kuma-client v0.7.5/go.mod h1:D1/64xCQlbdkuKCbeDHcPN9vzi2BbMQmqsd98kElYv0=
+github.com/breml/go-uptime-kuma-client v0.7.6 h1:r1o6PqhGcok5XsGchNLOWqj6Afu3zZ2FG//J4ZjDU3o=
+github.com/breml/go-uptime-kuma-client v0.7.6/go.mod h1:FczT6onulzdyNorTidIKtxY/Lx1KZMQaEpPi1Wc2ppQ=
 github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31 h1:l5fVxSzbJHJ1jcLxmcOLVY0uxZFfB1yuztPJVtMfLRg=
 github.com/breml/go.socket.io v0.0.0-20260516193936-e70410c8cd31/go.mod h1:H1EoWDJvqfV2WryM8F9og6ZkH7NsZDlHr0BRkKb58tY=
 github.com/breml/newline-after-block v0.0.0-20251225141726-84337171eef7 h1:ilIWXePccxYq7HvA/max1ZqS0kTkIB/sKzBPDneECts=
@@ -941,8 +941,8 @@ golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJ
 golang.org/x/sync v0.0.0-20210220032951-036812b2e83c/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.1.0/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
-golang.org/x/sync v0.24.0 h1:iqiDrGoDgyuvAKrhLQthUEzU/R378N78gXbBjxed7oA=
-golang.org/x/sync v0.24.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
+golang.org/x/sync v0.25.0 h1:dJnifr0nMV8/SBnBvdo4eSGGnrc3O4FFx6IqvtLcmRs=
+golang.org/x/sync v0.25.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
